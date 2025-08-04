@@ -1,0 +1,148 @@
+body {
+    display: flex;
+    flex-direction: column; /* Organiza os elementos filhos em uma coluna */
+    height: 100vh; /* Altura total da viewport */
+    overflow: hidden; /* Evita rolagem geral da página, permite rolagem interna se necessário */
+}
+
+
+.content-wrapper {
+    display: flex;
+    flex-grow: 1; /* Permite que o wrapper de conteúdo ocupe a altura restante */
+    overflow: hidden; /* Oculta overflow para gerenciar rolagem dentro dos filhos */
+}
+
+.sidebar {
+    width: 280px;
+    flex-shrink: 0; /* Impede que a barra lateral encolha */
+    padding: 1rem; /* Adiciona padding para espaçamento */
+    background-color: var(--bs-light); /* Fundo claro do Bootstrap */
+    border-right: 1px solid var(--bs-border-color); /* Borda sutil à direita */
+    overflow-y: auto; /* Habilita rolagem vertical para os filtros */
+}
+
+.main-content {
+    flex-grow: 1; /* Permite que o conteúdo principal ocupe o espaço restante */
+    position: relative; /* Base para posicionamento absoluto do mapa */
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%; /* O mapa ocupa todo o espaço do main-content */
+}
+
+.map-overlay-container {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre os overlays */
+    align-items: flex-end; /* Alinha os itens à direita */
+    z-index: 1; /* Garante que os overlays fiquem acima do mapa */
+}
+
+/* Estilos para o Card de Resumo */
+#summary-card {
+    background-color: rgba(255, 255, 255, 0.9); /* Fundo branco semi-transparente */
+    padding: 15px;
+    border-radius: 8px; /* Cantos arredondados */
+    width: 250px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra aprimorada */
+}
+
+#summary-card h5 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc; /* Linha divisória */
+    padding-bottom: 5px;
+    font-size: 1.1rem; /* Título ligeiramente maior */
+}
+
+#summary-card p {
+    margin: 5px 0;
+    font-size: 0.9rem; /* Fonte menor para detalhes */
+}
+
+/* Estilos para a Legenda do Mapa */
+#legend {
+    background-color: rgba(255, 255, 255, 0.9);
+    width: 250px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#legend h5 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.legend-container {
+    display: flex;
+    align-items: flex-start; /* Alinha itens ao topo */
+}
+
+.legend-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Espaço entre as chaves de cor */
+}
+
+.legend-labels {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    gap: 8px; /* Espaço entre os rótulos */
+}
+
+.legend-key {
+    width: 25px;
+    height: 20px;
+    border-radius: 3px; /* Leve arredondamento para chaves de cor */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Borda sutil para chaves */
+}
+
+.legend-labels span {
+    height: 20px;
+    line-height: 20px;
+    font-size: 0.9rem; /* Tamanho de fonte consistente */
+}
+
+/* Estilos do Popup do Mapbox (modificados) */
+.mapboxgl-popup-content {
+    font-size: 1rem; /* Tamanho base da fonte do conteúdo do popup */
+    min-width: 350px;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px; /* Padding consistente */
+}
+
+.popup-details p {
+    margin-bottom: 6px; /* Margem aumentada para legibilidade */
+    line-height: 1.5; /* Altura da linha melhorada */
+}
+
+/* Estilos gerais para grupos de filtro */
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+/* Estilos para ícones do Bootstrap Icons (se estiver usando) */
+.bi {
+    vertical-align: -.125em;
+    fill: currentColor;
+}
+
+.text-small {
+    font-size: 85%;
+}
+
+.dropdown-toggle {
+    outline: 0;
+}
