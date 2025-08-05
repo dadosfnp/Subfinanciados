@@ -1,53 +1,71 @@
-/* --- Header Styling --- */
+/* --- Cabeçalho --- */
 .page-header {
     width: 100%;
-    background-color: var(--bs-white); /* Ensures header is opaque */
-    z-index: 10; /* Make sure header is above other content */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+    background-color: #fff; /* Fundo branco */
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .page-header .container {
-    max-width: 100%; /* Make the container take full width */
-    padding-right: var(--bs-gutter-x, 1.5rem); /* Preserve Bootstrap's default horizontal padding */
-    padding-left: var(--bs-gutter-x, 1.5rem); /* Preserve Bootstrap's default horizontal padding */
+    max-width: 100%;
+    padding: 0 1.5rem;
 }
 
-.page-header .container header {
-    padding-top: 8px; /* Further reduced top padding */
-    padding-bottom: 8px; /* Further reduced bottom padding */
-    border-bottom: none; /* Explicitly removed the bottom border */
-    justify-content: flex-start !important; /* Force items to the start (left) */
-    margin-bottom: 0 !important; /* This is the key change: remove the bottom margin */
+.page-header header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Logo à esquerda, menu centralizado */
+    padding: 8px 0;
 }
 
-.page-header .container header .d-flex {
-    justify-content: flex-start !important;
-    flex-grow: 0; /* Prevent it from taking extra space */
+/* Logo */
+.logo-fnp {
+    max-height: 60px;
+    height: auto;
+    width: auto;
+    margin-right: 12px;
 }
 
-.page-header .container header .nav {
-    margin-left: 20px; /* Space between logo and navigation */
-    flex-grow: 0; /* Prevent nav from pushing other items */
+/* Menu centralizado */
+.page-header .nav {
+    display: flex;
+    justify-content: center;
+    gap: 2rem; /* Espaço entre links */
+    flex: 1;
 }
 
-/* Adjusting the column to take less space and ensure proper alignment */
-.page-header .container header .col-md-3 {
-    flex-basis: auto; /* Allow content to dictate width */
-    flex-grow: 0;
-    display: flex; /* Make it a flex container to align its children */
-    justify-content: flex-start; /* Align its content (logo and text) to the left */
-    align-items: center; /* Vertically center items */
-    width: auto; /* Override col-md-3 fixed width if necessary */
+/* Links do menu */
+.page-header .nav-link {
+    color: #333;
+    font-weight: 500;
+    padding: 6px 12px;
+    transition: all 0.3s ease;
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 767.98px) {
-    .page-header .container header {
+/* Hover */
+.page-header .nav-link:hover {
+    background-color: rgba(25, 70, 133, 0.85);
+    color: #fff !important;
+    border-radius: 5px;
+}
+
+/* Link ativo */
+.page-header .nav-link.active {
+    background-color: #194685;
+    color: #fff !important;
+    border-radius: 5px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .page-header header {
         flex-direction: column;
-        align-items: flex-start;
+        gap: 0.5rem;
     }
-    .page-header .nav-links {
-        margin-top: 0.5rem;
-        margin-left: 0;
+    .page-header .nav {
+        gap: 1rem;
+    }
+    .logo-fnp {
+        max-height: 50px;
     }
 }
