@@ -193,13 +193,13 @@ map.on("click", "populacao-circulos", (e) => {
 
     // Conteúdo HTML do popup
     const popup_html = `
-        <h5 class="text-center mb-2"><strong>${properties.name_muni_uf}</strong></h5>
+        <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
         <hr class="mt-0 mb-2">
         <div class="popup-details">
-            <p><strong>População:</strong> ${properties.Populacao23.toLocaleString("pt-BR")}</p>
-            <p><strong>Receita p/c:</strong> ${properties.rc_23_pc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-            <p><strong>Classificação:</strong> ${dynamicQuantileText}</p>
-            <p><strong>Percentil Nacional:</strong> ${properties.percentil || 'N/D'}</p>
+            <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${properties.Populacao23.toLocaleString("pt-BR")}</p>
+            <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${properties.rc_23_pc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+            <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
+            <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil || 'N/D'}</p>
         </div>
         ${percentil_texto}
         <div class="d-grid mt-3">
@@ -210,7 +210,7 @@ map.on("click", "populacao-circulos", (e) => {
     `;
 
     // Cria e adiciona o popup ao mapa
-    new mapboxgl.Popup({ minWidth: '350px' })
+    new mapboxgl.Popup({ minWidth: '400px', maxWidth: '500px' })
         .setLngLat(coordinates)
         .setHTML(popup_html)
         .addTo(map);

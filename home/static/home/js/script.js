@@ -258,6 +258,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             return label;
                         }
                     }
+                },
+                datalabels: { 
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#00000', // Cor do texto
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function (value) {
+                        return formatPorcentagemRadio.checked
+                            ? value.toFixed(0) + '%'
+                            : value.toLocaleString('pt-BR') + 'M';
+                    }
                 }
             },
             scales: {
@@ -274,7 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: { display: true, text: 'Quintil' }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 
     updateDependentFilters();

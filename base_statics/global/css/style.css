@@ -69,3 +69,9 @@
         max-height: 50px;
     }
 }
+
+/* Estilo para o botão */
+.btn {
+    background-color: #194685 !important; /* fundo azul principal */
+    border-color: #194685 !important;
+}
