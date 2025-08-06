@@ -264,14 +264,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     align: 'top',
                     color: '#00000', // Cor do texto
                     font: {
-                        weight: 'bold',
                         size: 12
                     },
-                    formatter: function (value) {
-                        return formatPorcentagemRadio.checked
-                            ? value.toFixed(0) + '%'
-                            : value.toLocaleString('pt-BR') + 'M';
-                    }
+                   formatter: function (value, context) {
+                        const isPercentage = document.getElementById('formatPorcentagem').checked;
+                         return isPercentage
+                            ? value.toFixed(1) + '%'
+                            : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
+    }
                 }
             },
             scales: {
@@ -339,8 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Hover sincronizado entre tabelas 2023 e 2000
 function enableSynchronizedHover(tableId1, tableId2) {
-    const table1 = document.querySelector(tableId1);
-    const table2 = document.querySelector(tableId2);
+    const table1 = document.querySelector(tableId1); // Tabela 2023
+    const table2 = document.querySelector(tableId2); // Tabela 2000
 
     if (!table1 || !table2) return;
 
@@ -358,8 +358,16 @@ function enableSynchronizedHover(tableId1, tableId2) {
                     const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
                     if (otherRow) {
                         const otherCell = otherRow.querySelectorAll('td')[colIndex];
-                        if (otherCell) otherCell.classList.add('highlight');
-                        cell.classList.add('highlight');
+                        if (otherCell) {
+                            // Aplica classes diferentes dependendo da tabela
+                            if (tableIndex === 0) {
+                                otherCell.classList.add('highlight2'); // tabela 2000
+                                cell.classList.add('highlight');      // tabela 2023
+                            } else {
+                                otherCell.classList.add('highlight');  // tabela 2023
+                                cell.classList.add('highlight2');      // tabela 2000
+                            }
+                        }
                     }
                 });
 
@@ -368,8 +376,15 @@ function enableSynchronizedHover(tableId1, tableId2) {
                     const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
                     if (otherRow) {
                         const otherCell = otherRow.querySelectorAll('td')[colIndex];
-                        if (otherCell) otherCell.classList.remove('highlight');
-                        cell.classList.remove('highlight');
+                        if (otherCell) {
+                            if (tableIndex === 0) {
+                                otherCell.classList.remove('highlight2');
+                                cell.classList.remove('highlight');
+                            } else {
+                                otherCell.classList.remove('highlight');
+                                cell.classList.remove('highlight2');
+                            }
+                        }
                     }
                 });
             });

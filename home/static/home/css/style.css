@@ -215,4 +215,11 @@ body {
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+.highlight2 {
+    background-color: #efae17 !important; 
+    color: #000 !important; /* texto preto para contraste */
+    font-weight: bold;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
 
