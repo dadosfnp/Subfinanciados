@@ -285,9 +285,9 @@ function getMapPaintConfig(classification) {
                 'match', ['get', propertyToUse],
                 1, '#a50026', 2, '#d73027',
                 3, '#f46d43', 4, '#fdae61',
-                5, '#fee090', 6, '#e0f3f8',
-                7, '#abd9e9', 8, '#74add1',
-                9, '#4575b4', 10, '#313695',
+                5, '#fee08b', 6, '#d9ef8b',
+                7, '#a6d96a', 8, '#66bd63',
+                9, '#1a9850', 10, '#006837',
                 '#cccccc' // Cor padrão para valores não correspondentes
             ];
         case 'natural':
@@ -328,9 +328,9 @@ function updateLegend(classification) {
         case 'decil':
             const decileColors = {
                 1: '#a50026', 2: '#d73027', 3: '#f46d43',
-                4: '#fdae61', 5: '#fee090', 6: '#e0f3f8',
-                7: '#abd9e9', 8: '#74add1', 9: '#4575b4',
-                10: '#313695'
+                4: '#fdae61', 5: '#fee08b', 6: '#d9ef8b',
+                7: '#a6d96a', 8: '#66bd63', 9: '#1a9850',
+                10: '#006837'
             };
             content = '<h5>Decil</h5><div class="legend-container"><div class="legend-colors">';
             for (let i = 1; i <= 10; i++) {
