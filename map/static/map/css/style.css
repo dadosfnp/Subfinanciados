@@ -123,10 +123,18 @@ body {
     padding: 15px; /* Padding consistente */
 }
 
+/* Ícones dentro do popup do Mapbox */
+.mapboxgl-popup-content i {
+    color: #194685; 
+    margin-right: 7px;
+    font-size: 14px;
+}
+
 .popup-details p {
     margin-bottom: 6px; /* Margem aumentada para legibilidade */
     line-height: 1.5; /* Altura da linha melhorada */
 }
+
 
 /* Estilos gerais para grupos de filtro */
 .filter-group {

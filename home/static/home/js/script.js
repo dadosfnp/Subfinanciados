@@ -1,4 +1,4 @@
-// Global variables for DOM elements and Chart instance
+// Variáveis globais para elementos DOM e instância do gráfico
 let filtroRegiao;
 let filtroUf;
 let filtroRm;
@@ -20,7 +20,7 @@ let toggle2000e2023;
 let populacaoQuintilCtx;
 let populacaoQuintilChart;
 
-// New global variables for table elements
+// Novas variáveis globais para elementos das tabelas
 let tableCard2023;
 let table2023Head;
 let table2023Body;
@@ -30,8 +30,8 @@ let table2000Head;
 let table2000Body;
 
 /**
- * Helper function to retrieve and parse JSON data from a script tag.
- * Assumes the HTML contains a <script type="application/json" id="your-id"> tag.
+ * Função auxiliar para obter e converter dados JSON de uma tag <script>.
+ * Pressupõe que o HTML contenha uma tag <script type="application/json" id="seu-id">.
  */
 function getJsonData(id) {
     const element = document.getElementById(id);
@@ -39,7 +39,7 @@ function getJsonData(id) {
         try {
             return JSON.parse(element.textContent);
         } catch (e) {
-            console.error(`Error parsing JSON from element #${id}:`, e);
+            console.error(`Erro ao processar JSON do elemento #${id}:`, e);
             return null;
         }
     }
@@ -47,8 +47,8 @@ function getJsonData(id) {
 }
 
 /**
- * Updates the dependent filter dropdowns (UF, RM) based on selected region, UF, or RM.
- * @param {string} trigger - Indicates which filter triggered the update ('regiao', 'uf', 'rm').
+ * Atualiza os filtros dependentes (UF, RM) com base na região, UF ou RM selecionada.
+ * @param {string} trigger - Indica qual filtro acionou a atualização ('regiao', 'uf', 'rm').
  */
 async function updateDependentFilters(trigger = null) {
     const regiaoAtual = filtroRegiao.value;
@@ -59,9 +59,8 @@ async function updateDependentFilters(trigger = null) {
 
     try {
         const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Erro HTTP! status: ${response.status}`);
+
         const data = await response.json();
 
         filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
@@ -70,27 +69,23 @@ async function updateDependentFilters(trigger = null) {
 
         filtroRm.innerHTML = '<option value="todos">Todos</option>';
         data.rms.forEach(item => filtroRm.add(new Option(item, item)));
-        if (trigger !== 'regiao' && trigger !== 'uf') {
-            filtroRm.value = rmAtual;
-        }
+        if (trigger !== 'regiao' && trigger !== 'uf') filtroRm.value = rmAtual;
 
         filtroUf.innerHTML = '<option value="todos">Todas</option>';
         data.ufs.forEach(item => filtroUf.add(new Option(item, item)));
-        if (trigger !== 'regiao') {
-            filtroUf.value = ufAtual;
-        }
+        if (trigger !== 'regiao') filtroUf.value = ufAtual;
 
     } catch (error) {
-        console.error("Error updating dependent filters:", error);
+        console.error("Erro ao atualizar filtros dependentes:", error);
     }
 }
 
 /**
- * Renders a table with given headers and data into specified tbody and thead elements.
- * @param {HTMLElement} tableHeadElement - The <thead> element.
- * @param {HTMLElement} tableBodyElement - The <tbody> element.
- * @param {Array<string>} headers - Array of header strings.
- * @param {Array<Object>} data - Array of row objects.
+ * Renderiza uma tabela com base nos cabeçalhos e dados fornecidos.
+ * @param {HTMLElement} tableHeadElement - Elemento <thead>.
+ * @param {HTMLElement} tableBodyElement - Elemento <tbody>.
+ * @param {Array<string>} headers - Lista de cabeçalhos.
+ * @param {Array<Object>} data - Lista de objetos para as linhas.
  */
 function renderTable(tableHeadElement, tableBodyElement, headers, data) {
     tableHeadElement.innerHTML = '';
@@ -100,9 +95,7 @@ function renderTable(tableHeadElement, tableBodyElement, headers, data) {
     headers.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        if (headerText === 'Faixas' || headerText === 'Total') {
-            th.style.fontWeight = 'bold';
-        }
+        if (headerText === 'Faixas' || headerText === 'Total') th.style.fontWeight = 'bold';
         headerRow.appendChild(th);
     });
 
@@ -112,15 +105,13 @@ function renderTable(tableHeadElement, tableBodyElement, headers, data) {
             const cell = row.insertCell();
             const cellValue = rowData[headerKey];
             cell.textContent = cellValue;
-            if (headerKey === 'Faixas' || headerKey === 'Total') {
-                cell.style.fontWeight = 'bold';
-            }
+            if (headerKey === 'Faixas' || headerKey === 'Total') cell.style.fontWeight = 'bold';
         });
     });
 }
 
 /**
- * Fetches and updates dashboard data, including summary cards, chart, and dynamic table.
+ * Busca e atualiza os dados do dashboard (cards, gráfico e tabela dinâmica).
  */
 async function atualizarFiltros() {
     const selectedRegiao = filtroRegiao.value;
@@ -128,16 +119,8 @@ async function atualizarFiltros() {
     const selectedRm = filtroRm.value;
     const selectedPorte = filtroPorte ? filtroPorte.value : 'todos';
 
-    let classificationFilter = 'quintil';
-    if (quantilDecilRadio && quantilDecilRadio.checked) {
-        classificationFilter = 'decil';
-    }
-
-    let displayFormat = 'numero';
-    if (formatPorcentagemRadio && formatPorcentagemRadio.checked) {
-        displayFormat = 'porcentagem';
-    }
-
+    let classificationFilter = quantilDecilRadio?.checked ? 'decil' : 'quintil';
+    let displayFormat = formatPorcentagemRadio?.checked ? 'porcentagem' : 'numero';
     let calculationMode = calcModeFilteredRadio.checked ? 'por_filtro' : 'total';
 
     const selectedYearOptionElement = document.querySelector('.toggle-option.active');
@@ -150,93 +133,84 @@ async function atualizarFiltros() {
         const response = await fetch(apiUrl);
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+            throw new Error(`Erro HTTP! Status: ${response.status}, Mensagem: ${errorText}`);
         }
         const data = await response.json();
 
-        // ==============================================================================
-        // LÓGICA PARA ATUALIZAR SUMMARY CARDS
-        // ==============================================================================
+        // ==== Atualizar cards de resumo ====
         document.getElementById('summary-total-municipios').textContent =
             `${data.summaryCards.totalMunicipios.toLocaleString('pt-BR')} (${data.summaryCards.percTotalMunicipios.toFixed(1)}%)`;
         document.getElementById('summary-media-receita').textContent =
-            data.summaryCards.mediaReceitaPerCapita.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
+            data.summaryCards.mediaReceitaPerCapita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         const diffNational = data.summaryCards.diffMediaNacional;
         document.getElementById('summary-diff-nacional').textContent = `${diffNational.toFixed(1)}%`;
         const diffTrendElement = document.getElementById('summary-diff-nacional-trend');
-        diffTrendElement.textContent = diffNational > 0 ? 'Acima da média nacional' : (diffNational < 0 ? 'Abaixo da média nacional' : 'Na média nacional');
+        diffTrendElement.textContent = diffNational > 0 ? 'Acima da média nacional' :
+            (diffNational < 0 ? 'Abaixo da média nacional' : 'Na média nacional');
         diffTrendElement.className = `sub-value ${diffNational < 0 ? 'negative' : ''} ${diffNational > 0 ? 'positive' : ''}`;
 
         document.getElementById('summary-gini').textContent = data.summaryCards.giniIndex;
 
-
-        // ==============================================================================
-        // LÓGICA PARA ATUALIZAR GRÁFICO
-        // ==============================================================================
+        // ==== Atualizar gráfico ====
         populacaoQuintilChart.data.labels = data.chartData.labels;
         populacaoQuintilChart.data.datasets = [];
 
-        const colors = ['#3498db', '#2ecc71'];
+        // Usar cores da logo
+        const colors = ['#194685', '#efae17'];
 
-        if (data.chartData.datasets && data.chartData.datasets.length > 0) {
+        if (data.chartData.datasets?.length > 0) {
             data.chartData.datasets.forEach((dataset, index) => {
                 populacaoQuintilChart.data.datasets.push({
                     label: dataset.label,
                     data: dataset.data,
-                    backgroundColor: colors[index % colors.length],
-                    borderColor: colors[index % colors.length],
+                    backgroundColor: dataset.data.map(() => colors[index % colors.length]),
+                    borderColor: dataset.data.map(() => colors[index % colors.length]),
                     borderWidth: 1,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.8
+                    fill: true,
+                    barPercentage: 1,
+                    categoryPercentage: 1,
+                    grouped: true,
+                    barThickness: 50
                 });
             });
         } else {
-            console.warn("API returned no data for the chart.");
+            console.warn("A API não retornou dados para o gráfico.");
         }
+
+        populacaoQuintilChart.update();
 
         populacaoQuintilChart.options.scales.x.title.text = data.chartData.xAxisTitle;
         populacaoQuintilChart.options.scales.y.title.text = data.chartData.yAxisTitle;
 
-        populacaoQuintilChart.options.scales.y.ticks.callback = function(value, index, ticks) {
-            if (formatPorcentagemRadio.checked) {
-                return value.toFixed(0) + '%';
-            } else {
-                return value.toLocaleString('pt-BR') + 'M';
-            }
+        populacaoQuintilChart.options.scales.y.ticks.callback = function (value) {
+            return formatPorcentagemRadio.checked ? value.toFixed(0) + '%' : value.toLocaleString('pt-BR') + 'M';
         };
 
         populacaoQuintilChart.update();
 
-
-        // ==============================================================================
-        // LÓGICA PARA ATUALIZAR TABELAS
-        // ==============================================================================
-
-        // Always render 2023 table
+        // ==== Atualizar tabelas ====
         renderTable(table2023Head, table2023Body, data.tableHeaders23, data.tableData23);
-        tableCard2023.classList.remove('d-none'); // Ensure 2023 table is visible
+        tableCard2023.classList.remove('d-none');
 
-        // Handle 2000 table visibility and content
         if (include2000Data && data.tableData00 && data.tableHeaders00) {
             renderTable(table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
-            tableCard2000.classList.remove('d-none'); // Show 2000 table
+            tableCard2000.classList.remove('d-none');
         } else {
-            tableCard2000.classList.add('d-none'); // Hide 2000 table
+            tableCard2000.classList.add('d-none');
         }
 
+        // Ativar hover sincronizado agora que as tabelas existem
+        enableSynchronizedHover('#table-2023', '#table-2000');
+
     } catch (error) {
-        console.error("Error loading dashboard data:", error);
+        console.error("Erro ao carregar dados do dashboard:", error);
         alert("Ocorreu um erro ao carregar os dados do dashboard. Por favor, tente novamente.");
     }
 }
 
-// Event Listeners and Initial Calls
+// ==== Eventos e inicialização ====
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Get references to DOM elements and assign them to the GLOBAL variables.
     filtroRegiao = document.getElementById('filtro-regiao');
     filtroUf = document.getElementById('filtro-uf');
     filtroRm = document.getElementById('filtro-rm');
@@ -255,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle2023 = document.querySelector('.toggle-option[data-option="2023"]');
     toggle2000e2023 = document.querySelector('.toggle-option[data-option="2000 e 2023"]');
 
-    // Get references for table elements
     tableCard2023 = document.getElementById('table-card-2023');
     table2023Head = document.querySelector('#table-2023 thead');
     table2023Body = document.querySelector('#table-2023 tbody');
@@ -264,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
     table2000Head = document.querySelector('#table-2000 thead');
     table2000Body = document.querySelector('#table-2000 tbody');
 
-    // 2. Initialize Chart.js once
     populacaoQuintilCtx = document.getElementById('populacaoQuintilChart').getContext('2d');
     populacaoQuintilChart = new Chart(populacaoQuintilCtx, {
         type: 'bar',
@@ -276,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 legend: { display: true, position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
@@ -286,6 +258,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             return label;
                         }
                     }
+                },
+                datalabels: { 
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#00000', // Cor do texto
+                    font: {
+                        size: 12
+                    },
+                   formatter: function (value, context) {
+                        const isPercentage = document.getElementById('formatPorcentagem').checked;
+                         return isPercentage
+                            ? value.toFixed(1) + '%'
+                            : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
+    }
                 }
             },
             scales: {
@@ -293,9 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     beginAtZero: true,
                     title: { display: true, text: 'População (milhões)' },
                     ticks: {
-                        callback: function(value, index, ticks) {
-                            if (formatPorcentagemRadio.checked) return value.toFixed(0) + '%';
-                            else return value.toLocaleString('pt-BR') + 'M';
+                        callback: function (value) {
+                            return formatPorcentagemRadio.checked ? value.toFixed(0) + '%' : value.toLocaleString('pt-BR') + 'M';
                         }
                     }
                 },
@@ -303,50 +288,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: { display: true, text: 'Quintil' }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 
-    // 3. Initial calls to populate filters and dashboard data
     updateDependentFilters();
-
-    const initialFiltersData = getJsonData('initial-filters-data');
-    const currentFilters = getJsonData('current-filters-json');
-
-    if (currentFilters) {
-        if (currentFilters.regiao) filtroRegiao.value = currentFilters.regiao;
-        if (currentFilters.uf) filtroUf.value = currentFilters.uf;
-        if (currentFilters.rm) filtroRm.value = currentFilters.rm;
-        if (filtroPorte && currentFilters.porte) filtroPorte.value = currentFilters.porte;
-
-        if (currentFilters.classification === 'decil' && quantilDecilRadio) quantilDecilRadio.checked = true;
-        else if (quantilQuintilRadio) quantilQuintilRadio.checked = true;
-
-        if (currentFilters.display_format === 'porcentagem' && formatPorcentagemRadio) formatPorcentagemRadio.checked = true;
-        else if (formatNumeroRadio) formatNumeroRadio.checked = true;
-
-        if (currentFilters.calculation_mode === 'por_filtro' && calcModeFilteredRadio) calcModeFilteredRadio.checked = true;
-        else if (calcModeTotalRadio) calcModeTotalRadio.checked = true;
-        
-        if (currentFilters.include_2000_data === 'true' && toggle2000e2023) {
-            toggle2000e2023.classList.add('active');
-            toggle2023.classList.remove('active');
-        } else {
-            toggle2023.classList.add('active');
-            toggle2000e2023.classList.remove('active');
-        }
-    }
-
     atualizarFiltros();
 
-    // 4. Event Listeners for filter changes
     filtroRegiao.addEventListener('change', () => { updateDependentFilters('regiao'); atualizarFiltros(); });
     filtroUf.addEventListener('change', () => { updateDependentFilters('uf'); atualizarFiltros(); });
     filtroRm.addEventListener('change', () => { updateDependentFilters('rm'); atualizarFiltros(); });
-    if (filtroPorte) {
-        filtroPorte.addEventListener('change', atualizarFiltros);
-    }
+    if (filtroPorte) filtroPorte.addEventListener('change', atualizarFiltros);
 
-    // 5. Event Listeners for radio buttons
     quantilQuintilRadio.addEventListener('change', atualizarFiltros);
     quantilDecilRadio.addEventListener('change', atualizarFiltros);
     formatNumeroRadio.addEventListener('change', atualizarFiltros);
@@ -354,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
     calcModeTotalRadio.addEventListener('change', atualizarFiltros);
     calcModeFilteredRadio.addEventListener('change', atualizarFiltros);
 
-    // 6. Event Listeners for year toggles
     toggle2023.addEventListener('click', () => {
         document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
         toggle2023.classList.add('active');
@@ -367,16 +319,15 @@ document.addEventListener('DOMContentLoaded', () => {
         atualizarFiltros();
     });
 
-    // 7. Event Listener for "Clear Filters" button
     btnLimpar.addEventListener('click', () => {
         filtroRegiao.value = 'todos';
         filtroUf.value = 'todos';
         filtroRm.value = 'todos';
-        if (filtroPorte) { filtroPorte.value = 'todos'; }
-        
-        if (quantilQuintilRadio) quantilQuintilRadio.checked = true;
-        if (formatNumeroRadio) formatNumeroRadio.checked = true;
-        if (calcModeTotalRadio) calcModeTotalRadio.checked = true;
+        if (filtroPorte) filtroPorte.value = 'todos';
+
+        quantilQuintilRadio.checked = true;
+        formatNumeroRadio.checked = true;
+        calcModeTotalRadio.checked = true;
 
         document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
         toggle2023.classList.add('active');
@@ -385,3 +336,58 @@ document.addEventListener('DOMContentLoaded', () => {
         atualizarFiltros();
     });
 });
+
+// Hover sincronizado entre tabelas 2023 e 2000
+function enableSynchronizedHover(tableId1, tableId2) {
+    const table1 = document.querySelector(tableId1); // Tabela 2023
+    const table2 = document.querySelector(tableId2); // Tabela 2000
+
+    if (!table1 || !table2) return;
+
+    const tables = [table1, table2];
+
+    tables.forEach((table, tableIndex) => {
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach((row, rowIndex) => {
+            const cells = row.querySelectorAll('td');
+
+            cells.forEach((cell, colIndex) => {
+                cell.addEventListener('mouseenter', () => {
+                    const otherTable = tables[tableIndex === 0 ? 1 : 0];
+                    const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
+                    if (otherRow) {
+                        const otherCell = otherRow.querySelectorAll('td')[colIndex];
+                        if (otherCell) {
+                            // Aplica classes diferentes dependendo da tabela
+                            if (tableIndex === 0) {
+                                otherCell.classList.add('highlight2'); // tabela 2000
+                                cell.classList.add('highlight');      // tabela 2023
+                            } else {
+                                otherCell.classList.add('highlight');  // tabela 2023
+                                cell.classList.add('highlight2');      // tabela 2000
+                            }
+                        }
+                    }
+                });
+
+                cell.addEventListener('mouseleave', () => {
+                    const otherTable = tables[tableIndex === 0 ? 1 : 0];
+                    const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
+                    if (otherRow) {
+                        const otherCell = otherRow.querySelectorAll('td')[colIndex];
+                        if (otherCell) {
+                            if (tableIndex === 0) {
+                                otherCell.classList.remove('highlight2');
+                                cell.classList.remove('highlight');
+                            } else {
+                                otherCell.classList.remove('highlight');
+                                cell.classList.remove('highlight2');
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    });
+}
