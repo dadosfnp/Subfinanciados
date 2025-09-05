@@ -7,6 +7,8 @@ const map = new mapboxgl.Map({
     center: [-54, -15] // Centro inicial (aproximadamente Brasil)
 });
 map.addControl(new mapboxgl.NavigationControl()); // Adiciona controles de navegação
+const DEFAULT_VIEW = { center: [-54, -15], zoom: 3.5 }; // Visão padrão
+const q = (v) => encodeURIComponent(v ?? ""); // Helper para encode de parâmetros
 
 // Referências aos elementos HTML dos filtros
 const filtroRegiao = document.getElementById('filtro-regiao');
@@ -32,7 +34,7 @@ async function updateDependentFilters(trigger = null) {
     const municipioAtual = filtroMunicipio.value;
 
     // Monta a URL da API para obter as opções filtradas
-    const apiUrl = `/api/get-dependent-filters/?regiao=${regiaoAtual}&uf=${ufAtual}&rm=${rmAtual}`;
+    const apiUrl = `/api/get-dependent-filters/?regiao=${q(regiaoAtual)}&uf=${q(ufAtual)}&rm=${q(rmAtual)}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -79,7 +81,7 @@ async function atualizarMapa() {
     const modoCalculoAtual = filtroModoCalculo.value; // NOVO: Obtenha o valor do modo de cálculo
     
     // Constrói a URL da API com todos os filtros
-    const apiUrl = `/api/dados-municipios/?regiao=${filtroRegiao.value}&uf=${filtroUf.value}&municipio=${filtroMunicipio.value}&porte=${filtroPorte.value}&subgrupo=${subgroupAtual}&rm=${filtroRm.value}&classification=${classificacaoAtual}&calculation_mode=${modoCalculoAtual}`; // NOVO: Adicionado calculation_mode
+    const apiUrl = `/api/dados-municipios/?regiao=${q(filtroRegiao.value)}&uf=${q(filtroUf.value)}&municipio=${q(filtroMunicipio.value)}&porte=${q(filtroPorte.value)}&subgrupo=${q(subgroupAtual)}&rm=${q(filtroRm.value)}&classification=${q(classificacaoAtual)}&calculation_mode=${q(modoCalculoAtual)}`; // NOVO: Adicionado calculation_mode
     
     try {
         const response = await fetch(apiUrl);
@@ -105,6 +107,7 @@ async function atualizarMapa() {
         // Atualiza os dados da fonte 'municipios' no Mapbox
         if (map.getSource('municipios')) {
             map.getSource('municipios').setData(geojsonData);
+            applyZoom(geojsonData); // NOVO: aplica zoom conforme os filtros
         }
 
     } catch (error) {
@@ -190,7 +193,6 @@ map.on("click", "populacao-circulos", (e) => {
         // Para 'natural', não há um 'quantil' específico para exibir no popup, pois é uma faixa de valor.
     }
 
-
     // Conteúdo HTML do popup
     const popup_html = `
         <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
@@ -217,6 +219,64 @@ map.on("click", "populacao-circulos", (e) => {
 });
 
 /**
+ * Zoom do filtro.
+ */
+// Calcula o bbox (minX,minY,maxX,maxY) de um GeoJSON de pontos/linhas/polígonos
+function getGeoJSONBounds(geojson) {
+    const coords = [];
+    geojson.features.forEach(f => {
+        const g = f.geometry;
+        if (!g) return;
+
+        const pushCoord = (c) => coords.push(c);
+        const walk = (arr) => Array.isArray(arr[0]) ? arr.forEach(walk) : pushCoord(arr);
+
+        walk(g.coordinates);
+    });
+    if (!coords.length) return null;
+
+    let minX = coords[0][0], minY = coords[0][1], maxX = minX, maxY = minY;
+    coords.forEach(([x, y]) => {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+    });
+    return [[minX, minY], [maxX, maxY]];
+}
+
+// Aplica zoom conforme seleção atual
+function applyZoom(geojsonData) {
+    // 1) Município selecionado: foca nele
+    if (filtroMunicipio.value !== 'todos') {
+        const f = geojsonData.features.find(ft =>
+            (ft.properties?.name_muni === filtroMunicipio.value) ||
+            (ft.properties?.name_muni_uf === filtroMunicipio.value)
+        );
+        if (f && f.geometry) {
+            if (f.geometry.type === 'Point') {
+                const [lng, lat] = f.geometry.coordinates;
+                map.flyTo({ center: [lng, lat], zoom: 9, speed: 0.8, curve: 1.3 });
+            } else {
+                const bbox = getGeoJSONBounds({ type: 'FeatureCollection', features: [f] });
+                if (bbox) map.fitBounds(bbox, { padding: 50, maxZoom: 9, duration: 700 });
+            }
+            return;
+        }
+    }
+
+    // 2) UF / RM / Região selecionados: ajusta aos resultados filtrados
+    if (filtroUf.value !== 'todos' || filtroRm.value !== 'todos' || filtroRegiao.value !== 'todos') {
+        const bbox = getGeoJSONBounds(geojsonData);
+        if (bbox) {
+            map.fitBounds(bbox, { padding: 50, maxZoom: 7.5, duration: 700 });
+            return;
+        }
+    }
+
+    // 3) Sem filtros: visão padrão
+    map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
+}
+
+/**
  * Reseta todos os filtros para seus valores padrão ('todos')
  * e atualiza o mapa e os filtros dependentes.
  */
@@ -230,6 +290,7 @@ function limparFiltros() {
     filtroSubgrupo.value = 'todos';
     filtroClassificacao.value = 'quintil'; // Reseta a classificação para o padrão
     filtroModoCalculo.value = 'total'; // NOVO: Reseta o modo de cálculo
+    map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 }); // Reseta a visão
 
     // Atualiza as listas dos filtros dinâmicos e o mapa
     updateDependentFilters('limpar');
@@ -406,9 +467,6 @@ function atualizarClassificacao() {
     switch (classificacao) {
         case 'decil':
             subgrupoLabel.textContent = 'Decil:';
-            // Os valores para o subfiltro devem ser numéricos (1, 2, etc.)
-            // para corresponder ao que o backend espera para `subgroup_filter`
-            // quando `calculation_mode='por_filtro'`.
             const decileOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
             decileOptions.forEach(opt => {
                 subgrupoSelect.add(new Option(`${opt}º decil`, opt)); // Ex: label '1º decil', value '1'
@@ -430,7 +488,6 @@ function atualizarClassificacao() {
         case 'quintil':
         default:
             subgrupoLabel.textContent = 'Quintil:';
-            // Os valores para o subfiltro devem ser numéricos (1, 2, etc.)
             const quintileOptions = ['1', '2', '3', '4', '5'];
             quintileOptions.forEach(opt => {
                 subgrupoSelect.add(new Option(`${opt}º quintil`, opt)); // Ex: label '1º quintil', value '1'
@@ -447,7 +504,9 @@ function atualizarClassificacao() {
 // Listener para o evento 'change' do filtro de classificação
 filtroClassificacao.addEventListener('change', atualizarClassificacao);
 
-
+/**
+ * Download dos dados da tabela (CSV) com base nos filtros atuais.
+ */
 async function downloadTableData() {
     // Obter os filtros atuais para usar na requisição
     const regiaoAtual = filtroRegiao.value;
@@ -460,7 +519,7 @@ async function downloadTableData() {
     const modoCalculoAtual = filtroModoCalculo.value; // NOVO: Obtenha o valor do modo de cálculo
 
     // Constrói a URL da API para obter os dados filtrados
-    const apiUrl = `/api/dados-municipios/?regiao=${regiaoAtual}&uf=${ufAtual}&municipio=${municipioAtual}&porte=${porteAtual}&subgrupo=${subgrupoAtual}&rm=${rmAtual}&classification=${classificacaoAtual}&calculation_mode=${modoCalculoAtual}`;
+    const apiUrl = `/api/dados-municipios/?regiao=${q(regiaoAtual)}&uf=${q(ufAtual)}&municipio=${q(municipioAtual)}&porte=${q(porteAtual)}&subgrupo=${q(subgrupoAtual)}&rm=${q(rmAtual)}&classification=${q(classificacaoAtual)}&calculation_mode=${q(modoCalculoAtual)}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -498,13 +557,10 @@ async function downloadTableData() {
                 if (value === null || value === undefined) {
                     value = "N/D"; // Trata valores nulos/indefinidos
                 }
-                // Formata números para CSV (ex: substitui vírgula por ponto para evitar problemas)
                 if (typeof value === 'number') {
-                    // Para o Excel brasileiro, '.' como separador de milhar e ',' para decimal
-                    // Pode ser necessário um tratamento mais robusto se os números forem muito grandes
-                    value = String(value).replace(".", ",");
+                    value = String(value).replace(".", ","); // Ajuste simples para Excel pt-BR
                 }
-                return `"${value}"`; // Garante que valores com vírgulas ou aspas sejam tratados corretamente
+                return `"${value}"`;
             }).join(";");
             csvContent += row + "\n";
         });
@@ -517,10 +573,10 @@ async function downloadTableData() {
         const a = document.createElement("a");
         a.href = url;
         a.download = "dados_municipios_filtrados.csv"; // Nome do arquivo
-        document.body.appendChild(a); // Adiciona ao DOM (necessário para Firefox)
-        a.click(); // Aciona o clique para iniciar o download
-        document.body.removeChild(a); // Remove o link
-        URL.revokeObjectURL(url); // Libera o URL do objeto
+        document.body.appendChild(a); // Necessário para Firefox
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         
     } catch (error) {
         console.error("Erro ao baixar dados da tabela:", error);
