@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter    
-from . import views
-
-router = DefaultRouter()
-router.register(r'municipios', views.MunicipioAPIView)
-
-urlpatterns = [
-    path('municipio/<str:cod_ibge>/', views.municipio_detalhe_view, name='municipio_detalhe'),
-    path('api/', include(router.urls)),
-
-=======
 from django.urls import path
 from . import views
 
@@ -24,5 +11,4 @@ urlpatterns = [
     path('api/fiscal-details/', views.conjunto_fiscal_api, name='conjunto_fiscal_api'),
     path('api/conjunto-chart-data/', views.conjunto_chart_api, name='conjunto_chart_api'),
 
->>>>>>> origin/main
 ]
