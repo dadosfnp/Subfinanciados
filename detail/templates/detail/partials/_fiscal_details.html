@@ -1,0 +1,9 @@
+{% load currency_filters %}
+
+{% if revenue_tree %}
+    {% for item in revenue_tree %}
+        {% include "detail/_revenue_item.html" with item=item level=0 %}
+    {% endfor %}
+{% else %}
+    <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
+{% endif %}

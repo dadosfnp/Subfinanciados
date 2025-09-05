@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* Estilos principais do corpo da página (Tema Claro) */
 body {
     font-family: 'Inter', sans-serif;
@@ -143,3 +144,21 @@ body {
 .chart-container canvas {
     max-width: 400px; /* Control max width of the chart */
 }
+=======
+/* O seu CSS original vai aqui - não precisa de alterações */
+body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }
+.kpi-card, .metric-card { background-color: #ffffff; border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s; }
+.kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
+.toggle-heading, .toggle-subheading { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.toggle-subheading { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.toggle-heading .arrow, .toggle-subheading .arrow { transition: transform 0.2s ease-in-out; }
+.toggle-heading.open .arrow, .toggle-subheading.open .arrow { transform: rotate(90deg); }
+.ranking-indicator-container { position: relative; display: inline-flex; align-items: center; vertical-align: middle; }
+.ranking-indicator { width: 14px; height: 14px; border-radius: 3px; }
+.quintil-1 { background-color: #d73027; } .quintil-2 { background-color: #fc8d59; } .quintil-3 { background-color: #fee08b; } .quintil-4 { background-color: #91cf60; } .quintil-5 { background-color: #1a9850; }
+.ranking-tooltip { visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 0.75rem; }
+.ranking-indicator-container:hover .ranking-tooltip { visibility: visible; opacity: 1; }
+.metric-detail-row { display: flex; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
+.metric-detail-row:last-child { border-bottom: none; }
+.chart-container { position: relative; margin: 0 auto; width: 90%; max-width: 400px; }
+>>>>>>> origin/main

@@ -1,0 +1,174 @@
+{% extends "global/head.html" %}
+{% load static %}
+{% block extra_head %}
+    <title>Detalhamento de Receita por Conjunto de Municípios</title>
+    <link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock extra_head %}
+
+{% block content %}
+
+    {% load currency_filters %}
+
+    <div class="flex h-screen">
+
+        <aside class="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+            <div class="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                <h3 class="text-base font-bold text-gray-800">Filtros</h3>
+            </div>
+
+            <div class="flex-grow p-4 overflow-y-auto">
+                <div class="mb-4">
+                    <label for="filtro-porte" class="block text-xs font-bold text-gray-600 mb-1">Faixa Populacional:</label>
+                    <select id="filtro-porte" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                        <option value="todos">Todos</option>
+                        <option value="Até 5 mil">Até 5 mil</option>
+                        <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+                        <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+                        <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+                        <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+                        <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+                        <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+                        <option value="Acima de 500 mil">Acima de 500 mil</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="filtro-rm" class="block text-xs font-bold text-gray-600 mb-1">Região Metropolitana:</label>
+                    <select id="filtro-rm" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                        <option value="todos" selected>Todas</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="filtro-regiao" class="block text-xs font-bold text-gray-600 mb-1">Região:</label>
+                    <select id="filtro-regiao" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                        <option value="todos" selected>Todas</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="filtro-uf" class="block text-xs font-bold text-gray-600 mb-1">UF:</label>
+                    <select id="filtro-uf" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                        <option value="todos" selected>Todos</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="filtro-municipio" class="block text-xs font-bold text-gray-600 mb-1">Município:</label>
+                    <select id="filtro-municipio" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                        <option value="todos" selected>Todos</option>
+                    </select>
+                </div>
+                <!-- Classificação -->
+                <div class="mb-4">
+                <label for="filtro-classificacao" class="block text-xs font-bold text-gray-600 mb-1">
+                    Classificar por:
+                </label>
+                <select id="filtro-classificacao" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                    <option value="quintil" selected>Quintis de Receita p/c</option>
+                    <option value="decil">Decis de Receita p/c</option>
+                    <option value="natural">Quebras Naturais (Receita)</option>
+                </select>
+                </div>
+
+                <!-- Subgrupo -->
+                <div class="mb-4" id="grupo-subgrupo">
+                <label for="filtro-subgrupo" class="block text-xs font-bold text-gray-600 mb-1">
+                    Subgrupo:
+                </label>
+                <select id="filtro-subgrupo" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                    <option value="todos" selected>Todos</option>
+                    <option value="1">1</option><option value="2">2</option>
+                    <option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-200 flex-shrink-0">
+                <button id="btn-limpar-filtros" class="w-full px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300">
+                    Limpar Filtros
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-2 overflow-y-auto">
+            
+            <header class="flex flex-col md:flex-row justify-between items-start mb-8">
+                <div>
+                    <h1 class="text-3xl md:text-5xl font-bold flex items-center">
+                        <span id="municipio-name">Detalhamento da Receita Corrente</span>
+                        <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-4 hidden">
+                            <div class="ranking-indicator"></div>
+                            <div class="ranking-tooltip"></div>
+                        </div>
+                    </h1>
+                </div>
+            </header>
+
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="kpi-section">
+                <div class="kpi-card p-6 rounded-xl">
+                    <p class="text-xl font-medium text-gray-500">População</p>
+                    <p class="text-3xl font-bold mt-2" id="kpi-populacao">0</p>
+                </div>
+                <div class="kpi-card p-6 rounded-xl">
+                    <p class="text-xl font-medium text-gray-500">Quantidade de Municípios</p>
+                    <p class="text-3xl font-bold mt-2" id="kpi-quantidade">0</p>
+                </div>
+                <div class="kpi-card p-6 rounded-xl">
+                    <p class="text-xl font-medium text-gray-500">Receita per capita</p>
+                    <p class="text-3xl font-bold mt-2" id="kpi-receita-per-capita">0</p>
+                </div>
+                <div class="kpi-card p-6 rounded-xl">
+                    <p class="text-xl font-medium text-gray-500">Diferença da média Nacional</p>
+                    <p class="text-3xl font-bold mt-2" id="kpi-diferenca-media">0</p>
+                </div>
+                
+            </section>
+
+            <div class="grid grid-cols-1 gap-8">
+                <section class="metric-card p-6 rounded-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
+                        <button id="valor-toggle-btn" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                            Valores Reais
+                        </button>
+                    </div>
+                    <div id="main-revenue-details-container">
+                        {% if revenue_tree %}
+                            {% for item in revenue_tree %}
+                                {% include "detail/_revenue_item.html" with item=item level=0 %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
+                        {% endif %}
+                    </div>
+                </section>
+                
+<section id="chart-card" class="metric-card p-6 rounded-xl">
+                   <div class="flex justify-between items-center mb-4">
+                       <h2 class="text-xl font-bold">Composição da Receita</h2>
+                       <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
+                       <option value="main_categories">Categorias Principais</option>
+                       <option value="imposto">Impostos</option>
+                       <option value="taxas">Taxas</option>
+                       <option value="contribuicoes">Contribuições</option>
+                       <option value="transferencias_correntes">Transferências Correntes</option>
+                       <option value="transferencias_uniao">Transferências da União</option>
+                       <option value="transferencias_estado">Transferências dos Estados</option>
+                       <option value="outras_receitas">Outras Receitas</option>
+                       </select>
+                   </div>
+
+                   <div id="chart-body" class="w-full relative" style="width:100%; position:relative;">
+                       <canvas id="myChart"></canvas>
+                       </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    {{ chart_data_json|json_script:"chart-data" }}
+    {{ percentile_data_json|json_script:"percentile-data" }}
+    <script src="{% static 'detail/js/script.js' %}"></script>
+{% endblock content%}
