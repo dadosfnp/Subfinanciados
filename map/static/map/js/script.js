@@ -21,6 +21,15 @@ const filtroClassificacao = document.getElementById('filtro-classificacao');
 const filtroModoCalculo = document.getElementById('filtro-modo-calculo'); // NOVO: Referência ao filtro de modo de cálculo
 
 /**
+ * Restaura o valor de um <select> apenas se existir entre as opções.
+ * Caso contrário, cai para 'todos'.
+ */
+function restoreSelectValue(selectEl, value) {
+    const has = Array.from(selectEl.options).some(o => o.value === value);
+    selectEl.value = has ? value : 'todos';
+}
+
+/**
  * Atualiza os dropdowns de filtros dependentes (Região, UF, Município, RM)
  * com base nos filtros atualmente selecionados.
  * @param {string} [trigger] - O ID do filtro que disparou a atualização (ex: 'regiao', 'uf', 'rm').
@@ -43,14 +52,14 @@ async function updateDependentFilters(trigger = null) {
         // Bloco para popular e restaurar o estado do filtro de REGIÃO
         filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
         data.regioes.forEach(item => filtroRegiao.add(new Option(item, item)));
-        filtroRegiao.value = regiaoAtual; // Restaura o estado
+        restoreSelectValue(filtroRegiao, regiaoAtual); // Restaura com segurança
 
         // Bloco para popular e restaurar o estado do filtro de RM
         filtroRm.innerHTML = '<option value="todos">Todas</option>';
         data.rms.forEach(item => filtroRm.add(new Option(item, item)));
         // Restaura o estado da RM apenas se o trigger não for UF ou Região (que a afetam)
         if (trigger !== 'regiao' && trigger !== 'uf') {
-            filtroRm.value = rmAtual;
+            restoreSelectValue(filtroRm, rmAtual);
         }
 
         // Bloco para popular e restaurar o estado do filtro de UF
@@ -58,13 +67,13 @@ async function updateDependentFilters(trigger = null) {
         data.ufs.forEach(item => filtroUf.add(new Option(item, item)));
         // Restaura o estado da UF apenas se o trigger não for Região (que a afeta)
         if (trigger !== 'regiao') {
-            filtroUf.value = ufAtual;
+            restoreSelectValue(filtroUf, ufAtual);
         }
         
         // Bloco para popular e restaurar o estado do filtro de Município
         filtroMunicipio.innerHTML = '<option value="todos">Todos</option>';
         data.municipios.forEach(item => filtroMunicipio.add(new Option(item, item)));
-        filtroMunicipio.value = municipioAtual; // Restaura o estado
+        restoreSelectValue(filtroMunicipio, municipioAtual); // Restaura o estado
         
     } catch (error) {
         console.error("Erro ao atualizar filtros dependentes:", error);
@@ -91,7 +100,7 @@ async function atualizarMapa() {
         const features = geojsonData.features;
         const count = features.length;
 
-        // Calcula a soma da receita per capita e a média
+        // Calcular soma de receita p/c e média
         const totalRevenue = features.reduce((sum, feature) => {
             return sum + (feature.properties.rc_23_pc || 0);
         }, 0);
@@ -280,7 +289,7 @@ function applyZoom(geojsonData) {
  * Reseta todos os filtros para seus valores padrão ('todos')
  * e atualiza o mapa e os filtros dependentes.
  */
-function limparFiltros() {
+async function limparFiltros() {
     // Reseta o valor de todos os seletores para "todos"
     filtroRegiao.value = 'todos';
     filtroRm.value = 'todos';
@@ -292,27 +301,29 @@ function limparFiltros() {
     filtroModoCalculo.value = 'total'; // NOVO: Reseta o modo de cálculo
     map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 }); // Reseta a visão
 
-    // Atualiza as listas dos filtros dinâmicos e o mapa
-    updateDependentFilters('limpar');
+    // Atualiza as listas dos filtros dinâmicos e o mapa (aguarda para evitar corrida)
+    await updateDependentFilters('limpar');
     atualizarClassificacao(); // Reconfigura o subfiltro e a legenda, e chama atualizarMapa()
 }
 
 // --- Event Listeners para os Filtros ---
-document.getElementById('btn-limpar-filtros').addEventListener('click', limparFiltros);
-
-filtroRegiao.addEventListener('change', () => {
-    updateDependentFilters('regiao'); // Atualiza UFs e Municípios com base na Região
-    atualizarMapa(); // Atualiza o mapa com a nova seleção
+document.getElementById('btn-limpar-filtros').addEventListener('click', async () => {
+    await limparFiltros();
 });
 
-filtroUf.addEventListener('change', () => {
-    updateDependentFilters('uf'); // Atualiza Municípios com base na UF
-    atualizarMapa(); // Atualiza o mapa
+filtroRegiao.addEventListener('change', async () => {
+    await updateDependentFilters('regiao'); // Atualiza UFs e Municípios com base na Região
+    await atualizarMapa(); // Atualiza o mapa com a nova seleção
 });
 
-filtroRm.addEventListener('change', () => {
-    updateDependentFilters('rm'); // Atualiza Região, UF e Municípios com base na RM
-    atualizarMapa(); // Atualiza o mapa
+filtroUf.addEventListener('change', async () => {
+    await updateDependentFilters('uf'); // Atualiza Municípios com base na UF
+    await atualizarMapa(); // Atualiza o mapa
+});
+
+filtroRm.addEventListener('change', async () => {
+    await updateDependentFilters('rm'); // Atualiza Região, UF e Municípios com base na RM
+    await atualizarMapa(); // Atualiza o mapa
 });
 
 filtroMunicipio.addEventListener('change', atualizarMapa); // Apenas atualiza o mapa
