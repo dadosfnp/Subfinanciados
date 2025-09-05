@@ -161,6 +161,6 @@ python manage.py runserver
 
 ---
 
-✍ **Autor:** [Seu Nome]  
+✍ **Autor:** FNP  
 📅 **Ano:** 2025  
 📄 **Licença:** Uso interno / restrito
