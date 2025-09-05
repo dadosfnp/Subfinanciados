@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db.models import  Avg, StdDev
 from django.http import JsonResponse
-from .models import Municipio
+from .models import Municipio, ContaDetalhada 
 import numpy as np
 import math
 from collections import defaultdict
@@ -377,3 +377,4 @@ def api_get_dashboard_data(request):
         response_data["tableHeaders00"] = table_headers_00
 
     return JsonResponse(response_data)
+

@@ -1,145 +1,16 @@
-/* Estilos principais do corpo da página (Tema Claro) */
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6; /* Fundo cinza claro (bg-gray-100) */
-    color: #111827; /* Cor de texto padrão escura (text-gray-900) */
-}
-/* Estilos para os cards de KPI e métricas (Tema Claro) */
-.kpi-card, .metric-card {
-    background-color: #ffffff; /* Fundo branco */
-    border: 1px solid #e5e7eb; /* Borda cinza clara (border-gray-200) */
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.kpi-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-/* Estilos para os indicadores de variação positiva/negativa */
-.positive-change {
-    color: #059669; /* text-emerald-600 */
-    background-color: #d1fae5; /* bg-emerald-100 */
-}
-.negative-change {
-    color: #dc2626; /* text-red-600 */
-    background-color: #fee2e2; /* bg-red-100 */
-}
-/* Style for clickable headings */
-.toggle-heading {
-    cursor: pointer;
-    display: flex;
-    align-items: center; /* Align items vertically in the middle */
-    justify-content: space-between; /* Push the value to the right */
-}
-/* NEW: Style for clickable sub-headings */
-.toggle-subheading {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 0.5rem; /* Add some padding for sub-headings */
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #f3f4f6; /* Lighter border for sub-items */
-}
-
-.toggle-heading .arrow, .toggle-subheading .arrow {
-    transition: transform 0.2s ease-in-out;
-    margin-right: 0.75rem;
-}
-.toggle-heading.open .arrow, .toggle-subheading.open .arrow {
-    transform: rotate(90deg);
-}
-.toggle-heading .text-content, .toggle-subheading .text-content {
-    flex-grow: 1; /* Allow text content to take available space */
-}
-
-/* Styles for the ranking indicator square */
-.ranking-indicator-container {
-    position: relative; /* Needed for tooltip positioning */
-    display: flex; /* To align arrow and square */
-    align-items: center;
-}
-
-/* Espaço entre o quadradinho de ranking e a seta do toggler nos elementos de toggle */
-.toggle-heading .ranking-indicator-container,
-.toggle-subheading .ranking-indicator-container {
-    margin-right: 0.75rem; /* Adjust this value (e.g., 1rem) for more or less space */
-}
-
-/* Specific adjustment for ranking indicator within a span for left alignment in non-toggle rows */
-.metric-detail-row .ranking-indicator-container {
-    display: inline-flex; /* Use inline-flex to keep it with text */
-    vertical-align: middle; /* Align with text vertically */
-    margin-right: 0.5rem; /* Space between indicator and text in detail rows */
-}
-
-
-.ranking-indicator {
-    width: 14px; /* Size of the square */
-    height: 14px; /* Size of the square */
-    border-radius: 3px; /* Slightly rounded corners for aesthetics */
-}
-
-/* Color classes for the ranking indicator based on Quintil */
-.quintil-1 { background-color: #d73027; /* 1º quintil - Red */ }
-.quintil-2 { background-color: #fc8d59; /* 2º quintil - Orange */ }
-.quintil-3 { background-color: #fee08b; /* 3º quintil - Yellow */ }
-.quintil-4 { background-color: #91cf60; /* 4º quintil - Light Green */ }
-.quintil-5 { background-color: #1a9850; /* 5º quintil - Dark Green */ }
-
-/* Tooltip styles */
-.ranking-tooltip {
-    visibility: hidden;
-    background-color: #333;
-    color: #fff;
-    text-align: right; /* Aligns text inside the tooltip to the right */
-    border-radius: 6px;
-    padding: 5px 8px;
-    position: absolute;
-    z-index: 10;
-    top: 100%; /* Position below the square */
-    left: 0; /* Align to the left of the ranking-indicator-container */
-    transform: translateX(0); /* Remove horizontal centering transform */
-    white-space: nowrap; /* Prevent text wrapping */
-    opacity: 0;
-    transition: opacity 0.3s, visibility 0.3s;
-    font-size: 0.75rem; /* Smaller font for tooltip */
-}
-
-.ranking-indicator-container:hover .ranking-tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-/* Style for sub-item rows that are NOT toggles */
-.metric-detail-row {
-    display: flex;
-    align-items: center; /* Keep items vertically aligned */
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #f3f4f6; /* Lighter border for inner details */
-}
-/* Ensure the left-side text takes up available space and pushes the right side */
-.metric-detail-row .left-content {
-    display: flex;
-    align-items: center;
-    flex-grow: 1; /* Allow left content to take available space */
-}
-
-/* Remove border for the last sub-item in a block */
-.metric-detail-row:last-child {
-    border-bottom: none;
-}
-
-/* Updated chart-container styles for centering and height adjustment */
-.chart-container {
-    position: relative;
-    display: flex; /* Use flexbox for centering */
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
-    margin: 0 auto; /* Center the container itself */
-    width: 70%;
-    /* Removed fixed height here, let canvas control it */
-}
-/* Style for the canvas itself to control its size */
-.chart-container canvas {
-    max-width: 400px; /* Control max width of the chart */
-}
+/* O seu CSS original vai aqui - não precisa de alterações */
+body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }
+.kpi-card, .metric-card { background-color: #ffffff; border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s; }
+.kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
+.toggle-heading, .toggle-subheading { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.toggle-subheading { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.toggle-heading .arrow, .toggle-subheading .arrow { transition: transform 0.2s ease-in-out; }
+.toggle-heading.open .arrow, .toggle-subheading.open .arrow { transform: rotate(90deg); }
+.ranking-indicator-container { position: relative; display: inline-flex; align-items: center; vertical-align: middle; }
+.ranking-indicator { width: 14px; height: 14px; border-radius: 3px; }
+.quintil-1 { background-color: #d73027; } .quintil-2 { background-color: #fc8d59; } .quintil-3 { background-color: #fee08b; } .quintil-4 { background-color: #91cf60; } .quintil-5 { background-color: #1a9850; }
+.ranking-tooltip { visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 0.75rem; }
+.ranking-indicator-container:hover .ranking-tooltip { visibility: visible; opacity: 1; }
+.metric-detail-row { display: flex; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
+.metric-detail-row:last-child { border-bottom: none; }
+.chart-container { position: relative; margin: 0 auto; width: 90%; max-width: 400px; }

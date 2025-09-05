@@ -19,7 +19,7 @@ for _, row in df.iterrows():
             municipio=muni,
             imposto=row['imposto'],
             taxas=row['taxas'],
-            contribuicoes=row['contribuicoes'],
+            contribuicoes_melhoria=row['contribuicoes'],
             contribuicoes_sociais=row['contribuicoes_sociais'],
             contribuicoes_iluminacao_publica=row['contribuicoes_iluminacao_publica'],
             outras_contribuicoes=row['outras_contribuicoes'],
@@ -105,7 +105,7 @@ for _, row in df.iterrows():
             # Nacional
             imposto_nacional=row['percentil_imposto_per_capita_nacional'],
             taxas_nacional=row['percentil_taxas_per_capita_nacional'],
-            contribuicoes_nacional=row['percentil_contribuicoes_per_capita_nacional'],
+            contribuicoes_melhoria_nacional=row['percentil_contribuicoes_per_capita_nacional'],
             contribuicoes_sociais_nacional=row['percentil_contribuicoes_sociais_per_capita_nacional'],
             contribuicoes_iluminacao_publica_nacional=row['percentil_contribuicoes_iluminacao_publica_per_capita_nacional'],
             outras_contribuicoes_nacional=row['percentil_outras_contribuicoes_per_capita_nacional'],
@@ -121,7 +121,7 @@ for _, row in df.iterrows():
             # Regional
             imposto_regional=row['percentil_imposto_per_capita_regional'],
             taxas_regional=row['percentil_taxas_per_capita_regional'],
-            contribuicoes_regional=row['percentil_contribuicoes_per_capita_regional'],
+            contribuicoes_melhoria_regional=row['percentil_contribuicoes_per_capita_regional'],
             contribuicoes_sociais_regional=row['percentil_contribuicoes_sociais_per_capita_regional'],
             contribuicoes_iluminacao_publica_regional=row['percentil_contribuicoes_iluminacao_publica_per_capita_regional'],
             outras_contribuicoes_regional=row['percentil_outras_contribuicoes_per_capita_regional'],
@@ -138,7 +138,7 @@ for _, row in df.iterrows():
             # Estadual
             imposto_estadual=row['percentil_imposto_per_capita_estadual'],
             taxas_estadual=row['percentil_taxas_per_capita_estadual'],
-            contribuicoes_estadual=row['percentil_contribuicoes_per_capita_estadual'],
+            contribuicoes_melhoria_estadual=row['percentil_contribuicoes_per_capita_estadual'],
             contribuicoes_sociais_estadual=row['percentil_contribuicoes_sociais_per_capita_estadual'],
             contribuicoes_iluminacao_publica_estadual=row['percentil_contribuicoes_iluminacao_publica_per_capita_estadual'],
             outras_contribuicoes_estadual=row['percentil_outras_contribuicoes_per_capita_estadual'],

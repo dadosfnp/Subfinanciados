@@ -1,1392 +1,407 @@
 {% extends "global/head.html" %}
 {% load static %}
-
 {% block extra_head %}
-    <link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes de {{ municipio.name_muni_uf }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="{% static 'detail/css/style_mun.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
-
-    {% if municipio.conta_detalhada %}
-        {# New data structure for detailed charts #}
-        <script type="application/json" id="detailed-revenue-charts-data">
-            {
-                "main_categories": {
-                    "labels": ["Impostos, Taxas e Contribuições", "Contribuições", "Transferências Correntes", "Outras Receitas Correntes"],
-                    "values": [
-                        {{ municipio.conta_detalhada.imposto_taxas_contribuicoes_pc|default:0 }},
-                        {{ municipio.conta_detalhada.contribuicoes_pc|default:0 }},
-                        {{ municipio.conta_detalhada.transferencia_corrente_pc|default:0 }},
-                        {{ municipio.conta_detalhada.outras_receita_pc|default:0 }}
-                    ]
-                },
-
-                "imposto_taxas_contribuicoes": {
-                    "labels": ["Impostos", "Taxas", "Contribuições de Melhoria"],
-                    "values": [
-                        {{ municipio.conta_especifica.imposto|default:0 }},
-                        {{ municipio.conta_especifica.taxas|default:0 }},
-                        {{ municipio.conta_especifica.contribuicoes|default:0 }}
-                    ]
-                },
-
-                "imposto": { 
-                    "labels": [
-                        "Imposto sobre a Propriedade Predial e Territorial Urbana",
-                        "Imposto sobre a Transmissão 'Inter Vivos'",
-                        "Imposto sobre Serviços",
-                        "Outros Impostos"
-                    ],
-                    "values": [
-                        {{ municipio.conta_mais_especifica.iptu|default:0 }},
-                        {{ municipio.conta_mais_especifica.itbi|default:0 }},
-                        {{ municipio.conta_mais_especifica.iss|default:0 }},
-                        {{ municipio.conta_mais_especifica.outros_impostos|default:0 }}
-                    ]
-                },
-
-                "taxas": { {# NEW: All sub-items for Imposto, Taxas e Contribuições #}
-                    "labels": [
-                        "Taxas pelo Exercício do Poder de Polícia",
-                        "Taxas pela Prestação de Serviços",
-                        "Outras Taxas"
-                    ],
-                    "values": [
-                        {{ municipio.conta_mais_especifica.taxa_policia|default:0 }},
-                        {{ municipio.conta_mais_especifica.taxa_prestacao_servico|default:0 }},
-                        {{ municipio.conta_mais_especifica.outras_taxas|default:0 }}
-                    ]
-                },
-
-                "contribuicoes_melhoria": { {# NEW: All sub-items for Imposto, Taxas e Contribuições #}
-                    "labels": [
-                        "Contribuição de Melhoria para Pavimentação e Obras Complementares",
-                        "Contribuição de Melhoria para Expansão da Rede de Água Potável e Esgoto Sanitário",
-                        "Contribuição de Melhoria para Expansão da Rede de Iluminação Pública na Cidade/Rural",
-                        "Outras Contribuição de Melhoria"
-                    ],
-                    "values": [
-                        {{ municipio.conta_mais_especifica.contribuicao_melhoria_pavimento_obras|default:0 }},
-                        {{ municipio.conta_mais_especifica.contribuicao_melhoria_agua_potavel|default:0 }},
-                        {{ municipio.conta_mais_especifica.contribuicao_melhoria_iluminacao_publica|default:0 }},
-                        {{ municipio.conta_mais_especifica.outras_contribuicoes_melhoria|default:0 }}
-                    ]
-                },
-                
-                "contribuicoes": {
-                    "labels": ["Contribuições Sociais", "Contribuição Iluminação Pública", "Outras Contribuições"],
-                    "values": [
-                        {{ municipio.conta_especifica.contribuicoes_sociais|default:0 }},
-                        {{ municipio.conta_especifica.contribuicoes_iluminacao_publica|default:0 }},
-                        {{ municipio.conta_especifica.outras_contribuicoes|default:0 }}
-                    ]
-                },
-                "transferencias_correntes": {
-                    "labels": ["Transferências União", "Transferências Estados", "Outras Transferências"],
-                    "values": [
-                        {{ municipio.conta_especifica.tranferencias_uniao|default:0 }},
-                        {{ municipio.conta_especifica.tranferencias_estados|default:0 }},
-                        {{ municipio.conta_especifica.outras_tranferencias|default:0 }}
-                    ]
-                },
-
-                "transferencias_uniao": { {# NEW: All sub-items for Transferências Correntes #}
-                    "labels": [
-                        "Cota-Parte do Fundo de Participação dos Municípios - FPM",
-                        "Transferências das Compensações Financeiras pela Exploração de Recursos Naturais (União)",
-                        "Transferências de Recursos do Sistema Único de Saúde (SUS) (União)",
-                        "Transferências de Recursos do Fundo Nacional do Desenvolvimento da Educação (FNDE)",
-                        "Transferências de Recursos do Fundo Nacional de Assistência Social (FNAS)",
-                        "Outras Transferências (União)"
-                    ],
-                    "values": [
-                        {{ municipio.conta_mais_especifica.transferencia_uniao_fpm|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_uniao_exploracao|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_uniao_sus|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_uniao_fnde|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_uniao_fnas|default:0 }},
-                        {{ municipio.conta_mais_especifica.outras_transferencias_uniao|default:0 }}
-                    ]
-                },
-
-                "transferencias_estado": { {# NEW: All sub-items for Transferências Correntes #}
-                    "labels": [
-                        "Cota-Parte do ICMS",
-                        "Cota-Parte do IPVA",
-                        "Transferências das Compensações Financeiras pela Exploração de Recursos Naturais (Estados)",
-                        "Transferências de Recursos do Sistema Único de Saúde (SUS) (Estados)",
-                        "Transferências de Estados destinadas à Assistência Social",
-                        "Outras Transferências (Estados)"
-                    ],
-                    "values": [
-                        {{ municipio.conta_mais_especifica.transferencia_estado_icms|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_estado_ipva|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_estado_exploracao|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_estado_sus|default:0 }},
-                        {{ municipio.conta_mais_especifica.transferencia_estado_assistencia|default:0 }},
-                        {{ municipio.conta_mais_especifica.outras_transferencias_estado|default:0 }}
-                    ]
-                },
-
-                "outras_receitas": {
-                    "labels": ["Receita Patrimonial", "Receita Agropecuária", "Receita Industrial", "Receita de Serviços", "Outras Receitas"],
-                    "values": [
-                        {{ municipio.conta_especifica.receita_patrimonial|default:0 }},
-                        {{ municipio.conta_especifica.receita_agropecuaria|default:0 }},
-                        {{ municipio.conta_especifica.receita_industrial|default:0 }},
-                        {{ municipio.conta_especifica.receita_servicos|default:0 }},
-                        {{ municipio.conta_especifica.outras_receitas|default:0 }}
-                    ]
-                }
-            }
-        </script>
-    {% endif %}
-
-    <body>
-        
-        <div class="container mx-auto p-4 md:p-8">
-
-            <header class="flex flex-col md:flex-row justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-5xl font-bold flex items-center">
-                        {{ municipio.name_muni_uf }}
-                        {# Quintil indicator for the main header #}
-                        <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-2">
-                            <div class="ranking-indicator"></div>
-                            <div class="ranking-tooltip"></div>
-                        </div>
-                    </h1>
-                    <p class="text-gray-500 text-2xl">Detalhamento da Receita Corrente</p>
-                </div>
-            </header>
-
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="kpi-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between">
-                        <p class="text-2xl font-medium text-gray-500">População </p>
+    {% load currency_filters %}
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="flex flex-col md:flex-row justify-between items-start mb-8">
+            <div>
+                <h1 class="text-3xl md:text-5xl font-bold flex items-center">
+                    {{ municipio.name_muni_uf }}
+                    <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-4">
+                        <div class="ranking-indicator"></div>
+                        <div class="ranking-tooltip"></div>
                     </div>
-                    <p class="text-3xl font-bold mt-2">{{ municipio.populacao23  }}</p>
+                </h1>
+                <p class="text-lg md:text-2xl text-gray-500">Detalhamento da Receita Corrente</p>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="kpi-card p-6 rounded-xl">
+                <p class="text-xl font-medium text-gray-500">População</p>
+                <p class="text-3xl font-bold mt-2">{{ municipio.populacao23|br_integer }}</p>
+            </div>
+            <div class="kpi-card p-6 rounded-xl">
+                <p class="text-xl font-medium text-gray-500">Receita Corrente</p>
+                <p class="text-3xl font-bold mt-2">{{ municipio.rc_2023|br_float }}</p>
+            </div>
+            <div class="kpi-card p-6 rounded-xl">
+                <p class="text-xl font-medium text-gray-500">Receita per capita</p>
+                <p class="text-3xl font-bold mt-2">{{ municipio.rc_23_pc|br_float }}</p>
+            </div>
+            <div class="kpi-card p-6 rounded-xl">
+                <select id="ranking-select" class="w-full text-xl font-medium text-gray-500 border-0 focus:ring-0 p-0 mb-2 bg-transparent">
+                    <option value="nacional">Ranking Nacional</option>
+                    <option value="estadual">Ranking Estadual</option>
+                    <option value="faixa">Ranking por Faixa Pop.</option>
+                </select>
+                <p id="ranking-value" class="text-3xl font-bold">{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}</p>
+            </div>
+        </section>
+
+        <main class="grid grid-cols-1 gap-8">
+            <section class="metric-card p-6 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
+                    <button id="valor-toggle-btn" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Valores Reais
+                    </button>
                 </div>
-                <div class="kpi-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between">
-                        <p class="text-2xl font-medium text-gray-500">Receita Corrente</p>
+
+                {% if revenue_tree %}
+                    <div id="main-revenue-details-container">
+                        {% for item in revenue_tree %}
+                            {% include "detail/_revenue_item.html" with item=item level=0 %}
+                        {% endfor %}
                     </div>
-                    <p class="text-3xl font-bold mt-2">{{ municipio.rc_2023  }}</p>
-                </div>
-                
-                <div class="kpi-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between">
-                        <p class="text-2xl font-medium text-gray-500">Receita per capita</p>
-                    </div>
-                    <p class="text-3xl font-bold mt-2">{{ municipio.rc_23_pc  }}</p>
-                </div>
-                <div class="kpi-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between">
-                        <p class="text-2xl font-medium text-gray-500">Ranking</p>
-                    </div>
-                    <select id="ranking-select" class="ranking-select text-2xl font-medium text-gray-500 focus:ring-0">
-                        <option value="nacional" >Nacional</option>
-                        <option value="estadual" >Estadual</option>
-                        <option value="faixa" >Por Faixa Populacional</option>
-                    </select>
-                    <div class="flex items-center mt-2">
-                        <p id="ranking-value" class="text-3xl font-bold">{{ municipio.rank_nacional  }} /{{ municipio.total_nacional  }}</p>
-                    </div>
-                </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
+                {% endif %}
             </section>
-            
-            <main class="grid grid-cols-1 gap-8">
-                <section class="metric-card p-6 rounded-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
-                        <button id="valor-toggle-btn"
-                        class="px-2 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                            Valores Reais
-                        </button>
-                    </div>
 
-                    {% if municipio.conta_detalhada %}
-                        <div class="space-y-4" id="main-revenue-details-container">
-                            
-                            {# Wrapper for Impostos, Taxas e Contribuições #}
-                            <div class="revenue-item-wrapper">
-                                <div class="py-2 border-b border-gray-200 toggle-heading" data-target="detalhe-impostos" data-field-base="imposto_taxas_contribuicoes">
-                                    <div class="ranking-indicator-container"> 
-                                        <div class="ranking-indicator"></div>
-                                        <div class="ranking-tooltip"></div>
-                                    </div>
-                                    <span class="arrow">&#9654;</span> 
-                                    <span class="text-gray-600 font-semibold text-content">Impostos, Taxas e Contribuições de Melhoria</span>
-                                    <div>
-                                        <span class="font-semibold valor-absoluto hidden">{{ municipio.conta_detalhada.imposto_taxas_contribuicoes  }}</span>
-                                        <span class="font-semibold valor-per-capita">{{ municipio.conta_detalhada.imposto_taxas_contribuicoes_pc  }}</span>
-                                    </div>
-                                </div>
-                                <div id="detalhe-impostos" class="space-y-4 ml-4 pl-4 border-l border-gray-200 hidden">
-                                    {# Wrapper for Impostos #}
-                                    <div class="revenue-item-wrapper">
-                                        <div class="toggle-subheading border-b border-gray-100" data-target="detalhe-sub-impostos" data-field-base="imposto">
-                                            <div class="ranking-indicator-container"> {# Ranking first #}
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                            <span class="text-gray-500 text-sm flex-grow text-content">Impostos</span>
-                                            <div>
-                                                <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.imposto  }}</span>
-                                                <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.imposto_pc  }}</span>
-                                            </div>
-                                        </div>
-                                        {# Detalhes do Imposto #}
-                                        <div id="detalhe-sub-impostos" class="space-y-4 ml-4 pl-4 border-l border-gray-100 hidden">
-                                            <div class="metric-detail-row" data-field-base="iptu">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Imposto sobre a Propriedade Predial e Territorial Urbana
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.iptu  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.iptu_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="itbi">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Imposto sobre a Transmissão "Inter Vivos"
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.itbi  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.itbi_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="iss">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Imposto sobre Serviços
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.iss  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.iss_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="outros_impostos">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Outros Impostos
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.outros_impostos  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.outros_impostos_pc  }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {# Wrapper for Taxas #}
-                                    <div class="revenue-item-wrapper">
-                                        <div class="toggle-subheading border-b border-gray-100" data-target="detalhe-sub-taxas" data-field-base="taxas">
-                                            <div class="ranking-indicator-container"> {# Ranking first #}
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                            <span class="text-gray-500 text-sm flex-grow text-content">Taxas</span>
-                                            <div>
-                                                <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.taxas  }}</span>
-                                                <span class="text-sm valor-per-capita">{{municipio.conta_especifica.taxas_pc  }}</span>
-                                            </div>
-                                        </div>
-                                        {# Detalhes da Taxa #}
-                                        <div id="detalhe-sub-taxas" class="space-y-4 ml-4 pl-4 border-l border-gray-100 hidden">
-                                            <div class="metric-detail-row" data-field-base="taxa_policia">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Taxas pelo Exercício do Poder de Polícia
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.taxa_policia  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.taxa_policia_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="taxa_prestacao_servico">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Taxas pela Prestação de Serviços
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.taxa_prestacao_servico  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.taxa_prestacao_servico_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="outras_taxas">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Outras Taxas
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.outras_taxas  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.outras_taxas_pc  }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+            <section class="metric-card p-6 rounded-xl mt-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Composição da Receita Per Capita</h2>
+                <div class="flex gap-2 items-center">
+                <!-- Select para escolher categoria -->
+                <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
+                    <option value="main_categories">Categorias Principais</option>
+                    <option value="imposto">Impostos</option>
+                    <option value="taxas">Taxas</option>
+                    <option value="contribuicoes">Contribuições</option>
+                    <option value="transferencias_correntes">Transferências Correntes</option>
+                    <option value="transferencias_uniao">Transferências da União</option>
+                    <option value="transferencias_estado">Transferências dos Estados</option>
+                    <option value="outras_receitas">Outras Receitas</option>
+                </select>
+                </div>
+            </div>
+            <div style="width: 100%; height: 400px; position: relative;">
+                <canvas id="myChart"></canvas>
+            </div>
+            </section>
 
-                                    {# Wrapper for Contribuições de Melhoria #}
-                                    <div class="revenue-item-wrapper">
-                                        <div class="toggle-subheading" data-target="detalhe-sub-contribuicoes-melhoria" data-field-base="contribuicoes_melhoria">
-                                            <div class="ranking-indicator-container"> {# Ranking first #}
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                            <span class="text-gray-500 text-sm flex-grow text-content">Contribuições de Melhoria</span>
-                                            <div>
-                                                <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.contribuicoes  }}</span>
-                                                <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.contribuicoes_pc  }}</span>
-                                            </div>
-                                        </div>
-                                        {# Detalhes da Contribuição de Melhoria #}
-                                        <div id="detalhe-sub-contribuicoes-melhoria" class="space-y-4 ml-4 pl-4 border-l border-gray-100 hidden">
-                                            <div class="metric-detail-row" data-field-base="contribuicao_melhoria_pavimento_obras">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Contribuição de Melhoria para Pavimentação e Obras Complementares
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.contribuicao_melhoria_pavimento_obras  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{municipio.conta_mais_especifica.contribuicao_melhoria_pavimento_obras_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="contribuicao_melhoria_agua_potavel">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Contribuição de Melhoria para Expansão da Rede de Água Potável e Esgoto Sanitário
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.contribuicao_melhoria_agua_potavel  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{municipio.conta_mais_especifica.contribuicao_melhoria_agua_potavel_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="contribuicao_melhoria_iluminacao_publica">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Contribuição de Melhoria para Expansão da Rede de Iluminação Pública na Cidade/Rural
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.contribuicao_melhoria_iluminacao_publica  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{municipio.conta_mais_especifica.contribuicao_melhoria_iluminacao_publica_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="outras_contribuicoes_melhoria">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Outras Contribuição de Melhoria
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.outras_contribuicoes_melhoria  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{municipio.conta_mais_especifica.outras_contribuicoes_melhoria_pc  }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        </main>
+    </div>
 
-                            {# Wrapper for Contribuições #}
-                            <div class="revenue-item-wrapper">
-                                <div class="py-2 border-b border-gray-200 toggle-heading" data-target="detalhe-contribuicoes" data-field-base="contribuicoes">
-                                    <div class="ranking-indicator-container"> {# Ranking first #}
-                                        <div class="ranking-indicator"></div>
-                                        <div class="ranking-tooltip"></div>
-                                    </div>
-                                    <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                    <span class="text-gray-600 font-semibold text-content">Contribuições</span>
-                                    <div>
-                                        <span class="font-semibold valor-absoluto hidden">{{ municipio.conta_detalhada.contribuicoes  }}</span>
-                                        <span class="font-semibold valor-per-capita">{{ municipio.conta_detalhada.contribuicoes_pc  }}</span>
-                                    </div>
-                                </div>
-                                <div id="detalhe-contribuicoes" class="space-y-4 ml-4 pl-4 border-l border-gray-200 hidden">
-                                    <div class="metric-detail-row" data-field-base="contribuicoes_sociais">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Contribuições Sociais
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.contribuicoes_sociais  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.contribuicoes_sociais_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="contribuicoes_iluminacao_publica">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Contribuição para Custeio do Serviço de Iluminação Pública
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.contribuicoes_iluminacao_publica  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.contribuicoes_iluminacao_publica_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="outras_contribuicoes">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Outras Contribuições
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.outras_contribuicoes  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.outras_contribuicoes_pc  }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+    {{ chart_data_json|json_script:"chart-data" }}
+    {{ percentile_data_json|json_script:"percentile-data" }}
 
-                            {# Wrapper for Transferências Correntes #}
-                            <div class="revenue-item-wrapper">
-                                <div class="py-2 border-b border-gray-200 toggle-heading" data-target="detalhe-transferencias" data-field-base="transferencias_correntes">
-                                    <div class="ranking-indicator-container"> {# Ranking first #}
-                                        <div class="ranking-indicator"></div>
-                                        <div class="ranking-tooltip"></div>
-                                    </div>
-                                    <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                    <span class="text-gray-600 font-semibold text-content">Transferências Correntes</span>
-                                    <div>
-                                        <span class="font-semibold valor-absoluto hidden">{{ municipio.conta_detalhada.transferencias_correntes  }}</span>
-                                        <span class="font-semibold valor-per-capita">{{ municipio.conta_detalhada.transferencia_corrente_pc  }}</span>
-                                    </div>
-                                </div>
-                                <div id="detalhe-transferencias" class="space-y-4 ml-4 pl-4 border-l border-gray-200 hidden">
-                                    {# Wrapper for Transferências União #}
-                                    <div class="revenue-item-wrapper">
-                                        <div class="toggle-subheading border-b border-gray-100" data-target="detalhe-sub-transferencias-uniao" data-field-base="tranferencias_uniao">
-                                            <div class="ranking-indicator-container"> {# Ranking first #}
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                            <span class="text-gray-500 text-sm flex-grow text-content">Transferências União</span>
-                                            <div>
-                                                <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.tranferencias_uniao  }}</span>
-                                                <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.tranferencias_uniao_pc  }}</span>
-                                            </div>
-                                        </div>
-                                        {# Detalhes da Transferência da União #}
-                                        <div id="detalhe-sub-transferencias-uniao" class="space-y-4 ml-4 pl-4 border-l border-gray-100 hidden">
-                                            <div class="metric-detail-row" data-field-base="transferencia_uniao_fpm">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Cota-Parte do Fundo de Participação dos Municípios - FPM
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_uniao_fpm  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_uniao_fpm_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_uniao_exploracao">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências das Compensações Financeiras pela Exploração de Recursos Naturais
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{municipio.conta_mais_especifica.transferencia_uniao_exploracao  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_uniao_exploracao_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_uniao_sus">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências de Recursos do Sistema Único de Saúde (SUS)
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_uniao_sus  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_uniao_sus_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_uniao_fnde">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências de Recursos do Fundo Nacional do Desenvolvimento da Educação (FNDE)
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_uniao_fnde  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_uniao_fnde_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_uniao_fnas">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências de Recursos do Fundo Nacional de Assistência Social (FNAS)
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_uniao_fnas  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_uniao_fnas_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="outras_transferencias_uniao">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Outras Transferências
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.outras_transferencias_uniao  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.outras_transferencias_uniao_pc  }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {# Wrapper for Transferências dos Estados #}
-                                    <div class="revenue-item-wrapper">
-                                        <div class="toggle-subheading border-b border-gray-100" data-target="detalhe-sub-transferencias-estados" data-field-base="tranferencias_estados">
-                                            <div class="ranking-indicator-container"> {# Ranking first #}
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                            <span class="text-gray-500 text-sm flex-grow text-content">Transferências dos Estados</span>
-                                            <div>
-                                                <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.tranferencias_estados  }}</span>
-                                                <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.tranferencias_estados_pc  }}</span>
-                                            </div>
-                                        </div>
-                                        {# Detalhes da Transferência dos Estados #}
-                                        <div id="detalhe-sub-transferencias-estados" class="space-y-4 ml-4 pl-4 border-l border-gray-100 hidden">
-                                            <div class="metric-detail-row" data-field-base="transferencia_estado_icms">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Cota-Parte do ICMS
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_estado_icms  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_estado_icms_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_estado_ipva">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Cota-Parte do IPVA
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_estado_ipva  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_estado_ipva_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_estado_exploracao">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências das Compensações Financeiras pela Exploração de Recursos Naturais
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{municipio.conta_mais_especifica.transferencia_estado_exploracao  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_estado_exploracao  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_estado_sus">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências de Recursos do Sistema Único de Saúde (SUS)
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_estado_sus  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_estado_sus_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="transferencia_estado_assistencia">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Transferências de Estados destinadas à Assistência Social
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.transferencia_estado_assistencia  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.transferencia_estado_assistencia_pc  }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="metric-detail-row" data-field-base="outras_transferencias_estado">
-                                                <span class="text-gray-400 text-sm left-content">
-                                                    <div class="ranking-indicator-container">
-                                                        <div class="ranking-indicator"></div>
-                                                        <div class="ranking-tooltip"></div>
-                                                    </div>
-                                                    Outras Transferências
-                                                </span>
-                                                <div>
-                                                    <span class="text-sm valor-absoluto hidden">{{ municipio.conta_mais_especifica.outras_transferencias_estado  }}</span>
-                                                    <span class="text-sm valor-per-capita">{{ municipio.conta_mais_especifica.outras_transferencias_estado_pc  }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {# This specific one is not a toggle-subheading, so it's a direct metric-detail-row #}
-                                    <div class="metric-detail-row" data-field-base="outras_tranferencias">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Outras Transferencias
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.outras_tranferencias  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.outras_tranferencias_pc  }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // --- DATA PARSING ROBUSTO (evita “dupla serialização”) ---
+  function parsePossiblyDoubleSerialized(text) {
+    let out = JSON.parse(text);
+    if (typeof out === 'string') out = JSON.parse(out);
+    return out;
+  }
 
-                            {# Wrapper for Outras Receitas Correntes #}
-                            <div class="revenue-item-wrapper">
-                                <div class="py-2 border-b border-gray-200 toggle-heading" data-target="detalhe-outras-receitas" data-field-base="outras_receita">
-                                    <div class="ranking-indicator-container"> {# Ranking first #}
-                                        <div class="ranking-indicator"></div>
-                                        <div class="ranking-tooltip"></div>
-                                    </div>
-                                    <span class="arrow">&#9654;</span> {# Arrow after ranking #}
-                                    <span class="text-gray-600 font-semibold text-content">Outras Receitas Correntes</span>
-                                    <div>
-                                        <span class="font-semibold valor-absoluto hidden">{{ municipio.conta_detalhada.outras_receita  }}</span>
-                                        <span class="font-semibold valor-per-capita">{{ municipio.conta_detalhada.outras_receita_pc  }}</span>
-                                    </div>
-                                </div>
-                                <div id="detalhe-outras-receitas" class="space-y-4 ml-4 pl-4 border-l border-gray-200 hidden">
-                                    <div class="metric-detail-row" data-field-base="receita_patrimonial">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Receita Patrimonial
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.receita_patrimonial  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.receita_patrimonial_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="receita_agropecuaria">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Receita Agropecuaria
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.receita_agropecuaria  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.receita_agropecuaria_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="receita_industrial">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Receita Industrial
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.receita_industrial  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.receita_industrial_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="receita_servicos">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Receita de Serviços
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.receita_servicos  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.receita_servicos_pc  }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-detail-row" data-field-base="outras_receitas">
-                                        <span class="text-gray-500 text-sm flex-grow left-content">
-                                            <div class="ranking-indicator-container">
-                                                <div class="ranking-indicator"></div>
-                                                <div class="ranking-tooltip"></div>
-                                            </div>
-                                            Outras Receitas
-                                        </span>
-                                        <div>
-                                            <span class="text-sm valor-absoluto hidden">{{ municipio.conta_especifica.outras_receitas  }}</span>
-                                            <span class="text-sm valor-per-capita">{{ municipio.conta_especifica.outras_receitas_pc  }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+  const chartRaw = document.getElementById('chart-data')?.textContent;
+  const percentileRaw = document.getElementById('percentile-data')?.textContent;
 
-                        </div>
-                    {% else %}
-                        <div class="text-gray-500 text-center py-4">
-                            Nenhum dado de receita detalhada foi encontrado para este município.
-                        </div>
-                    {% endif %}
-                </section>
+  if (!chartRaw || !percentileRaw) {
+    console.error('chart-data ou percentile-data não encontrados.');
+    return;
+  }
 
-                <section class="grid grid-cols-1 md:grid-cols-2 gap-8"> {# Added grid for charts #}
-                    <div class="metric-card p-6 rounded-xl">
-                        <h2 class="text-xl font-bold mb-4">Receita Corrente por Categoria Principal</h2>
-                        <div class="chart-container"> <canvas id="mainRevenueChart"></canvas> 
-                        </div>
-                    </div>
-                    <div class="metric-card p-6 rounded-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 id="detailed-chart-title" class="text-xl font-bold">Receita Detalhada por Tipo</h2>
-                        <select id="detailed-revenue-select" class="text-sm font-medium text-gray-700 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <option value="main_categories">Todas as Categorias Principais</option> {# New "All" option for main categories #}
-                            <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
-                            <option value="imposto">  - Impostos</option> 
-                            <option value="taxas">  - Taxas</option> 
-                            <option value="contribuicoes_melhoria">  - Contribuições de Melhoria</option> 
-                            <option value="contribuicoes">Contribuições</option>
-                            <option value="transferencias_correntes">Transferências Correntes</option>
-                            <option value="transferencias_uniao">  - Transferências União</option> 
-                            <option value="transferencias_estado">  - Transferências dos Estados</option> 
-                            <option value="outras_receitas">Outras Receitas Correntes</option>
-                        </select>
-                    </div>
-                    <div class="chart-container"> <canvas id="detailedRevenueChart"></canvas> 
-                    </div>
-                </section>
+  let allRevenueChartData, percentileData;
+  try {
+    allRevenueChartData = parsePossiblyDoubleSerialized(chartRaw);
+    percentileData = parsePossiblyDoubleSerialized(percentileRaw);
+  } catch (e) {
+    console.error('Falha ao parsear os JSONs:', e);
+    return;
+  }
 
-            </main>
+  console.log("Dados do gráfico como objeto (normalizado):", allRevenueChartData);
 
-        </div>
-        <script>
+  // --- TOGGLE LOGIC ---
+  function handleToggleClick(event) {
+    event.stopPropagation();
+    const targetId = this.dataset.target;
+    if (!targetId) return;
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      this.classList.toggle('open');
+      targetElement.classList.toggle('hidden');
+    }
+  }
 
-        // --- FUNÇÕES GLOBAIS DE RANKING E CORES ---
+  function initializeToggleListeners(scopeElement = document) {
+    const toggleElements = scopeElement.querySelectorAll('.toggle-heading, .toggle-subheading');
+    toggleElements.forEach(element => {
+      element.removeEventListener('click', handleToggleClick);
+      element.addEventListener('click', handleToggleClick);
+    });
+  }
 
-        // Function to apply color based on quintile number (1-5)
-        function applyQuintilColor(element, quintileNumber) {
-            // Remove existing quintil classes
-            element.classList.remove('quintil-1', 'quintil-2', 'quintil-3', 'quintil-4', 'quintil-5');
-            // Add the correct class based on the quintile number
-            element.classList.add(`quintil-${quintileNumber}`);
-        }
+  // --- SORTING LOGIC ---
+  function parseCurrencyValue(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+  }
 
-        // Function to apply color based on percentile
-        function applyPercentileColor(element, percentile) {
-            element.classList.remove('quintil-1', 'quintil-2', 'quintil-3', 'quintil-4', 'quintil-5'); // Use quintil classes for consistency
-            if (percentile <= 20) { // 1st quintile
-                element.classList.add('quintil-1');
-            } else if (percentile <= 40) { // 2nd quintile
-                element.classList.add('quintil-2');
-            } else if (percentile <= 60) { // 3rd quintile
-                element.classList.add('quintil-3');
-            } else if (percentile <= 80) { // 4th quintile
-                element.classList.add('quintil-4');
-            } else { // 5th quintile
-                element.classList.add('quintil-5');
-            }
-        }
+  function sortChildrenByValue(container, isPerCapita) {
+    const children = Array.from(container.children);
+    children.sort((a, b) => {
+      const valueSelector = isPerCapita ? '.valor-per-capita' : '.valor-absoluto';
+      const valA = parseCurrencyValue(a.querySelector(valueSelector)?.textContent);
+      const valB = parseCurrencyValue(b.querySelector(valueSelector)?.textContent);
+      return valB - valA;
+    });
+    children.forEach(child => container.appendChild(child));
+  }
 
-        // Function to get the correct percentile value based on the selected ranking type
-        function getPercentileForField(fieldBaseName, rankingType) {
-            // Access the percentile data passed from Django context
-            const municipioPercentil = {
-                rc_23_pc: { // Add the main RC per capita percentile here
-                    nacional: {{ municipio.rc_23_pc_percentile_nacional|default:0 }},
-                    estadual: {{ municipio.rc_23_pc_percentile_estadual|default:0 }},
-                    faixa: {{ municipio.rc_23_pc_percentile_regional|default:0 }},
+  function sortAllRevenueSections(isPerCapita) {
+    const containers = document.querySelectorAll('#main-revenue-details-container, [id^="detalhe-"]');
+    containers.forEach(container => {
+      sortChildrenByValue(container, isPerCapita);
+    });
+    initializeToggleListeners();
+  }
+
+  // --- VALUE TOGGLE BUTTON ---
+  let isShowingPerCapita = true;
+  const toggleBtn = document.getElementById('valor-toggle-btn');
+  const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
+  const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
+
+  toggleBtn.addEventListener('click', function() {
+    isShowingPerCapita = !isShowingPerCapita;
+    if (isShowingPerCapita) {
+      toggleBtn.textContent = 'Valores Reais';
+      valoresAbsolutos.forEach(el => el.classList.add('hidden'));
+      valoresPerCapita.forEach(el => el.classList.remove('hidden'));
+    } else {
+      toggleBtn.textContent = 'Per Capita';
+      valoresAbsolutos.forEach(el => el.classList.remove('hidden'));
+      valoresPerCapita.forEach(el => el.classList.add('hidden'));
+    }
+    sortAllRevenueSections(isShowingPerCapita);
+  });
+
+  // --- RANKING LOGIC ---
+  const rankingSelect = document.getElementById('ranking-select');
+  const rankingValueElement = document.getElementById('ranking-value');
+  const municipioData = {
+    rank_nacional: {{ municipio.rank_nacional|default_if_none:"'N/A'"|safe }},
+    total_nacional: {{ municipio.total_nacional|default_if_none:"'N/A'"|safe }},
+    rank_estadual: {{ municipio.rank_estadual|default_if_none:"'N/A'"|safe }},
+    total_estadual: {{ municipio.total_estadual|default_if_none:"'N/A'"|safe }},
+    rank_faixa: {{ municipio.rank_faixa|default_if_none:"'N/A'"|safe }},
+    total_faixa: {{ municipio.total_faixa|default_if_none:"'N/A'"|safe }}
+  };
+  const headerQuintilContainer = document.getElementById('header-quintil-indicator-container');
+
+  function updateQuintilIndicator(element, percentile) {
+    if (!element) return;
+    element.classList.remove('quintil-1', 'quintil-2', 'quintil-3', 'quintil-4', 'quintil-5');
+    if (percentile <= 20) element.classList.add('quintil-1');
+    else if (percentile <= 40) element.classList.add('quintil-2');
+    else if (percentile <= 60) element.classList.add('quintil-3');
+    else if (percentile <= 80) element.classList.add('quintil-4');
+    else element.classList.add('quintil-5');
+  }
+
+  function updateRankingDisplay() {
+    const selectedRanking = rankingSelect.value;
+    let rank, total;
+
+    switch (selectedRanking) {
+      case 'nacional':
+        rank = municipioData.rank_nacional; total = municipioData.total_nacional; break;
+      case 'estadual':
+        rank = municipioData.rank_estadual; total = municipioData.total_estadual; break;
+      case 'faixa':
+        rank = municipioData.rank_faixa; total = municipioData.total_faixa; break;
+      default:
+        rank = 'N/A'; total = 'N/A';
+    }
+    rankingValueElement.textContent = `${rank} / ${total}`;
+
+    const allRevenueItems = document.querySelectorAll('.revenue-item-wrapper');
+    allRevenueItems.forEach(itemWrapper => {
+      itemWrapper.querySelectorAll('.ranking-indicator-container').forEach(ind => {
+        ind.classList.add('hidden');
+      });
+      const activeIndicator = itemWrapper.querySelector(`.ranking-indicator-container[data-ranking="${selectedRanking}"]`);
+      if (activeIndicator) activeIndicator.classList.remove('hidden');
+    });
+
+    const headerQuintilIndicator = headerQuintilContainer.querySelector('.ranking-indicator');
+    const headerQuintilTooltip = headerQuintilContainer.querySelector('.ranking-tooltip');
+
+    const main_rc_percentile = percentileData['rc'] ? percentileData['rc'][selectedRanking] : null;
+
+    if (main_rc_percentile !== null && main_rc_percentile !== undefined) {
+      updateQuintilIndicator(headerQuintilIndicator, main_rc_percentile);
+      headerQuintilTooltip.textContent = `O município supera ${main_rc_percentile}% dos outros municípios`;
+    } else {
+      if (headerQuintilIndicator) headerQuintilIndicator.className = 'ranking-indicator';
+      if (headerQuintilTooltip) headerQuintilTooltip.textContent = 'Ranking não disponível';
+    }
+  }
+
+  rankingSelect.addEventListener('change', updateRankingDisplay);
+
+  // --- INITIALIZATION CALLS ---
+  sortAllRevenueSections(isShowingPerCapita);
+  initializeToggleListeners();
+  updateRankingDisplay();
+
+  // ================== GRÁFICO + SELECT DE CATEGORIAS ==================
+
+  // 1) Garante canvas
+  const canvas = document.getElementById('myChart');
+  if (!canvas) {
+    console.error('Canvas #myChart não encontrado.');
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+
+  // 2) Cria/injeta o SELECT se ele não existir
+  let selectEl = document.getElementById('chart-category-select');
+  if (!selectEl) {
+    const headerRow = canvas.closest('.metric-card')?.querySelector('.flex.justify-between.items-center');
+    selectEl = document.createElement('select');
+    selectEl.id = 'chart-category-select';
+    selectEl.className = 'px-3 py-1.5 text-sm border rounded-lg';
+    // insere antes do botão "Voltar"
+    const backButton = document.getElementById('back-button');
+    if (headerRow && backButton) headerRow.insertBefore(selectEl, backButton);
+    else if (headerRow) headerRow.appendChild(selectEl);
+  }
+
+  // 3) Quais categorias queremos exibir no select (ordem amigável)
+  const preferredOrder = [
+    'main_categories',
+    'imposto',
+    'taxas',
+    'contribuicoes',
+    'transferencias_correntes',
+    'transferencias_uniao',
+    'transferencias_estado',
+    'outras_receitas'
+  ];
+
+  // helper de label bonitinha
+  const pretty = (k) => ({
+    main_categories: 'Categorias Principais',
+    imposto: 'Impostos',
+    taxas: 'Taxas',
+    contribuicoes: 'Contribuições',
+    transferencias_correntes: 'Transferências Correntes',
+    transferencias_uniao: 'Transferências da União',
+    transferencias_estado: 'Transferências dos Estados',
+    outras_receitas: 'Outras Receitas'
+  }[k] || k.replace(/_/g, ' '));
+
+  // 4) Popula o select apenas com categorias presentes e não vazias
+  selectEl.innerHTML = '';
+  const availableKeys = preferredOrder.filter(k => {
+    const o = allRevenueChartData[k];
+    return o && Array.isArray(o.labels) && o.labels.length && Array.isArray(o.values) && o.values.length;
+  });
+  availableKeys.forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = pretty(k);
+    selectEl.appendChild(opt);
+  });
+
+  // fallback: se nada sobrou (improvável), usa main_categories mesmo assim
+  if (!availableKeys.length && allRevenueChartData.main_categories) {
+    const opt = document.createElement('option');
+    opt.value = 'main_categories';
+    opt.textContent = pretty('main_categories');
+    selectEl.appendChild(opt);
+  }
+
+  // 5) Função que desenha a barra empilhada horizontal com cores sólidas
+  function renderChart(categoryKey) {
+    const dataObj = allRevenueChartData[categoryKey];
+    if (!dataObj || !Array.isArray(dataObj.labels) || !Array.isArray(dataObj.values)) {
+        console.error(`Estrutura inesperada em ${categoryKey}`, dataObj);
+        return;
+    }
+
+    const rawValues = dataObj.values;
+    const total = rawValues.reduce((a, b) => a + b, 0);
+    const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Percentuais por segmento (mesma ordem dos labels/values)
+    const percValues = rawValues.map(v => total ? (v / total) * 100 : 0);
+
+    const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+
+    const datasets = dataObj.labels.map((label, i) => ({
+        label,
+        data: [percValues[i]],         // plota em %
+        backgroundColor: palette[i % palette.length],
+        borderWidth: 1
+    }));
+
+    if (window._stackedMainChart) window._stackedMainChart.destroy();
+
+    window._stackedMainChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+        labels: [pretty(categoryKey).toUpperCase()],
+        datasets
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+            x: {
+            stacked: true,
+            min: 0,
+            max: 100,
+            ticks: { callback: (v) => v + '%' }
+            },
+            y: { stacked: true }
+        },
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+            callbacks: {
+                label: (ctx) => {
+                const dsIdx = ctx.datasetIndex;            // <- pega o segmento certo
+                const pct = ctx.parsed.x || 0;             // valor em %
+                const raw = rawValues[dsIdx];              // valor bruto daquela categoria
+                return `${ctx.dataset.label}: ${pct.toFixed(1)}% (${fmtBRL.format(raw)})`;
                 },
-                conta_detalhada_percentil: {
-                    imposto_taxas_contribuicoes_nacional: {{ municipio.conta_detalhada_percentil.imposto_taxas_contribuicoes_nacional|default:0 }},
-                    imposto_taxas_contribuicoes_estadual: {{ municipio.conta_detalhada_percentil.imposto_taxas_contribuicoes_estadual|default:0 }},
-                    imposto_taxas_contribuicoes_faixa: {{ municipio.conta_detalhada_percentil.imposto_taxas_contribuicoes_regional|default:0 }}, // Assuming 'regional' for 'faixa'
-                    contribuicoes_nacional: {{ municipio.conta_detalhada_percentil.contribuicoes_nacional|default:0 }},
-                    contribuicoes_estadual: {{ municipio.conta_detalhada_percentil.contribuicoes_estadual|default:0 }},
-                    contribuicoes_faixa: {{ municipio.conta_detalhada_percentil.contribuicoes_regional|default:0 }},
-                    transferencias_correntes_nacional: {{ municipio.conta_detalhada_percentil.transferencias_correntes_nacional|default:0 }},
-                    transferencias_correntes_estadual: {{ municipio.conta_detalhada_percentil.transferencias_correntes_estadual|default:0 }},
-                    transferencias_correntes_faixa: {{ municipio.conta_detalhada_percentil.transferencias_correntes_regional|default:0 }},
-                    outras_receita_nacional: {{ municipio.conta_detalhada_percentil.outras_receita_nacional|default:0 }},
-                    outras_receita_estadual: {{ municipio.conta_detalhada_percentil.outras_receita_estadual|default:0 }},
-                    outras_receita_faixa: {{ municipio.conta_detalhada_percentil.outras_receita_regional|default:0 }}
-                },
-                conta_especifica_percentil: {
-                    imposto_nacional: Number({{ municipio.conta_especifica_percentil.imposto_nacional|default:"0" }}),
-                    imposto_estadual: {{ municipio.conta_especifica_percentil.imposto_estadual|default:0 }},
-                    imposto_faixa: {{ municipio.conta_especifica_percentil.imposto_regional|default:0 }},
-                    taxas_nacional: {{ municipio.conta_especifica_percentil.taxas_nacional|default:0 }},
-                    taxas_estadual: {{ municipio.conta_especifica_percentil.taxas_estadual|default:0 }},
-                    taxas_faixa: {{ municipio.conta_especifica_percentil.taxas_regional|default:0 }},
-                    contribuicoes_nacional: {{ municipio.conta_especifica_percentil.contribuicoes_nacional|default:0 }}, // Contribuições de Melhoria
-                    contribuicoes_estadual: {{ municipio.conta_especifica_percentil.contribuicoes_estadual|default:0 }}, // Contribuições de Melhoria
-                    contribuicoes_faixa: {{ municipio.conta_especifica_percentil.contribuicoes_regional|default:0 }}, // Contribuições de Melhoria
-                    contribuicoes_sociais_nacional: {{ municipio.conta_especifica_percentil.contribuicoes_sociais_nacional|default:0 }},
-                    contribuicoes_sociais_estadual: {{ municipio.conta_especifica_percentil.contribuicoes_sociais_estadual|default:0 }},
-                    contribuicoes_sociais_faixa: {{ municipio.conta_especifica_percentil.contribuicoes_sociais_regional|default:0 }},
-                    contribuicoes_iluminacao_publica_nacional: {{ municipio.conta_especifica_percentil.contribuicoes_iluminacao_publica_nacional|default:0 }},
-                    contribuicoes_iluminacao_publica_estadual: {{ municipio.conta_especifica_percentil.contribuicoes_iluminacao_publica_estadual|default:0 }},
-                    contribuicoes_iluminacao_publica_faixa: {{ municipio.conta_especifica_percentil.contribuicoes_iluminacao_publica_regional|default:0 }},
-                    outras_contribuicoes_nacional: {{ municipio.conta_especifica_percentil.outras_contribuicoes_nacional|default:0 }},
-                    outras_contribuicoes_estadual: {{ municipio.conta_especifica_percentil.outras_contribuicoes_estadual|default:0 }},
-                    outras_contribuicoes_faixa: {{ municipio.conta_especifica_percentil.outras_contribuicoes_regional|default:0 }},
-                    tranferencias_uniao_nacional: {{ municipio.conta_especifica_percentil.tranferencias_uniao_nacional|default:0 }},
-                    tranferencias_uniao_estadual: {{ municipio.conta_especifica_percentil.tranferencias_uniao_estadual|default:0 }},
-                    tranferencias_uniao_faixa: {{ municipio.conta_especifica_percentil.tranferencias_uniao_regional|default:0 }},
-                    tranferencias_estados_nacional: {{ municipio.conta_especifica_percentil.tranferencias_estados_nacional|default:0 }},
-                    tranferencias_estados_estadual: {{ municipio.conta_especifica_percentil.tranferencias_estados_estadual|default:0 }},
-                    tranferencias_estados_faixa: {{ municipio.conta_especifica_percentil.tranferencias_estados_regional|default:0 }},
-                    outras_tranferencias_nacional: {{ municipio.conta_especifica_percentil.outras_tranferencias_nacional|default:0 }},
-                    outras_tranferencias_estadual: {{ municipio.conta_especifica_percentil.outras_tranferencias_estadual|default:0 }},
-                    outras_tranferencias_faixa: {{ municipio.conta_especifica_percentil.outras_tranferencias_regional|default:0 }},
-                    receita_patrimonial_nacional: {{ municipio.conta_especifica_percentil.receita_patrimonial_nacional|default:0 }},
-                    receita_patrimonial_estadual: {{ municipio.conta_especifica_percentil.receita_patrimonial_estadual|default:0 }},
-                    receita_patrimonial_faixa: {{ municipio.conta_especifica_percentil.receita_patrimonial_regional|default:0 }},
-                    receita_agropecuaria_nacional: {{ municipio.conta_especifica_percentil.receita_agropecuaria_nacional|default:0 }},
-                    receita_agropecuaria_estadual: {{ municipio.conta_especifica_percentil.receita_agropecuaria_estadual|default:0 }},
-                    receita_agropecuaria_faixa: {{ municipio.conta_especifica_percentil.receita_agropecuaria_regional|default:0 }},
-                    receita_industrial_nacional: {{ municipio.conta_especifica_percentil.receita_industrial_nacional|default:0 }},
-                    receita_industrial_estadual: {{ municipio.conta_especifica_percentil.receita_industrial_estadual|default:0 }},
-                    receita_industrial_faixa: {{ municipio.conta_especifica_percentil.receita_industrial_regional|default:0 }},
-                    receita_servicos_nacional: {{ municipio.conta_especifica_percentil.receita_servicos_nacional|default:0 }},
-                    receita_servicos_estadual: {{ municipio.conta_especifica_percentil.receita_servicos_estadual|default:0 }},
-                    receita_servicos_faixa: {{ municipio.conta_especifica_percentil.receita_servicos_regional|default:0 }},
-                    outras_receitas_nacional: {{ municipio.conta_especifica_percentil.outras_receitas_nacional|default:0 }},
-                    outras_receitas_estadual: {{ municipio.conta_especifica_percentil.outras_receitas_estadual|default:0 }},
-                    outras_receitas_faixa: {{ municipio.conta_especifica_percentil.outras_receitas_regional|default:0 }}
-                },
-                conta_mais_especifica_percentil: {
-                    iptu_nacional: {{ municipio.conta_mais_especifica_percentil.iptu_nacional|default:0 }},
-                    iptu_estadual: {{ municipio.conta_mais_especifica_percentil.iptu_estadual|default:0 }},
-                    iptu_faixa: {{ municipio.conta_mais_especifica_percentil.iptu_regional|default:0 }},
-                    itbi_nacional: {{ municipio.conta_mais_especifica_percentil.itbi_nacional|default:0 }},
-                    itbi_estadual: {{ municipio.conta_mais_especifica_percentil.itbi_estadual|default:0 }},
-                    itbi_faixa: {{ municipio.conta_mais_especifica_percentil.itbi_regional|default:0 }},
-                    iss_nacional: {{ municipio.conta_mais_especifica_percentil.iss_nacional|default:0 }},
-                    iss_estadual: {{ municipio.conta_mais_especifica_percentil.iss_estadual|default:0 }},
-                    iss_faixa: {{ municipio.conta_mais_especifica_percentil.iss_regional|default:0 }},
-                    outros_impostos_nacional: {{ municipio.conta_mais_especifica_percentil.outros_impostos_nacional|default:0 }},
-                    outros_impostos_estadual: {{ municipio.conta_mais_especifica_percentil.outros_impostos_estadual|default:0 }},
-                    outros_impostos_faixa: {{ municipio.conta_mais_especifica_percentil.outros_impostos_regional|default:0 }},
-                    taxa_policia_nacional: {{ municipio.conta_mais_especifica_percentil.taxa_policia_nacional|default:0 }},
-                    taxa_policia_estadual: {{ municipio.conta_mais_especifica_percentil.taxa_policia_estadual|default:0 }},
-                    taxa_policia_faixa: {{ municipio.conta_mais_especifica_percentil.taxa_policia_regional|default:0 }},
-                    taxa_prestacao_servico_nacional: {{ municipio.conta_mais_especifica_percentil.taxa_prestacao_servico_nacional|default:0 }},
-                    taxa_prestacao_servico_estadual: {{ municipio.conta_mais_especifica_percentil.taxa_prestacao_servico_estadual|default:0 }},
-                    taxa_prestacao_servico_faixa: {{ municipio.conta_mais_especifica_percentil.taxa_prestacao_servico_regional|default:0 }},
-                    outras_taxas_nacional: {{ municipio.conta_mais_especifica_percentil.outras_taxas_nacional|default:0 }},
-                    outras_taxas_estadual: {{ municipio.conta_mais_especifica_percentil.outras_taxas_estadual|default:0 }},
-                    outras_taxas_faixa: {{ municipio.conta_mais_especifica_percentil.outras_taxas_regional|default:0 }},
-                    contribuicao_melhoria_pavimento_obras_nacional: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_pavimento_obras_nacional|default:0 }},
-                    contribuicao_melhoria_pavimento_obras_estadual: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_pavimento_obras_estadual|default:0 }},
-                    contribuicao_melhoria_pavimento_obras_faixa: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_pavimento_obras_regional|default:0 }},
-                    contribuicao_melhoria_agua_potavel_nacional: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_agua_potavel_nacional|default:0 }},
-                    contribuicao_melhoria_agua_potavel_estadual: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_agua_potavel_estadual|default:0 }},
-                    contribuicao_melhoria_agua_potavel_faixa: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_agua_potavel_regional|default:0 }},
-                    contribuicao_melhoria_iluminacao_publica_nacional: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_iluminacao_publica_nacional|default:0 }},
-                    contribuicao_melhoria_iluminacao_publica_estadual: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_iluminacao_publica_estadual|default:0 }},
-                    contribuicao_melhoria_iluminacao_publica_faixa: {{ municipio.conta_mais_especifica_percentil.contribuicao_melhoria_iluminacao_publica_regional|default:0 }},
-                    outras_contribuicoes_melhoria_nacional: {{ municipio.conta_mais_especifica_percentil.outras_contribuicoes_melhoria_nacional|default:0 }},
-                    outras_contribuicoes_melhoria_estadual: {{ municipio.conta_mais_especifica_percentil.outras_contribuicoes_melhoria_estadual|default:0 }},
-                    outras_contribuicoes_melhoria_faixa: {{ municipio.conta_mais_especifica_percentil.outras_contribuicoes_melhoria_regional|default:0 }},
-                    transferencia_uniao_fpm_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fpm_nacional|default:0 }},
-                    transferencia_uniao_fpm_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fpm_estadual|default:0 }},
-                    transferencia_uniao_fpm_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fpm_regional|default:0 }},
-                    transferencia_uniao_exploracao_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_exploracao_nacional|default:0 }},
-                    transferencia_uniao_exploracao_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_exploracao_estadual|default:0 }},
-                    transferencia_uniao_exploracao_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_exploracao_regional|default:0 }},
-                    transferencia_uniao_sus_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_sus_nacional|default:0 }},
-                    transferencia_uniao_sus_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_sus_estadual|default:0 }},
-                    transferencia_uniao_sus_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_sus_regional|default:0 }},
-                    transferencia_uniao_fnde_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnde_nacional|default:0 }},
-                    transferencia_uniao_fnde_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnde_estadual|default:0 }},
-                    transferencia_uniao_fnde_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnde_regional|default:0 }},
-                    transferencia_uniao_fnas_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnas_nacional|default:0 }},
-                    transferencia_uniao_fnas_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnas_estadual|default:0 }},
-                    transferencia_uniao_fnas_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_uniao_fnas_regional|default:0 }},
-                    outras_transferencias_uniao_nacional: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_uniao_nacional|default:0 }},
-                    outras_transferencias_uniao_estadual: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_uniao_estadual|default:0 }},
-                    outras_transferencias_uniao_faixa: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_uniao_regional|default:0 }},
-                    transferencia_estado_icms_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_icms_nacional|default:0 }},
-                    transferencia_estado_icms_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_icms_estadual|default:0 }},
-                    transferencia_estado_icms_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_icms_regional|default:0 }},
-                    transferencia_estado_ipva_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_ipva_nacional|default:0 }},
-                    transferencia_estado_ipva_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_ipva_estadual|default:0 }},
-                    transferencia_estado_ipva_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_ipva_regional|default:0 }},
-                    transferencia_estado_exploracao_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_exploracao_nacional|default:0 }},
-                    transferencia_estado_exploracao_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_exploracao_estadual|default:0 }},
-                    transferencia_estado_exploracao_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_exploracao_regional|default:0 }},
-                    transferencia_estado_sus_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_sus_nacional|default:0 }},
-                    transferencia_estado_sus_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_sus_estadual|default:0 }},
-                    transferencia_estado_sus_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_sus_regional|default:0 }},
-                    transferencia_estado_assistencia_nacional: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_assistencia_nacional|default:0 }},
-                    transferencia_estado_assistencia_estadual: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_assistencia_estadual|default:0 }},
-                    transferencia_estado_assistencia_faixa: {{ municipio.conta_mais_especifica_percentil.transferencia_estado_assistencia_regional|default:0 }},
-                    outras_transferencias_estado_nacional: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_estado_nacional|default:0 }},
-                    outras_transferencias_estado_estadual: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_estado_estadual|default:0 }},
-                    outras_transferencias_estado_faixa: {{ municipio.conta_mais_especifica_percentil.outras_transferencias_estado_regional|default:0 }}
-                }
-            };
-
-            let percentileValue = 0;
-            let targetObject;
-            let percentileKey;
-
-            // Determine which percentile object to use
-            if (fieldBaseName === "rc_23_pc") { // For the main header's RC per capita
-                targetObject = municipioPercentil.rc_23_pc;
-            } else if (["imposto_taxas_contribuicoes", "contribuicoes", "transferencias_correntes", "outras_receita"].includes(fieldBaseName)) {
-                targetObject = municipioPercentil.conta_detalhada_percentil;
-            } else if (["imposto", "taxas", "contribuicoes_sociais", "contribuicoes_iluminacao_publica", "outras_contribuicoes", "tranferencias_uniao", "tranferencias_estados", "outras_tranferencias", "receita_patrimonial", "receita_agropecuaria", "receita_industrial", "receita_servicos", "outras_receitas"].includes(fieldBaseName)) {
-                targetObject = municipioPercentil.conta_especifica_percentil;
-            } else {
-                targetObject = municipioPercentil.conta_mais_especifica_percentil;
+                footer: () => `Total: ${fmtBRL.format(total)}`
             }
-            
-            if (rankingType === 'nacional') {
-                percentileKey = `${fieldBaseName}_nacional`;
-            } else if (rankingType === 'estadual') {
-                percentileKey = `${fieldBaseName}_estadual`;
-            } else if (rankingType === 'faixa') {
-                // Assuming 'regional' maps to 'faixa' in your model
-                percentileKey = `${fieldBaseName}_regional`;
-            }
-            
-            percentileValue = targetObject[percentileKey];
-            return percentileValue !== undefined ? percentileValue : 0; // Return 0 if undefined
-        }
-
-
-        function updateAllRankingIndicators(rankingType) {
-            // Update the main ranking indicator (for 'Receita per capita' KPI card)
-            updateMainRankingIndicator(rankingType);
-
-            // Update the header quintil indicator
-            updateHeaderQuintilIndicator(); // This one doesn't depend on rankingType, it uses 'quintil23' directly
-
-            // Update all toggle-heading, toggle-subheading, and metric-detail-row elements
-            const allElementsWithRanking = document.querySelectorAll('.toggle-heading, .toggle-subheading, .metric-detail-row');
-            allElementsWithRanking.forEach(element => {
-                const fieldBaseName = element.dataset.fieldBase;
-                if (fieldBaseName) {
-                    const percentile = getPercentileForField(fieldBaseName, rankingType);
-                    const rankingIndicator = element.querySelector('.ranking-indicator');
-                    const rankingTooltip = element.querySelector('.ranking-tooltip');
-
-                    if (rankingIndicator && !isNaN(percentile)) {
-                        applyPercentileColor(rankingIndicator, percentile); // Use percentile color logic
-                        rankingTooltip.textContent = `O município supera ${percentile}% dos outros municípios`;
-                        rankingIndicator.style.display = '';
-                    } else if (rankingIndicator) {
-                        rankingIndicator.style.display = 'none';
-                        rankingTooltip.textContent = '';
-                    }
-                }
-            });
-        }
-
-        function updateMainRankingIndicator(rankingType) {
-            const percentile = getPercentileForField('rc_23_pc', rankingType); // Always use 'rc_23_pc' for this KPI card
-            const rankingIndicator = document.querySelector('#ranking-indicator-main .ranking-indicator');
-            const rankingTooltip = document.querySelector('#ranking-indicator-main .ranking-tooltip');
-
-            if (rankingIndicator && !isNaN(percentile)) {
-                applyPercentileColor(rankingIndicator, percentile); // Use percentile color logic
-                rankingTooltip.textContent = `Seu município supera ${percentile}% dos outros municípios`;
-                rankingIndicator.style.display = '';
-            } else if (rankingIndicator) {
-                rankingIndicator.style.display = 'none';
-                rankingTooltip.textContent = '';
             }
         }
-
-        // New function for the header quintil indicator
-        function updateHeaderQuintilIndicator() {
-            const quintilText = "{{ municipio.quintil23|default:'1° quintil' }}"; // Get the string "X° quintil"
-            console.log('Valor de municipio.quintil23:', quintilText); // DEBUG: Verifique este valor
-
-            const quintilMatch = quintilText.match(/(\d+)° quintil/);
-            let quintileNumber = 0;
-
-            if (quintilMatch && quintilMatch[1]) {
-                quintileNumber = parseInt(quintilMatch[1]);
-            }
-            console.log('Número do quintil extraído:', quintileNumber); // DEBUG: Verifique se o número é extraído
-
-            const headerQuintilIndicator = document.querySelector('#header-quintil-indicator-container .ranking-indicator');
-            const headerQuintilTooltip = document.querySelector('#header-quintil-indicator-container .ranking-tooltip');
-
-            console.log('Elemento headerQuintilIndicator:', headerQuintilIndicator); // DEBUG: Verifique se o elemento foi encontrado
-            console.log('Elemento headerQuintilTooltip:', headerQuintilTooltip); // DEBUG: Verifique se o elemento foi encontrado
-
-            if (headerQuintilIndicator && quintileNumber >= 1 && quintileNumber <= 5) {
-                applyQuintilColor(headerQuintilIndicator, quintileNumber); // Use new quintil color logic
-                headerQuintilTooltip.textContent = `O município está no ${quintileNumber}° quintil`;
-                headerQuintilIndicator.style.display = '';
-            } else if (headerQuintilIndicator) {
-                // Se o quintil for inválido ou 0, certifique-se de que o elemento não seja exibido
-                headerQuintilIndicator.style.display = 'none';
-                headerQuintilTooltip.textContent = '';
-                console.warn('Quintil inválido ou elemento não encontrado para o cabeçalho. Escondendo o indicador.');
-            }
         }
+    });
+    }
 
 
-        // Global variables to hold the chart instances
-        let mainRevenueChart;
-        let detailedRevenueChart;
 
-        // Function to create or update a pie chart
-        function createOrUpdatePieChart(canvasId, chartTitle, chartData) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            let chartInstance;
+  // 6) Eventos e render inicial
+  const initialKey = availableKeys.includes('main_categories')
+    ? 'main_categories'
+    : (availableKeys[0] || 'main_categories');
 
-            // Destroy existing chart if it exists
-            if (canvasId === 'mainRevenueChart' && mainRevenueChart) {
-                mainRevenueChart.destroy();
-            } else if (canvasId === 'detailedRevenueChart' && detailedRevenueChart) {
-                detailedRevenueChart.destroy();
-            }
-
-            chartInstance = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: chartData.labels,
-                    datasets: [{
-                        label: chartTitle,
-                        data: chartData.values,
-                        backgroundColor: [
-                            '#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#64748b', '#22d3ee', '#a78bfa', '#facc15', '#fb7185',
-                            '#34d399', '#fcd34d', '#fb923c', '#c084fc', '#f87171', '#94a3b8', '#67e8f9', '#d8b4fe', '#fde047', '#fda4af'
-                        ],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (context.parsed !== null) {
-                                        const value = context.parsed;
-                                        const total = context.dataset.data.reduce((acc, current) => acc + current, 0);
-                                        const percentage = (value / total * 100).toFixed(2);
-                                        label += `: ${value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (${percentage}%)`;
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (canvasId === 'mainRevenueChart') {
-                mainRevenueChart = chartInstance;
-            } else if (canvasId === 'detailedRevenueChart') {
-                detailedRevenueChart = chartInstance;
-            }
-        }
-
-        // Helper function to extract numeric value from formatted string
-        function parseCurrencyValue(str) {
-            if (!str) return 0;
-            // Remove R$, . for thousands, and replace comma with dot for decimals
-            const cleanedStr = str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-            return parseFloat(cleanedStr);
-        }
-
-        // Function to sort children of a container (now expects .revenue-item-wrapper or .metric-detail-row)
-        function sortChildrenByValue(containerElement, isPerCapita) {
-            let children = Array.from(containerElement.children);
-
-            // Filter out elements with a value of 0 before sorting
-            children = children.filter(child => {
-                const valueElement = child.querySelector(isPerCapita ? '.valor-per-capita' : '.valor-absoluto');
-                if (valueElement) {
-                    const value = parseCurrencyValue(valueElement.textContent);
-                    return value !== 0; // Keep element if value is not 0
-                }
-                return false; // Remove if no value element or unparseable
-            });
+  selectEl.value = initialKey;
+  selectEl.addEventListener('change', () => renderChart(selectEl.value));
+  renderChart(initialKey);
+});
+</script>
 
 
-            children.sort((a, b) => {
-                let valueA = 0;
-                let valueB = 0;
-
-                // For .revenue-item-wrapper, the value is in its .toggle-heading's value span
-                // For .metric-detail-row, the value is in its own value span
-                const valueAElement = a.querySelector(isPerCapita ? '.valor-per-capita' : '.valor-absoluto');
-                const valueBElement = b.querySelector(isPerCapita ? '.valor-per-capita' : '.valor-absoluto');
-
-                if (valueAElement) {
-                    valueA = parseCurrencyValue(valueAElement.textContent);
-                }
-                if (valueBElement) {
-                    valueB = parseCurrencyValue(valueBElement.textContent);
-                }
-                
-                // Sort in descending order (largest to smallest)
-                return valueB - valueA;
-            });
-
-            // IMPORTANT: Clear existing children before re-appending to avoid duplicates
-            while (containerElement.firstChild) {
-                containerElement.removeChild(containerElement.firstChild);
-            }
-
-            // Append sorted children back to the container
-            children.forEach(child => containerElement.appendChild(child));
-
-            // Re-initialize toggle listeners for elements within this container's *new* children (if they contain toggles)
-            // This ensures that the click events still work after reordering.
-            // We need to re-initialize for children that are toggles themselves.
-            initializeToggleListeners(containerElement);
-        }
-
-        // New function to initialize (or re-initialize) toggle listeners
-        function initializeToggleListeners(scopeElement = document) {
-            // Select all toggle elements within the specified scope
-            const toggleElements = scopeElement.querySelectorAll('.toggle-heading, .toggle-subheading');
-            
-            toggleElements.forEach(element => {
-                // Remove any existing listeners to prevent duplicates
-                element.removeEventListener('click', handleToggleClick);
-                // Add the new (or re-added) listener
-                element.addEventListener('click', handleToggleClick);
-            });
-        }
-
-        // Separate function for the click handler to easily attach/detach
-        function handleToggleClick() {
-            const targetId = this.dataset.target;
-            const targetElement = document.getElementById(targetId);
-            // Check if the element being clicked itself has the 'open' class
-            // or if it's the target that has it (meaning it's currently open)
-            const isCurrentlyOpen = this.classList.contains('open');
-
-            // If the element is currently open (and about to be closed),
-            // or if the target element is already visible,
-            // we should also close any nested toggles to prevent them from staying open.
-            if (isCurrentlyOpen && targetElement && !targetElement.classList.contains('hidden')) {
-                const nestedToggles = targetElement.querySelectorAll('.toggle-subheading.open');
-                nestedToggles.forEach(nestedToggle => {
-                    nestedToggle.classList.remove('open');
-                    const nestedTargetId = nestedToggle.dataset.target;
-                    const nestedTargetElement = document.getElementById(nestedTargetId);
-                    if (nestedTargetElement) {
-                        nestedTargetElement.classList.add('hidden'); // Ensure nested content is hidden
-                    }
-                });
-            }
-
-
-            const arrow = this.querySelector('.arrow'); 
-
-            if (targetElement) {
-                targetElement.classList.toggle('hidden');
-                this.classList.toggle('open'); // Toggle 'open' class on the header
-            }
-        }
-
-
-        // --- SCRIPTS PRINCIPAIS (EXECUTAM APÓS O CARREGAMENTO DO DOM) ---
-        document.addEventListener('DOMContentLoaded', function() {
-            // Script para o Dropdown de Ranking (Nacional/Estadual/Faixa)
-            const rankingSelect = document.getElementById('ranking-select');
-            const rankingValue = document.getElementById('ranking-value');
-
-            // Data for the main ranking display (not percentiles)
-            const rankingValueData = {
-                nacional: "{{ municipio.rank_nacional  }} /{{ municipio.total_nacional  }}",
-                estadual: "{{ municipio.rank_estadual  }} /{{ municipio.total_estadual  }}",
-                faixa: "{{ municipio.rank_faixa  }} /{{ municipio.total_faixa  }}"
-            };
-
-            rankingSelect.addEventListener('change', (event) => {
-                const selectedRankingType = event.target.value;
-                rankingValue.textContent = rankingValueData[selectedRankingType];
-                updateAllRankingIndicators(selectedRankingType); // Call the new function
-            });
-
-            // Initial update for all indicators when the page loads (defaults to 'nacional')
-            updateAllRankingIndicators(rankingSelect.value);
-
-
-            // Script for Revenue Charts
-            const detailedRevenueChartsDataElement = document.getElementById('detailed-revenue-charts-data');
-            const detailedRevenueSelect = document.getElementById('detailed-revenue-select');
-            const detailedChartTitle = document.getElementById('detailed-chart-title');
-            let allRevenueChartData = {};
-
-            if (detailedRevenueChartsDataElement) {
-                allRevenueChartData = JSON.parse(detailedRevenueChartsDataElement.textContent);
-
-                // Initialize the Main Revenue Chart (fixed: main categories)
-                createOrUpdatePieChart('mainRevenueChart', 'Receita Corrente', allRevenueChartData['main_categories']);
-
-                // Initialize the Detailed Revenue Chart (defaults to "Todas as Categorias Principais")
-                createOrUpdatePieChart('detailedRevenueChart', 'Todas as Categorias Principais', allRevenueChartData['main_categories']);
-                detailedRevenueSelect.value = 'main_categories'; // Set dropdown to this initial value
-                detailedChartTitle.textContent = `Receita Detalhada: ${detailedRevenueSelect.options[detailedRevenueSelect.selectedIndex].text.replace('  - ', '')}`;
-
-            } else {
-                // If no data, display messages in both chart containers
-                document.getElementById('mainRevenueChart').parentElement.innerHTML = '<div class="text-center text-gray-500 py-8">Dados de receita não disponíveis para o gráfico.</div>';
-                document.getElementById('detailedRevenueChart').parentElement.innerHTML = '<div class="text-center text-gray-500 py-8">Dados de receita não disponíveis para o gráfico.</div>';
-            }
-
-            // Event listener for the Detailed Revenue Chart's dropdown
-            detailedRevenueSelect.addEventListener('change', (event) => {
-                const selectedCategory = event.target.value;
-                const selectedCategoryText = event.target.options[event.target.selectedIndex].text;
-                
-                if (allRevenueChartData[selectedCategory]) {
-                    createOrUpdatePieChart('detailedRevenueChart', selectedCategoryText, allRevenueChartData[selectedCategory]);
-                    detailedChartTitle.textContent = `Receita Detalhada: ${selectedCategoryText.replace('  - ', '')}`; // Clean up title
-                } else {
-                    console.error('No data found for selected detailed category:', selectedCategory);
-                }
-            });
-
-
-            // Script para o Toggle de Valores (Absoluto/Per Capita)
-            let isShowingPerCapita = true; // Changed to true for initial per capita display
-            const toggleBtn = document.getElementById('valor-toggle-btn');
-            const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
-            const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
-            
-            // Set initial button text
-            toggleBtn.textContent = 'Valores Reais';
-
-            // Set initial visibility based on isShowingPerCapita
-            valoresAbsolutos.forEach(el => el.classList.add('hidden'));
-            valoresPerCapita.forEach(el => el.classList.remove('hidden'));
-
-            toggleBtn.addEventListener('click', function() {
-                isShowingPerCapita = !isShowingPerCapita;
-                if (isShowingPerCapita) {
-                    toggleBtn.textContent = 'Valores Reais';
-                    valoresAbsolutos.forEach(el => el.classList.add('hidden'));
-                    valoresPerCapita.forEach(el => el.classList.remove('hidden'));
-                } else {
-                    toggleBtn.textContent = 'Per Capita';
-                    valoresAbsolutos.forEach(el => el.classList.remove('hidden'));
-                    valoresPerCapita.forEach(el => el.classList.add('hidden'));
-                }
-                // Re-sort all sections after changing the value display
-                sortAllRevenueSections(isShowingPerCapita);
-            });
-
-            // Initial setup for all toggle listeners
-            initializeToggleListeners();
-
-            // Function to sort all relevant revenue sections
-            function sortAllRevenueSections(isPerCapita) {
-                // Get all containers that hold sortable items
-                const containersToSort = [
-                    document.getElementById('main-revenue-details-container'),
-                    document.getElementById('detalhe-impostos'),
-                    document.getElementById('detalhe-sub-impostos'),
-                    document.getElementById('detalhe-sub-taxas'),
-                    document.getElementById('detalhe-sub-contribuicoes-melhoria'),
-                    document.getElementById('detalhe-contribuicoes'), // Added for consistency
-                    document.getElementById('detalhe-transferencias'),
-                    document.getElementById('detalhe-sub-transferencias-uniao'),
-                    document.getElementById('detalhe-sub-transferencias-estados'),
-                    document.getElementById('detalhe-outras-receitas')
-                ].filter(Boolean); // Filter out any null/undefined elements
-
-                containersToSort.forEach(container => {
-                    sortChildrenByValue(container, isPerCapita);
-                });
-            }
-
-            // Initial sort when the page loads (based on per capita values)
-            sortAllRevenueSections(isShowingPerCapita);
-
-            // Initial call to update the header quintile indicator
-            updateHeaderQuintilIndicator();
-        });
-
-        </script>
-    
 {% endblock content %}

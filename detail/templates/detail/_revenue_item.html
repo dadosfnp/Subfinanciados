@@ -1,0 +1,84 @@
+{% comment %} your_app/templates/your_app/_revenue_item.html {% endcomment %}
+{% load currency_filters %}
+
+{% with has_children=item.children %}
+<div class="revenue-item-wrapper">
+    <div 
+        class="py-2 flex items-center justify-between border-b border-gray-200 last:border-b-0
+               {% if has_children and level == 0 %}toggle-heading
+               {% elif has_children and level > 0 %}toggle-subheading
+               {% else %}metric-detail-row{% endif %}"
+        {% if has_children %}data-target="{{ item.target_id }}"{% endif %}
+        data-field-base="{{ item.field_base }}"
+    >
+        <div class="flex items-center flex-grow min-w-0">
+            
+            <div class="ranking-indicator-container flex-shrink-0 " data-ranking="diff">
+                <div class="ranking-indicator
+                {% if item.diff.pc <= -60 %}quintil-1
+                {% elif item.diff.pc > -60 and item.diff.pc <= -20 %}quintil-2
+                {% elif item.diff.pc > -20 and item.diff.pc <= 20 %}quintil-3
+                {% elif item.diff.pc > 20 and item.diff.pc <= 60 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+                <div class="ranking-tooltip">O grupo de municípios supera {{item.diff.pc|default_if_none:"--"}}% da média nacional</div>
+            </div>
+
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="nacional">
+                <div class="ranking-indicator 
+                {% if item.percentiles.nacional <= 20 %}quintil-1
+                {% elif item.percentiles.nacional > 20 and item.percentiles.nacional <= 40 %}quintil-2
+                {% elif item.percentiles.nacional > 40 and item.percentiles.nacional <= 60 %}quintil-3
+                {% elif item.percentiles.nacional > 60 and item.percentiles.nacional <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+                <div class="ranking-tooltip">O município supera {{item.percentiles.nacional|default_if_none:"--"}}% dos outros municípios do país</div>
+            </div>
+            
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="estadual">
+                <div class="ranking-indicator
+                {% if item.percentiles.estadual <= 20 %}quintil-1
+                {% elif item.percentiles.estadual > 20 and item.percentiles.estadual <= 40 %}quintil-2
+                {% elif item.percentiles.estadual > 40 and item.percentiles.estadual <= 60 %}quintil-3
+                {% elif item.percentiles.estadual > 60 and item.percentiles.estadual <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+                <div class="ranking-tooltip">O município supera {{item.percentiles.estadual|default_if_none:"--"}}% dos outros municípios do mesmo estado</div>
+            </div>
+
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="faixa">
+                <div class="ranking-indicator
+                {% if item.percentiles.faixa <= 20 %}quintil-1
+                {% elif item.percentiles.faixa > 20 and item.percentiles.faixa <= 40 %}quintil-2
+                {% elif item.percentiles.faixa > 40 and item.percentiles.faixa <= 60 %}quintil-3
+                {% elif item.percentiles.faixa > 60 and item.percentiles.faixa <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+                <div class="ranking-tooltip">O município supera {{item.percentiles.faixa|default_if_none:"--"}}% dos outros municípios da mesma faixa populacional</div>
+            </div>
+
+
+
+            {% if has_children %}<span class="arrow mx-2 flex-shrink-0">&#9654;</span>{% else %}<span class="w-4 mx-2 flex-shrink-0"></span>{% endif %}
+            
+            <span class="text-content truncate 
+                {% if level == 0 %}text-gray-700 font-semibold{% else %}text-gray-600 text-sm{% endif %}">
+                {{ item.name }}
+            </span>
+        </div>
+
+        <div class="text-right pl-2 flex-shrink-0 {% if level == 0 %}font-semibold{% else %}text-sm{% endif %}">
+            <span class="valor-absoluto hidden">{{ item.value_abs|br_float }}</span>
+            <span class="valor-per-capita">{{ item.value_pc|br_float }}</span>
+        </div>
+    </div>
+
+    {% if has_children %}
+    <div id="{{ item.target_id }}" class="hidden ml-4 pl-4 border-l border-gray-200">
+        {% for child in item.children %}
+            {% include "detail/_revenue_item.html" with item=child level=level|add:1 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endwith %}

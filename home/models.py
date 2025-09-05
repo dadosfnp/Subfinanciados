@@ -85,7 +85,7 @@ class ContaDetalhada(models.Model):
         return self._calcular_pc(self.contribuicoes)
 
     @property
-    def transferencia_corrente_pc(self):
+    def transferencias_correntes_pc(self):
         return self._calcular_pc(self.transferencias_correntes)
         
     @property
@@ -145,7 +145,7 @@ class ContaEspecifica(models.Model):
     )
     imposto = models.FloatField()
     taxas = models.FloatField()
-    contribuicoes = models.FloatField()
+    contribuicoes_melhoria = models.FloatField()
     contribuicoes_sociais = models.FloatField()
     contribuicoes_iluminacao_publica = models.FloatField()
     outras_contribuicoes = models.FloatField()
@@ -174,8 +174,8 @@ class ContaEspecifica(models.Model):
         return self._calcular_pc(self.taxas)
 
     @property
-    def contribuicoes_pc(self):
-        return self._calcular_pc(self.contribuicoes)
+    def contribuicoes_melhoria_pc(self):
+        return self._calcular_pc(self.contribuicoes_melhoria)
         
     @property
     def contribuicoes_sociais_pc(self):
@@ -184,6 +184,10 @@ class ContaEspecifica(models.Model):
     @property
     def contribuicoes_iluminacao_publica_pc(self):
         return self._calcular_pc(self.contribuicoes_iluminacao_publica)
+    
+    @property
+    def outras_contribuicoes_pc(self):
+        return self._calcular_pc(self.outras_contribuicoes)
 
     @property
     def tranferencias_uniao_pc(self):
@@ -236,7 +240,7 @@ class ContaEspecificaPercentil(models.Model):
     # Nacional
     imposto_nacional = models.FloatField()
     taxas_nacional = models.FloatField()
-    contribuicoes_nacional = models.FloatField()
+    contribuicoes_melhoria_nacional = models.FloatField()
     contribuicoes_sociais_nacional = models.FloatField()
     contribuicoes_iluminacao_publica_nacional = models.FloatField()
     outras_contribuicoes_nacional = models.FloatField()
@@ -253,7 +257,7 @@ class ContaEspecificaPercentil(models.Model):
     # Regional
     imposto_regional = models.FloatField()
     taxas_regional = models.FloatField()
-    contribuicoes_regional = models.FloatField()
+    contribuicoes_melhoria_regional = models.FloatField()
     contribuicoes_sociais_regional = models.FloatField()
     contribuicoes_iluminacao_publica_regional = models.FloatField()
     outras_contribuicoes_regional = models.FloatField()
@@ -269,7 +273,7 @@ class ContaEspecificaPercentil(models.Model):
     # Estadual
     imposto_estadual = models.FloatField()
     taxas_estadual = models.FloatField()
-    contribuicoes_estadual = models.FloatField()
+    contribuicoes_melhoria_estadual = models.FloatField()
     contribuicoes_sociais_estadual = models.FloatField()
     contribuicoes_iluminacao_publica_estadual = models.FloatField()
     outras_contribuicoes_estadual = models.FloatField()
