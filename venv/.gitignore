@@ -1,0 +1,6 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Python
+_pycache_/
+*.py[cod]
+*.pyo
+*.pyd
