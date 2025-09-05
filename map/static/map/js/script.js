@@ -20,6 +20,10 @@ const filtroRm = document.getElementById('filtro-rm');
 const filtroClassificacao = document.getElementById('filtro-classificacao');
 const filtroModoCalculo = document.getElementById('filtro-modo-calculo'); // NOVO: Referência ao filtro de modo de cálculo
 
+// Controle de corrida: debounce + request-id
+let debounceTimer = null;
+let lastRequestId = 0;         // id crescente de requisições
+
 /**
  * Restaura o valor de um <select> apenas se existir entre as opções.
  * Caso contrário, cai para 'todos'.
@@ -29,52 +33,76 @@ function restoreSelectValue(selectEl, value) {
     selectEl.value = has ? value : 'todos';
 }
 
+// Monta a query removendo filtros com valor "todos" (ou string vazia)
+function buildApiUrl(basePath, params) {
+    const usp = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '' && v !== 'todos') {
+            usp.append(k, v);
+        }
+    });
+    const qs = usp.toString();
+    return qs ? `${basePath}?${qs}` : basePath;
+}
+
+// Cria uma “chave” imutável dos parâmetros relevantes (sem "todos") para detectar respostas obsoletas
+function paramsKeyFromSelects() {
+    const raw = {
+        regiao: filtroRegiao.value,
+        uf: filtroUf.value,
+        municipio: filtroMunicipio.value,
+        porte: filtroPorte.value,
+        subgrupo: filtroSubgrupo.value,
+        rm: filtroRm.value,
+        classification: filtroClassificacao.value,
+        calculation_mode: filtroModoCalculo.value
+    };
+    const cleaned = {};
+    Object.entries(raw).forEach(([k, v]) => {
+        if (v && v !== 'todos') cleaned[k] = v;
+    });
+    return JSON.stringify(Object.keys(cleaned).sort().reduce((acc, k) => { acc[k] = cleaned[k]; return acc; }, {}));
+}
+
 /**
- * Atualiza os dropdowns de filtros dependentes (Região, UF, Município, RM)
- * com base nos filtros atualmente selecionados.
- * @param {string} [trigger] - O ID do filtro que disparou a atualização (ex: 'regiao', 'uf', 'rm').
- * Usado para preservar o estado do filtro que não foi alterado.
+ * Atualiza os dropdowns (Região, UF, Município, RM) SEM RESTRIÇÃO,
+ * sempre listando TODAS as opções disponíveis.
+ * Mantém o valor selecionado, se existir; senão, cai para 'todos'.
  */
-async function updateDependentFilters(trigger = null) {
-    // Guarda os valores atuais dos filtros para tentar restaurá-los após a atualização
+async function updateDependentFilters() {
+    // Guarda os valores atuais
     const regiaoAtual = filtroRegiao.value;
     const ufAtual = filtroUf.value;
     const rmAtual = filtroRm.value;
     const municipioAtual = filtroMunicipio.value;
 
-    // Monta a URL da API para obter as opções filtradas
-    const apiUrl = `/api/get-dependent-filters/?regiao=${q(regiaoAtual)}&uf=${q(ufAtual)}&rm=${q(rmAtual)}`;
+    // Busca SEM parâmetros → listas completas
+    const apiUrl = '/api/get-dependent-filters/';
 
     try {
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // Bloco para popular e restaurar o estado do filtro de REGIÃO
+        // REGIÃO
         filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
         data.regioes.forEach(item => filtroRegiao.add(new Option(item, item)));
-        restoreSelectValue(filtroRegiao, regiaoAtual); // Restaura com segurança
+        restoreSelectValue(filtroRegiao, regiaoAtual);
 
-        // Bloco para popular e restaurar o estado do filtro de RM
+        // RM
         filtroRm.innerHTML = '<option value="todos">Todas</option>';
         data.rms.forEach(item => filtroRm.add(new Option(item, item)));
-        // Restaura o estado da RM apenas se o trigger não for UF ou Região (que a afetam)
-        if (trigger !== 'regiao' && trigger !== 'uf') {
-            restoreSelectValue(filtroRm, rmAtual);
-        }
+        restoreSelectValue(filtroRm, rmAtual);
 
-        // Bloco para popular e restaurar o estado do filtro de UF
+        // UF
         filtroUf.innerHTML = '<option value="todos">Todos</option>';
         data.ufs.forEach(item => filtroUf.add(new Option(item, item)));
-        // Restaura o estado da UF apenas se o trigger não for Região (que a afeta)
-        if (trigger !== 'regiao') {
-            restoreSelectValue(filtroUf, ufAtual);
-        }
-        
-        // Bloco para popular e restaurar o estado do filtro de Município
+        restoreSelectValue(filtroUf, ufAtual);
+
+        // MUNICÍPIO
         filtroMunicipio.innerHTML = '<option value="todos">Todos</option>';
         data.municipios.forEach(item => filtroMunicipio.add(new Option(item, item)));
-        restoreSelectValue(filtroMunicipio, municipioAtual); // Restaura o estado
-        
+        restoreSelectValue(filtroMunicipio, municipioAtual);
+
     } catch (error) {
         console.error("Erro ao atualizar filtros dependentes:", error);
     }
@@ -83,52 +111,77 @@ async function updateDependentFilters(trigger = null) {
 /**
  * Atualiza os dados exibidos no mapa e o card de resumo.
  * Faz uma requisição à API de dados de municípios com base nos filtros atuais.
+ * Protegido contra “race condition” usando request-id e conferindo a chave de parâmetros.
  */
 async function atualizarMapa() {
     const classificacaoAtual = filtroClassificacao.value;
     const subgroupAtual = filtroSubgrupo.value;
     const modoCalculoAtual = filtroModoCalculo.value; // NOVO: Obtenha o valor do modo de cálculo
-    
-    // Constrói a URL da API com todos os filtros
-    const apiUrl = `/api/dados-municipios/?regiao=${q(filtroRegiao.value)}&uf=${q(filtroUf.value)}&municipio=${q(filtroMunicipio.value)}&porte=${q(filtroPorte.value)}&subgrupo=${q(subgroupAtual)}&rm=${q(filtroRm.value)}&classification=${q(classificacaoAtual)}&calculation_mode=${q(modoCalculoAtual)}`; // NOVO: Adicionado calculation_mode
-    
+
+    const params = {
+        regiao: filtroRegiao.value,
+        uf: filtroUf.value,
+        municipio: filtroMunicipio.value,
+        porte: filtroPorte.value,
+        subgrupo: subgroupAtual,
+        rm: filtroRm.value,
+        classification: classificacaoAtual,
+        calculation_mode: modoCalculoAtual
+    };
+    const desiredKey = paramsKeyFromSelects();
+    const apiUrl = buildApiUrl('/api/dados-municipios/', params);
+
+    const myId = ++lastRequestId;
+
     try {
         const response = await fetch(apiUrl);
         const geojsonData = await response.json();
+        console.log('[dados]', apiUrl, 'features:', geojsonData.features?.length);
+
+        if (myId !== lastRequestId) return; // resposta obsoleta, ignora
+
+        const currentKey = paramsKeyFromSelects();
+        if (currentKey !== desiredKey) return; // parâmetros mudaram, ignora
 
         // Lógica para calcular e exibir o resumo dos municípios filtrados
-        const features = geojsonData.features;
+        const features = geojsonData.features || [];
         const count = features.length;
 
-        // Calcular soma de receita p/c e média
         const totalRevenue = features.reduce((sum, feature) => {
             return sum + (feature.properties.rc_23_pc || 0);
         }, 0);
         const averageRevenue = count > 0 ? totalRevenue / count : 0;
 
-        // Atualiza os elementos HTML do card de resumo
         document.getElementById('summary-count').textContent = count.toLocaleString('pt-BR');
         document.getElementById('summary-avg-revenue').textContent = averageRevenue.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         });
 
-        // Atualiza os dados da fonte 'municipios' no Mapbox
         if (map.getSource('municipios')) {
             map.getSource('municipios').setData(geojsonData);
-            applyZoom(geojsonData); // NOVO: aplica zoom conforme os filtros
+            applyZoom(geojsonData); // aplica zoom conforme filtros
         }
 
     } catch (error) {
         console.error("Erro ao atualizar os dados do mapa ou resumo:", error);
-        // Em caso de erro, zera o card de resumo
         document.getElementById('summary-count').textContent = '0';
         document.getElementById('summary-avg-revenue').textContent = 'R$ 0,00';
     }
 }
 
+/**
+ * Pequeno debounce para evitar várias chamadas seguidas durante interação rápida.
+ */
+function scheduleAtualizarMapa(delay = 150) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        atualizarMapa();
+    }, delay);
+}
+
 // --- Configuração do Mapa Mapbox GL JS ---
-map.on("load", () => {
+map.on("load", async () => {
     // Adiciona a fonte de dados 'municipios' ao mapa (inicialmente vazia)
     map.addSource("municipios", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
 
@@ -165,11 +218,15 @@ map.on("load", () => {
             "text-halo-width": 1.5
         }
     });
-    
-    // Chamadas iniciais para popular os filtros dependentes e carregar o mapa
-    updateDependentFilters();
-    atualizarClassificacao(); // Garante que a coloração e o sub-filtro estejam corretos no carregamento
-    // `atualizarMapa` já é chamada dentro de `atualizarClassificacao`
+
+    // NOVO: Esconde camadas do estilo base que mostram todos os municípios/pontos
+    hideBaseMunicipalityLayers();
+
+    // Carrega listas completas nos selects (sem restringir por outros filtros)
+    await updateDependentFilters();
+
+    // Define coloração/legenda + faz a primeira atualização do mapa (com debounce)
+    atualizarClassificacao(); // chama scheduleAtualizarMapa internamente
 });
 
 /**
@@ -256,7 +313,7 @@ function getGeoJSONBounds(geojson) {
 function applyZoom(geojsonData) {
     // 1) Município selecionado: foca nele
     if (filtroMunicipio.value !== 'todos') {
-        const f = geojsonData.features.find(ft =>
+        const f = geojsonData.features?.find(ft =>
             (ft.properties?.name_muni === filtroMunicipio.value) ||
             (ft.properties?.name_muni_uf === filtroMunicipio.value)
         );
@@ -272,8 +329,14 @@ function applyZoom(geojsonData) {
         }
     }
 
-    // 2) UF / RM / Região selecionados: ajusta aos resultados filtrados
-    if (filtroUf.value !== 'todos' || filtroRm.value !== 'todos' || filtroRegiao.value !== 'todos') {
+    // 2) Qualquer outro filtro selecionado: ajusta aos resultados filtrados
+    if (
+        filtroUf.value !== 'todos' ||
+        filtroRm.value !== 'todos' ||
+        filtroRegiao.value !== 'todos' ||
+        filtroPorte.value !== 'todos' ||
+        filtroSubgrupo.value !== 'todos'
+    ) {
         const bbox = getGeoJSONBounds(geojsonData);
         if (bbox) {
             map.fitBounds(bbox, { padding: 50, maxZoom: 7.5, duration: 700 });
@@ -286,24 +349,48 @@ function applyZoom(geojsonData) {
 }
 
 /**
+ * Esconde camadas do estilo base que desenham todos os municípios/pontos (para evitar "todos + selecionado").
+ * Heurística: camadas do tipo 'circle' ou 'fill' e com id/source-layer contendo palavras-chave.
+ */
+function hideBaseMunicipalityLayers() {
+    const keywords = ['munic', 'muni', 'municip', 'cidade', 'cidades', 'cities', 'municipios', 'municipios-pontos'];
+    const style = map.getStyle();
+    if (!style || !style.layers) return;
+
+    style.layers.forEach(layer => {
+        const id = (layer.id || '').toLowerCase();
+        const srcLayer = (layer['source-layer'] || '').toLowerCase();
+        const hay = id + ' ' + srcLayer;
+        const match = keywords.some(k => hay.includes(k));
+
+        // Evita esconder nossas próprias camadas
+        const isOurLayer = id.startsWith('populacao-circulos') || id.startsWith('municipio-labels');
+
+        if (!isOurLayer && match && (layer.type === 'circle' || layer.type === 'fill')) {
+            try {
+                map.setLayoutProperty(layer.id, 'visibility', 'none');
+            } catch (_) {}
+        }
+    });
+}
+
+/**
  * Reseta todos os filtros para seus valores padrão ('todos')
  * e atualiza o mapa e os filtros dependentes.
  */
 async function limparFiltros() {
-    // Reseta o valor de todos os seletores para "todos"
     filtroRegiao.value = 'todos';
     filtroRm.value = 'todos';
     filtroUf.value = 'todos';
     filtroMunicipio.value = 'todos';
     filtroPorte.value = 'todos';
     filtroSubgrupo.value = 'todos';
-    filtroClassificacao.value = 'quintil'; // Reseta a classificação para o padrão
-    filtroModoCalculo.value = 'total'; // NOVO: Reseta o modo de cálculo
-    map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 }); // Reseta a visão
+    filtroClassificacao.value = 'quintil';
+    filtroModoCalculo.value = 'total';
+    map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
 
-    // Atualiza as listas dos filtros dinâmicos e o mapa (aguarda para evitar corrida)
-    await updateDependentFilters('limpar');
-    atualizarClassificacao(); // Reconfigura o subfiltro e a legenda, e chama atualizarMapa()
+    await updateDependentFilters(); // repovoa com listas completas
+    atualizarClassificacao();       // reconfigura subfiltro + colore
 }
 
 // --- Event Listeners para os Filtros ---
@@ -311,24 +398,14 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
     await limparFiltros();
 });
 
-filtroRegiao.addEventListener('change', async () => {
-    await updateDependentFilters('regiao'); // Atualiza UFs e Municípios com base na Região
-    await atualizarMapa(); // Atualiza o mapa com a nova seleção
-});
-
-filtroUf.addEventListener('change', async () => {
-    await updateDependentFilters('uf'); // Atualiza Municípios com base na UF
-    await atualizarMapa(); // Atualiza o mapa
-});
-
-filtroRm.addEventListener('change', async () => {
-    await updateDependentFilters('rm'); // Atualiza Região, UF e Municípios com base na RM
-    await atualizarMapa(); // Atualiza o mapa
-});
-
-filtroMunicipio.addEventListener('change', atualizarMapa); // Apenas atualiza o mapa
-filtroPorte.addEventListener('change', atualizarMapa); // Apenas atualiza o mapa
-filtroSubgrupo.addEventListener('change', atualizarMapa); // Apenas atualiza o mapa
+// Não resetamos selects "filhos": cada dropdown sempre mostra todas as opções.
+// Apenas atualizamos o mapa (com debounce).
+filtroRegiao.addEventListener('change', () => scheduleAtualizarMapa());
+filtroUf.addEventListener('change', () => scheduleAtualizarMapa());
+filtroRm.addEventListener('change', () => scheduleAtualizarMapa());
+filtroMunicipio.addEventListener('change', () => scheduleAtualizarMapa());
+filtroPorte.addEventListener('change', () => scheduleAtualizarMapa());
+filtroSubgrupo.addEventListener('change', () => scheduleAtualizarMapa());
 
 // NOVO: Listener para o modo de cálculo do quantil
 filtroModoCalculo.addEventListener('change', () => {
@@ -346,13 +423,10 @@ map.on("mouseleave", "populacao-circulos", () => { map.getCanvas().style.cursor 
  * @returns {Array} - Array de configuração de pintura para 'circle-color'.
  */
 function getMapPaintConfig(classification) {
-    // A propriedade 'dynamic_quantile' é a que sempre conterá o resultado do cálculo
-    // de quantil do backend, seja ele 'total' ou 'por_filtro'.
-    const propertyToUse = 'dynamic_quantile';
+    const propertyToUse = 'dynamic_quantile'; // resultado do backend
 
     switch (classification) {
         case 'decil':
-            // Mapeia deciis (valores numéricos de 1 a 10 de 'dynamic_quantile') para cores específicas
             return [
                 'match', ['get', propertyToUse],
                 1, '#a50026', 2, '#d73027',
@@ -360,14 +434,12 @@ function getMapPaintConfig(classification) {
                 5, '#fee08b', 6, '#d9ef8b',
                 7, '#a6d96a', 8, '#66bd63',
                 9, '#1a9850', 10, '#006837',
-                '#cccccc' // Cor padrão para valores não correspondentes
+                '#cccccc'
             ];
         case 'natural':
-            // Usa interpolação 'step' para classificar por faixas de receita per capita
-            // Este caso usa 'rc_23_pc' diretamente, não o quantil dinâmico
             return [
                 'step', ['get', 'rc_23_pc'],
-                '#d73027', // Cor para valores abaixo de 2500
+                '#d73027',
                 2500, '#fc8d59',
                 4000, '#fee08b',
                 6000, '#91cf60',
@@ -375,7 +447,6 @@ function getMapPaintConfig(classification) {
             ];
         case 'quintil':
         default:
-            // Configuração padrão para quintis (valores numéricos de 1 a 5 de 'dynamic_quantile')
             return [
                 'match', ['get', propertyToUse],
                 1, '#d73027', 2, '#fc8d59',
@@ -393,7 +464,6 @@ function updateLegend(classification) {
     const legend = document.getElementById('legend');
     let content = '';
 
-    // Função auxiliar para gerar labels de quantis
     const getQuantileLabel = (index, type) => `${index}º ${type}`;
 
     switch (classification) {
@@ -432,7 +502,6 @@ function updateLegend(classification) {
             break;
         case 'quintil':
         default:
-            // Legenda padrão para quintis
             content = `
                 <h5>Quintil</h5>
                 <div class="legend-container">
@@ -478,9 +547,8 @@ function atualizarClassificacao() {
     switch (classificacao) {
         case 'decil':
             subgrupoLabel.textContent = 'Decil:';
-            const decileOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-            decileOptions.forEach(opt => {
-                subgrupoSelect.add(new Option(`${opt}º decil`, opt)); // Ex: label '1º decil', value '1'
+            ['1','2','3','4','5','6','7','8','9','10'].forEach(opt => {
+                subgrupoSelect.add(new Option(`${opt}º decil`, opt));
             });
             break;
         case 'natural':
@@ -499,17 +567,14 @@ function atualizarClassificacao() {
         case 'quintil':
         default:
             subgrupoLabel.textContent = 'Quintil:';
-            const quintileOptions = ['1', '2', '3', '4', '5'];
-            quintileOptions.forEach(opt => {
-                subgrupoSelect.add(new Option(`${opt}º quintil`, opt)); // Ex: label '1º quintil', value '1'
+            ['1','2','3','4','5'].forEach(opt => {
+                subgrupoSelect.add(new Option(`${opt}º quintil`, opt));
             });
             break;
     }
     
     // --- PARTE 3: Atualiza o mapa para refletir a nova classificação ---
-    // Como a classificação principal mudou, o sub-filtro foi resetado para "Todos".
-    // Chamamos atualizarMapa() para garantir que o mapa reflita a nova coloração.
-    atualizarMapa();
+    scheduleAtualizarMapa(); // usa debounce
 }
 
 // Listener para o evento 'change' do filtro de classificação
@@ -529,14 +594,23 @@ async function downloadTableData() {
     const classificacaoAtual = filtroClassificacao.value;
     const modoCalculoAtual = filtroModoCalculo.value; // NOVO: Obtenha o valor do modo de cálculo
 
-    // Constrói a URL da API para obter os dados filtrados
-    const apiUrl = `/api/dados-municipios/?regiao=${q(regiaoAtual)}&uf=${q(ufAtual)}&municipio=${q(municipioAtual)}&porte=${q(porteAtual)}&subgrupo=${q(subgrupoAtual)}&rm=${q(rmAtual)}&classification=${q(classificacaoAtual)}&calculation_mode=${q(modoCalculoAtual)}`;
+    // Constrói a URL da API para obter os dados filtrados (sem "todos")
+    const apiUrl = buildApiUrl('/api/dados-municipios/', {
+        regiao: regiaoAtual,
+        uf: ufAtual,
+        municipio: municipioAtual,
+        porte: porteAtual,
+        subgrupo: subgrupoAtual,
+        rm: rmAtual,
+        classification: classificacaoAtual,
+        calculation_mode: modoCalculoAtual
+    });
 
     try {
         const response = await fetch(apiUrl);
         const geojsonData = await response.json();
 
-        const features = geojsonData.features;
+        const features = geojsonData.features || [];
 
         if (features.length === 0) {
             alert("Não há dados de municípios para baixar com os filtros atuais.");
@@ -548,43 +622,33 @@ async function downloadTableData() {
             { header: "Município", property: "name_muni_uf" },
             { header: "População 2023", property: "Populacao23" },
             { header: "Receita Per Capita 2023", property: "rc_23_pc" },
-            // NOVO: Usa a propriedade 'dynamic_quantile' para o CSV
-            // E os campos pré-calculados para referência, se desejar
             { header: "Quantil Dinâmico", property: "dynamic_quantile" }, 
-            { header: "Quintil Pré-Calculado", property: "quintil23_pre_calculado" }, // Para referência
-            { header: "Decil Pré-Calculado", property: "decil23_pre_calculado" },     // Para referência
+            { header: "Quintil Pré-Calculado", property: "quintil23_pre_calculado" },
+            { header: "Decil Pré-Calculado", property: "decil23_pre_calculado" },
             { header: "Percentil Nacional", property: "percentil" },
-            { header: "Percentil N", property: "percentil_n" }, // Adicionado para download
+            { header: "Percentil N", property: "percentil_n" },
             { header: "Cód. IBGE", property: "cod_ibge" }
         ];
 
-        // Cria o cabeçalho do CSV
         let csvContent = columns.map(col => `"${col.header}"`).join(";") + "\n";
 
-        // Adiciona as linhas de dados
         features.forEach(feature => {
             const row = columns.map(col => {
                 let value = feature.properties[col.property];
-                if (value === null || value === undefined) {
-                    value = "N/D"; // Trata valores nulos/indefinidos
-                }
-                if (typeof value === 'number') {
-                    value = String(value).replace(".", ","); // Ajuste simples para Excel pt-BR
-                }
+                if (value === null || value === undefined) value = "N/D";
+                if (typeof value === 'number') value = String(value).replace(".", ",");
                 return `"${value}"`;
             }).join(";");
             csvContent += row + "\n";
         });
 
-        // Cria um Blob com o conteúdo CSV
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
 
-        // Cria um link temporário para download
         const a = document.createElement("a");
         a.href = url;
-        a.download = "dados_municipios_filtrados.csv"; // Nome do arquivo
-        document.body.appendChild(a); // Necessário para Firefox
+        a.download = "dados_municipios_filtrados.csv";
+        document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
