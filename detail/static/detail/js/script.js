@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return out;
   }
+
   function handleToggleClick(event) {
     event.stopPropagation();
     const targetId = this.dataset.target;
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
       targetElement.classList.toggle('hidden');
     }
   }
+
   function initializeToggleListeners(scopeElement = document) {
     const toggleElements = scopeElement.querySelectorAll('.toggle-heading, .toggle-subheading');
     toggleElements.forEach(el => {
@@ -25,10 +27,12 @@ document.addEventListener('DOMContentLoaded', function() {
       el.addEventListener('click', handleToggleClick);
     });
   }
+
   function parseCurrencyValue(str) {
     if (!str) return 0;
     return parseFloat(str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
   }
+
   function sortChildrenByValue(container, isPerCapita) {
     const children = Array.from(container.children);
     children.sort((a, b) => {
@@ -39,10 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     children.forEach(child => container.appendChild(child));
   }
+
   function sortAllRevenueSections(isPerCapita) {
     const containers = document.querySelectorAll('#main-revenue-details-container, [id^="detalhe-"]');
     containers.forEach(container => sortChildrenByValue(container, isPerCapita));
     initializeToggleListeners();
+  }
+
+  // Preserva seleção se existir; senão cai para 'todos'
+  function restoreSelectValue(selectEl, value) {
+    const has = Array.from(selectEl.options).some(o => o.value === value);
+    selectEl.value = has ? value : 'todos';
   }
 
   // ======================== ELEMENTOS DA PÁGINA ========================
@@ -53,10 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   const filtroRegiao = document.getElementById('filtro-regiao');
-  const filtroUf = document.getElementById('filtro-uf');
-  const filtroMunicipio = document.getElementById('filtro-municipio');
-  const filtroPorte = document.getElementById('filtro-porte');
-  const filtroRm = document.getElementById('filtro-rm');
+  const filtroUf     = document.getElementById('filtro-uf');
+  const filtroPorte  = document.getElementById('filtro-porte');
+  const filtroRm     = document.getElementById('filtro-rm');
 
   const toggleBtn = document.getElementById('valor-toggle-btn');
   let isShowingPerCapita = true;
@@ -84,49 +94,56 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ======================== FILTROS / KPIs / DETALHES ========================
-  async function updateDependentFilters(trigger = null) {
-    if (!filtroRegiao || !filtroUf || !filtroRm || !filtroMunicipio) return;
+  // Agora SEMPRE usa lista completa e NÃO existe município
+  async function updateDependentFilters() {
+    if (!filtroRegiao || !filtroUf || !filtroRm) return;
+
     const regiaoAtual = filtroRegiao.value;
-    const ufAtual = filtroUf.value;
-    const rmAtual = filtroRm.value;
-    const municipioAtual = filtroMunicipio.value;
-    const apiUrl = `/api/get-dependent-filters/?regiao=${regiaoAtual}&uf=${ufAtual}&rm=${rmAtual}`;
+    const ufAtual     = filtroUf.value;
+    const rmAtual     = filtroRm.value;
 
     try {
-      const response = await fetch(apiUrl);
+      // IMPORTANTE: alguns backends só devolvem listas “cheias” se você mandar os 3 = todos
+      const url = '/api/get-dependent-filters/?regiao=todos&uf=todos&rm=todos';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
+      // debug opcional:
+      // console.log('[dependent-filters]', data);
 
+      // Região
       filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
-      data.regioes.forEach(item => filtroRegiao.add(new Option(item, item)));
-      filtroRegiao.value = regiaoAtual;
+      (data.regioes || []).forEach(item => filtroRegiao.add(new Option(item, item)));
+      restoreSelectValue(filtroRegiao, regiaoAtual);
 
-      filtroRm.innerHTML = '<option value="todos">Todas</option>';
-      data.rms.forEach(item => filtroRm.add(new Option(item, item)));
-      if (trigger !== 'regiao' && trigger !== 'uf') filtroRm.value = rmAtual;
+      // RM
+      filtroRm.innerHTML = '<option value="todos">Todos</option>';
+      (data.rms || []).forEach(item => filtroRm.add(new Option(item, item)));
+      restoreSelectValue(filtroRm, rmAtual);
 
-      filtroUf.innerHTML = '<option value="todos">Todos</option>';
-      data.ufs.forEach(item => filtroUf.add(new Option(item, item)));
-      if (trigger !== 'regiao') filtroUf.value = ufAtual;
-
-      filtroMunicipio.innerHTML = '<option value="todos">Todos</option>';
-      data.municipios.forEach(item => filtroMunicipio.add(new Option(item, item)));
-      filtroMunicipio.value = municipioAtual;
+      // UF
+      filtroUf.innerHTML = '<option value="todos">Todas</option>';
+      (data.ufs || []).forEach(item => filtroUf.add(new Option(item, item)));
+      restoreSelectValue(filtroUf, ufAtual);
 
     } catch (error) {
-      console.error("[filtros] Erro ao atualizar filtros dependentes:", error);
+      console.error("[filtros] Erro ao atualizar filtros (listas completas):", error);
     }
   }
 
+  // Monta params (sem município)
+  function buildParams() {
+    const params = new URLSearchParams();
+    params.set('porte',   filtroPorte?.value  || 'todos');
+    params.set('rm',      filtroRm?.value     || 'todos');
+    params.set('regiao',  filtroRegiao?.value || 'todos');
+    params.set('uf',      filtroUf?.value     || 'todos');
+    return params;
+  }
+
   async function updateKPIs() {
-    const params = new URLSearchParams({
-      porte: filtroPorte?.value || 'todos',
-      rm: filtroRm?.value || 'todos',
-      regiao: filtroRegiao?.value || 'todos',
-      uf: filtroUf?.value || 'todos',
-      municipio: filtroMunicipio?.value || 'todos',
-    });
     try {
-      const response = await fetch(`/api/dados-detalhados/?${params}`);
+      const response = await fetch(`/api/dados-detalhados/?${buildParams()}`);
       const data = await response.json();
       document.getElementById('kpi-populacao').textContent =
         (data.kpis?.populacao || 0).toLocaleString('pt-BR');
@@ -142,15 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function updateFiscalDetails() {
-    const params = new URLSearchParams({
-      porte: filtroPorte?.value || 'todos',
-      rm: filtroRm?.value || 'todos',
-      regiao: filtroRegiao?.value || 'todos',
-      uf: filtroUf?.value || 'todos',
-      municipio: filtroMunicipio?.value || 'todos',
-    });
     try {
-      const response = await fetch(`/api/fiscal-details/?${params}`);
+      const response = await fetch(`/api/fiscal-details/?${buildParams()}`);
       if (!response.ok) throw new Error('Falha ao buscar detalhes fiscais.');
       const data = await response.json();
       const container = document.getElementById('main-revenue-details-container');
@@ -176,26 +186,17 @@ document.addEventListener('DOMContentLoaded', function() {
   let chartInstance = null;
   let currentChartData = initialChartData; // Inicia com os dados da página
 
-  // **NOVA FUNÇÃO**
   async function updateChart() {
-    const params = new URLSearchParams({
-      porte: filtroPorte?.value || 'todos',
-      rm: filtroRm?.value || 'todos',
-      regiao: filtroRegiao?.value || 'todos',
-      uf: filtroUf?.value || 'todos',
-      municipio: filtroMunicipio?.value || 'todos',
-    });
     try {
-      const response = await fetch(`/api/conjunto-chart-data/?${params}`);
+      const response = await fetch(`/api/conjunto-chart-data/?${buildParams()}`);
       if (!response.ok) throw new Error('Falha ao buscar dados do gráfico.');
-      currentChartData = await response.json(); // Atualiza os dados do gráfico
-      renderChart(selectEl.value, currentChartData); // Redesenha o gráfico com os novos dados
+      currentChartData = await response.json();
+      renderChart(selectEl.value, currentChartData);
     } catch (error) {
       console.error("[chart] Erro ao atualizar dados do gráfico:", error);
     }
   }
 
-  // **FUNÇÃO MODIFICADA**
   function renderChart(categoryKey, allRevenueChartData) {
     if (!allRevenueChartData) {
       console.error('[chart] Dados do gráfico não disponíveis.');
@@ -204,17 +205,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataObj = allRevenueChartData[categoryKey];
     if (!dataObj || !Array.isArray(dataObj.labels) || !Array.isArray(dataObj.values)) {
       console.error(`[chart] Estrutura inesperada em ${categoryKey}`, dataObj);
-      if (chartInstance) chartInstance.destroy(); // Limpa o gráfico se der erro
+      if (chartInstance) chartInstance.destroy();
       return;
     }
 
     const rawValues = dataObj.values.map(v => Number(v) || 0);
     const total = rawValues.reduce((a, b) => a + b, 0);
 
-    // Filtra labels e valores que são 0 para não poluir o gráfico
     const filteredData = dataObj.labels.map((label, i) => ({
-      label: label,
-      value: rawValues[i]
+      label, value: rawValues[i]
     })).filter(item => item.value > 0);
     
     const finalLabels = filteredData.map(item => item.label);
@@ -233,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: [(selectEl.options[selectEl.selectedIndex]?.text || 'Categoria').toUpperCase()],
+        labels: [(selectEl?.options[selectEl.selectedIndex]?.text || 'Categoria').toUpperCase()],
         datasets
       },
       options: {
@@ -276,32 +275,32 @@ document.addEventListener('DOMContentLoaded', function() {
   // ======================== FUNÇÃO PRINCIPAL DE ATUALIZAÇÃO ========================
   async function applyFilters() {
     await Promise.all([
-        updateKPIs(),
-        updateFiscalDetails(),
-        updateChart() // <— ATUALIZA O GRÁFICO
+      updateKPIs(),
+      updateFiscalDetails(),
+      updateChart()
     ]);
   }
 
   // ======================== INICIALIZAÇÃO ========================
-  if (filtroRegiao) filtroRegiao.addEventListener('change', () => { updateDependentFilters('regiao'); applyFilters(); });
-  if (filtroUf) filtroUf.addEventListener('change', () => { updateDependentFilters('uf'); applyFilters(); });
-  if (filtroRm) filtroRm.addEventListener('change', () => { updateDependentFilters('rm'); applyFilters(); });
-  if (filtroPorte) filtroPorte.addEventListener('change', applyFilters);
-  if (filtroMunicipio) filtroMunicipio.addEventListener('change', applyFilters);
+  // Mudanças: NÃO repovoar selects; apenas atualizar dados
+  if (filtroRegiao) filtroRegiao.addEventListener('change', () => { applyFilters(); });
+  if (filtroUf)     filtroUf.addEventListener('change',     () => { applyFilters(); });
+  if (filtroRm)     filtroRm.addEventListener('change',     () => { applyFilters(); });
+  if (filtroPorte)  filtroPorte.addEventListener('change',  applyFilters);
 
   const btnLimpar = document.getElementById('btn-limpar-filtros');
   if (btnLimpar) {
     btnLimpar.addEventListener('click', function() {
       if (filtroRegiao) filtroRegiao.value = 'todos';
-      if (filtroRm) filtroRm.value = 'todos';
-      if (filtroUf) filtroUf.value = 'todos';
-      if (filtroMunicipio) filtroMunicipio.value = 'todos';
-      if (filtroPorte) filtroPorte.value = 'todos';
-      updateDependentFilters('limpar');
+      if (filtroRm)     filtroRm.value     = 'todos';
+      if (filtroUf)     filtroUf.value     = 'todos';
+      if (filtroPorte)  filtroPorte.value  = 'todos';
+      updateDependentFilters(); // repovoa com listas completas
       applyFilters();
     });
   }
 
+  // Primeira carga: popula listas completas e aplica filtros
   updateDependentFilters();
   applyFilters();
 });
