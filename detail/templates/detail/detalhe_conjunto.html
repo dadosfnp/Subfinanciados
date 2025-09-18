@@ -1,5 +1,7 @@
 {% extends "global/head.html" %}
 {% load static %}
+<link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
+
 {% block extra_head %}
     <title>Detalhamento de Receita por Conjunto de Municípios</title>
     <link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
@@ -125,9 +127,11 @@
                 <section class="metric-card p-6 rounded-xl">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
-                        <button id="valor-toggle-btn" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                            Valores Reais
-                        </button>
+                        <!-- controle segmentado novo -->
+                        <div id="valor-toggle" class="segmented">
+                        <button id="btn-per-capita" class="segmented-option active" type="button">Per Capita</button>
+                        <button id="btn-valores-reais" class="segmented-option" type="button">Valores Reais</button>
+                        </div>
                     </div>
                     <div id="main-revenue-details-container">
                         {% if revenue_tree %}

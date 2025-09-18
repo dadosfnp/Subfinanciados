@@ -1,4 +1,4 @@
-/* O seu CSS original vai aqui - não precisa de alterações */
+/* CSS de Análise Municipal */
 body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }
 .kpi-card, .metric-card { background-color: #ffffff; border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s; }
 .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
@@ -13,4 +13,51 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1118
 .ranking-indicator-container:hover .ranking-tooltip { visibility: visible; opacity: 1; }
 .metric-detail-row { display: flex; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
 .metric-detail-row:last-child { border-bottom: none; }
-.chart-container { position: relative; margin: 0 auto; width: 90%; max-width: 400px; }
+
+.chart-container {
+  position: relative;
+  margin: 0 auto;
+  width: 90%;
+  max-width: 400px;
+} 
+
+/* === Toggle segmentado  === */
+#valor-toggle.segmented {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;                 /* fundo branco */
+  border: 1px solid #d9dee7;        /* borda externa */
+  border-radius: 6px;               /* cantos pouco arredondados */
+  padding: 0;                       /* sem padding no contêiner */
+  overflow: hidden;                 /* esconde o raio do botão ativo */
+}
+
+#valor-toggle .segmented-option {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  margin: 0;                        /* importantíssimo p/ alinhar */
+  padding: 8px 14px;                /* altura/largura do “tab” */
+  border-radius: 0;                 /* retangular */
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #194685;
+}
+
+#valor-toggle .segmented-option + .segmented-option {
+  border-left: 1px solid #e5e7eb;   /* divisor vertical entre opções */
+}
+
+#valor-toggle .segmented-option.active {
+  background: #194685;              /* azul ativo */
+  color: #fff;
+  box-shadow: none;
+}
+
+#valor-toggle .segmented-option:focus-visible {
+  outline: 2px solid #194685;
+  outline-offset: 2px;
+}
