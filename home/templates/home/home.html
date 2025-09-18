@@ -161,7 +161,9 @@
     </div>
 
 
-    <script src="{% static 'home/js/script.js' %}"></script>
+    {% now "U" as ts %}
+    <script src="{% static 'home/js/script.js' %}?v={{ ts }}"></script>
+
 
 
 {% endblock content %}
