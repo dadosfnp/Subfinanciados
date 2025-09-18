@@ -1,5 +1,9 @@
 {% extends "global/head.html" %}
 {% load static %}
+
+<!-- # 1 Tema da Home primeiro (cores, fundo, layout da sidebar, etc.) -->
+<link rel="stylesheet" href="{% static 'home/css/style.css' %}">
+<!-- # 2 Ajustes específicos do Detail depois -->
 <link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
 
 {% block extra_head %}
@@ -94,7 +98,7 @@
             <header class="flex flex-col md:flex-row justify-between items-start mb-8">
                 <div>
                     <h1 class="text-3xl md:text-5xl font-bold flex items-center">
-                        <span id="municipio-name">Detalhamento da Receita Corrente</span>
+                        <!--<span id="municipio-name">Detalhamento da Receita Corrente</span>-->
                         <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-4 hidden">
                             <div class="ranking-indicator"></div>
                             <div class="ranking-tooltip"></div>

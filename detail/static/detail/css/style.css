@@ -1,63 +1,156 @@
-/* CSS de Análise Municipal */
-body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }
-.kpi-card, .metric-card { background-color: #ffffff; border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s; }
-.kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
-.toggle-heading, .toggle-subheading { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-.toggle-subheading { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.toggle-heading .arrow, .toggle-subheading .arrow { transition: transform 0.2s ease-in-out; }
-.toggle-heading.open .arrow, .toggle-subheading.open .arrow { transform: rotate(90deg); }
-.ranking-indicator-container { position: relative; display: inline-flex; align-items: center; vertical-align: middle; }
-.ranking-indicator { width: 14px; height: 14px; border-radius: 3px; }
-.quintil-1 { background-color: #d73027; } .quintil-2 { background-color: #fc8d59; } .quintil-3 { background-color: #fee08b; } .quintil-4 { background-color: #91cf60; } .quintil-5 { background-color: #1a9850; }
-.ranking-tooltip { visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 0.75rem; }
-.ranking-indicator-container:hover .ranking-tooltip { visibility: visible; opacity: 1; }
-.metric-detail-row { display: flex; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
-.metric-detail-row:last-child { border-bottom: none; }
-
-.chart-container {
-  position: relative;
-  margin: 0 auto;
-  width: 90%;
-  max-width: 400px;
-} 
-
-/* === Toggle segmentado  === */
-#valor-toggle.segmented {
-  display: inline-flex;
-  align-items: center;
-  background: #fff;                 /* fundo branco */
-  border: 1px solid #d9dee7;        /* borda externa */
-  border-radius: 6px;               /* cantos pouco arredondados */
-  padding: 0;                       /* sem padding no contêiner */
-  overflow: hidden;                 /* esconde o raio do botão ativo */
+/* ========= TEMA BASE (igual à home) ========= */
+:root{
+  --bs-body-bg:#dde4ed;
+  --bs-border-color:#dee2e6;
+  --fnp-blue:#194685;
+  --fnp-yellow:#efae17;
 }
 
-#valor-toggle .segmented-option {
-  -webkit-appearance: none;
-  appearance: none;
-  border: 0;
-  background: transparent;
-  margin: 0;                        /* importantíssimo p/ alinhar */
-  padding: 8px 14px;                /* altura/largura do “tab” */
-  border-radius: 0;                 /* retangular */
-  font-weight: 700;
-  font-size: 0.9rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #194685;
+html,body{height:100%}
+body{
+  font-family:'Inter',sans-serif;
+  background-color:var(--bs-body-bg);
+  color:#111827;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden; /* rolagem nas áreas internas */
 }
 
-#valor-toggle .segmented-option + .segmented-option {
-  border-left: 1px solid #e5e7eb;   /* divisor vertical entre opções */
+/* ========= LAYOUT (replica home) ========= */
+.content-wrapper,
+.detail-wrapper{          /* use qualquer um dos dois que existir */
+  display:flex;
+  flex:1;
+  overflow:hidden;
 }
 
-#valor-toggle .segmented-option.active {
-  background: #194685;              /* azul ativo */
-  color: #fff;
-  box-shadow: none;
+.dashboard-content,
+.detail-content,
+.main-content{            /* coluna da direita */
+  flex:1;
+  padding:1.5rem;
+  overflow-y:auto;
 }
 
-#valor-toggle .segmented-option:focus-visible {
-  outline: 2px solid #194685;
-  outline-offset: 2px;
+/* ========= SIDEBAR (igual à home) ========= */
+aside.sidebar,
+.filters-sidebar,
+#filters{                 /* o detail usa #filters; deixei seletores redundantes */
+  width:280px;
+  flex-shrink:0;
+  padding:1.5rem;
+  background:#fff;
+  border-right:1px solid var(--bs-border-color);
+  overflow-y:auto;
+  box-shadow:2px 0 5px rgba(25,70,133,.12);
+}
+
+aside.sidebar h4,
+#filters h4{font-size:1.25rem;color:var(--fnp-blue)}
+
+aside.sidebar hr,
+#filters hr{margin:1rem 0 1.5rem;border-top:1px solid rgba(0,0,0,.1)}
+
+aside.sidebar .filter-group,
+#filters .filter-group{margin-bottom:1.25rem}
+
+aside.sidebar label,
+#filters label{
+  font-weight:500;
+  margin-bottom:.5rem;
+  color:var(--fnp-blue);
+}
+
+/* selects pequenos, mesmo “tamanho visual” da home */
+aside.sidebar select,
+#filters select{
+  height:calc(1.8125rem + 2px);
+  padding:.25rem .5rem;
+  font-size:.875rem;
+  background:#fff;
+  border:1px solid var(--bs-border-color);
+  border-radius:.25rem;
+}
+
+/* botão limpar no padrão FNP */
+#btn-limpar-filtros{
+  width:100%;
+  background:#194685;
+  border-color:#194685;
+  color:#fff;
+}
+#btn-limpar-filtros:hover{filter:brightness(.95)}
+
+/* ========= CARTÕES E SEÇÕES ========= */
+.kpi-card,.metric-card,
+.section-card,.panel,.box,.table-card{
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 4px 8px rgba(0,0,0,.08);
+  border:1px solid transparent;
+}
+.kpi-card:hover{transform:translateY(-3px);transition:.2s}
+.kpi-card h6{color:#6c757d;font-size:.9rem;margin-bottom:.25rem}
+.kpi-card .value{font-size:1.5rem;font-weight:600;color:var(--fnp-blue)}
+
+.section-card h5,
+.panel h5,
+.box h5{color:var(--fnp-blue);margin-bottom:1rem}
+
+/* ========= TOGGLE retangular (Per Capita / Valores Reais) ========= */
+#valor-toggle.segmented{
+  display:inline-flex;
+  align-items:center;
+  background:#fff;
+  border:1px solid #d9dee7;
+  border-radius:6px;      /* retângulo leve, igual home */
+  padding:0;
+  overflow:hidden;
+}
+#valor-toggle .segmented-option{
+  -webkit-appearance:none;appearance:none;
+  background:transparent;border:0;margin:0;
+  padding:8px 14px;border-radius:0;
+  font-weight:700;font-size:.9rem;line-height:1;
+  cursor:pointer;
+}
+#valor-toggle .segmented-option + .segmented-option{
+  border-left:1px solid #e5e7eb;
+}
+#valor-toggle .segmented-option.active{
+  background:var(--fnp-blue);
+  color:#fff;
+  box-shadow:none;
+}
+#valor-toggle .segmented-option:focus-visible{
+  outline:2px solid var(--fnp-blue);
+  outline-offset:2px;
+}
+
+/* ========= TIPOS/DETALHES já existentes ========= */
+.toggle-heading,.toggle-subheading{
+  cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+}
+.toggle-subheading{padding:.5rem 0}
+.toggle-heading .arrow,.toggle-subheading .arrow{transition:transform .2s ease-in-out}
+.toggle-heading.open .arrow,.toggle-subheading.open .arrow{transform:rotate(90deg)}
+
+.ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.ranking-indicator{width:14px;height:14px;border-radius:3px}
+.quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
+.ranking-tooltip{visibility:hidden;background:#333;color:#fff;text-align:center;border-radius:6px;padding:5px 8px;position:absolute;z-index:10;bottom:125%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;white-space:nowrap;font-size:.75rem}
+.ranking-indicator-container:hover .ranking-tooltip{visibility:visible;opacity:1}
+
+/* container do gráfico */
+.chart-container{position:relative;margin:0 auto;width:90%;max-width:400px}
+
+/* responsivo – sidebar em cima no mobile, igual home */
+@media (max-width: 767.98px){
+  aside.sidebar,#filters{
+    width:100%;
+    max-height:50vh;
+    border-right:none;
+    border-bottom:1px solid var(--bs-border-color);
+  }
+  .content-wrapper,.detail-wrapper{flex-direction:column}
 }
