@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // ======================== HELPERS ========================
+  // --- JS da Análise Municipal
+
   function parsePossiblyMultiSerialized(text) {
     let out = text;
     try { out = JSON.parse(out); } catch { return text; }
@@ -68,9 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const filtroPorte  = document.getElementById('filtro-porte');
   const filtroRm     = document.getElementById('filtro-rm');
 
-  const toggleBtn = document.getElementById('valor-toggle-btn');
-  let isShowingPerCapita = true;
-
   // ======================== JSON INICIAL ========================
   let initialChartData = null;
   try {
@@ -80,18 +78,38 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  // ======================== TOGGLE VALOR/PER CAPITA ========================
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', function() {
-      isShowingPerCapita = !isShowingPerCapita;
-      this.textContent = isShowingPerCapita ? 'Valores Reais' : 'Per Capita';
-      const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
-      const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
-      valoresAbsolutos.forEach(el => el.classList.toggle('hidden', isShowingPerCapita));
-      valoresPerCapita.forEach(el => el.classList.toggle('hidden', !isShowingPerCapita));
-      sortAllRevenueSections(isShowingPerCapita);
-    });
-  }
+// --- Toggle segmentado Per Capita / Valores Reais ---
+
+  let isShowingPerCapita = true;
+
+const perCapitaBtn = document.getElementById('btn-per-capita');
+const reaisBtn     = document.getElementById('btn-valores-reais');
+
+function setValorMode(mode) {
+  // mode: 'percapita' | 'real'
+  isShowingPerCapita = (mode === 'percapita');
+
+  // estados visuais
+  perCapitaBtn?.classList.toggle('active', isShowingPerCapita);
+  reaisBtn?.classList.toggle('active', !isShowingPerCapita);
+
+  // exibição dos valores
+  const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
+  const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
+  valoresAbsolutos.forEach(el => el.classList.toggle('hidden', isShowingPerCapita));
+  valoresPerCapita.forEach(el => el.classList.toggle('hidden', !isShowingPerCapita));
+
+  // mantém sua ordenação por valor
+  sortAllRevenueSections(isShowingPerCapita);
+}
+
+// listeners
+perCapitaBtn?.addEventListener('click', () => setValorMode('percapita'));
+reaisBtn?.addEventListener('click',     () => setValorMode('real'));
+
+// estado inicial ao carregar a página
+setValorMode('percapita');
+
 
   // ======================== FILTROS / KPIs / DETALHES ========================
   // Agora SEMPRE usa lista completa e NÃO existe município
