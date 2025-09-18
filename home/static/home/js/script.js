@@ -1,3 +1,5 @@
+// >>> HOME filters: lista completa SEMPRE (espelhando o Mapa) <<<
+
 // Variáveis globais para elementos DOM e instância do gráfico
 let filtroRegiao;
 let filtroUf;
@@ -20,7 +22,7 @@ let toggle2000e2023;
 let populacaoQuintilCtx;
 let populacaoQuintilChart;
 
-// Novas variáveis globais para elementos das tabelas
+// Variáveis das tabelas
 let tableCard2023;
 let table2023Head;
 let table2023Body;
@@ -30,62 +32,65 @@ let table2000Head;
 let table2000Body;
 
 /**
- * Função auxiliar para obter e converter dados JSON de uma tag <script>.
- * Pressupõe que o HTML contenha uma tag <script type="application/json" id="seu-id">.
+ * Restaura o valor de um <select> se existir entre as opções; senão, cai para 'todos'.
+ */
+function restoreSelectValue(selectEl, value) {
+    const has = Array.from(selectEl.options).some(o => o.value === value);
+    selectEl.value = has ? value : 'todos';
+}
+
+/**
+ * (Opcional) Lê JSON de uma <script type="application/json" id="...">
  */
 function getJsonData(id) {
     const element = document.getElementById(id);
     if (element && element.textContent) {
-        try {
-            return JSON.parse(element.textContent);
-        } catch (e) {
-            console.error(`Erro ao processar JSON do elemento #${id}:`, e);
-            return null;
-        }
+        try { return JSON.parse(element.textContent); }
+        catch (e) { console.error(`Erro ao processar JSON do elemento #${id}:`, e); return null; }
     }
     return null;
 }
 
 /**
- * Atualiza os filtros dependentes (UF, RM) com base na região, UF ou RM selecionada.
- * @param {string} trigger - Indica qual filtro acionou a atualização ('regiao', 'uf', 'rm').
+ * Atualiza os filtros SEM RESTRIÇÃO (lista completa da API, sem parâmetros).
+ * Mantém o valor selecionado quando possível; caso contrário, define 'todos'.
  */
-async function updateDependentFilters(trigger = null) {
+async function updateDependentFilters(initial = false) {
     const regiaoAtual = filtroRegiao.value;
-    const ufAtual = filtroUf.value;
-    const rmAtual = filtroRm.value;
-
-    const apiUrl = `/api/get-dependent-filters/?regiao=${regiaoAtual}&uf=${ufAtual}&rm=${rmAtual}`;
+    const ufAtual     = filtroUf.value;
+    const rmAtual     = filtroRm.value;
 
     try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error(`Erro HTTP! status: ${response.status}`);
+        // Busca SEM parâmetros → servidor devolve listas completas
+        const resp = await fetch('/api/get-dependent-filters/');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
 
-        const data = await response.json();
-
+        // Regiões (label "Todas")
         filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
-        data.regioes.forEach(item => filtroRegiao.add(new Option(item, item)));
-        filtroRegiao.value = regiaoAtual;
+        (data.regioes || []).forEach(v => filtroRegiao.add(new Option(v, v)));
+        restoreSelectValue(filtroRegiao, regiaoAtual);
 
+        // RM (label "Todos")
         filtroRm.innerHTML = '<option value="todos">Todos</option>';
-        data.rms.forEach(item => filtroRm.add(new Option(item, item)));
-        if (trigger !== 'regiao' && trigger !== 'uf') filtroRm.value = rmAtual;
+        (data.rms || []).forEach(v => filtroRm.add(new Option(v, v)));
+        restoreSelectValue(filtroRm, rmAtual);
 
+        // UF (label "Todas")
         filtroUf.innerHTML = '<option value="todos">Todas</option>';
-        data.ufs.forEach(item => filtroUf.add(new Option(item, item)));
-        if (trigger !== 'regiao') filtroUf.value = ufAtual;
+        (data.ufs || []).forEach(v => filtroUf.add(new Option(v, v)));
+        restoreSelectValue(filtroUf, ufAtual);
 
     } catch (error) {
-        console.error("Erro ao atualizar filtros dependentes:", error);
+        console.error('Erro ao atualizar filtros (listas completas):', error);
     }
+
+    // Igual ao mapa: não repovoa a cada mudança; só atualiza dados
+    if (!initial) await atualizarFiltros();
 }
 
 /**
- * Renderiza uma tabela com base nos cabeçalhos e dados fornecidos.
- * @param {HTMLElement} tableHeadElement - Elemento <thead>.
- * @param {HTMLElement} tableBodyElement - Elemento <tbody>.
- * @param {Array<string>} headers - Lista de cabeçalhos.
- * @param {Array<Object>} data - Lista de objetos para as linhas.
+ * Renderiza tabela genérica
  */
 function renderTable(tableHeadElement, tableBodyElement, headers, data) {
     tableHeadElement.innerHTML = '';
@@ -111,7 +116,7 @@ function renderTable(tableHeadElement, tableBodyElement, headers, data) {
 }
 
 /**
- * Busca e atualiza os dados do dashboard (cards, gráfico e tabela dinâmica).
+ * Busca e atualiza cards, gráfico e tabelas com base nos filtros atuais.
  */
 async function atualizarFiltros() {
     const selectedRegiao = filtroRegiao.value;
@@ -119,9 +124,9 @@ async function atualizarFiltros() {
     const selectedRm = filtroRm.value;
     const selectedPorte = filtroPorte ? filtroPorte.value : 'todos';
 
-    let classificationFilter = quantilDecilRadio?.checked ? 'decil' : 'quintil';
-    let displayFormat = formatPorcentagemRadio?.checked ? 'porcentagem' : 'numero';
-    let calculationMode = calcModeFilteredRadio.checked ? 'por_filtro' : 'total';
+    const classificationFilter = quantilDecilRadio?.checked ? 'decil' : 'quintil';
+    const displayFormat = formatPorcentagemRadio?.checked ? 'porcentagem' : 'numero';
+    const calculationMode = calcModeFilteredRadio.checked ? 'por_filtro' : 'total';
 
     const selectedYearOptionElement = document.querySelector('.toggle-option.active');
     const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2023';
@@ -137,7 +142,7 @@ async function atualizarFiltros() {
         }
         const data = await response.json();
 
-        // ==== Atualizar cards de resumo ====
+        // ==== Cards de resumo ====
         document.getElementById('summary-total-municipios').textContent =
             `${data.summaryCards.totalMunicipios.toLocaleString('pt-BR')} (${data.summaryCards.percTotalMunicipios.toFixed(1)}%)`;
         document.getElementById('summary-media-receita').textContent =
@@ -152,13 +157,11 @@ async function atualizarFiltros() {
 
         document.getElementById('summary-gini').textContent = data.summaryCards.giniIndex;
 
-        // ==== Atualizar gráfico ====
+        // ==== Gráfico ====
         populacaoQuintilChart.data.labels = data.chartData.labels;
         populacaoQuintilChart.data.datasets = [];
 
-        // Usar cores da logo
-        const colors = ['#194685', '#efae17'];
-
+        const colors = ['#194685', '#efae17']; // paleta da marca
         if (data.chartData.datasets?.length > 0) {
             data.chartData.datasets.forEach((dataset, index) => {
                 populacaoQuintilChart.data.datasets.push({
@@ -189,7 +192,7 @@ async function atualizarFiltros() {
 
         populacaoQuintilChart.update();
 
-        // ==== Atualizar tabelas ====
+        // ==== Tabelas ====
         renderTable(table2023Head, table2023Body, data.tableHeaders23, data.tableData23);
         tableCard2023.classList.remove('d-none');
 
@@ -200,7 +203,7 @@ async function atualizarFiltros() {
             tableCard2000.classList.add('d-none');
         }
 
-        // Ativar hover sincronizado agora que as tabelas existem
+        // Hover sincronizado
         enableSynchronizedHover('#table-2023', '#table-2000');
 
     } catch (error) {
@@ -262,16 +265,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 datalabels: { 
                     anchor: 'end',
                     align: 'top',
-                    color: '#00000', // Cor do texto
-                    font: {
-                        size: 12
-                    },
-                   formatter: function (value, context) {
+                    color: '#00000',
+                    font: { size: 12 },
+                    formatter: function (value) {
                         const isPercentage = document.getElementById('formatPorcentagem').checked;
-                         return isPercentage
+                        return isPercentage
                             ? value.toFixed(1) + '%'
                             : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
-    }
+                    }
                 }
             },
             scales: {
@@ -292,12 +293,13 @@ document.addEventListener('DOMContentLoaded', () => {
         plugins: [ChartDataLabels]
     });
 
-    updateDependentFilters();
-    atualizarFiltros();
+    // Carrega listas completas e depois pinta a tela
+    updateDependentFilters(true).then(atualizarFiltros);
 
-    filtroRegiao.addEventListener('change', () => { updateDependentFilters('regiao'); atualizarFiltros(); });
-    filtroUf.addEventListener('change', () => { updateDependentFilters('uf'); atualizarFiltros(); });
-    filtroRm.addEventListener('change', () => { updateDependentFilters('rm'); atualizarFiltros(); });
+    // Em cada mudança, NÃO repopular selects — só atualiza os dados
+    filtroRegiao.addEventListener('change', atualizarFiltros);
+    filtroUf.addEventListener('change', atualizarFiltros);
+    filtroRm.addEventListener('change', atualizarFiltros);
     if (filtroPorte) filtroPorte.addEventListener('change', atualizarFiltros);
 
     quantilQuintilRadio.addEventListener('change', atualizarFiltros);
@@ -332,60 +334,42 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
         toggle2023.classList.add('active');
 
-        updateDependentFilters();
-        atualizarFiltros();
+        // Repovoa com listas completas e atualiza a tela
+        updateDependentFilters(true).then(atualizarFiltros);
     });
 });
 
 // Hover sincronizado entre tabelas 2023 e 2000
 function enableSynchronizedHover(tableId1, tableId2) {
-    const table1 = document.querySelector(tableId1); // Tabela 2023
-    const table2 = document.querySelector(tableId2); // Tabela 2000
-
+    const table1 = document.querySelector(tableId1); // 2023
+    const table2 = document.querySelector(tableId2); // 2000
     if (!table1 || !table2) return;
 
     const tables = [table1, table2];
-
     tables.forEach((table, tableIndex) => {
         const rows = table.querySelectorAll('tbody tr');
-
         rows.forEach((row, rowIndex) => {
             const cells = row.querySelectorAll('td');
-
             cells.forEach((cell, colIndex) => {
                 cell.addEventListener('mouseenter', () => {
                     const otherTable = tables[tableIndex === 0 ? 1 : 0];
                     const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
-                    if (otherRow) {
-                        const otherCell = otherRow.querySelectorAll('td')[colIndex];
-                        if (otherCell) {
-                            // Aplica classes diferentes dependendo da tabela
-                            if (tableIndex === 0) {
-                                otherCell.classList.add('highlight2'); // tabela 2000
-                                cell.classList.add('highlight');      // tabela 2023
-                            } else {
-                                otherCell.classList.add('highlight');  // tabela 2023
-                                cell.classList.add('highlight2');      // tabela 2000
-                            }
-                        }
-                    }
-                });
+                    if (!otherRow) return;
+                    const otherCell = otherRow.querySelectorAll('td')[colIndex];
+                    if (!otherCell) return;
 
+                    if (tableIndex === 0) { otherCell.classList.add('highlight2'); cell.classList.add('highlight'); }
+                    else { otherCell.classList.add('highlight'); cell.classList.add('highlight2'); }
+                });
                 cell.addEventListener('mouseleave', () => {
                     const otherTable = tables[tableIndex === 0 ? 1 : 0];
                     const otherRow = otherTable.querySelectorAll('tbody tr')[rowIndex];
-                    if (otherRow) {
-                        const otherCell = otherRow.querySelectorAll('td')[colIndex];
-                        if (otherCell) {
-                            if (tableIndex === 0) {
-                                otherCell.classList.remove('highlight2');
-                                cell.classList.remove('highlight');
-                            } else {
-                                otherCell.classList.remove('highlight');
-                                cell.classList.remove('highlight2');
-                            }
-                        }
-                    }
+                    if (!otherRow) return;
+                    const otherCell = otherRow.querySelectorAll('td')[colIndex];
+                    if (!otherCell) return;
+
+                    if (tableIndex === 0) { otherCell.classList.remove('highlight2'); cell.classList.remove('highlight'); }
+                    else { otherCell.classList.remove('highlight'); cell.classList.remove('highlight2'); }
                 });
             });
         });

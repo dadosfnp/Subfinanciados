@@ -1,3 +1,5 @@
+// --- JS do detalhamento do municipio
+
 document.addEventListener('DOMContentLoaded', function() {
     // --- DATA PARSING ---
     const allRevenueChartData = JSON.parse(document.getElementById('chart-data').textContent);
