@@ -67,3 +67,22 @@
     border-bottom:1px solid var(--bs-border-color);
   }
 }
+
+/* Sidebar – bloco de download com separador */
+.map-page .sidebar .map-download-row{
+  border-top: 1px solid var(--card-border, #e5e7eb);
+  margin-top: .75rem;
+  padding-top: .75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.map-page .sidebar .map-download-row .label{
+  color: #6c757d;
+  font-size: .875rem;
+}
+
+.map-page .sidebar #download-table-btn{
+  line-height: 1; /* alinha melhor o ícone no botão */
+}
