@@ -1,225 +1,34 @@
-:root {
-    --bs-body-bg: #dde4ed; /* Fundo cinza claro de toda a página */
-    --bs-border-color: #dee2e6; /* Cor de borda padrão */
+/* HOME: componentes específicos (fica só aqui) */
+.summary-cards-row{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+
+.summary-card{
+  background:#fff;
+  border-radius:8px;
+  padding:1.25rem;
+  box-shadow:0 4px 8px rgba(0,0,0,.08);
+  flex:1; min-width:200px;
+  display:flex; align-items:center; gap:1rem;
+}
+.summary-card .icon{ font-size:2.5rem; color:var(--fnp-blue); margin-bottom:.5rem; }
+.summary-card h6{ margin-bottom:.25rem; color:#6c757d; font-size:.9rem; }
+.summary-card .value{ font-size:1.5rem; font-weight:600; color:var(--fnp-blue); }
+.summary-card .sub-value{ font-size:.85rem; color:#6c757d; }
+
+/* Controles de gráfico/tabela da Home */
+.chart-card .chart-controls,.table-card .table-controls{display:flex;gap:.75rem}
+.chart-card .chart-controls .btn-group,.table-card .table-controls .btn-group{
+  border:1px solid var(--bs-border-color); border-radius:.375rem; overflow:hidden;
+}
+.chart-card .chart-controls .btn,.table-card .table-controls .btn{
+  padding:.25rem .75rem; font-size:.8rem; color:var(--fnp-blue); background:#fff; border-radius:0;
+}
+.chart-card .chart-controls .btn.active,.table-card .table-controls .btn.active{
+  background:var(--fnp-blue); color:#fff; border-color:var(--fnp-blue);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
 }
 
-body {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden; /* Controle de rolagem feito pelos sub-contêineres */
-    background-color: var(--bs-body-bg);
-}
-
-/* --- Layout principal do conteúdo --- */
-.content-wrapper {
-    display: flex;
-    flex-grow: 1; /* Ocupa o espaço vertical restante */
-    overflow: hidden; /* Oculta rolagens internas */
-}
-
-/* --- Estilo da barra lateral (Sidebar) --- */
-.sidebar {
-    width: 280px; /* Largura fixa */
-    flex-shrink: 0;
-    padding: 1.5rem; /* Espaçamento interno */
-    background-color: #ffffff; /* Fundo branco */
-    border-right: 1px solid var(--bs-border-color);
-    overflow-y: auto; /* Rolagem vertical na barra lateral */
-    box-shadow: 2px 0 5px #194685; /* Sombra suave */
-}
-
-.sidebar h4 {
-    font-size: 1.25rem;
-    color: #194685; /* Azul principal para títulos */
-}
-
-.sidebar hr {
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
-    border-top: 1px solid rgba(0, 0, 0, .1);
-}
-
-.sidebar .filter-group {
-    margin-bottom: 1.25rem;
-}
-
-.sidebar label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #194685; /* Azul principal para rótulos */
-}
-
-.sidebar .form-select-sm {
-    height: calc(1.8125rem + 2px); /* Altura padrão do Bootstrap para inputs pequenos */
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    font-size: 0.875rem;
-}
-
-/* --- Área principal do Dashboard --- */
-.dashboard-content {
-    flex-grow: 1;
-    padding: 1.5rem; /* Espaçamento interno */
-    overflow-y: auto; /* Rolagem vertical para o conteúdo */
-}
-
-/* --- Cartões de resumo --- */
-.summary-cards-row {
-    display: flex;
-    gap: 1rem; /* Espaço entre os cartões */
-    margin-bottom: 1.5rem; /* Espaço abaixo dos cartões */
-    flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-}
-
-.summary-card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    padding: 1.25rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    flex: 1;
-    min-width: 200px;
-    display: flex;
-    flex-direction: row; 
-    align-items: center; /* Centraliza verticalmente */
-    gap: 1rem; /* Espaço entre ícone e texto */
-}
-
-.summary-card .icon {
-    font-size: 2.5rem; /* Tamanho grande do ícone */
-    color: #194685; /* Azul principal para ícones */
-    margin-bottom: 0.5rem;
-}
-
-.summary-card h6 {
-    margin-bottom: 0.25rem;
-    color: #6c757d; /* Texto secundário */
-    font-size: 0.9rem;
-}
-
-.summary-card .value {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #194685; /* Azul principal para valores */
-}
-
-.summary-card .value.positive,
-.summary-card .sub-value.positive,
-.summary-card .icon.positive {
-    color: #28a745; /* Verde para valores positivos */
-}
-
-.summary-card .value.negative,
-.summary-card .sub-value.negative,
-.summary-card .icon.negative {
-    color: #dc3545; /* Vermelho para valores negativos */
-}
-
-/* --- Seções de gráficos e tabelas --- */
-.chart-card, .table-card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    margin-bottom: 1.5rem; /* Espaço entre as seções */
-}
-
-.chart-card h5, .table-card h5 {
-    margin-bottom: 1rem;
-    font-size: 1.15rem;
-    color: #194685; /* Azul principal para títulos */
-    display: flex; /* Alinhamento entre título e botões */
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chart-card .chart-controls, .table-card .table-controls {
-    display: flex;
-    gap: 0.75rem;
-}
-.chart-card .chart-controls .btn-group,
-.table-card .table-controls .btn-group {
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.375rem;
-    overflow: hidden;
-}
-.chart-card .chart-controls .btn,
-.table-card .table-controls .btn {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.8rem;
-    color: #194685; /* Texto em azul */
-    background-color: #ffffff;
-    border-radius: 0; 
-}
-.chart-card .chart-controls .btn.active,
-.table-card .table-controls .btn.active {
-    background-color: #194685; /* Azul principal para botão ativo */
-    color: #ffffff;
-    border-color: #194685;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
-}
-
-/* --- Alternador de opções --- */
-.toggle-container {
-    display: flex;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    overflow: hidden;
-    background-color: #ffffff;
-    font-size: 14px;
-}
-
-.toggle-option {
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    color: #194685; /* Texto azul principal */
-}
-
-.toggle-option:hover {
-    background-color: #dde4ed; /* Fundo cinza claro ao passar o mouse */
-}
-
-.toggle-option.active {
-    background-color: #194685; /* Fundo azul para item ativo */
-    color: white; /* Texto branco */
-    font-weight: bold;
-}
-
-/* --- Ajustes responsivos para telas menores --- */
-@media (max-width: 767.98px) {
-    .sidebar {
-        width: 100%; /* Sidebar ocupa 100% */
-        height: auto; /* Ajusta altura automaticamente */
-        max-height: 50vh; /* Limite de altura */
-        overflow-y: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--bs-border-color);
-        padding-bottom: 1rem;
-    }
-
-    .content-wrapper {
-        flex-direction: column; /* Empilha barra lateral e conteúdo */
-    }
-
-    .dashboard-content {
-        padding-top: 1rem;
-    }
-}
-
-/* Destaque sincronizado nas tabelas */
-.highlight {
-    background-color: #194685 !important; 
-    color: #000 !important; /* texto preto para contraste */
-    font-weight: bold;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.highlight2 {
-    background-color: #efae17 !important; 
-    color: #000 !important; /* texto preto para contraste */
-    font-weight: bold;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-
+/* Toggle antiga da Home*/
+.toggle-container{display:flex;border:1px solid #ccc;border-radius:5px;overflow:hidden;background:#fff;font-size:14px}
+.toggle-option{padding:10px 20px;cursor:pointer;color:var(--fnp-blue);transition:.3s}
+.toggle-option:hover{background:#dde4ed}
+.toggle-option.active{background:var(--fnp-blue);color:#fff;font-weight:bold}

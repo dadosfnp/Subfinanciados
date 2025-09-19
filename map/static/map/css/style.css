@@ -1,156 +1,69 @@
-body {
-    display: flex;
-    flex-direction: column; /* Organiza os elementos filhos em uma coluna */
-    height: 100vh; /* Altura total da viewport */
-    overflow: hidden; /* Evita rolagem geral da página, permite rolagem interna se necessário */
+/* ============ MAPA — fix rápido, escopado, sem afetar Home/Detail ============ */
+
+/* Wrapper */
+.map-page{
+  display:flex;
+  flex:1;
+  overflow:hidden;
 }
 
-
-.content-wrapper {
-    display: flex;
-    flex-grow: 1; /* Permite que o wrapper de conteúdo ocupe a altura restante */
-    overflow: hidden; /* Oculta overflow para gerenciar rolagem dentro dos filhos */
+/* Sidebar igual à Home (largura fixa real e acima do mapa) */
+.map-page > .sidebar{
+  flex:0 0 280px;          /* largura fixa */
+  box-sizing:border-box;
+  padding:1.5rem;
+  background:#fff;
+  border-right:1px solid var(--bs-border-color);
+  box-shadow:2px 0 5px rgba(25,70,133,.12);
+  position:relative;
+  z-index:2;               /* garante que fica por cima do mapa */
 }
 
-.sidebar {
-    width: 280px;
-    flex-shrink: 0; /* Impede que a barra lateral encolha */
-    padding: 1rem; /* Adiciona padding para espaçamento */
-    background-color: var(--bs-light); /* Fundo claro do Bootstrap */
-    border-right: 1px solid var(--bs-border-color); /* Borda sutil à direita */
-    overflow-y: auto; /* Habilita rolagem vertical para os filtros */
+/* Conteúdo do mapa ocupa 100% e não cria folgas */
+.map-page > .main-content{
+  position:relative;
+  flex:1;
+  padding:0;               /* sem padding — mapa encosta */
+  margin:0;
 }
 
-.main-content {
-    flex-grow: 1; /* Permite que o conteúdo principal ocupe o espaço restante */
-    position: relative; /* Base para posicionamento absoluto do mapa */
+/* Mapa sempre por trás da sidebar */
+.map-page #map{
+  position:absolute;
+  inset:0;                 /* top/right/bottom/left: 0 */
+  width:100%;
+  z-index:0;
 }
 
-#map {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 100%; /* O mapa ocupa todo o espaço do main-content */
+/* --- Alinhamento dos filtros (iguais à Home) --- */
+.map-page .sidebar .filter-group{ margin:0 0 1.25rem 0; }
+.map-page .sidebar .form-label{
+  display:block;
+  margin:0 0 .5rem .125rem;
+  color:#194685;
+  font-weight:500;
+}
+.map-page .sidebar .form-select,
+.map-page .sidebar select,
+.map-page .sidebar .form-control{
+  width:100%;
+  box-sizing:border-box;
+  height:calc(1.8125rem + 2px);
+  padding:.25rem .5rem;
+  font-size:.875rem;
+  margin:0;
 }
 
-.map-overlay-container {
-    position: absolute;
-    bottom: 30px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espaço entre os overlays */
-    align-items: flex-end; /* Alinha os itens à direita */
-    z-index: 1; /* Garante que os overlays fiquem acima do mapa */
-}
+/* Botão full-width */
+.map-page #btn-limpar-filtros{ width:100%; }
 
-/* Estilos para o Card de Resumo */
-#summary-card {
-    background-color: rgba(255, 255, 255, 0.9); /* Fundo branco semi-transparente */
-    padding: 15px;
-    border-radius: 8px; /* Cantos arredondados */
-    width: 250px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra aprimorada */
-}
-
-#summary-card h5 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ccc; /* Linha divisória */
-    padding-bottom: 5px;
-    font-size: 1.1rem; /* Título ligeiramente maior */
-}
-
-#summary-card p {
-    margin: 5px 0;
-    font-size: 0.9rem; /* Fonte menor para detalhes */
-}
-
-/* Estilos para a Legenda do Mapa */
-#legend {
-    background-color: rgba(255, 255, 255, 0.9);
-    width: 250px;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-#legend h5 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
-}
-
-.legend-container {
-    display: flex;
-    align-items: flex-start; /* Alinha itens ao topo */
-}
-
-.legend-colors {
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* Espaço entre as chaves de cor */
-}
-
-.legend-labels {
-    display: flex;
-    flex-direction: column;
-    margin-left: 10px;
-    gap: 8px; /* Espaço entre os rótulos */
-}
-
-.legend-key {
-    width: 25px;
-    height: 20px;
-    border-radius: 3px; /* Leve arredondamento para chaves de cor */
-    border: 1px solid rgba(0, 0, 0, 0.1); /* Borda sutil para chaves */
-}
-
-.legend-labels span {
-    height: 20px;
-    line-height: 20px;
-    font-size: 0.9rem; /* Tamanho de fonte consistente */
-}
-
-/* Estilos do Popup do Mapbox (modificados) */
-.mapboxgl-popup-content {
-    font-size: 1rem; /* Tamanho base da fonte do conteúdo do popup */
-    min-width: 350px;
-    border-radius: 12px !important;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    padding: 15px; /* Padding consistente */
-}
-
-/* Ícones dentro do popup do Mapbox */
-.mapboxgl-popup-content i {
-    color: #194685; 
-    margin-right: 7px;
-    font-size: 14px;
-}
-
-.popup-details p {
-    margin-bottom: 6px; /* Margem aumentada para legibilidade */
-    line-height: 1.5; /* Altura da linha melhorada */
-}
-
-
-/* Estilos gerais para grupos de filtro */
-.filter-group {
-    margin-bottom: 1rem;
-}
-
-/* Estilos para ícones do Bootstrap Icons (se estiver usando) */
-.bi {
-    vertical-align: -.125em;
-    fill: currentColor;
-}
-
-.text-small {
-    font-size: 85%;
-}
-
-.dropdown-toggle {
-    outline: 0;
+/* Responsivo: sidebar em cima, como na Home */
+@media (max-width: 767.98px){
+  .map-page{ flex-direction:column; }
+  .map-page > .sidebar{
+    width:100%;
+    max-height:50vh;
+    border-right:none;
+    border-bottom:1px solid var(--bs-border-color);
+  }
 }

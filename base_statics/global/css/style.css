@@ -1,77 +1,174 @@
 /* --- Cabeçalho --- */
 .page-header {
-    width: 100%;
-    background-color: #ffffff; /* Fundo branco */
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  background-color: #ffffff; /* Fundo branco */
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
-
-.page-header .container {
-    max-width: 100%;
-    padding: 0 1.5rem;
-}
-
+.page-header .container { max-width: 100%; padding: 0 1.5rem; }
 .page-header header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Logo à esquerda, menu centralizado */
-    padding: 8px 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0;
 }
-
 /* Logo */
-.logo-fnp {
-    max-height: 60px;
-    height: auto;
-    width: auto;
-    margin-right: 12px;
-}
-
+.logo-fnp { max-height: 60px; height: auto; width: auto; margin-right: 12px; }
 /* Menu centralizado */
-.page-header .nav {
-    display: flex;
-    justify-content: center;
-    gap: 2rem; /* Espaço entre links */
-    flex: 1;
-}
-
+.page-header .nav { display: flex; justify-content: center; gap: 2rem; flex: 1; }
 /* Links do menu */
-.page-header .nav-link {
-    color: #333;
-    font-weight: 500;
-    padding: 6px 12px;
-    transition: all 0.3s ease;
-}
-
+.page-header .nav-link { color: #333; font-weight: 500; padding: 6px 12px; transition: all 0.3s ease; }
 /* Hover */
-.page-header .nav-link:hover {
-    background-color: rgba(25, 70, 133, 0.85);
-    color: #fff !important;
-    border-radius: 5px;
-}
-
+.page-header .nav-link:hover { background-color: rgba(25, 70, 133, 0.85); color: #fff !important; border-radius: 5px; }
 /* Link ativo */
-.page-header .nav-link.active {
-    background-color: #194685;
-    color: #fff !important;
-    border-radius: 5px;
-}
-
+.page-header .nav-link.active { background-color: #194685; color: #fff !important; border-radius: 5px; }
 /* Responsividade */
 @media (max-width: 768px) {
-    .page-header header {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .page-header .nav {
-        gap: 1rem;
-    }
-    .logo-fnp {
-        max-height: 50px;
-    }
+  .page-header header { flex-direction: column; gap: .5rem; }
+  .page-header .nav { gap: 1rem; }
+  .logo-fnp { max-height: 50px; }
 }
 
-/* Estilo para o botão */
-.btn {
-    background-color: #194685 !important; /* fundo azul principal */
-    border-color: #194685 !important;
+/* Estilo para o botão (utilitário global, opt-in) */
+.btn-fnp,
+.btn { background-color: #194685 !important; border-color: #194685 !important; }
+
+/* ============== FNP THEME (global) ============== */
+:root{
+  --bs-body-bg:#dde4ed;
+  --bs-border-color:#dee2e6;
+  --fnp-blue:#194685;
+  --fnp-yellow:#efae17;
+  --card-radius:8px;
+}
+
+/* Layout base (neutro) */
+html,body{height:100%}
+body{
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  background:var(--bs-body-bg);
+  color:#111827;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden; /* rolagem só nos filhos */
+}
+
+/* Content wrapper padrão (Home, Detail, Mapa) – neutro */
+.content-wrapper,.detail-wrapper{ display:flex; flex:1; overflow:hidden; }
+/* Coluna da direita (conteúdo rolável) – neutro */
+.dashboard-content,.detail-content,.main-content{ flex:1; padding:1.5rem; overflow-y:auto; }
+
+/* Sidebar padronizada (container) */
+.sidebar,
+.filters-sidebar{
+  width: 280px;
+  flex-shrink: 0;
+  padding: 1.5rem;
+  background: #fff;
+  border-right: 1px solid var(--bs-border-color);
+  overflow-y: auto;
+  box-shadow: 2px 0 5px rgba(25,70,133,.12);
+}
+
+/* Quando houver um wrapper interno com id="filters", ele NÃO é container */
+#filters{
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+
+.sidebar h4,#filters h4{font-size:1.25rem;color:var(--fnp-blue)}
+.sidebar hr,#filters hr{margin:1rem 0 1.5rem;border-top:1px solid rgba(0,0,0,.1)}
+.sidebar .filter-group,#filters .filter-group{margin-bottom:1.25rem}
+.sidebar label,#filters label{font-weight:500;margin-bottom:.5rem;color:var(--fnp-blue)}
+
+/* Campos da sidebar – mantém setinha (usa .form-select se disponível) */
+.sidebar select,#filters select{
+  height:calc(1.8125rem + 2px);
+  padding:.25rem .5rem;
+  font-size:.875rem;
+  background-color:#fff;
+  border:1px solid var(--bs-border-color);
+  border-radius:.25rem;
+}
+/* Força a setinha se estiver usando .form-select (Bootstrap) */
+.form-select {
+  background-image:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23194685' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  background-size: 16px 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2rem; /* espaço pra seta */
+}
+
+/* Botão “Limpar filtros” padrão (opt-in por id) */
+#btn-limpar-filtros{
+  width:100%;
+  background:var(--fnp-blue);
+  border-color:var(--fnp-blue);
+  color:#fff;
+}
+#btn-limpar-filtros:hover{filter:brightness(.95)}
+
+/* Cartões / seções – utilitário de card compartilhado */
+.app-shadow-card,
+.kpi-card,.metric-card,.summary-card,.chart-card,.table-card,
+.section-card,.panel,.box{
+  background:#fff;
+  border-radius:var(--card-radius);
+  box-shadow:0 4px 8px rgba(0,0,0,.08);
+  border:1px solid transparent;
+}
+.kpi-card:hover{transform:translateY(-3px);transition:.2s}
+.kpi-card h6{color:#6c757d;font-size:.9rem;margin-bottom:.25rem}
+.kpi-card .value{font-size:1.5rem;font-weight:600;color:var(--fnp-blue)}
+
+.chart-card h5,.table-card h5,.section-card h5,.panel h5,.box h5{
+  margin-bottom:1rem; font-size:1.15rem; color:var(--fnp-blue);
+  display:flex; justify-content:space-between; align-items:center;
+}
+
+/* Toggle “segmentado” retangular (compartilhado) */
+.segmented,
+#valor-toggle.segmented{
+  display:inline-flex; align-items:center; background:#fff;
+  border:1px solid #d9dee7; border-radius:6px; padding:0; overflow:hidden;
+}
+.segmented .segmented-option,
+#valor-toggle .segmented-option{
+  appearance:none; background:transparent; border:0; margin:0;
+  padding:8px 14px; border-radius:0; font-weight:700; font-size:.9rem; line-height:1;
+  cursor:pointer; color:var(--fnp-blue);
+}
+.segmented .segmented-option + .segmented-option,
+#valor-toggle .segmented-option + .segmented-option{ border-left:1px solid #e5e7eb; }
+.segmented .segmented-option.active,
+#valor-toggle .segmented-option.active{ background:var(--fnp-blue); color:#fff; box-shadow:none; }
+.segmented .segmented-option:focus-visible,
+#valor-toggle .segmented-option:focus-visible{ outline:2px solid var(--fnp-blue); outline-offset:2px; }
+
+/* Destaque sincronizado de tabelas (Home) */
+.highlight  {background:#194685 !important;color:#000 !important;font-weight:bold;transition:.15s}
+.highlight2 {background:#efae17 !important;color:#000 !important;font-weight:bold;transition:.15s}
+
+/* Componentes do Detail (não-invasivos) */
+.toggle-heading,.toggle-subheading{cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.toggle-subheading{padding:.5rem 0}
+.toggle-heading .arrow,.toggle-subheading .arrow{transition:transform .2s}
+.toggle-heading.open .arrow,.toggle-subheading.open .arrow{transform:rotate(90deg)}
+.ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.ranking-indicator{width:14px;height:14px;border-radius:3px}
+.quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
+.ranking-tooltip{visibility:hidden;background:#333;color:#fff;text-align:center;border-radius:6px;padding:5px 8px;position:absolute;z-index:10;bottom:125%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;white-space:nowrap;font-size:.75rem}
+.ranking-indicator-container:hover .ranking-tooltip{visibility:visible;opacity:1}
+
+/* Responsivo — sidebar em cima no mobile */
+@media (max-width: 767.98px){
+  .sidebar,#filters,.filters-sidebar{
+    width:100%;max-height:50vh;border-right:none;border-bottom:1px solid var(--bs-border-color);padding-bottom:1rem;
+  }
+  .content-wrapper,.detail-wrapper{flex-direction:column}
 }
