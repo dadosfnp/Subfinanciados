@@ -1,2 +1,36 @@
-/* DETAIL (Conjunto) – extras específicos, se algum dia precisar */
-.chart-container{position:relative;margin:0 auto;width:90%;max-width:400px}
+/* DETAIL (Conjunto) — aproveita o tema do global; aqui só refinos da página */
+body { font-family: 'Inter', sans-serif; }
+
+/* título grande padrão das páginas internas */
+.page-title { font-size: 2rem; font-weight: 700; color: #111827; display:flex; align-items:center; gap:.5rem; }
+.page-subtitle { color:#6b7280; }
+
+/* KPI / Summary cards (visuais idênticos à Home) */
+.summary-cards-row{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.summary-card{background:#fff;border-radius:8px;padding:1.25rem;box-shadow:0 4px 8px rgba(0,0,0,.08);flex:1;min-width:220px;display:flex;align-items:center;gap:1rem}
+.summary-card h6{margin:0 0 .25rem;color:#6c757d;font-size:.95rem;font-weight:600}
+.summary-card .value{font-size:1.6rem;font-weight:700;color:#194685}
+
+/* Cards de conteúdo */
+.metric-card{background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 4px 8px rgba(0,0,0,.08);margin-bottom:1.25rem}
+.metric-card h5{margin:0 0 1rem;color:#194685;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+
+/* Select compacto usado no cabeçalho dos cards */
+.select-compact{padding:.25rem .5rem;font-size:.875rem;border:1px solid #dee2e6;border-radius:.375rem;background:#fff}
+
+/* Toggle retangular (Per Capita / Valores Reais) reaproveitando o global .segmented */
+.segmented{display:inline-flex;align-items:center;background:#fff;border:1px solid #d9dee7;border-radius:6px;overflow:hidden}
+.segmented .segmented-option{appearance:none;background:transparent;border:0;margin:0;padding:8px 14px;border-radius:0;font-weight:700;font-size:.9rem;line-height:1;cursor:pointer;color:#194685}
+.segmented .segmented-option + .segmented-option{border-left:1px solid #e5e7eb}
+.segmented .segmented-option.active{background:#194685;color:#fff}
+
+/* Componentes de árvore/indicadores já existentes */
+.toggle-heading,.toggle-subheading{cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.toggle-subheading{padding:.5rem 0}
+.toggle-heading .arrow,.toggle-subheading .arrow{transition:transform .2s}
+.toggle-heading.open .arrow,.toggle-subheading.open .arrow{transform:rotate(90deg)}
+.ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.ranking-indicator{width:14px;height:14px;border-radius:3px}
+.quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
+.ranking-tooltip{visibility:hidden;background:#333;color:#fff;text-align:center;border-radius:6px;padding:5px 8px;position:absolute;z-index:10;bottom:125%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;white-space:nowrap;font-size:.75rem}
+.ranking-indicator-container:hover .ranking-tooltip{visibility:visible;opacity:1}

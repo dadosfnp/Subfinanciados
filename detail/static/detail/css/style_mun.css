@@ -1,5 +1,96 @@
-/* DETAIL (Município) – só o que é bem específico desta página */
-.ranking-indicator-estadual{width:14px;height:14px;border-radius:3px}
-.metric-detail-row{display:flex;align-items:center;padding:.5rem 0;border-bottom:1px solid #f3f4f6}
-.metric-detail-row:last-child{border-bottom:none}
-.chart-container{position:relative;margin:0 auto;width:90%;max-width:400px}
+/* =========================================================
+   DETAIL (Município) 
+   ========================================================= */
+
+/* largura confortável do conteúdo principal */
+.container { max-width: 1200px; }
+
+/* Cartões no padrão do tema */
+.kpi-card,
+.metric-card{
+  background:#fff;
+  border-radius: var(--card-radius, 8px);
+  box-shadow:0 4px 8px rgba(0,0,0,.08);
+  border:1px solid transparent;
+}
+
+/* Títulos das seções */
+.metric-card h2{ color:var(--fnp-blue, #194685); }
+
+/* KPIs — rótulo discreto e valor em destaque */
+.kpi-card p:first-child{ color:#6b7280; margin:0; }
+.kpi-card .text-3xl,
+.kpi-card .text-4xl{ color:var(--fnp-blue, #194685); line-height:1.15; }
+
+/* Botão do valor (per capita / reais) apenas com polimento */
+#valor-toggle-btn{ box-shadow:0 1px 2px rgba(0,0,0,.06); }
+
+/* ----------- Detalhamento (árvore) ----------- */
+.metric-detail-row{
+  display:flex;
+  align-items:center;
+  padding:.5rem 0;
+  border-bottom:1px solid #f3f4f6;
+}
+.metric-detail-row:last-child{ border-bottom:none; }
+
+.toggle-heading,
+.toggle-subheading{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.toggle-heading .arrow,
+.toggle-subheading .arrow{ transition:transform .2s ease-in-out; }
+.toggle-heading.open .arrow,
+.toggle-subheading.open .arrow{ transform:rotate(90deg); }
+
+/* Indicadores/tooltip de ranking (mesmo padrão global) */
+.ranking-indicator-container{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  vertical-align:middle;
+}
+.ranking-indicator{ width:14px; height:14px; border-radius:3px; }
+.ranking-indicator-estadual{ width:14px; height:14px; border-radius:3px; }
+
+.quintil-1{ background:#d73027; }
+.quintil-2{ background:#fc8d59; }
+.quintil-3{ background:#fee08b; }
+.quintil-4{ background:#91cf60; }
+.quintil-5{ background:#1a9850; }
+
+.ranking-tooltip{
+  visibility:hidden;
+  background:#333;
+  color:#fff;
+  text-align:center;
+  border-radius:6px;
+  padding:5px 8px;
+  position:absolute;
+  z-index:10;
+  bottom:125%;
+  left:50%;
+  transform:translateX(-50%);
+  opacity:0;
+  transition:opacity .2s;
+  white-space:nowrap;
+  font-size:.75rem;
+}
+.ranking-indicator-container:hover .ranking-tooltip{
+  visibility:visible;
+  opacity:1;
+}
+
+/* ----------- Gráfico ----------- */
+.metric-card canvas{
+  display:block;           /* evita “gaps” inline */
+  max-width:100%;
+}
+
+/* Responsivo leve */
+@media (max-width: 767.98px){
+  .kpi-card, .metric-card { border-radius:10px; }
+}
