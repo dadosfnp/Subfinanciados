@@ -94,3 +94,20 @@
 @media (max-width: 767.98px){
   .kpi-card, .metric-card { border-radius:10px; }
 }
+
+/* Toggle segmentado — mesmo look do conjunto */
+.segmented{
+  display:inline-flex; align-items:center; gap:4px;
+  background:#e9eef6; border-radius:999px; padding:4px;
+}
+.segmented .segmented-option{
+  border:0; background:transparent; cursor:pointer;
+  padding:.35rem .8rem; border-radius:999px;
+  font-weight:600; color:#194685; transition:all .15s ease;
+}
+.segmented .segmented-option.active{
+  background:#194685; color:#fff;
+  box-shadow:0 2px 8px rgba(25,70,133,.25);
+}
+.segmented .segmented-option:focus{ outline:2px solid rgba(25,70,133,.35); outline-offset:2px; }
+

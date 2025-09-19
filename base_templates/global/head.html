@@ -29,24 +29,30 @@
                 <img src="{% static 'global/images/logo-FNP.png' %}" alt="Logo FNP" class="logo-fnp">
             </a>
 
-            <!-- Menu centralizado -->
+           <!-- Menu centralizado -->
+            {% with p=request.path %}
             <ul class="nav">
-                <li>
-                    <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
-                        Análise Gráfica
-                    </a>
-                </li>
-                <li>
-                    <a href="/mapa" class="nav-link {% if request.path == '/mapa' %}active{% endif %}">
-                        Visualização no Mapa
-                    </a>
-                </li>
-                <li>
-                    <a href="/analise-municipal" class="nav-link {% if request.path == '/analise-municipal' %}active{% endif %}">
-                        Análise Municipal
-                    </a>
-                </li>
+            <li>
+                <a href="/" class="nav-link {% if p == '/' %}active{% endif %}">
+                Análise Gráfica
+                </a>
+            </li>
+
+            <li>
+                <a href="/mapa" class="nav-link {% if p == '/mapa' %}active{% endif %}">
+                Visualização no Mapa
+                </a>
+            </li>
+
+            <li>
+                <a href="/analise-municipal"
+                class="nav-link {% if p == '/analise-municipal/' or '/municipio/' in p %}active{% endif %}">
+                Análise Municipal
+                </a>
+            </li>
             </ul>
+            {% endwith %}
+
         </header>
     </div>
 </div>

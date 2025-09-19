@@ -53,9 +53,10 @@
             <section class="metric-card p-6 rounded-xl">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
-                    <button id="valor-toggle-btn" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                        Valores Reais
-                    </button>
+                    <div id="valor-toggle" class="segmented">
+                      <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
+                      <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
+                    </div>
                 </div>
 
                 {% if revenue_tree %}
@@ -170,13 +171,14 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeToggleListeners();
   }
 
-  // --- VALUE TOGGLE BUTTON ---
-  let isShowingPerCapita = true;
-  const toggleBtn = document.getElementById('valor-toggle-btn');
-  const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
-  const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
+let isShowingPerCapita = true;
+const toggleBtn = document.getElementById('valor-toggle-btn'); // pode não existir
+const valoresAbsolutos = document.querySelectorAll('.valor-absoluto');
+const valoresPerCapita = document.querySelectorAll('.valor-per-capita');
 
-  toggleBtn.addEventListener('click', function() {
+// 2.1) Se ainda existir o botão simples, continua funcionando:
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', function () {
     isShowingPerCapita = !isShowingPerCapita;
     if (isShowingPerCapita) {
       toggleBtn.textContent = 'Valores Reais';
@@ -189,6 +191,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     sortAllRevenueSections(isShowingPerCapita);
   });
+}
+
+  // 2.2) Se você já trocou pelo toggle segmentado, ativa ele aqui:
+  const segmented = document.getElementById('valor-toggle');
+  if (segmented) {
+    const btnPc = segmented.querySelector('[data-mode="pc"]');
+    const btnVr = segmented.querySelector('[data-mode="vr"]');
+
+    function apply(mode) {
+      const pc = mode === 'pc';
+      // visual
+      btnPc?.classList.toggle('active', pc);
+      btnVr?.classList.toggle('active', !pc);
+      // dados
+      isShowingPerCapita = pc;
+      valoresPerCapita.forEach(el => el.classList.toggle('hidden', !pc));
+      valoresAbsolutos.forEach(el => el.classList.toggle('hidden', pc));
+      sortAllRevenueSections(pc);
+    }
+
+    btnPc?.addEventListener('click', () => apply('pc'));
+    btnVr?.addEventListener('click', () => apply('vr'));
+    apply('pc'); // estado inicial
+  }
+
 
   // --- RANKING LOGIC ---
   const rankingSelect = document.getElementById('ranking-select');
