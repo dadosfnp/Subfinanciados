@@ -52,6 +52,20 @@ function getJsonData(id) {
 }
 
 /**
+ * Pinta o número da Diferença % (verde/verm.) conforme sinal.
+ * Espera valor EM PORCENTO (ex.: 24.1, -3.5).
+ */
+function applyDiffColor(percentValue) {
+    const el = document.getElementById('summary-diff-nacional');
+    if (!el) return;
+    const EPS = 0.0001;
+    el.classList.remove('positive', 'negative', 'neutral');
+    if (percentValue > EPS) el.classList.add('positive');
+    else if (percentValue < -EPS) el.classList.add('negative');
+    else el.classList.add('neutral');
+}
+
+/**
  * Atualiza os filtros SEM RESTRIÇÃO (lista completa da API, sem parâmetros).
  * Mantém o valor selecionado quando possível; caso contrário, define 'todos'.
  */
@@ -148,12 +162,16 @@ async function atualizarFiltros() {
         document.getElementById('summary-media-receita').textContent =
             data.summaryCards.mediaReceitaPerCapita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        const diffNational = data.summaryCards.diffMediaNacional;
-        document.getElementById('summary-diff-nacional').textContent = `${diffNational.toFixed(1)}%`;
+        const diffNational = data.summaryCards.diffMediaNacional; // valor em %
+        const diffValueEl = document.getElementById('summary-diff-nacional');
+        diffValueEl.textContent = `${diffNational.toFixed(1)}%`;
         const diffTrendElement = document.getElementById('summary-diff-nacional-trend');
         diffTrendElement.textContent = diffNational > 0 ? 'Acima da média nacional' :
             (diffNational < 0 ? 'Abaixo da média nacional' : 'Na média nacional');
         diffTrendElement.className = `sub-value ${diffNational < 0 ? 'negative' : ''} ${diffNational > 0 ? 'positive' : ''}`;
+
+        // pinta o número conforme sinal
+        applyDiffColor(diffNational);
 
         document.getElementById('summary-gini').textContent = data.summaryCards.giniIndex;
 
