@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+  // --- Debug helpers seguros (no-ops quando DEBUG=false) ---
+  const DEBUG = false;
+  const log  = (...a) => { if (DEBUG) console.log('[detail]', ...a); };
+  const warn = (...a) => { if (DEBUG) console.warn('[detail]', ...a); };
+
   // =============== UTILS =================
   function parsePossiblyMultiSerialized(text) {
     let out = text;
