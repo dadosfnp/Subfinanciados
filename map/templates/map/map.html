@@ -158,16 +158,19 @@
       </button>
     </div>
 
-    <div class="map-download-row">
-      <span class="label">Baixar Dados:</span>
-      <a href="#" id="download-table-btn" class="btn btn-sm btn-outline-secondary" title="Baixar Dados da Tabela">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="16" fill="currentColor"
-             class="bi bi-download" viewBox="0 0 16 16">
-          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V3.5a.5.5 0 0 0-1 0v6.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-        </svg>
-      </a>
-    </div>
+    <!-- Botão de download fixado no rodapé da sidebar -->
+    <div class="sidebar-spacer"></div>
+    <button id="download-table-btn"
+            type="button"
+            class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2 btn-download">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+          viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V3.5a.5.5 0 0 0-1 0v6.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+        <path d="M.5 12.9v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1a.5.5 0 0 0-1 0v1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1v-1a.5.5 0 0 0-1 0z"/>
+      </svg>
+      <span>Baixar Dados</span>
+    </button>
+
   </aside>
 
   <!-- CONTEÚDO DO MAPA -->

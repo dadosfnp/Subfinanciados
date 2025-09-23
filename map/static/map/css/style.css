@@ -93,22 +93,26 @@
 .map-page #btn-limpar-filtros{ width:100%; }
 
 /* ---------- Bloco de download ---------- */
-.map-page .sidebar .map-download-row{
-  border-top:1px solid var(--card-border, #e5e7eb);
-  margin-top:.75rem;
-  padding-top:.75rem;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+/* Sidebar como coluna para “colar” o botão no rodapé */
+.map-page > .sidebar{
+  display: flex;
+  flex-direction: column;
 }
 
-.map-page .sidebar .map-download-row .label{
-  color:#6c757d;
-  font-size:.875rem;
+/* Empurra o botão de download para o final da coluna */
+.map-page .sidebar .sidebar-spacer{
+  margin-top: auto;
 }
 
-.map-page .sidebar #download-table-btn{
-  line-height:1; /* alinha melhor o ícone no botão */
+/* Botão de download: mesma hierarquia visual do “Limpar Pesquisa” */
+.map-page .sidebar .btn-download{
+  margin-top: .75rem;
+  color: #fff;                 /* garante texto branco */
+  box-shadow: 0 2px 6px rgba(25,70,133,.10);
+}
+.map-page .sidebar .btn-download svg{
+  display: inline-block;
+  line-height: 0;
 }
 
 /* ---------- Responsivo ---------- */
