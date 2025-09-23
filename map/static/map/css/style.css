@@ -1,4 +1,4 @@
-/* ============ MAPA — fix rápido, escopado, sem afetar Home/Detail ============ */
+/* ============ MAPA ============ */
 
 /* Wrapper */
 .map-page{
@@ -7,42 +7,45 @@
   overflow:hidden;
 }
 
-/* Sidebar igual à Home (largura fixa real e acima do mapa) */
+/* Sidebar (largura fixa, acima do mapa) */
 .map-page > .sidebar{
-  flex:0 0 280px;          /* largura fixa */
+  flex:0 0 280px;
   box-sizing:border-box;
   padding:1.5rem;
   background:#fff;
   border-right:1px solid var(--bs-border-color);
   box-shadow:2px 0 5px rgba(25,70,133,.12);
   position:relative;
-  z-index:2;               /* garante que fica por cima do mapa */
+  z-index:2;
 }
 
-/* Conteúdo do mapa ocupa 100% e não cria folgas */
+/* Conteúdo do mapa ocupa 100% e sem folgas */
 .map-page > .main-content{
   position:relative;
   flex:1;
-  padding:0;               /* sem padding — mapa encosta */
+  padding:0;
   margin:0;
 }
 
 /* Mapa sempre por trás da sidebar */
 .map-page #map{
   position:absolute;
-  inset:0;                 /* top/right/bottom/left: 0 */
+  inset:0;
   width:100%;
   z-index:0;
 }
 
-/* --- Alinhamento dos filtros (iguais à Home) --- */
+/* ---------- Filtros (layout geral) ---------- */
 .map-page .sidebar .filter-group{ margin:0 0 1.25rem 0; }
+
 .map-page .sidebar .form-label{
   display:block;
   margin:0 0 .5rem .125rem;
   color:#194685;
   font-weight:500;
 }
+
+/* Inputs padrão da sidebar */
 .map-page .sidebar .form-select,
 .map-page .sidebar select,
 .map-page .sidebar .form-control{
@@ -54,10 +57,61 @@
   margin:0;
 }
 
+/* ---------- Lupa ao lado do <select> ---------- */
+.map-page .sidebar .input-group{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:nowrap;               /* impede quebrar para baixo */
+}
+
+/* Dentro do input-group, o select não ocupa 100% */
+.map-page .sidebar .input-group .form-select,
+.map-page .sidebar .input-group select{
+  flex:1 1 0;                     /* pode encolher quando precisar */
+  width:auto !important;          /* vence width:100% e inline style */
+  min-width:0;                    /* evita overflow */
+}
+
+/* Botão da lupa colado ao select */
+.map-page .sidebar .input-group > .btn{
+  flex:0 0 auto;
+  padding:.25rem .5rem;           /* casa com input-group-sm */
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* Mantém width:100% apenas para selects fora do input-group */
+.map-page .sidebar .filter-group > .form-select,
+.map-page .sidebar .filter-group > select,
+.map-page .sidebar .filter-group > .form-control{
+  width:100%;
+}
+
 /* Botão full-width */
 .map-page #btn-limpar-filtros{ width:100%; }
 
-/* Responsivo: sidebar em cima, como na Home */
+/* ---------- Bloco de download ---------- */
+.map-page .sidebar .map-download-row{
+  border-top:1px solid var(--card-border, #e5e7eb);
+  margin-top:.75rem;
+  padding-top:.75rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.map-page .sidebar .map-download-row .label{
+  color:#6c757d;
+  font-size:.875rem;
+}
+
+.map-page .sidebar #download-table-btn{
+  line-height:1; /* alinha melhor o ícone no botão */
+}
+
+/* ---------- Responsivo ---------- */
 @media (max-width: 767.98px){
   .map-page{ flex-direction:column; }
   .map-page > .sidebar{
@@ -66,23 +120,4 @@
     border-right:none;
     border-bottom:1px solid var(--bs-border-color);
   }
-}
-
-/* Sidebar – bloco de download com separador */
-.map-page .sidebar .map-download-row{
-  border-top: 1px solid var(--card-border, #e5e7eb);
-  margin-top: .75rem;
-  padding-top: .75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.map-page .sidebar .map-download-row .label{
-  color: #6c757d;
-  font-size: .875rem;
-}
-
-.map-page .sidebar #download-table-btn{
-  line-height: 1; /* alinha melhor o ícone no botão */
 }
