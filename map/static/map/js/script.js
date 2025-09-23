@@ -182,52 +182,151 @@ function scheduleAtualizarMapa(delay = 150) {
 
 // --- Configuração do Mapa Mapbox GL JS ---
 map.on("load", async () => {
-    // Adiciona a fonte de dados 'municipios' ao mapa (inicialmente vazia)
-    map.addSource("municipios", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  // Adiciona a fonte de dados 'municipios' ao mapa (inicialmente vazia)
+  map.addSource("municipios", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
 
-    // Adiciona a camada de círculos para representar a população
-    map.addLayer({
-        "id": "populacao-circulos",
-        "type": "circle",
-        "source": "municipios",
-        "paint": {
-            // Raio do círculo baseado na população (interpolação linear)
-            "circle-radius": ["interpolate", ["linear"], ["get", "Populacao23"], 100000, 7, 1000000, 14, 10000000, 28],
-            "circle-opacity": 0.8,
-            "circle-stroke-width": 1,
-            "circle-stroke-color": "#ffffff"
+  // Adiciona a camada de círculos para representar a população
+  map.addLayer({
+    "id": "populacao-circulos",
+    "type": "circle",
+    "source": "municipios",
+    "paint": {
+      // Raio do círculo baseado na população (interpolação linear)
+      "circle-radius": ["interpolate", ["linear"], ["get", "Populacao23"], 100000, 7, 1000000, 14, 10000000, 28],
+      "circle-opacity": 0.8,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#ffffff"
+    }
+  });
+
+  // Adiciona a camada de rótulos de município (nomes)
+  map.addLayer({
+    "id": "municipio-labels",
+    "type": "symbol",
+    "source": "municipios",
+    "minzoom": 7, // Os rótulos aparecem a partir do zoom 7
+    "layout": {
+      "text-field": ["get", "name_muni"], // Pega o nome do município da propriedade GeoJSON
+      "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+      "text-size": 11,
+      "text-offset": [0, 0.9], // Desloca o texto ligeiramente acima do ponto
+      "text-anchor": "top"     // Ancoragem do texto na parte superior
+    },
+    "paint": {
+      "text-color": "#2c3e50", // Cor escura para o texto
+      "text-halo-color": "rgba(255, 255, 255, 0.9)", // Contorno branco para legibilidade
+      "text-halo-width": 1.5
+    }
+  });
+
+  // Esconde camadas do estilo base que mostram todos os municípios/pontos
+  hideBaseMunicipalityLayers();
+
+  // Carrega listas completas nos selects (sem restringir por outros filtros)
+  await updateDependentFilters();
+
+  // Define coloração/legenda + faz a primeira atualização do mapa (com debounce)
+  atualizarClassificacao(); // chama scheduleAtualizarMapa internamente
+
+  // ============================================================
+  // === Destaque exclusivo p/ "Xambioá - TO" (ícone condicional)
+  // ============================================================
+
+  const MUNICIPIO_NOME = 'Xambioá - TO';
+  const XAMBIOA_COORD  = [-48.536, -6.415]; // lon, lat (ajuste fino se necessário)
+  const IMG_URL        = '/static/map/images/xambioa.png'; // coloque a imagem aí
+
+  // Garante que a imagem, a source e a layer existem (depois do style carregar)
+  map.loadImage(IMG_URL, (err, img) => {
+    if (err) { console.error('Erro ao carregar imagem de Xambioá:', err); return; }
+
+    if (!map.hasImage('xambioa-badge')) map.addImage('xambioa-badge', img);
+
+    if (!map.getSource('municipio-highlight')) {
+      map.addSource('municipio-highlight', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+    }
+
+    if (!map.getLayer('municipio-badge')) {
+      map.addLayer({
+        id: 'municipio-badge',
+        type: 'symbol',
+        source: 'municipio-highlight',
+        layout: {
+          'icon-image': 'xambioa-badge',
+          'icon-size': 0.75,
+          'icon-allow-overlap': true,
+          'visibility': 'none' // começa invisível
         }
-    });
+      });
+    }
 
-    // Adiciona a camada de rótulos de município (nomes)
-    map.addLayer({
-        "id": "municipio-labels",
-        "type": "symbol",
-        "source": "municipios",
-        "minzoom": 7, // Os rótulos aparecem a partir do zoom 7
-        "layout": {
-            "text-field": ["get", "name_muni"], // Pega o nome do município da propriedade GeoJSON
-            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
-            "text-size": 11,
-            "text-offset": [0, 0.9], // Desloca o texto ligeiramente acima do ponto
-            "text-anchor": "top"     // Ancoragem do texto na parte superior
-        },
-        "paint": {
-            "text-color": "#2c3e50", // Cor escura para o texto
-            "text-halo-color": "rgba(255, 255, 255, 0.9)", // Contorno branco para legibilidade
-            "text-halo-width": 1.5
-        }
-    });
+    // ---- ligação com o seletor de município ----
+    const municipioSelect = document.getElementById('filtro-municipio');
 
-    // NOVO: Esconde camadas do estilo base que mostram todos os municípios/pontos
-    hideBaseMunicipalityLayers();
+    function atualizarBadgeMunicipio() {
+      const src = map.getSource('municipio-highlight');
+      if (!src || !map.getLayer('municipio-badge')) return;
 
-    // Carrega listas completas nos selects (sem restringir por outros filtros)
-    await updateDependentFilters();
+      const val   = municipioSelect?.value || '';
+      const label = municipioSelect?.selectedOptions?.[0]?.text?.trim() || '';
 
-    // Define coloração/legenda + faz a primeira atualização do mapa (com debounce)
-    atualizarClassificacao(); // chama scheduleAtualizarMapa internamente
+      // bate por value OU pelo texto exibido (caso o value seja um código IBGE)
+      const selecionouXambioa = (val === MUNICIPIO_NOME) || (label === MUNICIPIO_NOME);
+
+      if (selecionouXambioa) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: XAMBIOA_COORD },
+            properties: { name: MUNICIPIO_NOME }
+          }]
+        });
+        map.setLayoutProperty('municipio-badge', 'visibility', 'visible');
+        // opcional: focar no ponto
+        // map.easeTo({ center: XAMBIOA_COORD, zoom: 9 });
+      } else {
+        src.setData({ type: 'FeatureCollection', features: [] });
+        map.setLayoutProperty('municipio-badge', 'visibility', 'none');
+      }
+    }
+    // deixe o navio menor e responsivo ao zoom
+    map.setLayoutProperty('municipio-badge', 'icon-size', [
+    'interpolate', ['linear'], ['zoom'],
+    5, 0.08,   // longe
+    8, 0.12,   // médio
+    10, 0.16,  // perto
+    12, 0.22   // bem perto
+    ]);
+
+    // ancora a base do ícone no ponto (a “quilha” na coordenada)
+    map.setLayoutProperty('municipio-badge', 'icon-anchor', 'bottom');
+
+    // move o ícone um pouco para cima do ponto/label
+    map.setPaintProperty('municipio-badge', 'icon-translate', [0, -18]);
+    // usa coordenadas de tela pra manter o offset estável
+    map.setPaintProperty('municipio-badge', 'icon-translate-anchor', 'viewport');
+
+
+    // 1) Reage à troca manual do usuário
+    municipioSelect?.addEventListener('change', atualizarBadgeMunicipio);
+
+    // 2) Reage a repopulação dinâmica do <select> (quando outros filtros mudam)
+    //    Se sua lógica recria <option>s sem disparar "change", o observer pega.
+    if (municipioSelect) {
+      const mo = new MutationObserver(() => atualizarBadgeMunicipio());
+      mo.observe(municipioSelect, { childList: true, subtree: true });
+    }
+
+    // 3) Aplica imediatamente ao estado atual
+    atualizarBadgeMunicipio();
+  });
 });
+
+
 
 /**
  * Lida com o clique em um círculo de município no mapa.
