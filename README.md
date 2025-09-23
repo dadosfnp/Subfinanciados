@@ -159,7 +159,36 @@ python manage.py help
 python manage.py runserver
 ```
 
----
+## 📝 Convenção de Commits
+
+Utilizamos uma convenção baseada no **Conventional Commits**, adaptada para o projeto.  
+O formato geral é:
+
+### 🔑 Tipos aceitos
+
+- **feat** → nova funcionalidade  
+  - `feat(map): adiciona lupa ao filtro de municípios`
+- **fix** → correção de bug  
+  - `fix(detail): corrige alinhamento do botão de busca`
+- **docs** → alterações apenas em documentação  
+  - `docs(readme): adiciona seção de boas práticas`
+- **style** → ajustes visuais (CSS, HTML, formatação, sem alterar lógica)  
+  - `style(home): ajusta espaçamento dos cards`
+- **refactor** → refatoração de código sem mudar comportamento  
+  - `refactor(map): simplifica função de atualização dos filtros`
+- **test** → adição ou ajuste em testes  
+  - `test(detail): adiciona teste para cálculo de percentis`
+- **chore** → tarefas gerais (build, dependências, configs)  
+  - `chore: atualiza requirements.txt`
+
+
+### ✅ Boas práticas
+
+- **Descrição curta** (máx. 72 caracteres) → explique o que foi feito.  
+- **Escopo** (opcional) → indique onde foi feita a mudança (`home`, `map`, `detail`, `readme`, etc.).  
+- Use o **imperativo**: “adiciona”, “corrige”, “refatora”, em vez de “adicionado”, “corrigido”.  
+
+
 
 ✍ **Autor:** FNP  
 📅 **Ano:** 2025  
