@@ -111,3 +111,33 @@
 }
 .segmented .segmented-option:focus{ outline:2px solid rgba(25,70,133,.35); outline-offset:2px; }
 
+/* ===== Scroll fix (página de detalhe) ===== */
+:root{
+  /* ajuste se o seu header for fixo e tiver outra altura */
+  --header-height: 64px;
+}
+
+/* fallback: garante que o documento pode rolar se nada mais pegar */
+html, body {
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* contêiner com rolagem própria (substitui o wrapper padrão das páginas com sidebar) */
+.detail-scroll{
+  position: relative;
+  /* ocupa a janela menos a barra do cabeçalho fixo */
+  height: calc(100vh - var(--header-height));
+  max-height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* rolagem suave em iOS */
+  padding-bottom: 1.5rem;            /* respiro pra última linha não colar na borda */
+}
+
+/* quando o navegador suportar 100dvh (corrige barras de endereço móveis) */
+@supports (height: 100dvh) {
+  .detail-scroll{
+    height: calc(100dvh - var(--header-height));
+    max-height: calc(100dvh - var(--header-height));
+  }
+}
