@@ -120,9 +120,11 @@ def municipios_geojson_api(request):
         
         # Se o modo de cálculo é 'total' (quantis pré-calculados) OU se o filtro é 'natural'
         elif classification_filter == 'quintil':
-            queryset = queryset.filter(quintil23=subgroup_filter)
+            quintil_filter = f"{subgroup_filter}º quintil"
+            queryset = queryset.filter(quintil23=quintil_filter)
         elif classification_filter == 'decil':
-            queryset = queryset.filter(decil23=subgroup_filter)
+            decil_filter = f"{subgroup_filter}º decil"
+            queryset = queryset.filter(decil23=decil_filter)
         elif classification_filter == 'natural':
             try:
                 min_str, max_str = subgroup_filter.split('-')

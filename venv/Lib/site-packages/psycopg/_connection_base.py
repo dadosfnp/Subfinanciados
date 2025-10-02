@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sys
 import logging
-from typing import TYPE_CHECKING, Callable, Generic, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, Generic, NamedTuple
 from weakref import ReferenceType, ref
 from warnings import warn
 from functools import partial
@@ -23,9 +23,9 @@ from .adapt import AdaptersMap
 from ._enums import IsolationLevel
 from ._compat import Deque, LiteralString, Self, TypeAlias, TypeVar
 from .pq.misc import connection_summary
-from ._pipeline import BasePipeline
 from ._preparing import PrepareManager
 from ._capabilities import capabilities
+from ._pipeline_base import BasePipeline
 from ._connection_info import ConnectionInfo
 
 if TYPE_CHECKING:
@@ -133,7 +133,7 @@ class BaseConnection(Generic[Row]):
         self._deferrable: bool | None = None
         self._begin_statement = b""
 
-    def __del__(self) -> None:
+    def __del__(self, __warn: Any = warn) -> None:
         # If fails on connection we might not have this attribute yet
         if not hasattr(self, "pgconn"):
             return
@@ -146,9 +146,9 @@ class BaseConnection(Generic[Row]):
         if hasattr(self, "_pool"):
             return
 
-        warn(
-            f"connection {self} was deleted while still open."
-            " Please use 'with' or '.close()' to close the connection",
+        __warn(
+            f"{object.__repr__(self)} was deleted while still open."
+            " Please use 'with' or '.close()' to close the connection properly",
             ResourceWarning,
         )
 
@@ -376,12 +376,13 @@ class BaseConnection(Generic[Row]):
         enc = self.pgconn._encoding
         n = Notify(pgn.relname.decode(enc), pgn.extra.decode(enc), pgn.be_pid)
 
-        # `_notifies_backlog` is None if the `notifies()` generator is running
-        if (d := self._notifies_backlog) is not None:
-            d.append(n)
-
-        for cb in self._notify_handlers:
-            cb(n)
+        if self._notify_handlers:
+            for cb in self._notify_handlers:
+                cb(n)
+        else:
+            # `_notifies_backlog` is None if the `notifies()` generator is running
+            if (d := self._notifies_backlog) is not None:
+                d.append(n)
 
     @property
     def prepare_threshold(self) -> int | None:

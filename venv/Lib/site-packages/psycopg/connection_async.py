@@ -7,6 +7,7 @@ Psycopg connection object (async version)
 from __future__ import annotations
 
 import logging
+import warnings
 from time import monotonic
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, cast, overload
@@ -22,11 +23,12 @@ from ._enums import IsolationLevel
 from ._compat import Self
 from .conninfo import conninfo_attempts_async, conninfo_to_dict, make_conninfo
 from .conninfo import timeout_from_conninfo
-from ._pipeline import AsyncPipeline
 from .generators import notifies
 from .transaction import AsyncTransaction
 from .cursor_async import AsyncCursor
 from ._capabilities import capabilities
+from ._conninfo_utils import gssapi_requested
+from ._pipeline_async import AsyncPipeline
 from ._connection_base import BaseConnection, CursorRow, Notify
 from ._server_cursor_async import AsyncServerCursor
 
@@ -101,11 +103,13 @@ class AsyncConnection(BaseConnection[Row]):
             if sys.platform == "win32":
                 loop = asyncio.get_running_loop()
                 if isinstance(loop, asyncio.ProactorEventLoop):
+
+                    from ._compat import _asyncio_run_snippet
+
                     raise e.InterfaceError(
                         "Psycopg cannot use the 'ProactorEventLoop' to run in async"
                         " mode. Please use a compatible event loop, for instance by"
-                        " setting 'asyncio.set_event_loop_policy"
-                        "(WindowsSelectorEventLoopPolicy())'"
+                        + f" {_asyncio_run_snippet}"
                     )
 
         params = await cls._get_connection_params(conninfo, **kwargs)
@@ -141,6 +145,21 @@ class AsyncConnection(BaseConnection[Row]):
             lines.append("Multiple connection attempts failed. All failures were:")
             lines.extend(f"- {descr}: {error}" for error, descr in conn_errors)
             raise type(last_ex)("\n".join(lines)).with_traceback(None)
+
+        if (
+            pq.version() >= 160000
+            and rv.pgconn.used_gssapi
+            and not gssapi_requested(params)
+        ):
+            warnings.warn(
+                "the connection was obtained using the GSSAPI relying on the"
+                " 'gssencmode=prefer' libpq default. In a future psycopg[binary]"
+                " version this default will be changed to 'disable'."
+                " If you wish to interact with the GSSAPI reliably please set the"
+                " 'gssencmode' parameter in the connection string or the"
+                " 'PGGSSENCMODE' environment variable to 'prefer' or 'require'",
+                DeprecationWarning,
+            )
 
         rv._autocommit = bool(autocommit)
         if row_factory:
@@ -364,6 +383,14 @@ class AsyncConnection(BaseConnection[Row]):
 
         nreceived = 0
 
+        if self._notify_handlers:
+            warnings.warn(
+                "using 'notifies()' together with notifies handlers on the"
+                " same connection is not reliable."
+                " Please use only one of thees methods",
+                RuntimeWarning,
+            )
+
         async with self.lock:
             enc = self.pgconn._encoding
 
@@ -427,6 +454,27 @@ class AsyncConnection(BaseConnection[Row]):
                 async with self.lock:
                     assert pipeline is self._pipeline
                     self._pipeline = None
+
+    @asynccontextmanager
+    async def _pipeline_nolock(self) -> AsyncIterator[AsyncPipeline]:
+        """like pipeline() but don't acquire a lock.
+
+        Assume that the caller is holding the lock.
+        """
+
+        # Currently only used internally by Cursor.executemany() in a branch
+        # in which we already established that the connection has no pipeline.
+        # If this changes we may relax the asserts.
+        assert not self._pipeline
+        # WARNING: reference loop, broken ahead.
+        pipeline = self._pipeline = AsyncPipeline(self, _no_lock=True)
+        try:
+            async with pipeline:
+                yield pipeline
+        finally:
+            assert pipeline.level == 0
+            assert pipeline is self._pipeline
+            self._pipeline = None
 
     async def wait(self, gen: PQGen[RV], interval: float | None = _WAIT_INTERVAL) -> RV:
         """
