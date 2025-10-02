@@ -10,6 +10,7 @@ Psycopg connection object (sync version)
 from __future__ import annotations
 
 import logging
+import warnings
 from time import monotonic
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Generator, Iterator, cast, overload
@@ -32,6 +33,7 @@ from .generators import notifies
 from .transaction import Transaction
 from ._capabilities import capabilities
 from ._server_cursor import ServerCursor
+from ._conninfo_utils import gssapi_requested
 from ._connection_base import BaseConnection, CursorRow, Notify
 
 if TYPE_CHECKING:
@@ -123,6 +125,16 @@ class Connection(BaseConnection[Row]):
             lines.append("Multiple connection attempts failed. All failures were:")
             lines.extend((f"- {descr}: {error}" for error, descr in conn_errors))
             raise type(last_ex)("\n".join(lines)).with_traceback(None)
+
+        if (
+            pq.version() >= 160000
+            and rv.pgconn.used_gssapi
+            and (not gssapi_requested(params))
+        ):
+            warnings.warn(
+                "the connection was obtained using the GSSAPI relying on the 'gssencmode=prefer' libpq default. In a future psycopg[binary] version this default will be changed to 'disable'. If you wish to interact with the GSSAPI reliably please set the 'gssencmode' parameter in the connection string or the 'PGGSSENCMODE' environment variable to 'prefer' or 'require'",
+                DeprecationWarning,
+            )
 
         rv._autocommit = bool(autocommit)
         if row_factory:
@@ -342,6 +354,12 @@ class Connection(BaseConnection[Row]):
 
         nreceived = 0
 
+        if self._notify_handlers:
+            warnings.warn(
+                "using 'notifies()' together with notifies handlers on the same connection is not reliable. Please use only one of thees methods",
+                RuntimeWarning,
+            )
+
         with self.lock:
             enc = self.pgconn._encoding
 
@@ -402,6 +420,27 @@ class Connection(BaseConnection[Row]):
                 with self.lock:
                     assert pipeline is self._pipeline
                     self._pipeline = None
+
+    @contextmanager
+    def _pipeline_nolock(self) -> Iterator[Pipeline]:
+        """like pipeline() but don't acquire a lock.
+
+        Assume that the caller is holding the lock.
+        """
+
+        # Currently only used internally by Cursor.executemany() in a branch
+        # in which we already established that the connection has no pipeline.
+        # If this changes we may relax the asserts.
+        assert not self._pipeline
+        # WARNING: reference loop, broken ahead.
+        pipeline = self._pipeline = Pipeline(self, _no_lock=True)
+        try:
+            with pipeline:
+                yield pipeline
+        finally:
+            assert pipeline.level == 0
+            assert pipeline is self._pipeline
+            self._pipeline = None
 
     def wait(self, gen: PQGen[RV], interval: float | None = _WAIT_INTERVAL) -> RV:
         """

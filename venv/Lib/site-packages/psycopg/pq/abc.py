@@ -86,6 +86,9 @@ class PGconn(Protocol):
     def _encoding(self) -> str: ...
 
     @property
+    def protocol_version(self) -> int: ...
+
+    @property
     def server_version(self) -> int: ...
 
     @property
@@ -99,6 +102,9 @@ class PGconn(Protocol):
 
     @property
     def used_password(self) -> bool: ...
+
+    @property
+    def used_gssapi(self) -> bool: ...
 
     @property
     def ssl_in_use(self) -> bool: ...
