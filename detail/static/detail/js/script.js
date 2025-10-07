@@ -293,13 +293,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ---- Tabela de trilhas por categoria ----
-  const PATH_HINTS = {
-    // Gráfico "Categorias Principais"
+  PATH_HINTS = {
+    //Gráfico "Categorias Principais"
     main_categories: {
       'ITC':                ['Impostos, Taxas e Contribuições de Melhoria'],
       'Transf. Correntes':  ['Transferências Correntes'],
       'Contribuições':      ['Contribuições'],
       'Outras':             ['Outras Receitas Correntes'],
+    },
+
+    // (NOVO) Adicione esta seção
+    imposto_taxas_contribuicoes: {
+        'Impostos':    ['Impostos, Taxas e Contribuições de Melhoria', 'Impostos'],
+        'Taxas':       ['Impostos, Taxas e Contribuições de Melhoria', 'Taxas'],
+        'Contribuições de Melhoria': ['Impostos, Taxas e Contribuições de Melhoria', 'Contribuições de Melhoria'],
     },
     // Gráfico "Impostos"
     imposto: {
@@ -314,16 +321,51 @@ document.addEventListener('DOMContentLoaded', function () {
       'Taxas pelo Exercício do Poder de Polícia': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Taxas pelo Exercício do Poder de Polícia'],
       'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Outras Taxas'],
     },
-    // Gráfico "Contribuições"
+    // Gráfico "Contribuições de Melhoria"
+    contribuicoes_melhoria: {
+      'Pavimentação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Pavimentação e Obras'],
+      'Água/Esgoto': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Rede de Água e Esgoto'],
+      'Iluminação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Iluminação Pública'],
+      'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Outras Contribuições de Melhoria'],
+    },
+    // Gráfico "Contribuições" (nível detalhado)
     contribuicoes: {
-      'Contribuições de Melhoria': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria'],
+      'Sociais': ['Contribuições', 'Contribuições Sociais'],
+      'Iluminação Pública': ['Contribuições', 'Custeio do Serviço de Iluminação Pública'],
+      'Outras': ['Contribuições', 'Outras Contribuições'],
     },
     // Gráfico "Transferências Correntes"
     transferencias_correntes: {
       'Transferências da União':   ['Transferências Correntes','Transferências da União'],
       'Transferências dos Estados':['Transferências Correntes','Transferências dos Estados'],
       'Outras':                    ['Transferências Correntes','Outras Transferências'],
-    }
+    },
+    // Gráfico "Transferências da União" (detalhe)
+    transferencias_uniao: {
+      'FPM': ['Transferências Correntes','Transferências da União', 'Cota-Parte do FPM'],
+      'Rec. Naturais': ['Transferências Correntes','Transferências da União', 'Compensação Financeira (Recursos Naturais)'],
+      'SUS': ['Transferências Correntes','Transferências da União', 'Recursos do SUS'],
+      'FNDE': ['Transferências Correntes','Transferências da União', 'Recursos do FNDE'],
+      'FNAS': ['Transferências Correntes','Transferências da União', 'Recursos do FNAS'],
+      'Outras': ['Transferências Correntes','Transferências da União', 'Outras Transferências da União'],
+    },
+    // Gráfico "Transferências dos Estados" (detalhe)
+    transferencias_estado: {
+      'ICMS': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do ICMS'],
+      'IPVA': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do IPVA'],
+      'Rec. Naturais': ['Transferências Correntes','Transferências dos Estados', 'Compensação Financeira (Recursos Naturais)'],
+      'SUS': ['Transferências Correntes','Transferências dos Estados', 'Recursos do SUS'],
+      'Assistência': ['Transferências Correntes','Transferências dos Estados', 'Assistência Social'],
+      'Outras': ['Transferências Correntes','Transferências dos Estados', 'Outras Transferências dos Estados'],
+    },
+    // Gráfico "Outras Receitas Correntes"
+    outras_receitas_correntes: { // Renomeado para evitar conflito com "outras_receitas" do aggregated_data
+      'Patrimonial': ['Outras Receitas Correntes', 'Receita Patrimonial'],
+      'Agropecuária': ['Outras Receitas Correntes', 'Receita Agropecuária'],
+      'Industrial': ['Outras Receitas Correntes', 'Receita Industrial'],
+      'Serviços': ['Outras Receitas Correntes', 'Receita de Serviços'],
+      'Outras': ['Outras Receitas Correntes', 'Outras Receitas'],
+    },
   };
 
   function resolvePath(categoryKey, datasetLabel){

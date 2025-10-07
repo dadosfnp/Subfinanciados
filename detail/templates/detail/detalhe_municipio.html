@@ -79,12 +79,15 @@
           <div class="flex gap-2 items-center">
             <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
               <option value="main_categories">Categorias Principais</option>
-              <option value="imposto">Impostos</option>
-              <option value="taxas">Taxas</option>
+              <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
+              <option value="imposto">___ Impostos</option>
+              <option value="taxas">____ Taxas</option>
+              <option value="imposto">___ Impostos</option>
+              <option value="contribuicoes_melhoria">____ Contribuições de Melhoria</option>
               <option value="contribuicoes">Contribuições</option>
               <option value="transferencias_correntes">Transferências Correntes</option>
-              <option value="transferencias_uniao">Transferências da União</option>
-              <option value="transferencias_estado">Transferências dos Estados</option>
+              <option value="transferencias_uniao">___ Transferências da União</option>
+              <option value="transferencias_estado">___ Transferências dos Estados</option>
               <option value="outras_receitas">Outras Receitas</option>
             </select>
           </div>
@@ -106,6 +109,7 @@
 
   {{ chart_data_json|json_script:"chart-data" }}
   {{ percentile_data_json|json_script:"percentile-data" }}
+  {{ data|json_script:"mun-data" }}
   <script id="municipio-data" type="application/json">
   {
     "rank_nacional": {{ municipio.rank_nacional|default_if_none:"null" }},
@@ -124,5 +128,5 @@
   };
 </script>
   <script src="{% static 'detail/js/script_mun.js' %}"></script>
-  <script src="{% static 'detail/js/script_density.js' %}"></script>
+  <script src="{% static 'detail/js/script_density_mun.js' %}"></script>
 {% endblock content %}

@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada # Assuming you have your models set up
-from django.db.models import Sum, Avg
+from django.db.models import Sum, Avg, F
 
 # Helper function to format a single revenue item (no changes needed here)
 def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
@@ -164,7 +164,7 @@ def municipio_detalhe_view(request, municipio_id):
         ),
         "contribuicoes_melhoria": get_chart_series(
             ["Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
-            [cme.contribuicao_melhoria_pavimento_obras_pc, cme.contribuicao_melhoria_agua_potavel_pc, cme.contribuicao_melhoria_iluminacao_publica_pc, cme.outras_contribuicoes_melhoria_pc]
+           [cme.contribuicao_melhoria_pavimento_obras_pc, cme.contribuicao_melhoria_agua_potavel_pc, cme.contribuicao_melhoria_iluminacao_publica_pc, cme.outras_contribuicoes_melhoria_pc]
         ),
         "contribuicoes": get_chart_series(
             ["Sociais", "Iluminação Pública", "Outras"],
@@ -202,11 +202,59 @@ def municipio_detalhe_view(request, municipio_id):
                     populate_percentiles(item['children'])
     populate_percentiles(revenue_tree)
 
+
+    qs = (
+        Municipio.objects
+        .annotate(
+            # Categorias Principais
+            main_categories=F('rc_23_pc'),
+
+            # Imposto, Taxas e Contribuições de Melhoria
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
+            imposto = F('conta_especifica__imposto')/F('populacao23'),  
+            taxas = F('conta_especifica__taxas')/F('populacao23'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+
+            # Contribuições
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+
+            # Transferências Correntes
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+
+            # Outras Receitas Correntes
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+                  )
+        .values(                  # já vem “flat” pro template
+            "cod_ibge", "main_categories",
+            
+            "imposto_taxas_contribuicoes",
+            "imposto",
+            "taxas",
+            "contribuicoes_melhoria",
+            
+            "contribuicoes",
+
+            "transferencias_correntes",
+            "transferencias_uniao",
+            "transferencias_estado",
+
+            "outras_receitas",
+            
+            
+        )
+        .order_by("cod_ibge")
+    )
+    data = list(qs)  # ~5.570 linhas é tranquilo
+
+
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
+        'data': data,
     }
 
     
@@ -578,10 +626,11 @@ def conjunto_detalhe_view(request):
             ],
         },
         "imposto_taxas_contribuicoes": {
-            "labels": ["Impostos", "Taxas"],
+            "labels": ["Impostos", "Taxas", "Contribuições de Melhoria"], 
             "values": [
                 v('total_imposto'),
                 v('total_taxas'),
+                v('total_contribuicoes_melhoria'),
             ],
         },
         "imposto": {
@@ -594,16 +643,26 @@ def conjunto_detalhe_view(request):
             ],
         },
         "taxas": {
-            "labels": ["Poder de Polícia"],
-            "values": [v('total_taxa_policia')],
+            "labels": ["Poder de Polícia", "Prestação de Serviços", "Outras"],
+            "values": [
+                v('total_taxa_policia'),
+                v('total_taxa_prestacao_servico'),
+                v('total_outras_taxas'),
+                ],
         },
         "contribuicoes_melhoria": {
-            "labels": [],
-            "values": [],
+            "labels": [ "Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
+            "values": [ v('total_contribuicao_melhoria_pavimento_obras'),
+                        v('total_contribuicao_melhoria_agua_potavel'),
+                        v('total_contribuicao_melhoria_iluminacao_publica'),
+                        v('total_outras_contribuicoes_melhoria'),
+                     ],
         },
         "contribuicoes": {
-            "labels": ["Sociais"],
-            "values": [v('total_contribuicoes')],  # se quiser só sociais, troque para v('total_contribuicoes_sociais')
+            "labels": ["Sociais", "Iluminação Pública", "Outras"],
+            "values": [v('total_contribuicoes'),
+                       v('total_contribuicoes_iluminacao_publica'),
+                       v('total_outras_contribuicoes')],  # se quiser só sociais, troque para v('total_contribuicoes_sociais')
         },
         "transferencias_correntes": {
             "labels": ["União", "Estados", "Outras"],
@@ -625,10 +684,13 @@ def conjunto_detalhe_view(request):
             ],
         },
         "transferencias_estado": {
-            "labels": ["ICMS", "IPVA", "Outras"],
+            "labels": ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
             "values": [
                 v('total_transferencia_estado_icms'),
                 v('total_transferencia_estado_ipva'),
+                v('total_transferencia_estado_exploracao'),
+                v('total_transferencia_estado_sus'),
+                v('total_transferencia_estado_assistencia'),
                 v('total_outras_transferencias_estado'),
             ],
         },
@@ -642,10 +704,105 @@ def conjunto_detalhe_view(request):
         },
     }
 
+    qs = (
+        Municipio.objects
+        .annotate(
+            # Categorias Principais
+            main_categories=F('rc_23_pc'),
+
+            # Imposto, Taxas e Contribuições de Melhoria
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
+            imposto = F('conta_especifica__imposto')/F('populacao23'),  
+            taxas = F('conta_especifica__taxas')/F('populacao23'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+
+            # Contribuições
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+
+            # Transferências Correntes
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+
+            # Outras Receitas Correntes
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+                  )
+        .values(                  # já vem “flat” pro template
+            "cod_ibge", "main_categories",
+            
+            "imposto_taxas_contribuicoes",
+            "imposto",
+            "taxas",
+            "contribuicoes_melhoria",
+            
+            "contribuicoes",
+
+            "transferencias_correntes",
+            "transferencias_uniao",
+            "transferencias_estado",
+            
+            "outras_receitas",
+            
+            
+        )
+        .order_by("cod_ibge")
+    )
+
+    data = list(qs)  # ~5.570 linhas é tranquilo
+
+    qsf = (
+        Municipio.objects
+        .annotate(
+            # Categorias Principais
+            main_categories=F('rc_23_pc'),
+
+            # Imposto, Taxas e Contribuições de Melhoria
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
+            imposto = F('conta_especifica__imposto')/F('populacao23'),  
+            taxas = F('conta_especifica__taxas')/F('populacao23'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+
+            # Contribuições
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+
+            # Transferências Correntes
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+
+            # Outras Receitas Correntes
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+                  )
+        .values(                  # já vem “flat” pro template
+            "cod_ibge", "main_categories",
+            
+            "imposto_taxas_contribuicoes",
+            "imposto",
+            "taxas",
+            "contribuicoes_melhoria",
+            
+            "contribuicoes",
+
+            "transferencias_correntes",
+            "transferencias_uniao",
+            "transferencias_estado",
+            
+            "outras_receitas",
+            
+            
+        )
+        .order_by("cod_ibge")
+    )
+
+    data_f = list(qsf)  # ~5.570 linhas é tranquilo
+    print(data_f)
+    print("a")
     context = {
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
         'chart_data_json': chart_data,
+        'data_json': data,
+        'data_f_json': data_f,
     }
 
     print(revenue_tree)
@@ -873,20 +1030,40 @@ def conjunto_chart_api(request):
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
+        # Nível Detalhado
         total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
         total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
         total_transferencias_correntes=Sum('conta_detalhada__transferencias_correntes'),
         total_outras_receita=Sum('conta_detalhada__outras_receita'),
+
+        # Nível Específico
         total_imposto=Sum('conta_especifica__imposto'),
         total_taxas=Sum('conta_especifica__taxas'),
+        total_contribuicoes_melhoria=Sum('conta_especifica__contribuicoes_melhoria'),
+        total_contribuicoes_sociais=Sum('conta_especifica__contribuicoes_sociais'),
+        total_contribuicoes_iluminacao_publica=Sum('conta_especifica__contribuicoes_iluminacao_publica'),
+        total_outras_contribuicoes=Sum('conta_especifica__outras_contribuicoes'),
+        total_tranferencias_uniao=Sum('conta_especifica__tranferencias_uniao'),
+        total_tranferencias_estados=Sum('conta_especifica__tranferencias_estados'),
+        total_outras_tranferencias=Sum('conta_especifica__outras_tranferencias'),
+        total_receita_patrimonial=Sum('conta_especifica__receita_patrimonial'),
+        total_receita_agropecuaria=Sum('conta_especifica__receita_agropecuaria'),
+        total_receita_industrial=Sum('conta_especifica__receita_industrial'),
+        total_receita_servicos=Sum('conta_especifica__receita_servicos'),
+        total_outras_receitas=Sum('conta_especifica__outras_receitas'),
+
+        # Nível Mais Específico
         total_iptu=Sum('conta_mais_especifica__iptu'),
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
-        total_tranferencias_uniao=Sum('conta_especifica__tranferencias_uniao'),
-        total_tranferencias_estados=Sum('conta_especifica__tranferencias_estados'),
-        total_outras_tranferencias=Sum('conta_especifica__outras_tranferencias'),
+        total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
+        total_outras_taxas=Sum('conta_mais_especifica__outras_taxas'),
+        total_contribuicao_melhoria_pavimento_obras=Sum('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'),
+        total_contribuicao_melhoria_agua_potavel=Sum('conta_mais_especifica__contribuicao_melhoria_agua_potavel'),
+        total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
+        total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
@@ -895,10 +1072,10 @@ def conjunto_chart_api(request):
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
         total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
         total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
+        total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
+        total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
+        total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
         total_outras_transferencias_estado=Sum('conta_mais_especifica__outras_transferencias_estado'),
-        total_receita_patrimonial=Sum('conta_especifica__receita_patrimonial'),
-        total_receita_servicos=Sum('conta_especifica__receita_servicos'),
-        total_outras_receitas=Sum('conta_especifica__outras_receitas'),
     )
 
     def v(key):
@@ -914,6 +1091,14 @@ def conjunto_chart_api(request):
                 v('total_outras_receita'),
             ],
         },
+        "imposto_taxas_contribuicoes": {
+            "labels": ["Impostos", "Taxas", "Contribuições de Melhoria"], 
+            "values": [
+                v('total_imposto'),
+                v('total_taxas'),
+                v('total_contribuicoes_melhoria'),
+            ],
+        },
         "imposto": {
             "labels": ["IPTU", "ITBI", "ISS", "Outros"],
             "values": [
@@ -924,17 +1109,31 @@ def conjunto_chart_api(request):
             ],
         },
         "taxas": {
-            "labels": ["Poder de Polícia"],
-            "values": [v('total_taxa_policia')],
+            "labels": ["Poder de Polícia", "Prestação de Serviços", "Outras"],
+            "values": [
+                v('total_taxa_policia'),
+                v('total_taxa_prestacao_servico'),
+                v('total_outras_taxas'),
+                ],
+        },
+        "contribuicoes_melhoria": {
+            "labels": [ "Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
+            "values": [ v('total_contribuicao_melhoria_pavimento_obras'),
+                        v('total_contribuicao_melhoria_agua_potavel'),
+                        v('total_contribuicao_melhoria_iluminacao_publica'),
+                        v('total_outras_contribuicoes_melhoria'),
+                     ],
         },
         "contribuicoes": {
-            "labels": ["Sociais"],
-            "values": [v('total_contribuicoes')],
+            "labels": ["Sociais", "Iluminação Pública", "Outras"],
+            "values": [v('total_contribuicoes'),
+                       v('total_contribuicoes_iluminacao_publica'),
+                       v('total_outras_contribuicoes')],  # se quiser só sociais, troque para v('total_contribuicoes_sociais')
         },
         "transferencias_correntes": {
             "labels": ["União", "Estados", "Outras"],
             "values": [
-                v('total_tranferencias_uniao'),
+                v('total_tranferencias_uniao'),    # nota: no modelo está "tranferencias"
                 v('total_tranferencias_estados'),
                 v('total_outras_tranferencias'),
             ],
@@ -951,10 +1150,13 @@ def conjunto_chart_api(request):
             ],
         },
         "transferencias_estado": {
-            "labels": ["ICMS", "IPVA", "Outras"],
+            "labels": ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
             "values": [
                 v('total_transferencia_estado_icms'),
                 v('total_transferencia_estado_ipva'),
+                v('total_transferencia_estado_exploracao'),
+                v('total_transferencia_estado_sus'),
+                v('total_transferencia_estado_assistencia'),
                 v('total_outras_transferencias_estado'),
             ],
         },
@@ -969,3 +1171,72 @@ def conjunto_chart_api(request):
     }
 
     return JsonResponse(chart_data)
+
+
+def conjunto_data_api(request):
+    # --- Lógica de filtragem (copiada de outra view) ---
+    queryset = Municipio.objects.all()
+    uf_filtro = request.GET.get('uf')
+    regiao_filtro = request.GET.get('regiao')
+    porte_filtro = request.GET.get('porte')
+    rm_filtro = request.GET.get('rm')
+    classification_filter = request.GET.get('classification', 'quintil')
+    subgroup_filter = request.GET.get('subgrupo')
+
+    if regiao_filtro and regiao_filtro != 'todos':
+        queryset = queryset.filter(regiao=regiao_filtro)
+    if uf_filtro and uf_filtro != 'todos':
+        queryset = queryset.filter(uf=uf_filtro)
+    if rm_filtro and rm_filtro != 'todos':
+        queryset = queryset.filter(rm__nome=rm_filtro)
+    if porte_filtro and porte_filtro != 'todos':
+        if porte_filtro == 'Até 5 mil':
+            queryset = queryset.filter(populacao23__lt=5000)
+        elif porte_filtro == '5 mil a 10 mil':
+            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+        # ... (adicione os outros `elif` para as faixas de porte como na view `conjunto_detalhe_view`)
+        elif porte_filtro == '10 mil a 20 mil':
+            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+        elif porte_filtro == '20 mil a 50 mil':
+            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+        elif porte_filtro == '50 mil a 100 mil':
+            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+        elif porte_filtro == '100 mil a 200 mil':
+            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+        elif porte_filtro == '200 mil a 500 mil':
+            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+        elif porte_filtro == 'Acima de 500 mil':
+            queryset = queryset.filter(populacao23__gte=500000)
+
+
+    if subgroup_filter and subgroup_filter != "todos":
+        if classification_filter == 'quintil':
+            queryset = queryset.filter(quintil23=subgroup_filter)
+        elif classification_filter == 'decil':
+            queryset = queryset.filter(decil23=subgroup_filter)
+
+    # --- Anotação e seleção de valores (a mesma da view `conjunto_detalhe_view`) ---
+    qs = (
+        queryset.annotate(
+            main_categories=F('rc_23_pc'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
+            imposto = F('conta_especifica__imposto')/F('populacao23'),
+            taxas = F('conta_especifica__taxas')/F('populacao23'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+        )
+        .values(
+            "cod_ibge", "main_categories",
+            "imposto_taxas_contribuicoes", "imposto", "taxas", "contribuicoes_melhoria",
+            "contribuicoes", "transferencias_correntes", "transferencias_uniao",
+            "transferencias_estado", "outras_receitas"
+        )
+        .order_by("cod_ibge")
+    )
+
+    data = list(qs)
+    return JsonResponse(data, safe=False)
