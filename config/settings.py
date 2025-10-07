@@ -126,16 +126,12 @@ USE_THOUSAND_SEPARATOR = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-
-STATIC_URL = '/static/'
-
-# Caminho absoluto onde os arquivos coletados ficarão
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# (opcional) Caminhos adicionais onde procurar arquivos estáticos durante o dev
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'base_statics',
 ]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STORAGES = {
     "staticfiles": {
