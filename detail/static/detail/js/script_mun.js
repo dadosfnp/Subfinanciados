@@ -245,17 +245,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const pretty = k => ({
     main_categories:'Categorias Principais',
-    imposto:'Impostos',
-    taxas:'Taxas',
+    imposto_taxas_contribuicoes:'Impostos, Taxas e Contribuições de Melhoria',
+    imposto:'___ Impostos',
+    taxas:'___ Taxas',
+    contribuicoes_melhoria:'___ Contribuições de Melhoria',
     contribuicoes:'Contribuições',
     transferencias_correntes:'Transferências Correntes',
-    transferencias_uniao:'Transferências da União',
-    transferencias_estado:'Transferências dos Estados',
+    transferencias_uniao:'___ Transferências da União',
+    transferencias_estado:'___ Transferências dos Estados',
     outras_receitas:'Outras Receitas'
   }[k] || k.replace(/_/g,' '));
 
   const order = [
-    'main_categories','imposto','taxas','contribuicoes',
+    'main_categories','imposto_taxas_contribuicoes','imposto','taxas', 'contribuicoes_melhoria', 'contribuicoes',
     'transferencias_correntes','transferencias_uniao','transferencias_estado','outras_receitas'
   ];
 
@@ -275,6 +277,8 @@ document.addEventListener('DOMContentLoaded', function () {
       )
       .map(([k]) => k);
   })();
+
+  console.log('availableKeys:', availableKeys);
 
   // select de categorias
   const selectEl = document.getElementById('chart-category-select');
