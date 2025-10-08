@@ -159,6 +159,37 @@ python manage.py help
 python manage.py runserver
 ```
 
+## 👨‍💻 Comandos GIT para Desenvolvimento
+- Verificar status da branch e logs:
+```bash
+git status                # Mostra mudanças não commitadas e estado atual
+git log                   # Histórico completo de commits 
+```
+- Trabalhando com alterações:
+```bash
+git add arquivo.ext       # Adiciona arquivo específico à área de staging
+git add .                 # Adiciona todas as mudanças
+git commit -m "Mensagem"  # Faz commit com mensagem
+git commit --amend        # Edita o último commit (ex: corrigir mensagem)
+```
+- Branches (ramificações):
+```bash
+git branch                # Lista branches locais
+git branch nome-branch    # Cria nova branch
+git checkout nome-branch  # Vai para uma branch existente
+git checkout -b nova      # Cria e troca para nova branch
+```
+- Sincronização com remoto:
+```bash
+git fetch                    # Busca mudanças do remoto (sem aplicar)
+git pull                     # Atualiza branch local com remoto
+git push                     # Envia commits para o remoto
+git push -u origin main      # Primeira vez para setar upstream
+git push origin nome-branch  # Envia branch específica
+```
+
+
+
 ## 📝 Convenção de Commits
 
 Utilizamos uma convenção baseada no **Conventional Commits**, adaptada para o projeto.  
