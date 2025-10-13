@@ -151,7 +151,7 @@ body{
 #valor-toggle .segmented-option:focus-visible{ outline:2px solid var(--fnp-blue); outline-offset:2px; }
 
 /* Destaque sincronizado de tabelas (Home) */
-.highlight  {background:#194685 !important;color:#000 !important;font-weight:bold;transition:.15s}
+.highlight  {background:#194685 !important;color:#fff !important;font-weight:bold;transition:.15s}
 .highlight2 {background:#efae17 !important;color:#000 !important;font-weight:bold;transition:.15s}
 
 /* Componentes do Detail (não-invasivos) */
