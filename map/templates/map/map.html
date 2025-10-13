@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{% static 'map/css/style.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- (NOVO) Dependências do modal de busca (iguais às da Home) -->
+  <!--  Dependências do modal de busca -->
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
   <script defer src="{% static 'global/js/search-modal.js' %}"></script>
@@ -190,9 +190,12 @@
 
 <!-- JS específicos do mapa -->
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+<script>
+  window.MAPBOX_PUBLIC_TOKEN = "{{ MAPBOX_PUBLIC_TOKEN|escapejs }}";
+</script>
 <script src="{% static 'map/js/script.js' %}"></script>
 
-<!-- (NOVO) Modal de busca reutilizável (igual ao da Home) -->
+<!-- Modal de busca reutilizável -->
 <div id="search-modal" class="modal fade" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">

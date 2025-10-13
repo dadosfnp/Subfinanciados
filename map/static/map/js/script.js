@@ -1,10 +1,16 @@
 // Configuração do Mapbox
-mapboxgl.accessToken = "pk.eyJ1IjoiZ2F0b2NhbmdhY2Vpcm8iLCJhIjoiY21iaWNwZ243MDQ4bDJvb2tvZnR6bzZydCJ9.B_FIB-HTTgMdliNktSMDnw";
+const token = window.MAPBOX_PUBLIC_TOKEN || "";
+if (!token) {
+  console.error("MAPBOX_PUBLIC_TOKEN não definido no template.");
+}
+
+mapboxgl.accessToken = token;
+
 const map = new mapboxgl.Map({
     container: "map",
-    style: "mapbox://styles/gatocangaceiro/cmbicxxq2006g01s2e0ht9l0l", // Estilo do mapa
-    zoom: 3.5, // Zoom inicial
-    center: [-54, -15] // Centro inicial (aproximadamente Brasil)
+    style: "mapbox://styles/gatocangaceiro/cmbicxxq2006g01s2e0ht9l0l",
+    zoom: 3.5,
+    center: [-54, -15]
 });
 map.addControl(new mapboxgl.NavigationControl()); // Adiciona controles de navegação
 const DEFAULT_VIEW = { center: [-54, -15], zoom: 3.5 }; // Visão padrão
