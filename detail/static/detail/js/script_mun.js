@@ -234,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const rankingSelect = $('#ranking-select');
+  console.log('rankingSelect:', rankingSelect);
   rankingSelect?.addEventListener('change', () => updateRankingUI(rankingSelect.value || 'nacional'));
 
   // ===== Chart.js =====

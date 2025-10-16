@@ -32,7 +32,7 @@ body { font-family: 'Inter', sans-serif; }
 .ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
 .ranking-indicator{width:14px;height:14px;border-radius:3px}
 .quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
-.ranking-tooltip{visibility:hidden;background:#333;color:#fff;text-align:center;border-radius:6px;padding:5px 8px;position:absolute;z-index:10;bottom:125%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;white-space:nowrap;font-size:.75rem}
+.ranking-tooltip{visibility:hidden;background:#333;color:#fff;text-align:center; border-radius:6px;padding:5px 8px;position:absolute;z-index:10;bottom:125%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;white-space:nowrap;font-size:.75rem}
 .ranking-indicator-container:hover .ranking-tooltip{visibility:visible;opacity:1}
 
 /* ====== Lupa ao lado do <select> (Detail) ====== */
