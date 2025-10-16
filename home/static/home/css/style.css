@@ -95,3 +95,21 @@
 .summary-card .value.negative { color: #dc2626; } /* vermelho */
 .summary-card .value.neutral  { color: var(--fnp-blue); } /* zero */
 
+
+.btn-info-tooltip {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.btn-info-tooltip:focus,
+.btn-info-tooltip:hover,
+.btn-info-tooltip:active {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
