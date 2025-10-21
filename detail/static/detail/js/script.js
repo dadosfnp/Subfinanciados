@@ -1,42 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
-
-  // --- Debug helpers seguros (no-ops quando DEBUG=false) ---
+  // --- Debug helpers ---
   const DEBUG = false;
-  const log  = (...a) => { if (DEBUG) console.log('[detail]', ...a); };
-  const warn = (...a) => { if (DEBUG) console.warn('[detail]', ...a); };
+  const log  = (...a) => { if (DEBUG) console.log('[detail-conjunto]', ...a); };
+  const warn = (...a) => { if (DEBUG) console.warn('[detail-conjunto]', ...a); };
 
   // =============== UTILS =================
-  function parsePossiblyMultiSerialized(text) {
+  const parsePossiblyMultiSerialized = (text) => {
     let out = text;
     try { out = JSON.parse(out); } catch { return text; }
     while (typeof out === 'string') {
       try { out = JSON.parse(out); } catch { break; }
     }
     return out;
-  }
-  function normalizeLabel(str) {
-    return (str||'')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]+/gi,' ')
-      .replace(/\s+/g,' ')
-      .trim().toLowerCase();
-  }
+  };
+  const normalizeLabel = (str) => (str||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/gi,' ')
+    .replace(/\s+/g,' ')
+    .trim().toLowerCase();
 
-  // Apelidos simples
-  const HEADING_ALIAS = new Map([
-    ['itc', 'Impostos, Taxas e Contribuições de Melhoria'],
-    ['transf correntes', 'Transferências Correntes'],
-    ['outras', 'Outras Receitas Correntes'],
-  ]);
-
-  function aliasToHeading(label){
-    const k = normalizeLabel(label);
-    return HEADING_ALIAS.get(k) || label;
-  }
-
-  // ---------- Índice de headings ----------
+  // Índice para abrir seções
   let headingIndex = new Map();
-
   function buildHeadingIndex(scope=document){
     headingIndex.clear();
     const headers = scope.querySelectorAll(
@@ -51,68 +35,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const content  = targetId ? document.getElementById(targetId) : null;
       if (key) headingIndex.set(key,{header:h,content,targetId});
     });
-    log('headings indexados (limpos):', Array.from(headingIndex.keys()));
   }
-
-  // ---------- Localiza linha por texto ----------
-  function findRowByLabel(label){
-    const needle = normalizeLabel(label);
-    const scope  = document.getElementById('main-revenue-details-container');
-    if(!scope) return null;
-
-    const candidates = scope.querySelectorAll(
-      '.toggle-heading, .toggle-subheading, .revenue-item, .revenue-row, li, .item-row, .row'
-    );
-
-    let best = null; // {el, score, dist}
-    const pick = (el, score, dist)=>{
-      if(!best || score>best.score || (score===best.score && dist<best.dist)){
-        best = {el, score, dist};
-      }
-    };
-
-    for(const el of candidates){
-      const clone = el.cloneNode(true);
-      clone.querySelectorAll('.valor-absoluto,.valor-per-capita').forEach(n=>n.remove());
-      const txt = normalizeLabel(clone.textContent);
-      if(!txt) continue;
-
-      if (txt === needle) { pick(el, 2, 0); break; }
-      if (txt.includes(needle) || needle.includes(txt)){
-        pick(el, 1, Math.abs(txt.length-needle.length));
-      }
-    }
-    return best?.el || null;
-  }
-
-  // ---------- Expande pais ----------
-  function expandAncestorsFor(el){
-    if(!el) return;
-    const root = document.getElementById('main-revenue-details-container');
-    let node = el;
-    while(node && node!==root){
-      const container = node.closest('div[id^="detalhe-"]');
-      if(container){
-        const id = container.id;
-        const heading = document.querySelector(`.toggle-heading[data-target="${id}"]`);
-        if(heading){
-          container.classList.remove('hidden');
-          heading.classList.add('open');
-        }
-        node = container.parentElement;
-      }else{
-        node = node.parentElement;
-      }
-    }
-  }
-
-  // ---------- Abre por rótulo (heading/linha) ----------
   function openSectionByLabel(label, opts={scroll:true, highlight:false}){
-    if(!label) return;
-    label = aliasToHeading(label);
+    if(!label) return null;
     const needle = normalizeLabel(label);
-
-    // 1) HEADING exato
     let entry = headingIndex.get(needle);
     if(entry){
       if(entry.content) entry.content.classList.remove('hidden');
@@ -125,24 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if(opts.scroll) entry.header.scrollIntoView({behavior:'smooth', block:'center'});
       return entry.header;
     }
-
-    // 2) LINHA (folha) – abre pais e, se ela for toggle, abre filhos
-    let row = findRowByLabel(label);
-    if(row){
-      expandAncestorsFor(row);
-      if((row.classList.contains('toggle-heading') || row.classList.contains('toggle-subheading')) && row.dataset?.target){
-        const tgt = document.getElementById(row.dataset.target);
-        if(tgt) tgt.classList.remove('hidden');
-        row.classList.add('open');
-      }
-      if(opts.scroll){
-        row.scrollIntoView({behavior:'smooth', block:'center'});
-        if(opts.highlight){ row.classList.add('ring-2','ring-yellow-400'); setTimeout(()=>row.classList.remove('ring-2','ring-yellow-400'), 900); }
-      }
-      return row;
-    }
-
-    // 3) HEADING por substring
     for(const [k,v] of headingIndex){
       if(k.includes(needle) || needle.includes(k)){
         if(v.content) v.content.classList.remove('hidden');
@@ -156,23 +64,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return v.header;
       }
     }
-
-    warn('heading/linha não encontrada p/ label:', label, 'needle:', needle);
     return null;
   }
-
-  // ---------- Abre por trilha ----------
   function openByPath(path){
     if(!Array.isArray(path) || !path.length) return;
-    // abre pais sem scroll
-    for(let i=0;i<path.length-1;i++){
-      openSectionByLabel(path[i], {scroll:false});
-    }
-    // foco no último
+    for(let i=0;i<path.length-1;i++) openSectionByLabel(path[i], {scroll:false});
     openSectionByLabel(path[path.length-1], {scroll:true, highlight:true});
   }
 
-  // =============== TOGGLES / ORDEM (mesmo de antes) ===============
+  // =============== TOGGLES / ORDEM ===============
   function handleToggleClick(e){
     e.stopPropagation();
     const targetId = this.dataset.target;
@@ -184,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const els = scope.querySelectorAll('.toggle-heading, .toggle-subheading');
     els.forEach(el=>{ el.removeEventListener('click',handleToggleClick); el.addEventListener('click',handleToggleClick); });
   }
-  function parseCurrencyValue(str){ if(!str) return 0; return parseFloat(String(str).replace('R$','').replace(/\./g,'').replace(',','.').trim()); }
+  const parseCurrencyValue = (str) => !str ? 0 : parseFloat(String(str).replace('R$','').replace(/\./g,'').replace(',','.').trim());
   function sortChildrenByValue(container,isPC){
     const kids=[...container.children];
     kids.sort((a,b)=>{
@@ -196,8 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function sortAllRevenueSections(isPC){
     document.querySelectorAll('#main-revenue-details-container, [id^="detalhe-"]').forEach(c=>sortChildrenByValue(c,isPC));
     initializeToggleListeners();
+    buildHeadingIndex(document);
   }
-  function restoreSelectValue(sel, val){ const has=[...sel.options].some(o=>o.value===val); sel.value = has?val:'todos'; }
 
   // =============== ELEMENTOS / DADOS INICIAIS ===============
   const dataEl = document.getElementById('chart-data');
@@ -227,7 +127,8 @@ document.addEventListener('DOMContentLoaded', function () {
   reaisBtn?.addEventListener('click',()=>setValorMode('real'));
   setValorMode('percapita');
 
-  // =============== Filtros / KPIs / Detalhes ===============
+  // =============== Filtros / KPIs / Detalhes (inalterado) ===============
+  function restoreSelectValue(sel, val){ const has=[...sel.options].some(o=>o.value===val); sel.value = has?val:'todos'; }
   async function updateDependentFilters(){
     if(!filtroRegiao || !filtroUf || !filtroRm) return;
     const r=filtroRegiao.value,u=filtroUf.value,m=filtroRm.value;
@@ -240,14 +141,14 @@ document.addEventListener('DOMContentLoaded', function () {
       filtroUf.innerHTML   ='<option value="todos">Todas</option>';   (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        restoreSelectValue(filtroUf,u);
     }catch(e){ console.error('[filtros] erro',e); }
   }
-  function buildParams(){
+  const buildParams = () => {
     const p=new URLSearchParams();
     p.set('porte',filtroPorte?.value||'todos');
     p.set('rm',filtroRm?.value||'todos');
     p.set('regiao',filtroRegiao?.value||'todos');
     p.set('uf',filtroUf?.value||'todos');
     return p;
-  }
+  };
   async function updateKPIs(){
     try{
       const r=await fetch(`/api/dados-detalhados/?${buildParams()}`); const d=await r.json();
@@ -274,12 +175,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // =============== GRÁFICO ===============
+  // =============== GRÁFICO COMPOSIÇÃO ===============
   const canvas = document.getElementById('myChart');
   if(!canvas){ console.warn('[chart] canvas não encontrado'); return; }
   const ctx = canvas.getContext('2d');
   const selectEl = document.getElementById('chart-category-select');
+
+  // Remove “Impostos, Taxas e Contribuições de Melhoria” do select (não usamos mais)
+  (function removeITCGroup(){
+    const opt = selectEl?.querySelector('option[value="imposto_taxas_contribuicoes"]');
+    if (opt) opt.remove();
+  })();
+
+  // Cores fixas p/ categorias principais
+  const COLOR_BY_LABEL = {
+    'ITC': '#1f77b4',
+    'Contribuições': '#ff7f0e',
+    'Transf. Correntes': '#2ca02c',
+    'Outras': '#d62728'
+  };
   const palette  = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+
   let chartInstance=null;
   let currentChartData = initialChartData;
 
@@ -292,55 +208,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }catch(e){ console.error('[chart] erro',e); }
   }
 
-  // ---- Tabela de trilhas por categoria ----
-  PATH_HINTS = {
-    //Gráfico "Categorias Principais"
+  // Caminhos para abrir linhas na árvore
+  const PATH_HINTS = {
     main_categories: {
-      'ITC':                ['Impostos, Taxas e Contribuições de Melhoria'],
-      'Transf. Correntes':  ['Transferências Correntes'],
-      'Contribuições':      ['Contribuições'],
-      'Outras':             ['Outras Receitas Correntes'],
+      'ITC':               ['Impostos, Taxas e Contribuições de Melhoria'],
+      'Contribuições':     ['Contribuições'],
+      'Transf. Correntes': ['Transferências Correntes'],
+      'Outras':            ['Outras Receitas Correntes'],
     },
-
-    // (NOVO) Adicione esta seção
-    imposto_taxas_contribuicoes: {
-        'Impostos':    ['Impostos, Taxas e Contribuições de Melhoria', 'Impostos'],
-        'Taxas':       ['Impostos, Taxas e Contribuições de Melhoria', 'Taxas'],
-        'Contribuições de Melhoria': ['Impostos, Taxas e Contribuições de Melhoria', 'Contribuições de Melhoria'],
-    },
-    // Gráfico "Impostos"
     imposto: {
-      'IPTU':   ['Impostos, Taxas e Contribuições de Melhoria','Impostos','IPTU'],
-      'ITBI':   ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ITBI'],
-      'ISS':    ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ISS'],
+      'IPTU': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','IPTU'],
+      'ITBI': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ITBI'],
+      'ISS':  ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ISS'],
       'Outros': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','Outros Impostos'],
     },
-    // Gráfico "Taxas"
     taxas: {
       'Taxas pela Prestação de Serviços': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Taxas pela Prestação de Serviços'],
       'Taxas pelo Exercício do Poder de Polícia': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Taxas pelo Exercício do Poder de Polícia'],
       'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Outras Taxas'],
     },
-    // Gráfico "Contribuições de Melhoria"
     contribuicoes_melhoria: {
       'Pavimentação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Pavimentação e Obras'],
       'Água/Esgoto': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Rede de Água e Esgoto'],
       'Iluminação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Iluminação Pública'],
       'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Outras Contribuições de Melhoria'],
     },
-    // Gráfico "Contribuições" (nível detalhado)
     contribuicoes: {
-      'Sociais': ['Contribuições', 'Contribuições Sociais'],
-      'Iluminação Pública': ['Contribuições', 'Custeio do Serviço de Iluminação Pública'],
-      'Outras': ['Contribuições', 'Outras Contribuições'],
+      'Sociais': ['Contribuições','Contribuições Sociais'],
+      'Iluminação Pública': ['Contribuições','Custeio do Serviço de Iluminação Pública'],
+      'Outras': ['Contribuições','Outras Contribuições'],
     },
-    // Gráfico "Transferências Correntes"
     transferencias_correntes: {
-      'Transferências da União':   ['Transferências Correntes','Transferências da União'],
-      'Transferências dos Estados':['Transferências Correntes','Transferências dos Estados'],
-      'Outras':                    ['Transferências Correntes','Outras Transferências'],
+      'União':   ['Transferências Correntes','Transferências da União'],
+      'Estados': ['Transferências Correntes','Transferências dos Estados'],
+      'Outras':  ['Transferências Correntes','Outras Transferências'],
     },
-    // Gráfico "Transferências da União" (detalhe)
     transferencias_uniao: {
       'FPM': ['Transferências Correntes','Transferências da União', 'Cota-Parte do FPM'],
       'Rec. Naturais': ['Transferências Correntes','Transferências da União', 'Compensação Financeira (Recursos Naturais)'],
@@ -349,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function () {
       'FNAS': ['Transferências Correntes','Transferências da União', 'Recursos do FNAS'],
       'Outras': ['Transferências Correntes','Transferências da União', 'Outras Transferências da União'],
     },
-    // Gráfico "Transferências dos Estados" (detalhe)
     transferencias_estado: {
       'ICMS': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do ICMS'],
       'IPVA': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do IPVA'],
@@ -358,8 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'Assistência': ['Transferências Correntes','Transferências dos Estados', 'Assistência Social'],
       'Outras': ['Transferências Correntes','Transferências dos Estados', 'Outras Transferências dos Estados'],
     },
-    // Gráfico "Outras Receitas Correntes"
-    outras_receitas_correntes: { // Renomeado para evitar conflito com "outras_receitas" do aggregated_data
+    outras_receitas: {
       'Patrimonial': ['Outras Receitas Correntes', 'Receita Patrimonial'],
       'Agropecuária': ['Outras Receitas Correntes', 'Receita Agropecuária'],
       'Industrial': ['Outras Receitas Correntes', 'Receita Industrial'],
@@ -368,6 +268,21 @@ document.addEventListener('DOMContentLoaded', function () {
     },
   };
 
+  const MAIN_TO_KEY = {
+    'ITC':'imposto',
+    'Contribuições':'contribuicoes',
+    'Transf. Correntes':'transferencias_correntes',
+    'Outras':'outras_receitas'
+  };
+
+  // helper para sincronizar com densidade
+  function setCategoryAndSync(key){
+    if (!selectEl) return;
+    selectEl.value = key;
+    renderChart(key, currentChartData);
+    selectEl.dispatchEvent(new Event('change', { bubbles:true })); // avisa o script de densidade
+  }
+
   function resolvePath(categoryKey, datasetLabel){
     const table = PATH_HINTS[categoryKey] || {};
     const n = normalizeLabel(datasetLabel);
@@ -375,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const nk = normalizeLabel(k);
       if(nk===n || nk.includes(n) || n.includes(nk)) return path;
     }
-    return null; // sem trilha conhecida
+    return null;
   }
 
   function renderChart(categoryKey, allData){
@@ -387,60 +302,59 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // prepara dados
     const raw = d.values.map(v=>Number(v)||0);
     const total = raw.reduce((a,b)=>a+b,0);
-
     const items = d.labels.map((label,i)=>({label, value:raw[i]})).filter(x=>x.value>0);
-    const finalLabels = items.map(x=>x.label);
-    const finalValues = items.map(x=>x.value);
-    const perc = finalValues.map(v=> total? (v/total)*100 : 0);
+    const labels = items.map(x=>x.label);
+    const values = items.map(x=>x.value);
+    const perc   = values.map(v=> total? (v/total)*100 : 0);
 
-    const datasets = finalLabels.map((label,i)=>({
-      label, data:[perc[i]], backgroundColor: palette[i % palette.length], borderWidth:1
-    }));
+    const bcolors = labels.map((lbl,i)=> COLOR_BY_LABEL[lbl] || palette[i % palette.length]);
 
     if(chartInstance) chartInstance.destroy();
-
     chartInstance = new Chart(ctx,{
       type:'bar',
-      data:{ labels:[(selectEl?.options[selectEl.selectedIndex]?.text||'Categoria').toUpperCase()], datasets },
+      data:{ labels, datasets:[{ label:(selectEl?.selectedOptions?.[0]?.text || 'Categoria').toUpperCase(), data: perc, backgroundColor: bcolors, borderWidth:1 }] },
       options:{
         responsive:true, maintainAspectRatio:false, indexAxis:'y',
-        scales:{ x:{ stacked:true, min:0, max:100, ticks:{ callback:v=>v+'%'} }, y:{ stacked:true } },
-        plugins:{
-          legend:{ position:'bottom' },
-          tooltip:{ callbacks:{
-            label:(ctx)=>{
-              const i=ctx.datasetIndex, pct=ctx.parsed.x ?? 0, raw=finalValues[i];
-              const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-              return `${ctx.dataset.label}: ${pct.toFixed(1)}% (${fmt.format(raw)})`;
-            },
-            footer:()=>{
-              const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-              return `Total: ${fmt.format(total)}`;
-            }
-          } }
-        }
+        scales:{ x:{min:0,max:100,ticks:{callback:v=>v+'%'}}, y:{ticks:{autoSkip:false}} },
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+          label:(ct)=>{
+            const i=ct.dataIndex; const pct=ct.parsed.x || 0; const rawVal = values[i];
+            const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+            return `${labels[i]}: ${pct.toFixed(1)}% (${fmt.format(rawVal)})`;
+          },
+          footer:()=>`Total: ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(total)}`
+        } } }
       }
     });
 
-    // Clique -> abre trilha
+    // clique
     canvas.style.cursor='pointer';
     canvas.onclick = (evt)=>{
-      if(!chartInstance) return;
-      const pts = chartInstance.getElementsAtEventForMode(evt,'nearest',{intersect:false},false);
-      if(!pts.length) return;
-      const {datasetIndex} = pts[0];
-      const ds = chartInstance.data.datasets?.[datasetIndex];
-      const labelClicado = ds?.label || '';
-      log('click label:', labelClicado);
+      const pts = chartInstance.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
+      if (!pts.length) return;
+      const idx = pts[0].index;
+      const clicked = labels[idx];
 
-      // tenta trilha conhecida primeiro
-      const path = resolvePath(categoryKey, labelClicado);
-      if(path){ openByPath(path); return; }
+      if (categoryKey === 'main_categories') {
+        const nextKey = MAIN_TO_KEY[clicked];
+        if (nextKey) { setCategoryAndSync(nextKey); }
+        else { const path = resolvePath(categoryKey, clicked); path? openByPath(path): openSectionByLabel(clicked); }
+        return;
+      }
 
-      // fallback: tenta abrir pelo rótulo direto
-      openSectionByLabel(labelClicado, {scroll:true, highlight:true});
+      if (categoryKey === 'transferencias_correntes') {
+        const l = normalizeLabel(clicked);
+        if (l.includes('uniao'))  { setCategoryAndSync('transferencias_uniao');  return; }
+        if (l.includes('estado')) { setCategoryAndSync('transferencias_estado'); return; }
+        const path = resolvePath(categoryKey, clicked); path? openByPath(path): openSectionByLabel(clicked);
+        return;
+      }
+
+      const path = resolvePath(categoryKey, clicked);
+      path ? openByPath(path) : openSectionByLabel(clicked);
     };
   }
 
