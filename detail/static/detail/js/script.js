@@ -1,3 +1,4 @@
+// detail/static/detail/js/script.js  (CONJUNTO)
 document.addEventListener('DOMContentLoaded', function () {
   // --- Debug helpers ---
   const DEBUG = false;
@@ -127,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
   reaisBtn?.addEventListener('click',()=>setValorMode('real'));
   setValorMode('percapita');
 
-  // =============== Filtros / KPIs / Detalhes (inalterado) ===============
+  // =============== Filtros / KPIs / Detalhes ===============
   function restoreSelectValue(sel, val){ const has=[...sel.options].some(o=>o.value===val); sel.value = has?val:'todos'; }
   async function updateDependentFilters(){
     if(!filtroRegiao || !filtroUf || !filtroRm) return;
@@ -175,19 +176,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // =============== GRÁFICO COMPOSIÇÃO ===============
+  // =============== GRÁFICO COMPOSIÇÃO / SELECT HIERÁRQUICO ===============
   const canvas = document.getElementById('myChart');
   if(!canvas){ console.warn('[chart] canvas não encontrado'); return; }
   const ctx = canvas.getContext('2d');
   const selectEl = document.getElementById('chart-category-select');
 
-  // Remove “Impostos, Taxas e Contribuições de Melhoria” do select (não usamos mais)
-  (function removeITCGroup(){
-    const opt = selectEl?.querySelector('option[value="imposto_taxas_contribuicoes"]');
-    if (opt) opt.remove();
-  })();
+  // Rótulos bonitos do select
+  const PRETTY = {
+    main_categories: 'Categorias Principais',
+    imposto_taxas_contribuicoes: 'Impostos, Taxas e Contribuições',
+    imposto: 'Impostos',
+    taxas: 'Taxas',
+    contribuicoes_melhoria: 'Contribuições de Melhoria',
+    contribuicoes: 'Contribuições',
+    transferencias_correntes: 'Transferências Correntes',
+    transferencias_uniao: 'Transferências da União',
+    transferencias_estado: 'Transferências dos Estados',
+    outras_receitas: 'Outras Receitas'
+  };
 
-  // Cores fixas p/ categorias principais
+  // Hierarquia do select
+  const HIERARCHY = {
+    main_categories: { parent: null, children: ['imposto_taxas_contribuicoes','contribuicoes','transferencias_correntes','outras_receitas'] },
+    imposto_taxas_contribuicoes: { parent: 'main_categories', children: ['imposto','taxas','contribuicoes_melhoria'] },
+    imposto: { parent: 'imposto_taxas_contribuicoes', children: [] },
+    taxas: { parent: 'imposto_taxas_contribuicoes', children: [] },
+    contribuicoes_melhoria: { parent: 'imposto_taxas_contribuicoes', children: [] },
+    contribuicoes: { parent: 'main_categories', children: [] },
+    transferencias_correntes: { parent: 'main_categories', children: ['transferencias_uniao','transferencias_estado'] },
+    transferencias_uniao: { parent: 'transferencias_correntes', children: [] },
+    transferencias_estado: { parent: 'transferencias_correntes', children: [] },
+    outras_receitas: { parent: 'main_categories', children: [] }
+  };
+
+  // Mapa de cliques das barras principais -> chave do select
+  const MAIN_CLICK_TO_KEY = {
+    'ITC': 'imposto_taxas_contribuicoes',
+    'Contribuições': 'contribuicoes',
+    'Transf. Correntes': 'transferencias_correntes',
+    'Outras': 'outras_receitas'
+  };
+
+  // Cores fixas p/ categorias principais (barras)
   const COLOR_BY_LABEL = {
     'ITC': '#1f77b4',
     'Contribuições': '#ff7f0e',
@@ -228,10 +259,10 @@ document.addEventListener('DOMContentLoaded', function () {
       'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Taxas','Outras Taxas'],
     },
     contribuicoes_melhoria: {
-      'Pavimentação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Pavimentação e Obras'],
-      'Água/Esgoto': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Rede de Água e Esgoto'],
-      'Iluminação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Contribuição de Melhoria para Iluminação Pública'],
-      'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria', 'Outras Contribuições de Melhoria'],
+      'Pavimentação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Pavimentação e Obras'],
+      'Água/Esgoto':  ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Rede de Água e Esgoto'],
+      'Iluminação':   ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Iluminação Pública'],
+      'Outras':       ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Outras Contribuições de Melhoria'],
     },
     contribuicoes: {
       'Sociais': ['Contribuições','Contribuições Sociais'],
@@ -244,43 +275,75 @@ document.addEventListener('DOMContentLoaded', function () {
       'Outras':  ['Transferências Correntes','Outras Transferências'],
     },
     transferencias_uniao: {
-      'FPM': ['Transferências Correntes','Transferências da União', 'Cota-Parte do FPM'],
-      'Rec. Naturais': ['Transferências Correntes','Transferências da União', 'Compensação Financeira (Recursos Naturais)'],
-      'SUS': ['Transferências Correntes','Transferências da União', 'Recursos do SUS'],
-      'FNDE': ['Transferências Correntes','Transferências da União', 'Recursos do FNDE'],
-      'FNAS': ['Transferências Correntes','Transferências da União', 'Recursos do FNAS'],
-      'Outras': ['Transferências Correntes','Transferências da União', 'Outras Transferências da União'],
+      'FPM': ['Transferências Correntes','Transferências da União','Cota-Parte do FPM'],
+      'Rec. Naturais': ['Transferências Correntes','Transferências da União','Compensação Financeira (Recursos Naturais)'],
+      'SUS': ['Transferências Correntes','Transferências da União','Recursos do SUS'],
+      'FNDE': ['Transferências Correntes','Transferências da União','Recursos do FNDE'],
+      'FNAS': ['Transferências Correntes','Transferências da União','Recursos do FNAS'],
+      'Outras': ['Transferências Correntes','Transferências da União','Outras Transferências da União'],
     },
     transferencias_estado: {
-      'ICMS': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do ICMS'],
-      'IPVA': ['Transferências Correntes','Transferências dos Estados', 'Cota-Parte do IPVA'],
-      'Rec. Naturais': ['Transferências Correntes','Transferências dos Estados', 'Compensação Financeira (Recursos Naturais)'],
-      'SUS': ['Transferências Correntes','Transferências dos Estados', 'Recursos do SUS'],
-      'Assistência': ['Transferências Correntes','Transferências dos Estados', 'Assistência Social'],
-      'Outras': ['Transferências Correntes','Transferências dos Estados', 'Outras Transferências dos Estados'],
+      'ICMS': ['Transferências Correntes','Transferências dos Estados','Cota-Parte do ICMS'],
+      'IPVA': ['Transferências Correntes','Transferências dos Estados','Cota-Parte do IPVA'],
+      'Rec. Naturais': ['Transferências Correntes','Transferências dos Estados','Compensação Financeira (Recursos Naturais)'],
+      'SUS': ['Transferências Correntes','Transferências dos Estados','Recursos do SUS'],
+      'Assistência': ['Transferências Correntes','Transferências dos Estados','Assistência Social'],
+      'Outras': ['Transferências Correntes','Transferências dos Estados','Outras Transferências dos Estados'],
     },
     outras_receitas: {
-      'Patrimonial': ['Outras Receitas Correntes', 'Receita Patrimonial'],
-      'Agropecuária': ['Outras Receitas Correntes', 'Receita Agropecuária'],
-      'Industrial': ['Outras Receitas Correntes', 'Receita Industrial'],
-      'Serviços': ['Outras Receitas Correntes', 'Receita de Serviços'],
-      'Outras': ['Outras Receitas Correntes', 'Outras Receitas'],
+      'Patrimonial':  ['Outras Receitas Correntes','Receita Patrimonial'],
+      'Agropecuária': ['Outras Receitas Correntes','Receita Agropecuária'],
+      'Industrial':   ['Outras Receitas Correntes','Receita Industrial'],
+      'Serviços':     ['Outras Receitas Correntes','Receita de Serviços'],
+      'Outras':       ['Outras Receitas Correntes','Outras Receitas'],
     },
   };
 
-  const MAIN_TO_KEY = {
-    'ITC':'imposto',
-    'Contribuições':'contribuicoes',
-    'Transf. Correntes':'transferencias_correntes',
-    'Outras':'outras_receitas'
-  };
+  // ------ Select Hierárquico ------
+  function rebuildSelectOptions(currentKey){
+    if(!selectEl) return;
+    selectEl.innerHTML = '';
 
-  // helper para sincronizar com densidade
-  function setCategoryAndSync(key){
-    if (!selectEl) return;
-    selectEl.value = key;
+    const push = (k)=>{
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = PRETTY[k] || k;
+      selectEl.appendChild(opt);
+    };
+
+    // Sempre começa com "Categorias Principais"
+    push('main_categories');
+
+    if (currentKey === 'main_categories'){
+      HIERARCHY.main_categories.children.forEach(push);
+    } else {
+      const parent = HIERARCHY[currentKey]?.parent;
+      if (parent) push(parent);
+      push(currentKey);
+      const children = HIERARCHY[currentKey]?.children || [];
+      children.forEach(push);
+    }
+    selectEl.value = currentKey;
+  }
+
+  // Notifica densidade sem disparar 'change'
+  function notifyDensity(key){
+    if(!selectEl) return;
+    const ev = new CustomEvent('composition-category-changed', { detail:{ key } });
+    selectEl.dispatchEvent(ev);
+  }
+
+  // Troca categoria (por select ou clique) + renderiza + notifica densidade
+  function setCategory(key){
+    if(!selectEl) return;
+    rebuildSelectOptions(key);
     renderChart(key, currentChartData);
-    selectEl.dispatchEvent(new Event('change', { bubbles:true })); // avisa o script de densidade
+    notifyDensity(key);
+  }
+
+  // Clique nas barras das categorias principais → chave do select
+  function nextKeyFromMainBar(label){
+    return MAIN_CLICK_TO_KEY[label] || null;
   }
 
   function resolvePath(categoryKey, datasetLabel){
@@ -315,7 +378,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if(chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx,{
       type:'bar',
-      data:{ labels, datasets:[{ label:(selectEl?.selectedOptions?.[0]?.text || 'Categoria').toUpperCase(), data: perc, backgroundColor: bcolors, borderWidth:1 }] },
+      data:{
+        labels,
+        datasets:[{
+          label:(PRETTY[categoryKey] || 'Categoria').toUpperCase(),
+          data: perc,
+          backgroundColor: bcolors,
+          borderWidth:1
+        }]
+      },
       options:{
         responsive:true, maintainAspectRatio:false, indexAxis:'y',
         scales:{ x:{min:0,max:100,ticks:{callback:v=>v+'%'}}, y:{ticks:{autoSkip:false}} },
@@ -338,30 +409,48 @@ document.addEventListener('DOMContentLoaded', function () {
       const idx = pts[0].index;
       const clicked = labels[idx];
 
+      // 1) Categorias Principais → descer um nível
       if (categoryKey === 'main_categories') {
-        const nextKey = MAIN_TO_KEY[clicked];
-        if (nextKey) { setCategoryAndSync(nextKey); }
-        else { const path = resolvePath(categoryKey, clicked); path? openByPath(path): openSectionByLabel(clicked); }
+        const nxt = nextKeyFromMainBar(clicked);
+        if (nxt){ setCategory(nxt); }
         return;
       }
 
+      // 2) Grupo intermediário ITC → filhos
+      if (categoryKey === 'imposto_taxas_contribuicoes') {
+        const n = normalizeLabel(clicked);
+        if (n.includes('imposto'))  { setCategory('imposto'); return; }
+        if (n.includes('taxa'))     { setCategory('taxas'); return; }
+        if (n.includes('melhoria')) { setCategory('contribuicoes_melhoria'); return; }
+        // sem match, segue fallback
+      }
+
+      // 3) Transferências Correntes → União/Estados
       if (categoryKey === 'transferencias_correntes') {
         const l = normalizeLabel(clicked);
-        if (l.includes('uniao'))  { setCategoryAndSync('transferencias_uniao');  return; }
-        if (l.includes('estado')) { setCategoryAndSync('transferencias_estado'); return; }
-        const path = resolvePath(categoryKey, clicked); path? openByPath(path): openSectionByLabel(clicked);
+        if (l.includes('uniao'))  { setCategory('transferencias_uniao');  return; }
+        if (l.includes('estado')) { setCategory('transferencias_estado'); return; }
+        const pathTC = resolvePath(categoryKey, clicked);
+        pathTC ? openByPath(pathTC) : openSectionByLabel(clicked);
         return;
       }
 
+      // 4) Demais: tenta abrir caminho conhecido, senão procura por rótulo
       const path = resolvePath(categoryKey, clicked);
       path ? openByPath(path) : openSectionByLabel(clicked);
     };
   }
 
-  if(selectEl){ selectEl.addEventListener('change', ()=>renderChart(selectEl.value, currentChartData)); }
+  if(selectEl){
+    // muda via select (sem disparar change extra)
+    selectEl.addEventListener('change', (e)=> setCategory(e.target.value));
+  }
 
-  // Render inicial
-  renderChart(selectEl?.value || 'main_categories', initialChartData);
+  // Render/Select inicial
+  const initialKey = 'main_categories';
+  rebuildSelectOptions(initialKey);
+  renderChart(initialKey, initialChartData);
+  notifyDensity(initialKey);
 
   // =============== APLICAÇÃO / EVENTOS ===============
   async function applyFilters(){ await Promise.all([updateKPIs(), updateFiscalDetails(), updateChart()]); }

@@ -1,6 +1,5 @@
 // detail/static/detail/js/script_mun.js
 document.addEventListener('DOMContentLoaded', function () {
-  // ===== Config & helpers =====
   const DEBUG = false;
   const log  = (...a) => DEBUG && console.log('[detail-mun]', ...a);
   const warn = (...a) => DEBUG && console.warn('[detail-mun]', ...a);
@@ -8,22 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  // ----- leitura de JSON (rankings: ler texto e normalizar inteiros) -----
-  function getJsonText(id){ const el = document.getElementById(id); return (el && el.textContent) ? el.textContent.trim() : ''; }
-  function parseRankingDataFromText(id){
-    const txt = getJsonText(id); if (!txt) return null;
-    const keys = ['rank_nacional','total_nacional','rank_estadual','total_estadual','rank_faixa','total_faixa'];
-    const out = {};
-    for (const k of keys){
-      const re = new RegExp(`"${k}"\\s*:\\s*([^,}\\n\\r]+)`); const m = txt.match(re);
-      if (!m){ out[k] = null; continue; }
-      const raw = m[1].trim(); if (/^null$/i.test(raw)) { out[k] = null; continue; }
-      const unq = raw.replace(/^"(.*)"$/, '$1'); const digitsOnly = unq.replace(/\D+/g, '');
-      out[k] = digitsOnly ? parseInt(digitsOnly, 10) : null;
-    }
-    return out;
-  }
-
+  // ------------ JSON helpers ------------
   function safeParseJSONById(id) {
     const el = document.getElementById(id);
     if (!el) return null;
@@ -32,14 +16,31 @@ document.addEventListener('DOMContentLoaded', function () {
     try { let v = JSON.parse(txt); if (typeof v === 'string') v = JSON.parse(v); return v; }
     catch { return null; }
   }
+  function getJsonText(id){ const el = document.getElementById(id); return (el && el.textContent) ? el.textContent.trim() : ''; }
+  function parseRankingDataFromText(id){
+    const txt = getJsonText(id); if (!txt) return null;
+    const keys = ['rank_nacional','total_nacional','rank_estadual','total_estadual','rank_faixa','total_faixa'];
+    const out = {};
+    for (const k of keys){
+      const re = new RegExp(`"${k}"\\s*:\\s*([^,}\\n\\r]+)`); const m = txt.match(re);
+      if (!m){ out[k] = null; continue; }
+      const raw = m[1].trim();
+      if (/^null$/i.test(raw)) { out[k] = null; continue; }
+      const unq = raw.replace(/^"(.*)"$/, '$1'); const digitsOnly = unq.replace(/\D+/g, '');
+      out[k] = digitsOnly ? parseInt(digitsOnly, 10) : null;
+    }
+    return out;
+  }
 
-  // ===== Normalizadores =====
+  // ------------ normalizers/formatters ------------
   const normalize = (str) => (str||'')
     .normalize('NFD').replace(/\p{Diacritic}/gu,'')
     .replace(/R\$\s?[\d\.,]+/g,' ')
     .replace(/[\d\.,]+/g,' ')
     .replace(/\s+/g,' ')
     .trim().toLowerCase();
+
+  const fmtInt = (n) => (Number.isFinite(n) ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(n) : '—');
 
   const cleanText = (h) => {
     if (!h) return '';
@@ -48,30 +49,27 @@ document.addEventListener('DOMContentLoaded', function () {
     return (c.textContent || h.textContent || '').trim();
   };
 
-  // ===== Formatação numérica =====
-  const fmtInt = (n) => (Number.isFinite(n) ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(n) : '—');
-
-  // ===== Dados =====
+  // ------------ dados vindos do template ------------
   const allRevenueChartData = safeParseJSONById('chart-data');
   const percentileData      = safeParseJSONById('percentile-data');
-  const municipioData       = parseRankingDataFromText('municipio-data'); // única fonte para ranking
+  const municipioData       = parseRankingDataFromText('municipio-data');
 
-  // 🔑 heading -> key de percentis
+  // ------------ mapa “heading -> key” para percentis ------------
   const HEADING_TO_KEY = {
-    'receita corrente': 'rc',
-    'transferencias correntes': 'transferencias_correntes',
-    'transferencias da uniao': 'transferencias_uniao',
-    'transferencias dos estados': 'transferencias_estado',
-    'outras transferencias': 'outras_transferencias',
-    'impostos, taxas e contribuicoes de melhoria': 'imposto_taxas_contribuicoes',
-    'impostos': 'imposto',
-    'taxas': 'taxas',
-    'contribuicoes de melhoria': 'contribuicoes_melhoria',
-    'outras receitas correntes': 'outras_receitas',
-    'contribuicoes': 'contribuicoes'
+    'receita corrente':'rc',
+    'transferencias correntes':'transferencias_correntes',
+    'transferencias da uniao':'transferencias_uniao',
+    'transferencias dos estados':'transferencias_estado',
+    'outras transferencias':'outras_transferencias',
+    'impostos, taxas e contribuicoes de melhoria':'imposto_taxas_contribuicoes',
+    'impostos':'imposto',
+    'taxas':'taxas',
+    'contribuicoes de melhoria':'contribuicoes_melhoria',
+    'outras receitas correntes':'outras_receitas',
+    'contribuicoes':'contribuicoes'
   };
 
-  // ===== Indicador (cores + tooltip) =====
+  // ------------ indicador (cores + tooltip) ------------
   function paintIndicator(container, percentile) {
     if (!container || !Number.isFinite(percentile)) return;
     const ind = container.querySelector('.ranking-indicator') || container;
@@ -87,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tip) tip.textContent = `O município supera ${percentile}% dos outros municípios`;
   }
 
-  // ===== Toggle (setinhas) =====
+  // ------------ toggles ------------
   function handleToggleClick(e){
     e.stopPropagation();
     const id = this.dataset.target;
@@ -101,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ===== Ordenação =====
+  // ------------ ordenação ------------
   const toNum = s => {
     if (!s) return 0;
     const n = parseFloat(String(s).replace('R$','').replace(/\./g,'').replace(',','.'));
@@ -119,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     buildHeadingIndex();
   }
 
-  // ===== PC/VR =====
+  // ------------ PC/VR ------------
   const segmented = $('#valor-toggle');
   function showMode(m){
     const pc = m === 'pc';
@@ -132,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
   segmented?.querySelector('[data-mode="pc"]')?.addEventListener('click', ()=>showMode('pc'));
   segmented?.querySelector('[data-mode="vr"]')?.addEventListener('click', ()=>showMode('vr'));
 
-  // ===== Índice de headings =====
+  // ------------ índice de headings (abrir árvore) ------------
   let headingIndex = new Map();
   function buildHeadingIndex(scope=document){
     headingIndex.clear();
@@ -144,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (key) headingIndex.set(key, { header: h, content: ct, targetId: id });
       });
   }
-
   function openByLabel(label){
     if (!label) return false;
     const needle = normalize(label);
@@ -163,9 +160,8 @@ document.addEventListener('DOMContentLoaded', function () {
     return false;
   }
 
-  // ===== Ranking (cores + texto) =====
+  // ------------ ranking (cores + texto) ------------
   function updateRankingUI(selected) {
-    // cores (percentis)
     if (percentileData) {
       const headerBox = $('#header-quintil-indicator-container');
       const pHeader = percentileData.rc ? percentileData.rc[selected] : null;
@@ -191,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // texto “X / Y”
     const rankingValueEl = $('#ranking-value');
     if (rankingValueEl && municipioData) {
       const map = {
@@ -202,102 +197,127 @@ document.addEventListener('DOMContentLoaded', function () {
       const [rkKey, totKey] = map[selected] || map.nacional;
       const rk  = municipioData?.[rkKey];
       const tot = municipioData?.[totKey];
-      if (Number.isFinite(rk) && Number.isFinite(tot)) {
-        rankingValueEl.textContent = `${fmtInt(rk)} / ${fmtInt(tot)}`;
-      } else {
-        rankingValueEl.textContent = '—';
-      }
+      rankingValueEl.textContent = (Number.isFinite(rk) && Number.isFinite(tot)) ? `${fmtInt(rk)} / ${fmtInt(tot)}` : '—';
     }
   }
 
   const rankingSelect = $('#ranking-select');
-  console.log('rankingSelect:', rankingSelect);
   rankingSelect?.addEventListener('change', () => updateRankingUI(rankingSelect.value || 'nacional'));
 
-  // ===== Chart.js (COMPOSIÇÃO) =====
+  // ========== GRÁFICO (COMPOSIÇÃO) + SELECT DINÂMICO ==========
   const canvas = $('#myChart');
   if (!canvas){ console.error('Canvas #myChart não encontrado'); return; }
   if (!window.Chart){ console.error('Chart.js não carregado'); return; }
   canvas.style.cursor = 'pointer';
   const ctx = canvas.getContext('2d');
 
-  const pretty = k => ({
-    main_categories:'Categorias Principais',
-    // imposto_taxas_contribuicoes REMOVIDO do select
-    imposto:'___ Impostos',
-    taxas:'___ Taxas',
-    contribuicoes_melhoria:'___ Contribuições de Melhoria',
-    contribuicoes:'Contribuições',
-    transferencias_correntes:'Transferências Correntes',
-    transferencias_uniao:'___ Transferências da União',
-    transferencias_estado:'___ Transferências dos Estados',
-    outras_receitas:'Outras Receitas'
-  }[k] || k.replace(/_/g,' '));
+  // rótulos “bonitos” para o SELECT (sem "ITC")
+  const labelOf = (k) => ({
+    main_categories: 'Categorias Principais',
+    imposto_taxas_contribuicoes: 'Impostos, Taxas e Contribuições de Melhoria',
+    imposto: 'Impostos',
+    taxas: 'Taxas',
+    contribuicoes_melhoria: 'Contribuições de Melhoria',
+    contribuicoes: 'Contribuições',
+    transferencias_correntes: 'Transferências Correntes',
+    transferencias_uniao: 'Transferências da União',
+    transferencias_estado: 'Transferências dos Estados',
+    outras_receitas: 'Outras Receitas'
+  }[k] || k);
 
-  // cores fixas para as 4 principais
+  // Hierarquia (pai -> filhos)
+  const CHILDREN = {
+    imposto_taxas_contribuicoes: ['imposto', 'taxas', 'contribuicoes_melhoria'],
+    transferencias_correntes: ['transferencias_uniao', 'transferencias_estado'],
+  };
+  const PARENT = {
+    imposto: 'imposto_taxas_contribuicoes',
+    taxas: 'imposto_taxas_contribuicoes',
+    contribuicoes_melhoria: 'imposto_taxas_contribuicoes',
+    transferencias_uniao: 'transferencias_correntes',
+    transferencias_estado: 'transferencias_correntes',
+  };
+  const hasData = (key) => {
+    const d = allRevenueChartData?.[key];
+    return d && Array.isArray(d.labels) && d.labels.length && Array.isArray(d.values) && d.values.length;
+  };
+
+  const selectEl = document.getElementById('chart-category-select');
+
+  function buildSelectFor(currentKey){
+    if(!selectEl) return;
+    // lista base
+    let keys = ['main_categories'];
+
+    // principal (4) quando está nas categorias principais
+    if (currentKey === 'main_categories') {
+      keys.push('imposto_taxas_contribuicoes','contribuicoes','transferencias_correntes','outras_receitas');
+    } else {
+      // pai (se existir)
+      const parent = PARENT[currentKey] || null;
+      if (parent) keys.push(parent);
+      // selecionado
+      keys.push(currentKey);
+      // filhos (se existir)
+      const kids = CHILDREN[currentKey] || CHILDREN[parent] || [];
+      keys.push(...kids);
+    }
+
+    // filtra duplicados e só com dados
+    const seen = new Set();
+    const finalKeys = keys.filter(k=>{
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return hasData(k) || k === 'main_categories'; // main_categories sempre presente
+    });
+
+    // render
+    selectEl.innerHTML = '';
+    finalKeys.forEach(k=>{
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = labelOf(k);
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = currentKey;  // mantém o selecionado
+  }
+
+  // Paleta fixa das 4 principais para o gráfico (barras)
   const COLOR_BY_LABEL = {
-    'ITC': '#1f77b4',
+    'ITC': '#1f77b4',               // só rótulo no gráfico (não no select)
     'Contribuições': '#ff7f0e',
     'Transf. Correntes': '#2ca02c',
     'Outras': '#d62728'
   };
   const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
 
-  // mapping clique -> chave do select
-  const MAIN_TO_KEY = {
-    'ITC': 'imposto',                        // agora abre ___ Impostos
-    'Contribuições': 'contribuicoes',
-    'Transf. Correntes': 'transferencias_correntes',
-    'Outras': 'outras_receitas'
-  };
+  let chart = null;
 
-  // chaves disponíveis (exclui 'imposto_taxas_contribuicoes')
-  const order = [
-    'main_categories','imposto','taxas','contribuicoes_melhoria','contribuicoes',
-    'transferencias_correntes','transferencias_uniao','transferencias_estado','outras_receitas'
-  ];
-  const availableKeys = (() => {
-    if (!allRevenueChartData || typeof allRevenueChartData !== 'object') return [];
-    const first = order.filter(k => {
-      const o = allRevenueChartData[k];
-      return o && Array.isArray(o.labels) && o.labels.length &&
-             Array.isArray(o.values) && o.values.length;
-    });
-    if (first.length) return first;
-    return Object.entries(allRevenueChartData)
-      .filter(([, o]) => o && Array.isArray(o.labels) && o.labels.length && Array.isArray(o.values) && o.values.length)
-      .map(([k]) => k)
-      .filter(k => k !== 'imposto_taxas_contribuicoes'); // garante a remoção
-  })();
+// guarda a categoria atual para evitar renders desnecessários
+let currentKey = 'main_categories';
 
-  // select de categorias
-  const selectEl = document.getElementById('chart-category-select');
-  if (selectEl) {
-    selectEl.innerHTML = '';
-    (availableKeys.length ? availableKeys : ['main_categories']).forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = pretty(k);
-      selectEl.appendChild(opt);
-    });
-  }
-  const initialKey = availableKeys.includes('main_categories') ? 'main_categories' : (availableKeys[0] || 'main_categories');
-  if (selectEl) {
-    selectEl.value = initialKey;
-    selectEl.addEventListener('change', () => renderChart(selectEl.value));
-  }
-
-  let chart;
- 
   function setCategoryAndSync(key){
     if (!selectEl) return;
+    if (currentKey === key) {
+      // ainda assim notifica densidade (pode vir de clique)
+      selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
+      return;
+    }
+    currentKey = key;
+
+    buildSelectFor(key);            // reconstrói a lista conforme Pai/Filhos
     selectEl.value = key;
-    renderChart(key);                                 // atualiza o gráfico de composição
-    selectEl.dispatchEvent(new Event('change', {     // dispara p/ densidade redesenhar
-      bubbles: true
-    }));
+    renderChart(key);               // composição
+
+    // avisa a densidade sem disparar 'change'
+    selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
   }
-  
-  // renderiza como BARRAS HORIZONTAIS (cada categoria é uma linha do eixo Y)
+
+  // select → usuário trocou manualmente
+  if (selectEl){
+    selectEl.addEventListener('change', () => setCategoryAndSync(selectEl.value));
+  }
+
   function renderChart(key){
     const d = allRevenueChartData?.[key];
     if (!d){ warn('chave não encontrada no chart-data:', key); return; }
@@ -306,12 +326,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const total = d.values.reduce((a,b)=>a+b,0);
     const perc  = d.values.map(v=> total ? (v/total)*100 : 0);
 
-    // labels no eixo Y = cada categoria/item
     const labels = d.labels.slice();
     const background = labels.map((lbl,i)=> COLOR_BY_LABEL[lbl] || palette[i%palette.length]);
 
     const dataset = {
-      label: pretty(key).toUpperCase(),
+      label: labelOf(key).toUpperCase(),
       data: perc,
       backgroundColor: background,
       borderWidth: 1,
@@ -324,11 +343,11 @@ document.addEventListener('DOMContentLoaded', function () {
       options:{
         responsive:true, maintainAspectRatio:false, indexAxis:'y',
         scales:{
-          x:{ min:0, max:100, ticks:{ callback:v=>v+'%' } },
+          x:{ min:0, max:100, ticks:{ callback:v=>v+'%'} },
           y:{ ticks:{ autoSkip:false } }
         },
         plugins:{
-          legend:{ display:false }, // <<< legenda desligada
+          legend:{ display:false },
           tooltip:{ callbacks:{
             label:(ct)=>{
               const i = ct.dataIndex;
@@ -342,47 +361,52 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    // clique:
+    // clique → muda chave e também reconfigura o select (pai/filhos)
     canvas.onclick = (evt) => {
-      const pts = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+      const pts = chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
       if (!pts.length) return;
       const idx = pts[0].index;
       const clickedLabel = labels[idx];
+      const n = normalize(clickedLabel);
 
-      // === Categorias Principais ===
       if (key === 'main_categories') {
-        const nextKey = MAIN_TO_KEY[clickedLabel];
-        if (nextKey) {
-          setCategoryAndSync(nextKey);
-        }
+        if (n === 'itc') { setCategoryAndSync('imposto_taxas_contribuicoes'); return; }
+        if (n.includes('contribuicoes') && !n.includes('melhoria')) { setCategoryAndSync('contribuicoes'); return; }
+        if (n.includes('transf')) { setCategoryAndSync('transferencias_correntes'); return; }
+        if (n === 'outras') { setCategoryAndSync('outras_receitas'); return; }
         return;
       }
 
-      // === Transferências Correntes ===
+      if (key === 'imposto_taxas_contribuicoes') {
+        if (n.includes('imposto'))  { setCategoryAndSync('imposto'); return; }
+        if (n.includes('taxa'))     { setCategoryAndSync('taxas'); return; }
+        if (n.includes('melhoria')) { setCategoryAndSync('contribuicoes_melhoria'); return; }
+        openByLabel(clickedLabel); return;
+      }
+
       if (key === 'transferencias_correntes') {
-        const l = normalize(clickedLabel);
-        if (l.includes('uniao')) {
-          setCategoryAndSync('transferencias_uniao');
-          return;
-        }
-        if (l.includes('estado') || l.includes('estados')) {
-          setCategoryAndSync('transferencias_estado');
-          return;
-        }
-        // outras transferências: mantém comportamento antigo (abrir seção)
-        openByLabel(clickedLabel);
-        return;
+        if (n.includes('uniao'))  { setCategoryAndSync('transferencias_uniao');  return; }
+        if (n.includes('estado')) { setCategoryAndSync('transferencias_estado'); return; }
+        openByLabel(clickedLabel); return;
       }
 
-      // demais chaves: manter atalho de abrir seção
+      // demais: atalho → abre na árvore
       openByLabel(clickedLabel);
     };
   }
 
-  // ===== Inicializações =====
+  // select → troca chave (e reconstrói a lista)
+  if (selectEl){
+    selectEl.addEventListener('change', ()=> setCategoryAndSync(selectEl.value));
+  }
+
+  // -------- Inicializações --------
   buildHeadingIndex();
   showMode('pc');
-  renderChart(initialKey);
+  currentKey = 'main_categories';
+  buildSelectFor(currentKey);
+  renderChart(currentKey);
   initializeToggleListeners();
   updateRankingUI(rankingSelect?.value || 'nacional');
+
 });
