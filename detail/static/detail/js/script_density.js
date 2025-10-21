@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const fmtBRL = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
 
-      // annotation (linha da faixa atual)
       const annotationConfig = annotationPlugin ? {
         annotations: {
           faixaAtual: {
@@ -82,8 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
               borderColor: 'rgba(31,119,180,1)',
               backgroundColor: 'rgba(31,119,180,0.25)'
             },
-            // dataset vazio apenas para exibir "Faixa Atual" na legenda
-            {
+            { // legenda “Faixa Atual”
               label: 'Faixa Atual',
               data: [],
               borderColor: 'rgba(214,39,40,1)',
@@ -127,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const resp = await fetch(`/api/conjunto-data/?${p.toString()}`);
       if(!resp.ok) throw new Error('Falha ao buscar dados do filtro.');
       const filteredMunData = await resp.json();
+
       const key = categorySelect?.value;
       if(!key) return;
 
@@ -146,11 +145,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const key = categorySelect.value;
     const initialValues = totalMunData.map(d => Number(d[key])).filter(Number.isFinite);
     drawDensityPlot(key, totalMunData, mean(initialValues));
+
+    // 1) usuário muda manualmente
+    categorySelect.addEventListener('change', () => {
+      updateFilteredDensity();
+    });
+
+    // 2) mudança programática (clique no gráfico de composição)
+    categorySelect.addEventListener('composition-category-changed', (ev) => {
+      const k = ev.detail?.key || categorySelect.value;
+      // desenha direto (sem 'change' pra não duplicar)
+      const vals = totalMunData.map(d => Number(d[k])).filter(Number.isFinite);
+      drawDensityPlot(k, totalMunData, mean(vals));
+    });
   }
 
-  [filtroPorte, filtroRm, filtroRegiao, filtroUf, categorySelect].forEach(el=>{
+  [filtroPorte, filtroRm, filtroRegiao, filtroUf].forEach(el=>{
     if(el) el.addEventListener('change', updateFilteredDensity);
   });
+
   if(btnLimpar){
     btnLimpar.addEventListener('click', ()=> setTimeout(updateFilteredDensity, 100));
   }

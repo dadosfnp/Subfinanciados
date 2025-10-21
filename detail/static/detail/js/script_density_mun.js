@@ -193,15 +193,21 @@ async function drawDensityPlot(dataKey) {
 
 // 4) Gatilho: Adicionar o event listener e fazer a chamada inicial
 document.addEventListener("DOMContentLoaded", () => {
-    const categorySelect = document.getElementById('chart-category-select');
+  const categorySelect = document.getElementById('chart-category-select');
 
-    if (categorySelect) {
-        // Desenha o gráfico inicial com o valor padrão do select
-        drawDensityPlot(categorySelect.value);
+  if (categorySelect) {
+    // Desenha o gráfico inicial com o valor padrão do select
+    drawDensityPlot(categorySelect.value);
 
-        // Adiciona o listener para redesenhar quando o valor mudar
-        categorySelect.addEventListener('change', (event) => {
-            drawDensityPlot(event.target.value);
-        });
-    }
+    // Listener para o evento padrão (quando o usuário muda o select manualmente)
+    categorySelect.addEventListener('change', (event) => {
+      drawDensityPlot(event.target.value);
+    });
+
+    // Listener para o evento customizado (quando muda via clique no gráfico)
+    categorySelect.addEventListener('composition-category-changed', (event) => {
+      const newKey = event.detail?.key || categorySelect.value;
+      drawDensityPlot(newKey);
+    });
+  }
 });
