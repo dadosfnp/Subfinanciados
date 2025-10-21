@@ -63,26 +63,52 @@
 .quintil-5{ background:#1a9850; }
 
 .ranking-tooltip{
-  visibility:hidden;
-  background:#333;
-  color:#fff;
-  text-align:center;
-  border-radius:6px;
-  padding:5px 8px;
-  position:absolute;
-  z-index:10;
-  bottom:125%;
-  left:50%;
-  transform:translateX(-50%);
-  opacity:0;
-  transition:opacity .2s;
-  white-space:nowrap;
-  font-size:.75rem;
+  position: absolute;
+  z-index: 1000;                 /* fica por cima do cabeçalho/itens */
+  left: 50%;
+  bottom: calc(100% + 8px); top: auto;         /* aparece ABAIXO do quadradinho */
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  border-radius: 6px;
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;           /* permite quebra de linha se precisar */
+  max-width: 260px;              /* não estoura em telas menores */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;          /* não intercepta o hover */
 }
+
+/* mostra o tooltip no hover */
 .ranking-indicator-container:hover .ranking-tooltip{
-  visibility:visible;
-  opacity:1;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
+
+/* setinha decorativa opcional */
+.ranking-indicator-container{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.ranking-indicator-container:hover .ranking-tooltip::before{
+  content: "";
+  position: absolute;
+  top: -6px;                     /* setinha encostando no quadradinho */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(51,51,51,.95) transparent;
+}
+
 
 /* ----------- Gráfico ----------- */
 .metric-card canvas{
@@ -141,3 +167,7 @@ html, body {
     max-height: calc(100dvh - var(--header-height));
   }
 }
+
+/* garante que tooltips possam “sair” do cartão sem serem cortados */
+.metric-card { overflow: visible; position: relative; }
+.metric-detail-row { overflow: visible; }
