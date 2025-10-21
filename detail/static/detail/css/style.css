@@ -55,3 +55,39 @@ body { font-family: 'Inter', sans-serif; }
   white-space:nowrap;
   line-height:1;
 }
+
+/* ============================ GRÁFICOS (Conjunto) ============================ */
+/* O Chart.js (maintainAspectRatio:false) usa a altura do PAI. Por isso,
+   cada gráfico fica dentro de um slot com altura fixa. */
+
+.metric-card .chart-section{
+  width: 100%;
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid #e5e7eb;   /* linha separando o título do gráfico */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                       /* espaço entre composição e densidade */
+}
+
+/* Cada gráfico possui seu próprio "pai" com altura controlada */
+.metric-card .chart-slot{
+  position: relative;              /* referência para o canvas */
+  height: 260px;                   /* ajuste fino da altura */
+  overflow: hidden;                /* impede vazar do card branco */
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* O canvas ocupa 100% do slot */
+.metric-card .chart-slot > canvas{
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+/* Responsivo: gráficos um pouco menores em telas pequenas */
+@media (max-width: 768px){
+  .metric-card .chart-slot{ height: 220px; }
+}
