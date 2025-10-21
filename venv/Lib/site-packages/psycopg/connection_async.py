@@ -387,7 +387,7 @@ class AsyncConnection(BaseConnection[Row]):
             warnings.warn(
                 "using 'notifies()' together with notifies handlers on the"
                 " same connection is not reliable."
-                " Please use only one of thees methods",
+                " Please use only one of these methods",
                 RuntimeWarning,
             )
 
@@ -476,7 +476,7 @@ class AsyncConnection(BaseConnection[Row]):
             assert pipeline is self._pipeline
             self._pipeline = None
 
-    async def wait(self, gen: PQGen[RV], interval: float | None = _WAIT_INTERVAL) -> RV:
+    async def wait(self, gen: PQGen[RV], interval: float = _WAIT_INTERVAL) -> RV:
         """
         Consume a generator operating on the connection.
 

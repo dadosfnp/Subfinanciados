@@ -80,25 +80,27 @@
             <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
               <option value="main_categories">Categorias Principais</option>
               <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
-              <option value="imposto">___ Impostos</option>
-              <option value="taxas">____ Taxas</option>
-              <option value="imposto">___ Impostos</option>
-              <option value="contribuicoes_melhoria">____ Contribuições de Melhoria</option>
+              <option value="imposto">Impostos</option>
+              <option value="taxas">Taxas</option>
+              <option value="imposto">Impostos</option>
+              <option value="contribuicoes_melhoria">Contribuições de Melhoria</option>
               <option value="contribuicoes">Contribuições</option>
               <option value="transferencias_correntes">Transferências Correntes</option>
-              <option value="transferencias_uniao">___ Transferências da União</option>
-              <option value="transferencias_estado">___ Transferências dos Estados</option>
+              <option value="transferencias_uniao">Transferências da União</option>
+              <option value="transferencias_estado">Transferências dos Estados</option>
               <option value="outras_receitas">Outras Receitas</option>
             </select>
           </div>
         </div>
-        <div style="width: 100%; height: 400px; position: relative;">
-          <canvas id="myChart"></canvas>
-        </div>
+          <div class="chart-section">
+            <div class="chart-slot">
+              <canvas id="myChart"></canvas>
+            </div>
+            <div class="chart-slot">
+              <canvas id="densidadeReceita"></canvas>
+            </div>
+          </div>
 
-        <div style="width: 100%; height: 400px; position: relative;">
-          <canvas id="densidadeReceita"></canvas>
-        </div>
       </section>
 
 

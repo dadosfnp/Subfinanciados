@@ -112,15 +112,30 @@ async function drawDensityPlot(dataKey) {
         densityChart = new Chart(ctx, {
             type: 'line',
             data: {
-                datasets: [{
-                    label: 'Densidade',
-                    data: pontos,
-                    borderWidth: 2,
-                    tension: 0.35,
-                    fill: true,
-                    pointRadius: 0
-                }]
+                datasets: [
+                    {
+                        label: 'Densidade',
+                        data: pontos,
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 0,
+                        borderColor: 'rgba(31,119,180,1)',
+                        backgroundColor: 'rgba(31,119,180,0.25)'
+                    },
+                    {
+                        label: 'Receita Per Capita',
+                        data: [],              
+                        borderColor: 'rgba(214,39,40,1)',
+                        borderDash: [6, 6],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        type: 'line'
+                    }
+                ]
             },
+
             options: {
                 parsing: false,
                 animation: true,
@@ -143,7 +158,10 @@ async function drawDensityPlot(dataKey) {
                             label: (item) => `Densidade: ${item.parsed.y.toFixed(4)}`
                         }
                     },
-                    legend: { labels: { usePointStyle: true } },
+                    legend: {
+                        position: 'bottom',              // <<< legenda embaixo
+                        labels: { usePointStyle: false } // usa amostra de LINHA (mostra o tracejado vermelho)
+                    },
                     annotation: {
                         annotations: {
                             linhaRef: {
