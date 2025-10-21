@@ -8,54 +8,29 @@ document.addEventListener('DOMContentLoaded', function () {
   const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  // Lê um <script type="application/json"> como TEXTO (sem parse numérico do JSON)
-  function getJsonText(id){
-    const el = document.getElementById(id);
-    return (el && el.textContent) ? el.textContent.trim() : '';
-  }
-
-  // Extrai e normaliza inteiros para os campos de ranking (suporta "2.484", "1,172", "5530", null)
+  // ----- leitura de JSON (rankings: ler texto e normalizar inteiros) -----
+  function getJsonText(id){ const el = document.getElementById(id); return (el && el.textContent) ? el.textContent.trim() : ''; }
   function parseRankingDataFromText(id){
-    const txt = getJsonText(id);
-    if (!txt) return null;
-
-    const keys = [
-      'rank_nacional','total_nacional',
-      'rank_estadual','total_estadual',
-      'rank_faixa','total_faixa'
-    ];
-
+    const txt = getJsonText(id); if (!txt) return null;
+    const keys = ['rank_nacional','total_nacional','rank_estadual','total_estadual','rank_faixa','total_faixa'];
     const out = {};
     for (const k of keys){
-      // casa o valor cru após o campo (string JSON com chaves) até a vírgula/fecha-chaves
-      const re = new RegExp(`"${k}"\\s*:\\s*([^,}\\n\\r]+)`);
-      const m = txt.match(re);
+      const re = new RegExp(`"${k}"\\s*:\\s*([^,}\\n\\r]+)`); const m = txt.match(re);
       if (!m){ out[k] = null; continue; }
-      const raw = m[1].trim();        // ex.: 2.484   ou 1172   ou null
-
-      if (/^null$/i.test(raw)) { out[k] = null; continue; }
-
-      // Se vier entre aspas, remove aspas
-      const unq = raw.replace(/^"(.*)"$/, '$1');
-
-      // Mantém apenas dígitos -> interpreta como inteiro puro (milhar com ponto/vírgula também funciona)
-      const digitsOnly = unq.replace(/\D+/g, '');
+      const raw = m[1].trim(); if (/^null$/i.test(raw)) { out[k] = null; continue; }
+      const unq = raw.replace(/^"(.*)"$/, '$1'); const digitsOnly = unq.replace(/\D+/g, '');
       out[k] = digitsOnly ? parseInt(digitsOnly, 10) : null;
     }
     return out;
   }
 
-  // Para outras estruturas JSON (chart/percentis) podemos usar parse normal
   function safeParseJSONById(id) {
     const el = document.getElementById(id);
-    if (!el) { return null; }
+    if (!el) return null;
     const txt = el.textContent?.trim();
-    if (!txt) { return null; }
-    try {
-      let v = JSON.parse(txt);
-      if (typeof v === 'string') v = JSON.parse(v);
-      return v;
-    } catch { return null; }
+    if (!txt) return null;
+    try { let v = JSON.parse(txt); if (typeof v === 'string') v = JSON.parse(v); return v; }
+    catch { return null; }
   }
 
   // ===== Normalizadores =====
@@ -73,19 +48,15 @@ document.addEventListener('DOMContentLoaded', function () {
     return (c.textContent || h.textContent || '').trim();
   };
 
-  // ===== Formatação numérica para exibir com ponto de milhar =====
-  const fmtInt = (n) =>
-    (Number.isFinite(n)
-      ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0, useGrouping: true }).format(n)
-      : '—');
+  // ===== Formatação numérica =====
+  const fmtInt = (n) => (Number.isFinite(n) ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(n) : '—');
 
   // ===== Dados =====
   const allRevenueChartData = safeParseJSONById('chart-data');
   const percentileData      = safeParseJSONById('percentile-data');
-  // ⚠️ Ranking agora vem do texto e é normalizado para inteiro corretamente
-  const municipioData       = parseRankingDataFromText('municipio-data');
+  const municipioData       = parseRankingDataFromText('municipio-data'); // única fonte para ranking
 
-  // 🔑 mapa heading -> chave do JSON de percentis
+  // 🔑 heading -> key de percentis
   const HEADING_TO_KEY = {
     'receita corrente': 'rc',
     'transferencias correntes': 'transferencias_correntes',
@@ -177,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function openByLabel(label){
     if (!label) return false;
     const needle = normalize(label);
-
     if (headingIndex.has(needle)) {
       const entry = headingIndex.get(needle);
       const parentToggle = entry.header.closest('.revenue-section')?.querySelector?.('.toggle-heading');
@@ -190,38 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
       entry.header.scrollIntoView({ behavior:'smooth', block:'center' });
       return true;
     }
-
-    let best = null;
-    let bestScore = Infinity;
-    const scoreFor = (k) => {
-      const K = ` ${k} `;
-      const N = ` ${needle} `;
-      if (K.includes(N)) return 1;
-      if (k.startsWith(needle) || needle.startsWith(k)) return 2;
-      if (k.includes(needle)) return 3;
-      return 99;
-    };
-
-    for (const [k, v] of headingIndex) {
-      if (needle === 'contribuicoes' && k.includes('contribuicoes de melhoria')) continue;
-      const s = scoreFor(k);
-      if (s < bestScore || (s === bestScore && k.length < (best?.key.length || 1))) {
-        best = { entry: v, key: k, score: s };
-        bestScore = s;
-      }
-    }
-    if (!best || bestScore >= 99) return false;
-
-    const entry = best.entry;
-    const parentToggle = entry.header.closest('.revenue-section')?.querySelector?.('.toggle-heading');
-    if (parentToggle && parentToggle !== entry.header) {
-      const pid = parentToggle.dataset.target;
-      if (pid){ document.getElementById(pid)?.classList.remove('hidden'); parentToggle.classList.add('open'); }
-    }
-    entry.content?.classList.remove('hidden');
-    entry.header.classList.add('open');
-    entry.header.scrollIntoView({ behavior:'smooth', block:'center' });
-    return true;
+    return false;
   }
 
   // ===== Ranking (cores + texto) =====
@@ -252,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // texto “X / Y” (inteiros completos com ponto de milhar)
+    // texto “X / Y”
     const rankingValueEl = $('#ranking-value');
     if (rankingValueEl && municipioData) {
       const map = {
@@ -275,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
   console.log('rankingSelect:', rankingSelect);
   rankingSelect?.addEventListener('change', () => updateRankingUI(rankingSelect.value || 'nacional'));
 
-  // ===== Chart.js =====
+  // ===== Chart.js (COMPOSIÇÃO) =====
   const canvas = $('#myChart');
   if (!canvas){ console.error('Canvas #myChart não encontrado'); return; }
   if (!window.Chart){ console.error('Chart.js não carregado'); return; }
@@ -284,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const pretty = k => ({
     main_categories:'Categorias Principais',
-    imposto_taxas_contribuicoes:'Impostos, Taxas e Contribuições de Melhoria',
+    // imposto_taxas_contribuicoes REMOVIDO do select
     imposto:'___ Impostos',
     taxas:'___ Taxas',
     contribuicoes_melhoria:'___ Contribuições de Melhoria',
@@ -295,12 +234,28 @@ document.addEventListener('DOMContentLoaded', function () {
     outras_receitas:'Outras Receitas'
   }[k] || k.replace(/_/g,' '));
 
+  // cores fixas para as 4 principais
+  const COLOR_BY_LABEL = {
+    'ITC': '#1f77b4',
+    'Contribuições': '#ff7f0e',
+    'Transf. Correntes': '#2ca02c',
+    'Outras': '#d62728'
+  };
+  const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+
+  // mapping clique -> chave do select
+  const MAIN_TO_KEY = {
+    'ITC': 'imposto',                        // agora abre ___ Impostos
+    'Contribuições': 'contribuicoes',
+    'Transf. Correntes': 'transferencias_correntes',
+    'Outras': 'outras_receitas'
+  };
+
+  // chaves disponíveis (exclui 'imposto_taxas_contribuicoes')
   const order = [
-    'main_categories','imposto_taxas_contribuicoes','imposto','taxas', 'contribuicoes_melhoria', 'contribuicoes',
+    'main_categories','imposto','taxas','contribuicoes_melhoria','contribuicoes',
     'transferencias_correntes','transferencias_uniao','transferencias_estado','outras_receitas'
   ];
-
-  // chaves disponíveis
   const availableKeys = (() => {
     if (!allRevenueChartData || typeof allRevenueChartData !== 'object') return [];
     const first = order.filter(k => {
@@ -310,14 +265,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     if (first.length) return first;
     return Object.entries(allRevenueChartData)
-      .filter(([, o]) =>
-        o && Array.isArray(o.labels) && o.labels.length &&
-        Array.isArray(o.values) && o.values.length
-      )
-      .map(([k]) => k);
+      .filter(([, o]) => o && Array.isArray(o.labels) && o.labels.length && Array.isArray(o.values) && o.values.length)
+      .map(([k]) => k)
+      .filter(k => k !== 'imposto_taxas_contribuicoes'); // garante a remoção
   })();
-
-  console.log('availableKeys:', availableKeys);
 
   // select de categorias
   const selectEl = document.getElementById('chart-category-select');
@@ -329,83 +280,24 @@ document.addEventListener('DOMContentLoaded', function () {
       selectEl.appendChild(opt);
     });
   }
-
-  const initialKey = availableKeys.includes('main_categories')
-    ? 'main_categories'
-    : (availableKeys[0] || 'main_categories');
-
+  const initialKey = availableKeys.includes('main_categories') ? 'main_categories' : (availableKeys[0] || 'main_categories');
   if (selectEl) {
     selectEl.value = initialKey;
     selectEl.addEventListener('change', () => renderChart(selectEl.value));
   }
 
-  // “caminho” para abrir a seção ao clicar no gráfico
-  const PATH_HINTS = {
-    'CATEGORIAS PRINCIPAIS': {
-      'ITC':['Impostos, Taxas e Contribuições de Melhoria'],
-      'Contribuições':['Contribuições'],
-      'Transf. Correntes':['Transferências Correntes'],
-      'Outras':['Outras Receitas Correntes'],
-    },
-    'IMPOSTOS': {
-      'IPTU':['Impostos','IPTU'],
-      'ITBI':['Impostos','ITBI'],
-      'ISS':['Impostos','ISS'],
-      'Outros':['Impostos','Outros'],
-    },
-    'TAXAS': {
-      'Taxas pela Prestação de Serviços':['Impostos, Taxas e Contribuições de Melhoria','Taxas','Taxas pela Prestação de Serviços'],
-      'Taxas pelo Exercício do Poder de Polícia':['Impostos, Taxas e Contribuições de Melhoria','Taxas','Taxas pelo Exercício do Poder de Polícia'],
-      'Outras Taxas':['Impostos, Taxas e Contribuições de Melhoria','Taxas','Outras Taxas'],
-    },
-    'CONTRIBUIÇÕES': { 'Outras':['Contribuições'] },
-    'TRANSFERÊNCIAS CORRENTES': {
-      'Transferências da União':['Transferências Correntes','Transferências da União'],
-      'Transferências dos Estados':['Transferências Correntes','Transferências dos Estados'],
-      'Outras Transferências':['Transferências Correntes','Outras Transferências'],
-    },
-    'OUTRAS RECEITAS': {
-      'Receita Patrimonial':['Outras Receitas Correntes','Receita Patrimonial'],
-      'Outras Receitas':['Outras Receitas Correntes','Outras Receitas'],
-      'Receita de Serviços':['Outras Receitas Correntes','Receita de Serviços'],
-      'Receita Agropecuária':['Outras Receitas Correntes','Receita Agropecuária'],
-      'Receita Industrial':['Outras Receitas Correntes','Receita Industrial'],
-    }
-  };
-
-  function resolvePath(groupLabel, segmentLabel){
-    const g = normalize(groupLabel).toUpperCase();
-    let key;
-    if (g.includes('CATEGORIAS PRINCIPAIS')) key = 'CATEGORIAS PRINCIPAIS';
-    else if (g.includes('IMPOSTOS')) key = 'IMPOSTOS';
-    else if (g.includes('TAXAS')) key = 'TAXAS';
-    else if (g.includes('CONTRIBUI')) key = 'CONTRIBUIÇÕES';
-    else if (g.includes('TRANSFER')) key = 'TRANSFERÊNCIAS CORRENTES';
-    else if (g.includes('OUTRAS')) key = 'OUTRAS RECEITAS';
-
-    const table = key && PATH_HINTS[key];
-    if (table){
-      for (const k of Object.keys(table)){
-        if (normalize(k) === normalize(segmentLabel)) return table[k];
-      }
-      for (const k of Object.keys(table)){
-        if (normalize(k).includes(normalize(segmentLabel)) || normalize(segmentLabel).includes(normalize(k)))
-          return table[k];
-      }
-      if (key === 'IMPOSTOS') return ['Impostos'];
-      if (key === 'TAXAS') return ['Impostos, Taxas e Contribuições de Melhoria','Taxas'];
-      if (key === 'CONTRIBUIÇÕES') return ['Contribuições'];
-      if (key === 'TRANSFERÊNCIAS CORRENTES') return ['Transferências Correntes'];
-      if (key === 'OUTRAS RECEITAS') return ['Outras Receitas Correntes'];
-      if (key === 'CATEGORIAS PRINCIPAIS') return ['Impostos, Taxas e Contribuições de Melhoria'];
-    }
-    return null;
-  }
-
-  // ===== Chart render =====
-  const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
   let chart;
-
+ 
+  function setCategoryAndSync(key){
+    if (!selectEl) return;
+    selectEl.value = key;
+    renderChart(key);                                 // atualiza o gráfico de composição
+    selectEl.dispatchEvent(new Event('change', {     // dispara p/ densidade redesenhar
+      bubbles: true
+    }));
+  }
+  
+  // renderiza como BARRAS HORIZONTAIS (cada categoria é uma linha do eixo Y)
   function renderChart(key){
     const d = allRevenueChartData?.[key];
     if (!d){ warn('chave não encontrada no chart-data:', key); return; }
@@ -413,25 +305,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const total = d.values.reduce((a,b)=>a+b,0);
     const perc  = d.values.map(v=> total ? (v/total)*100 : 0);
-    const datasets = d.labels.map((label,i)=>({
-      label, data:[perc[i]], backgroundColor: palette[i%palette.length], borderWidth:1
-    }));
+
+    // labels no eixo Y = cada categoria/item
+    const labels = d.labels.slice();
+    const background = labels.map((lbl,i)=> COLOR_BY_LABEL[lbl] || palette[i%palette.length]);
+
+    const dataset = {
+      label: pretty(key).toUpperCase(),
+      data: perc,
+      backgroundColor: background,
+      borderWidth: 1,
+    };
 
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
       type:'bar',
-      data:{ labels:[pretty(key).toUpperCase()], datasets },
+      data:{ labels, datasets: [dataset] },
       options:{
         responsive:true, maintainAspectRatio:false, indexAxis:'y',
-        scales:{ x:{stacked:true,min:0,max:100,ticks:{callback:v=>v+'%'}}, y:{stacked:true} },
+        scales:{
+          x:{ min:0, max:100, ticks:{ callback:v=>v+'%' } },
+          y:{ ticks:{ autoSkip:false } }
+        },
         plugins:{
-          legend:{position:'bottom'},
-          tooltip:{callbacks:{
+          legend:{ display:false }, // <<< legenda desligada
+          tooltip:{ callbacks:{
             label:(ct)=>{
-              const i = ct.datasetIndex;
+              const i = ct.dataIndex;
               const raw = d.values[i];
               const pct = ct.parsed.x || 0;
-              return `${ct.dataset.label}: ${pct.toFixed(1)}% (${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(raw)})`;
+              return `${labels[i]}: ${pct.toFixed(1)}% (${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(raw)})`;
             },
             footer:()=>`Total: ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(total)}`
           }}
@@ -439,29 +342,47 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    canvas.onclick = (evt)=>{
-      const pts = chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
+    // clique:
+    canvas.onclick = (evt) => {
+      const pts = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
       if (!pts.length) return;
-      const dsIdx = pts[0].datasetIndex;
-      const segLabel   = chart.data.datasets?.[dsIdx]?.label;
-      const groupLabel = chart.data.labels?.[0] || '';
-      const path = resolvePath(groupLabel, segLabel);
-      if (path) path.forEach(lbl=>openByLabel(lbl));
-      else warn('sem caminho p/', groupLabel, segLabel);
+      const idx = pts[0].index;
+      const clickedLabel = labels[idx];
+
+      // === Categorias Principais ===
+      if (key === 'main_categories') {
+        const nextKey = MAIN_TO_KEY[clickedLabel];
+        if (nextKey) {
+          setCategoryAndSync(nextKey);
+        }
+        return;
+      }
+
+      // === Transferências Correntes ===
+      if (key === 'transferencias_correntes') {
+        const l = normalize(clickedLabel);
+        if (l.includes('uniao')) {
+          setCategoryAndSync('transferencias_uniao');
+          return;
+        }
+        if (l.includes('estado') || l.includes('estados')) {
+          setCategoryAndSync('transferencias_estado');
+          return;
+        }
+        // outras transferências: mantém comportamento antigo (abrir seção)
+        openByLabel(clickedLabel);
+        return;
+      }
+
+      // demais chaves: manter atalho de abrir seção
+      openByLabel(clickedLabel);
     };
   }
 
   // ===== Inicializações =====
   buildHeadingIndex();
-  showMode('pc'); // também ordena
-  renderChart( (()=>{
-    // calcula chave inicial de gráfico
-    const order = ['main_categories','imposto_taxas_contribuicoes','imposto','taxas','contribuicoes_melhoria','contribuicoes','transferencias_correntes','transferencias_uniao','transferencias_estado','outras_receitas'];
-    const first = order.find(k => allRevenueChartData?.[k]?.labels?.length && allRevenueChartData?.[k]?.values?.length);
-    return first || Object.keys(allRevenueChartData||{})[0] || 'main_categories';
-  })() );
+  showMode('pc');
+  renderChart(initialKey);
   initializeToggleListeners();
   updateRankingUI(rankingSelect?.value || 'nacional');
-  showMode('pc');
-  
 });

@@ -356,7 +356,7 @@ class Connection(BaseConnection[Row]):
 
         if self._notify_handlers:
             warnings.warn(
-                "using 'notifies()' together with notifies handlers on the same connection is not reliable. Please use only one of thees methods",
+                "using 'notifies()' together with notifies handlers on the same connection is not reliable. Please use only one of these methods",
                 RuntimeWarning,
             )
 
@@ -442,7 +442,7 @@ class Connection(BaseConnection[Row]):
             assert pipeline is self._pipeline
             self._pipeline = None
 
-    def wait(self, gen: PQGen[RV], interval: float | None = _WAIT_INTERVAL) -> RV:
+    def wait(self, gen: PQGen[RV], interval: float = _WAIT_INTERVAL) -> RV:
         """
         Consume a generator operating on the connection.
 
