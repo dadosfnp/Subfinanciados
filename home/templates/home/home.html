@@ -54,7 +54,17 @@
       </div>
 
       <div class="filter-section mb-4">
-        <h6>Quantil</h6>
+        <div class="d-flex align-items-center mb-1">
+          <h6 class="mb-0 me-1">Quantil</h6>
+          <button type="button"
+                  class="btn-info-tooltip"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="right"
+                  data-bs-html="true"
+                  title="O gráfico e a tabela mostram os municípios organizados em quintis, de acordo com sua receita per capita. Primeiro, os municípios são ordenados do menor para o maior valor. Depois, são divididos em cinco grupos com o mesmo número de municípios. O primeiro quintil representa os 20% com menor receita per capita, e o último quintil representa os 20% com maior receita per capita.">
+            <i class="fa-solid fa-circle-info text-secondary"></i>
+          </button>
+        </div>
         <div class="form-check">
           <input class="form-check-input" type="radio" name="quantilType" id="quantilQuintil" value="quintil" checked>
           <label class="form-check-label" for="quantilQuintil">Quintil</label>
@@ -66,7 +76,17 @@
       </div>
 
       <div class="filter-section mb-4">
-        <h6>Modo de Cálculo</h6>
+        <div class="d-flex align-items-center mb-1">
+            <h6 class="mb-0 me-1">Modo de Cálculo</h6>
+            <button type="button"
+                    class="btn-info-tooltip"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    data-bs-html="true"
+                    title="O modo 'Total' considera todos os municípios para calcular os quintis, independentemente dos filtros aplicados. Já o modo 'Aplicar Filtros' recalcula os quintis com base apenas nos municípios que atendem aos critérios dos filtros selecionados.">
+              <i class="fa-solid fa-circle-info text-secondary"></i>
+            </button>
+        </div>
         <div class="form-check">
           <input class="form-check-input" type="radio" name="calculationMode" id="calcModeTotal" value="total" checked>
           <label class="form-check-label" for="calcModeTotal">Total (Quintis Globais)</label>
@@ -178,22 +198,46 @@
     </div>
 
     <div class="chart-card">
-      <h5>
-        Distribuição da População Municipal
+      <div class="d-flex align-items-center justify-content-between mb-1">
+        
+        <!-- Lado esquerdo: título + tooltip -->
+        <div class="d-flex align-items-center">
+          <h5 class="mb-0 me-1">Distribuição da População Municipal</h5>
+          <button type="button"
+                  class="btn-info-tooltip"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="right"
+                  data-bs-html="true"
+                  title="O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2023 ou na comparação entre 2000 e 2023. O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. A lógica se repete nos demais quintis, até o último quintil, que representa os municípios com maior receita per capita. Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.">
+            <i class="fa-solid fa-circle-info text-secondary"></i>
+          </button>
+        </div>
+
+        <!-- Lado direito: toggle -->
         <div class="chart-controls">
           <div class="toggle-container">
             <span class="toggle-option active" data-option="2023">2023</span>
             <span class="toggle-option" data-option="2000 e 2023">2000 e 2023</span>
           </div>
         </div>
-      </h5>
+      </div>
       <div class="chart-container" style="position: relative; height:400px; width:100%">
         <canvas id="populacaoQuintilChart"></canvas>
       </div>
     </div>
 
     <div class="table-card" id="table-card-2023">
-      <h5>Distribuição de Municípios por Faixa Populacional(2023)</h5>
+      <div class="d-flex align-items-center mb-1">
+            <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2023)</h5>
+            <button type="button"
+                    class="btn-info-tooltip"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    data-bs-html="true"
+                    title="A tabela abaixo cruza duas informações: faixas populacionais dos municípios e seus quintis de receita per capita. Cada linha representa uma faixa de tamanho populacional e mostra como os municípios dessa faixa estão distribuídos entre os diferentes quintis. Por exemplo, para a faixa de municípios com até 5 mil habitantes, a tabela indica quantos deles estão em cada quintil. Isso permite entender se determinado grupo de municípios de certa faixa populacional tendem a estar entre os mais pobres ou mais ricos do país.">
+              <i class="fa-solid fa-circle-info text-secondary"></i>
+            </button>
+      </div>
       <div class="table-responsive">
         <table class="table table-striped table-hover" id="table-2023">
           <thead></thead>
@@ -203,7 +247,17 @@
     </div>
 
     <div class="table-card d-none" id="table-card-2000">
-      <h5>Distribuição de Municípios por Faixa Populacional(2000)</h5>
+      <div class="d-flex align-items-center mb-1">
+        <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2000)</h5>
+        <button type="button"
+              class="btn-info-tooltip"
+              data-bs-toggle="tooltip"
+              data-bs-placement="right"
+              data-bs-html="true"
+              title="A tabela abaixo cruza duas informações: faixas populacionais dos municípios e seus quintis de receita per capita. Cada linha representa uma faixa de tamanho populacional e mostra como os municípios dessa faixa estão distribuídos entre os diferentes quintis. Por exemplo, para a faixa de municípios com até 5 mil habitantes, a tabela indica quantos deles estão em cada quintil. Isso permite entender se determinado grupo de municípios de certa faixa populacional tendem a estar entre os mais pobres ou mais ricos do país.">
+          <i class="fa-solid fa-circle-info text-secondary"></i>
+        </button>
+      </div>
       <div class="table-responsive">
         <table class="table table-striped table-hover" id="table-2000">
           <thead></thead>
