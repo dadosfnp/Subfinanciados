@@ -8,25 +8,60 @@ document.addEventListener('DOMContentLoaded', function () {
   const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  function safeParseJSONById(id) {
+  // Lê um <script type="application/json"> como TEXTO (sem parse numérico do JSON)
+  function getJsonText(id){
     const el = document.getElementById(id);
-    if (!el) { warn(`Elemento #${id} não encontrado`); return null; }
-    const txt = el.textContent?.trim();
-    if (!txt) { warn(`#${id} vazio`); return null; }
-    try {
-      let v = JSON.parse(txt);
-      if (typeof v === 'string') v = JSON.parse(v); // tolera dupla serialização
-      return v;
-    } catch (e) {
-      console.error(`Falha ao parsear #${id}:`, e, txt.slice(0, 120) + '...');
-      return null;
-    }
+    return (el && el.textContent) ? el.textContent.trim() : '';
   }
 
-  // normaliza textos de headings
+  // Extrai e normaliza inteiros para os campos de ranking (suporta "2.484", "1,172", "5530", null)
+  function parseRankingDataFromText(id){
+    const txt = getJsonText(id);
+    if (!txt) return null;
+
+    const keys = [
+      'rank_nacional','total_nacional',
+      'rank_estadual','total_estadual',
+      'rank_faixa','total_faixa'
+    ];
+
+    const out = {};
+    for (const k of keys){
+      // casa o valor cru após o campo (string JSON com chaves) até a vírgula/fecha-chaves
+      const re = new RegExp(`"${k}"\\s*:\\s*([^,}\\n\\r]+)`);
+      const m = txt.match(re);
+      if (!m){ out[k] = null; continue; }
+      const raw = m[1].trim();        // ex.: 2.484   ou 1172   ou null
+
+      if (/^null$/i.test(raw)) { out[k] = null; continue; }
+
+      // Se vier entre aspas, remove aspas
+      const unq = raw.replace(/^"(.*)"$/, '$1');
+
+      // Mantém apenas dígitos -> interpreta como inteiro puro (milhar com ponto/vírgula também funciona)
+      const digitsOnly = unq.replace(/\D+/g, '');
+      out[k] = digitsOnly ? parseInt(digitsOnly, 10) : null;
+    }
+    return out;
+  }
+
+  // Para outras estruturas JSON (chart/percentis) podemos usar parse normal
+  function safeParseJSONById(id) {
+    const el = document.getElementById(id);
+    if (!el) { return null; }
+    const txt = el.textContent?.trim();
+    if (!txt) { return null; }
+    try {
+      let v = JSON.parse(txt);
+      if (typeof v === 'string') v = JSON.parse(v);
+      return v;
+    } catch { return null; }
+  }
+
+  // ===== Normalizadores =====
   const normalize = (str) => (str||'')
     .normalize('NFD').replace(/\p{Diacritic}/gu,'')
-    .replace(/R\$\s?[\d\.,]+/g,' ')   // tira valores
+    .replace(/R\$\s?[\d\.,]+/g,' ')
     .replace(/[\d\.,]+/g,' ')
     .replace(/\s+/g,' ')
     .trim().toLowerCase();
@@ -38,25 +73,34 @@ document.addEventListener('DOMContentLoaded', function () {
     return (c.textContent || h.textContent || '').trim();
   };
 
+  // ===== Formatação numérica para exibir com ponto de milhar =====
+  const fmtInt = (n) =>
+    (Number.isFinite(n)
+      ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0, useGrouping: true }).format(n)
+      : '—');
+
+  // ===== Dados =====
+  const allRevenueChartData = safeParseJSONById('chart-data');
+  const percentileData      = safeParseJSONById('percentile-data');
+  // ⚠️ Ranking agora vem do texto e é normalizado para inteiro corretamente
+  const municipioData       = parseRankingDataFromText('municipio-data');
+
   // 🔑 mapa heading -> chave do JSON de percentis
   const HEADING_TO_KEY = {
     'receita corrente': 'rc',
-
     'transferencias correntes': 'transferencias_correntes',
     'transferencias da uniao': 'transferencias_uniao',
     'transferencias dos estados': 'transferencias_estado',
     'outras transferencias': 'outras_transferencias',
-
     'impostos, taxas e contribuicoes de melhoria': 'imposto_taxas_contribuicoes',
     'impostos': 'imposto',
     'taxas': 'taxas',
     'contribuicoes de melhoria': 'contribuicoes_melhoria',
-
     'outras receitas correntes': 'outras_receitas',
     'contribuicoes': 'contribuicoes'
   };
 
-  // pinta a caixinha + tooltip conforme percentil
+  // ===== Indicador (cores + tooltip) =====
   function paintIndicator(container, percentile) {
     if (!container || !Number.isFinite(percentile)) return;
     const ind = container.querySelector('.ranking-indicator') || container;
@@ -71,11 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (tip) tip.textContent = `O município supera ${percentile}% dos outros municípios`;
   }
-
-  // ===== Dados =====
-  const allRevenueChartData = safeParseJSONById('chart-data');
-  const percentileData      = safeParseJSONById('percentile-data');
-  log('chart-data keys:', allRevenueChartData && Object.keys(allRevenueChartData));
 
   // ===== Toggle (setinhas) =====
   function handleToggleClick(e){
@@ -133,14 +172,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const ct  = id ? document.getElementById(id) : null;
         if (key) headingIndex.set(key, { header: h, content: ct, targetId: id });
       });
-    log('headings indexados:', Array.from(headingIndex.keys()));
   }
 
   function openByLabel(label){
     if (!label) return false;
     const needle = normalize(label);
 
-    // 1) match exato direto no índice
     if (headingIndex.has(needle)) {
       const entry = headingIndex.get(needle);
       const parentToggle = entry.header.closest('.revenue-section')?.querySelector?.('.toggle-heading');
@@ -154,37 +191,27 @@ document.addEventListener('DOMContentLoaded', function () {
       return true;
     }
 
-    // 2) ranking de similaridade (whole-word > startsWith > includes)
     let best = null;
     let bestScore = Infinity;
-
-    // util: score do match
     const scoreFor = (k) => {
       const K = ` ${k} `;
       const N = ` ${needle} `;
-      if (K.includes(N)) return 1;                      // palavra inteira
+      if (K.includes(N)) return 1;
       if (k.startsWith(needle) || needle.startsWith(k)) return 2;
       if (k.includes(needle)) return 3;
       return 99;
     };
 
     for (const [k, v] of headingIndex) {
-      // evita confundir "Contribuições" com "Contribuições de Melhoria"
       if (needle === 'contribuicoes' && k.includes('contribuicoes de melhoria')) continue;
-
       const s = scoreFor(k);
       if (s < bestScore || (s === bestScore && k.length < (best?.key.length || 1))) {
         best = { entry: v, key: k, score: s };
         bestScore = s;
       }
     }
+    if (!best || bestScore >= 99) return false;
 
-    if (!best || bestScore >= 99) { 
-      warn('heading não encontrado p/ label:', label); 
-      return false; 
-    }
-
-    // abre alvo + pai se precisar
     const entry = best.entry;
     const parentToggle = entry.header.closest('.revenue-section')?.querySelector?.('.toggle-heading');
     if (parentToggle && parentToggle !== entry.header) {
@@ -197,40 +224,51 @@ document.addEventListener('DOMContentLoaded', function () {
     return true;
   }
 
-
-  // ===== Ranking (pinta os quadradinhos) =====
+  // ===== Ranking (cores + texto) =====
   function updateRankingUI(selected) {
-    if (!percentileData) return;
+    // cores (percentis)
+    if (percentileData) {
+      const headerBox = $('#header-quintil-indicator-container');
+      const pHeader = percentileData.rc ? percentileData.rc[selected] : null;
+      if (Number.isFinite(pHeader)) paintIndicator(headerBox, pHeader);
 
-    // Header (RC)
-    const headerBox = $('#header-quintil-indicator-container');
-    const pHeader = percentileData.rc ? percentileData.rc[selected] : null;
-    if (Number.isFinite(pHeader)) paintIndicator(headerBox, pHeader);
+      $$('.revenue-item-wrapper').forEach(wrap => {
+        let key = wrap.querySelector('[data-field-base]')?.dataset.fieldBase;
+        if (!key) {
+          const heading = wrap.querySelector('.toggle-heading');
+          const txt = normalize(cleanText(heading));
+          key = HEADING_TO_KEY[txt];
+        }
+        const pct = key && percentileData[key] ? percentileData[key][selected] : null;
+        const container = wrap.querySelector('.ranking-indicator-container');
+        if (Number.isFinite(pct)) {
+          paintIndicator(container, pct);
+        } else if (container) {
+          const ind = container.querySelector('.ranking-indicator');
+          ind?.classList.remove('quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
+          const tip = container.querySelector('.ranking-tooltip');
+          if (tip) tip.textContent = 'Ranking não disponível';
+        }
+      });
+    }
 
-    // Linhas
-    $$('.revenue-item-wrapper').forEach(wrap => {
-      // 1) se existir, usa data-field-base
-      let key = wrap.querySelector('[data-field-base]')?.dataset.fieldBase;
-
-      // 2) senão, deriva pelo texto do heading
-      if (!key) {
-        const heading = wrap.querySelector('.toggle-heading');
-        const txt = normalize(cleanText(heading));
-        key = HEADING_TO_KEY[txt];
+    // texto “X / Y” (inteiros completos com ponto de milhar)
+    const rankingValueEl = $('#ranking-value');
+    if (rankingValueEl && municipioData) {
+      const map = {
+        nacional: ['rank_nacional','total_nacional'],
+        estadual: ['rank_estadual','total_estadual'],
+        faixa:    ['rank_faixa','total_faixa'],
+      };
+      const [rkKey, totKey] = map[selected] || map.nacional;
+      const rk  = municipioData?.[rkKey];
+      const tot = municipioData?.[totKey];
+      if (Number.isFinite(rk) && Number.isFinite(tot)) {
+        rankingValueEl.textContent = `${fmtInt(rk)} / ${fmtInt(tot)}`;
+      } else {
+        rankingValueEl.textContent = '—';
       }
-
-      const pct = key && percentileData[key] ? percentileData[key][selected] : null;
-      const container = wrap.querySelector('.ranking-indicator-container');
-
-      if (Number.isFinite(pct)) {
-        paintIndicator(container, pct);
-      } else if (container) {
-        const ind = container.querySelector('.ranking-indicator');
-        ind?.classList.remove('quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
-        const tip = container.querySelector('.ranking-tooltip');
-        if (tip) tip.textContent = 'Ranking não disponível';
-      }
-    });
+    }
   }
 
   const rankingSelect = $('#ranking-select');
@@ -416,7 +454,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // ===== Inicializações =====
   buildHeadingIndex();
   showMode('pc'); // também ordena
-  renderChart(initialKey);
+  renderChart( (()=>{
+    // calcula chave inicial de gráfico
+    const order = ['main_categories','imposto_taxas_contribuicoes','imposto','taxas','contribuicoes_melhoria','contribuicoes','transferencias_correntes','transferencias_uniao','transferencias_estado','outras_receitas'];
+    const first = order.find(k => allRevenueChartData?.[k]?.labels?.length && allRevenueChartData?.[k]?.values?.length);
+    return first || Object.keys(allRevenueChartData||{})[0] || 'main_categories';
+  })() );
   initializeToggleListeners();
-  updateRankingUI(rankingSelect?.value || 'nacional'); // pinta os quadradinhos na carga
+  updateRankingUI(rankingSelect?.value || 'nacional');
+  showMode('pc');
+  
 });
