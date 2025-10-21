@@ -27,9 +27,27 @@
   .logo-fnp { max-height: 50px; }
 }
 
-/* Estilo para o botão (utilitário global, opt-in) */
+/* Estilo de botão da marca: só quando for explicitamente .btn-fnp ou .btn-primary */
 .btn-fnp,
-.btn { background-color: #194685 !important; border-color: #194685 !important; }
+.btn-primary {
+  background-color: #194685 !important;
+  border-color: #194685 !important;
+  color: #fff !important;
+}
+
+/* Não pintar todos os outline como azul — manter padrão Bootstrap */
+.btn-outline-secondary {
+  background-color: #fff !important;
+  color: #6c757d !important;
+  border-color: #6c757d !important;
+}
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  border-color: #6c757d !important;
+  box-shadow: none !important;
+}
 
 /* ============== FNP THEME (global) ============== */
 :root{
@@ -172,3 +190,140 @@ body{
   }
   .content-wrapper,.detail-wrapper{flex-direction:column}
 }
+
+/* =================== Filtros (unificados como no Mapa) =================== */
+/* Mesma aparência para sidebars de todas as páginas (Gráfica, Municipal, Mapa) */
+
+/* Container dos filtros já é branco; garantimos consistência */
+.sidebar,
+.filters-sidebar{
+  background:#fff;
+  border-right:1px solid var(--bs-border-color);
+  box-shadow:2px 0 5px rgba(25,70,133,.12);
+}
+
+/* Títulos e espaçamento entre grupos */
+.sidebar .filter-group,
+#filters .filter-group,
+.filters-sidebar .filter-group{
+  margin:0 0 1.25rem 0;
+}
+.sidebar .form-label,
+#filters .form-label,
+.filters-sidebar .form-label{
+  display:block;
+  margin:0 0 .5rem .125rem;
+  color:#194685;
+  font-weight:500;
+}
+
+/* Campos padrão: SEM fundo azul, fundo branco + borda neutra */
+.sidebar .form-select,
+#filters .form-select,
+.filters-sidebar .form-select,
+.sidebar select,
+#filters select,
+.filters-sidebar select,
+.sidebar .form-control,
+#filters .form-control,
+.filters-sidebar .form-control{
+  width:100%;
+  box-sizing:border-box;
+  height:calc(1.8125rem + 2px);
+  padding:.25rem .5rem;
+  font-size:.875rem;
+  background:#fff;                         /* <-- Branco */
+  border:1px solid var(--bs-border-color); /* <-- Borda clara */
+  color:inherit;
+}
+
+/* --- Lupa ao lado do <select> (layout igual ao do Mapa) --- */
+.sidebar .input-group,
+#filters .input-group,
+.filters-sidebar .input-group{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:nowrap;           /* não quebra a lupa pra baixo */
+}
+
+/* Select dentro do input-group não força 100% */
+.sidebar .input-group .form-select,
+#filters .input-group .form-select,
+.filters-sidebar .input-group .form-select,
+.sidebar .input-group select,
+#filters .input-group select,
+.filters-sidebar .input-group select{
+  flex:1 1 0;
+  width:auto !important;      /* vence width:100% herdado */
+  min-width:0;                /* evita overflow */
+}
+
+/* Botão da lupa colado ao select */
+.sidebar .input-group > .btn,
+#filters .input-group > .btn,
+.filters-sidebar .input-group > .btn{
+  flex:0 0 auto;
+  padding:.25rem .5rem;       /* casa com input-group-sm */
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* Responsivo: quando a sidebar sobe pro topo, mantém o look */
+@media (max-width: 767.98px){
+  .sidebar,#filters,.filters-sidebar{
+    width:100%;
+    max-height:50vh;
+    border-right:none;
+    border-bottom:1px solid var(--bs-border-color);
+  }
+}
+
+/* ====== Padronização do Modal de Busca (command palette) ====== */
+#search-modal .modal-dialog { max-width: 720px; }
+#search-modal .modal-content {
+  background: #fff;                 /* força fundo branco */
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+  overflow: hidden;
+}
+#search-modal .modal-header {
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  padding: .6rem .75rem;
+}
+#search-modal .modal-header .form-control {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  color: #111827;
+}
+#search-modal .modal-body { padding: 0; background: #fff; }
+
+/* Lista padronizada: branco + separadores como no mapa */
+#search-modal .list-group { border-radius: 0; }
+#search-modal .list-group-item {
+  background: #fff;                 /* NÃO herda --bs-body-bg */
+  color: #111827;
+  border-color: #eef0f2;            /* separador mais sutil */
+  padding: .8rem 1rem;
+}
+#search-modal .list-group-item:first-child {
+  position: sticky; top: 0; z-index: 1;
+  background: #fff;                 /* “Todos” gruda no topo */
+  border-top: 0;
+}
+#search-modal .list-group-item:hover,
+#search-modal .list-group-item:focus {
+  background: #f7f9fc;              /* hover discreto */
+}
+
+/* Botão de fechar mantém estilo clean */
+#search-modal .btn-close {
+  filter: none;
+  opacity: .6;
+}
+#search-modal .btn-close:hover { opacity: 1; }
+
+/* Corrige backdrop muito escuro em alguns temas */
+.modal-backdrop.show { background: #000; opacity: .35; }
