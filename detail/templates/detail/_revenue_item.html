@@ -21,7 +21,19 @@
                 {% elif item.diff.pc > 20 and item.diff.pc <= 60 %}quintil-4
                 {% else %}quintil-5
                 {% endif %}"></div>
-                <div class="ranking-tooltip">O grupo de municípios supera {{item.diff.pc|default_if_none:"--"}}% da média nacional</div>
+                <div class="ranking-tooltip">
+                {% with pct=item.diff.pc %}
+                    {% if pct is None %}
+                    Sem comparação com a média nacional
+                    {% elif pct > 0 %}
+                    O grupo de municípios supera {{ pct|floatformat:2 }}% a média nacional
+                    {% elif pct < 0 %}
+                    O grupo de municípios é inferior em {{ pct|floatformat:2|cut:"-" }}% à média nacional
+                    {% else %}
+                    O grupo de municípios está igual à média nacional
+                    {% endif %}
+                {% endwith %}
+                </div>
             </div>
 
             <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="nacional">

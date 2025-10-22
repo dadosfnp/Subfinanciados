@@ -327,3 +327,39 @@ body{
 
 /* Corrige backdrop muito escuro em alguns temas */
 .modal-backdrop.show { background: #000; opacity: .35; }
+
+/* ===== Tooltips — tema escuro padrão (igual aos cards pretos) ===== */
+.tooltip {
+  z-index: 2000; /* acima de headers/cards */
+}
+
+.tooltip .tooltip-inner {
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: .875rem;         /* ~14px */
+  line-height: 1.25;
+  max-width: 320px;           /* textos longos */
+  white-space: normal;        /* permite quebra de linha */
+  text-align: left;           /* leitura melhor para textos grandes */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+}
+
+/* setinha nas quatro direções */
+.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+  border-top-color: rgba(51,51,51,.95);
+}
+.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+  border-bottom-color: rgba(51,51,51,.95);
+}
+.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
+.bs-tooltip-start .tooltip-arrow::before {
+  border-left-color: rgba(51,51,51,.95);
+}
+.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
+.bs-tooltip-end .tooltip-arrow::before {
+  border-right-color: rgba(51,51,51,.95);
+}
