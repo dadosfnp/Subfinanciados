@@ -17,6 +17,10 @@
   box-shadow:2px 0 5px rgba(25,70,133,.12);
   position:relative;
   z-index:2;
+
+  /* coluna para “colar” o botão de download no rodapé */
+  display:flex;
+  flex-direction:column;
 }
 
 /* Conteúdo do mapa ocupa 100% e sem folgas */
@@ -61,15 +65,15 @@
 .map-page .sidebar .input-group{
   display:flex;
   align-items:stretch;
-  flex-wrap:nowrap;               /* impede quebrar para baixo */
+  flex-wrap:nowrap;
 }
 
 /* Dentro do input-group, o select não ocupa 100% */
 .map-page .sidebar .input-group .form-select,
 .map-page .sidebar .input-group select{
-  flex:1 1 0;                     /* pode encolher quando precisar */
-  width:auto !important;          /* vence width:100% e inline style */
-  min-width:0;                    /* evita overflow */
+  flex:1 1 0;
+  width:auto !important;
+  min-width:0;
 }
 
 /* Botão da lupa colado ao select */
@@ -89,31 +93,17 @@
   width:100%;
 }
 
-/* Botão full-width */
+/* Botão “Limpar” full-width */
 .map-page #btn-limpar-filtros{ width:100%; }
 
 /* ---------- Bloco de download ---------- */
-/* Sidebar como coluna para “colar” o botão no rodapé */
-.map-page > .sidebar{
-  display: flex;
-  flex-direction: column;
-}
-
-/* Empurra o botão de download para o final da coluna */
-.map-page .sidebar .sidebar-spacer{
-  margin-top: auto;
-}
-
-/* Botão de download: mesma hierarquia visual do “Limpar Pesquisa” */
+.map-page .sidebar .sidebar-spacer{ margin-top:auto; }
 .map-page .sidebar .btn-download{
-  margin-top: .75rem;
-  color: #fff;                 /* garante texto branco */
-  box-shadow: 0 2px 6px rgba(25,70,133,.10);
+  margin-top:.75rem;
+  color:#fff;
+  box-shadow:0 2px 6px rgba(25,70,133,.10);
 }
-.map-page .sidebar .btn-download svg{
-  display: inline-block;
-  line-height: 0;
-}
+.map-page .sidebar .btn-download svg{ display:inline-block; line-height:0; }
 
 /* ---------- Responsivo ---------- */
 @media (max-width: 767.98px){
@@ -126,144 +116,122 @@
   }
 }
 
-.map-overlay-container {
-    position: absolute;
-    bottom: 30px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espaço entre os overlays */
-    align-items: flex-end; /* Alinha os itens à direita */
-    z-index: 1; /* Garante que os overlays fiquem acima do mapa */
+/* ---------- Overlays (Resumo + Legenda) ---------- */
+.map-overlay-container{
+  position:absolute;
+  bottom:30px;
+  right:10px;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  align-items:flex-end;
+  z-index:1;
 }
 
+/* Card de Resumo */
+#summary-card{
+  background:rgba(255,255,255,.9);
+  padding:15px;
+  border-radius:8px;
+  width:250px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+#summary-card h5{
+  margin:0 0 10px;
+  border-bottom:1px solid #ccc;
+  padding-bottom:5px;
+  font-size:1.1rem;
+}
+#summary-card p{ margin:5px 0; font-size:.9rem; }
 
-/* Estilos para o Card de Resumo */
-#summary-card {
-    background-color: rgba(255, 255, 255, 0.9); /* Fundo branco semi-transparente */
-    padding: 15px;
-    border-radius: 8px; /* Cantos arredondados */
-    width: 250px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra aprimorada */
+/* ---------- LEGENDA ---------- */
+#legend{
+  background:rgba(255,255,255,.9);
+  width:250px;
+  padding:15px;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
 }
 
-#summary-card h5 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ccc; /* Linha divisória */
-    padding-bottom: 5px;
-    font-size: 1.1rem; /* Título ligeiramente maior */
+/* Título principal com linha */
+#legend h5{
+  margin:0 0 .5rem;
+  color:var(--fnp-blue,#194685);
+  font-weight:700;
+  border-bottom:1px solid #e5e7eb;
+  padding-bottom:.5rem;
 }
 
-#summary-card p {
-    margin: 5px 0;
-    font-size: 0.9rem; /* Fonte menor para detalhes */
+/* Subtítulo “Faixa Populacional” com linha (igual ao h5) */
+#legend .legend-subtitle{
+  margin:.5rem 0 .5rem;
+  color:var(--fnp-blue,#194685);
+  font-weight:700;
+  border-bottom:1px solid #e5e7eb;
+  padding-bottom:.5rem;
 }
 
-/* Estilos para a Legenda do Mapa */
-#legend {
-    background-color: rgba(255, 255, 255, 0.9);
-    width: 250px;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* bloco de cores (quintil/decil/natural) */
+#legend .legend-container{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:.5rem;
+  row-gap:.35rem;
+  align-items:start;
+  margin-bottom:.25rem;           /* sem “barriga” no fim */
+}
+#legend .legend-colors{ display:flex; flex-direction:column; gap:.35rem; }
+#legend .legend-labels{ display:flex; flex-direction:column; gap:.35rem; }
+#legend .legend-labels span{ font-size:.9rem; color:#374151; }
+#legend .legend-key{
+  width:16px;
+  height:14px;
+  border-radius:3px;
+  border:1px solid rgba(0,0,0,.15); /* garante visibilidade em cores extremas */
 }
 
-#legend h5 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
+/* Escala de tamanhos (Faixa Populacional) */
+#legend .size-legend{ margin-top:.35rem; }  /* sem espaço extra no final */
+#legend .size-legend svg{ width:230px; height:110px; display:block; margin:0 auto; }
+#legend .size-legend text{ font-size:12px; fill:#374151; }
+#legend .size-legend .guide{ stroke:#666; stroke-dasharray:3 5; stroke-width:1; }
+#legend .size-legend .bubble{ fill:#fff; stroke:#111827; stroke-width:1; opacity:.95; }
+
+/* ---------- Popup do Mapbox ---------- */
+.mapboxgl-popup-content{
+  font-size:1rem;
+  min-width:350px;
+  border-radius:12px !important;
+  box-shadow:0 5px 15px rgba(0,0,0,.2);
+  padding:15px;
+}
+.mapboxgl-popup-content i{
+  color:#194685;
+  margin-right:7px;
+  font-size:14px;
+}
+.popup-details p{
+  margin-bottom:6px;
+  line-height:1.5;
 }
 
-.legend-container {
-    display: flex;
-    align-items: flex-start; /* Alinha itens ao topo */
+/* ---------- Botão/ícone “i” (tooltips bootstrap) ---------- */
+.btn-info-tooltip{
+  background:none !important;
+  border:none !important;
+  padding:0 !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+  outline:none !important;
 }
-
-.legend-colors {
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* Espaço entre as chaves de cor */
-}
-
-.legend-labels {
-    display: flex;
-    flex-direction: column;
-    margin-left: 10px;
-    gap: 8px; /* Espaço entre os rótulos */
-}
-
-.legend-key {
-    width: 25px;
-    height: 20px;
-    border-radius: 3px; /* Leve arredondamento para chaves de cor */
-    border: 1px solid rgba(0, 0, 0, 0.1); /* Borda sutil para chaves */
-}
-
-.legend-labels span {
-    height: 20px;
-    line-height: 20px;
-    font-size: 0.9rem; /* Tamanho de fonte consistente */
-}
-
-/* Estilos do Popup do Mapbox (modificados) */
-.mapboxgl-popup-content {
-    font-size: 1rem; /* Tamanho base da fonte do conteúdo do popup */
-    min-width: 350px;
-    border-radius: 12px !important;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    padding: 15px; /* Padding consistente */
-}
-
-/* Ícones dentro do popup do Mapbox */
-.mapboxgl-popup-content i {
-    color: #194685; 
-    margin-right: 7px;
-    font-size: 14px;
-}
-
-.popup-details p {
-    margin-bottom: 6px; /* Margem aumentada para legibilidade */
-    line-height: 1.5; /* Altura da linha melhorada */
-}
-
-
-/* Estilos gerais para grupos de filtro */
-.filter-group {
-    margin-bottom: 1rem;
-}
-
-/* Estilos para ícones do Bootstrap Icons (se estiver usando) */
-.bi {
-    vertical-align: -.125em;
-    fill: currentColor;
-}
-
-.text-small {
-    font-size: 85%;
-}
-
-.dropdown-toggle {
-    outline: 0;
-}
-
-.btn-info-tooltip {
-  background: none !important;
-  border: none !important;
-  padding: 0 !important;
-  line-height: 1 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
 .btn-info-tooltip:focus,
 .btn-info-tooltip:focus-visible,
 .btn-info-tooltip:hover,
-.btn-info-tooltip:active {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
+.btn-info-tooltip:active{
+  background:none !important;
+  border:none !important;
+  box-shadow:none !important;
+  outline:none !important;
 }
+
+
