@@ -51,10 +51,10 @@
 
 /* ============== FNP THEME (global) ============== */
 :root{
-  --bs-body-bg:#dde4ed;
-  --bs-border-color:#dee2e6;
-  --fnp-blue:#194685;
-  --fnp-yellow:#efae17;
+  --bs-body-bg:#dde4ed !important;
+  --bs-border-color:#dee2e6 !important;
+  --fnp-blue:#194685 !important;
+  --fnp-yellow:#efae17 !important;
   --card-radius:8px;
 }
 

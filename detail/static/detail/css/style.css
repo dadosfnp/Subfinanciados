@@ -133,3 +133,9 @@ body { font-family: 'Inter', sans-serif; }
 @media (max-width: 768px){
   .metric-card .chart-slot{ height: 220px; }
 }
+
+/* Cores específicas para o KPI da diferença da média */
+.summary-card .value#kpi-diferenca-media.neg { color: #dc2626 !important; }  /* vermelho */
+.summary-card .value#kpi-diferenca-media.pos { color: #16a34a !important; }  /* verde */
+.summary-card .value#kpi-diferenca-media.neu { color: #111827 !important; }  /* neutro */
+
