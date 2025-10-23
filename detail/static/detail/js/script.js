@@ -152,13 +152,35 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   async function updateKPIs(){
     try{
-      const r=await fetch(`/api/dados-detalhados/?${buildParams()}`); const d=await r.json();
-      document.getElementById('kpi-populacao').textContent=(d.kpis?.populacao||0).toLocaleString('pt-BR');
-      document.getElementById('kpi-quantidade').textContent=(d.kpis?.quantidade||0).toLocaleString('pt-BR');
-      document.getElementById('kpi-receita-per-capita').textContent=(d.kpis?.receita_per_capita||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-      document.getElementById('kpi-diferenca-media').textContent=(d.kpis?.diferenca_media||0).toLocaleString('pt-BR',{style:'percent',minimumFractionDigits:2});
-    }catch(e){ console.error('[kpis] erro',e); }
+      const r = await fetch(`/api/dados-detalhados/?${buildParams()}`);
+      const d = await r.json();
+
+      // KPI: População
+      document.getElementById('kpi-populacao').textContent =
+        (d.kpis?.populacao || 0).toLocaleString('pt-BR');
+
+      // KPI: Quantidade de Municípios
+      document.getElementById('kpi-quantidade').textContent =
+        (d.kpis?.quantidade || 0).toLocaleString('pt-BR');
+
+      // KPI: Receita per capita
+      document.getElementById('kpi-receita-per-capita').textContent =
+        (d.kpis?.receita_per_capita || 0)
+          .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      // KPI: Diferença da média nacional
+      const diff = Number(d.kpis?.diferenca_media ?? 0); // valor real (ex.: -0.1871)
+      const elDiff = document.getElementById('kpi-diferenca-media');
+      elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
+
+      // 👉 Chama o helper para aplicar a cor
+      colorizeDiffKpi(diff);
+
+    } catch(e) {
+      console.error('[kpis] erro', e);
+    }
   }
+
   async function updateFiscalDetails(){
     try{
       const resp=await fetch(`/api/fiscal-details/?${buildParams()}`);
@@ -475,3 +497,11 @@ document.addEventListener('DOMContentLoaded', function () {
   applyFilters();
   buildHeadingIndex(document);
 });
+
+// Helper para colorir o KPI da diferença
+function colorizeDiffKpi(value){
+  const el = document.getElementById('kpi-diferenca-media');
+  if(!el) return;
+  el.classList.remove('neg','pos','neu');
+  el.classList.add(value < 0 ? 'neg' : value > 0 ? 'pos' : 'neu');
+}
