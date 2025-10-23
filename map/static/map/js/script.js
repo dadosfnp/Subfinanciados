@@ -237,18 +237,32 @@ map.on("click", "populacao-circulos", (e) => {
   const coordinates = e.features[0].geometry.coordinates.slice();
   if (!properties.cod_ibge) return;
 
+  // ---- Percentil: cor no trecho em negrito (verde/ vermelho) ----
   let percentil_texto = '';
   if (properties.percentil_n != null) {
-    const percentil_n = Math.round(properties.percentil_n);
-    percentil_texto = properties.percentil_n > 50
-      ? `<p class="mt-3 fst-italic small">Este município tem receita per capita <b>superior a ${percentil_n}%</b> dos municípios do país.</p>`
-      : `<p class="mt-3 fst-italic small">Este município tem receita per capita <b>inferior a ${100 - percentil_n}%</b> dos municípios do país.</p>`;
+    const p = Number(properties.percentil_n);
+    const arred = Math.round(p);
+
+    const isSuperior = p > 50;
+    const palavra    = isSuperior ? 'superior a' : 'inferior a';
+    const percentual = isSuperior ? arred : (100 - arred);
+
+    // cores (inline para garantir prioridade, sem depender do CSS)
+    const cor = isSuperior ? '#16a34a' /* verde */ : '#dc2626' /* vermelho */;
+
+    percentil_texto = `
+      <p class="mt-3 fst-italic small">
+        Este município tem receita per capita
+        <strong style="color:${cor}">${palavra} ${percentual}%</strong>
+        dos municípios do país.
+      </p>`;
   }
 
+  // ---- Texto do quintil/decil dinâmico ----
   let dynamicQuantileText = 'N/D';
   if (properties.dynamic_quantile !== null && properties.dynamic_quantile !== undefined) {
-    if (filtroClassificacao.value === 'quintil') dynamicQuantileText = `${properties.dynamic_quantile}º quintil`;
-    else if (filtroClassificacao.value === 'decil') dynamicQuantileText = `${properties.dynamic_quantile}º decil`;
+    if (filtroClassificacao.value === 'quintil')      dynamicQuantileText = `${properties.dynamic_quantile}º quintil`;
+    else if (filtroClassificacao.value === 'decil')   dynamicQuantileText = `${properties.dynamic_quantile}º decil`;
   }
 
   const html = `
@@ -267,6 +281,7 @@ map.on("click", "populacao-circulos", (e) => {
   `;
   new mapboxgl.Popup({ minWidth:'400px', maxWidth:'500px' }).setLngLat(coordinates).setHTML(html).addTo(map);
 });
+
 
 // ===================== Zoom helpers =====================
 function getGeoJSONBounds(geojson) {
