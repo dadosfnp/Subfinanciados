@@ -147,7 +147,7 @@ def municipio_detalhe_view(request, municipio_id):
     # Prepara os dados do gráfico usando a função auxiliar e os valores PER CAPITA (_pc)
     chart_data = {
         "main_categories": get_chart_series(
-            ["ITC", "Contribuições", "Transf. Correntes", "Outras"],
+            ["Impostos, Taxas e Contribuições de Melhoria", "Contribuições", "Transf. Correntes", "Outras"],
             [cd.imposto_taxas_contribuicoes_pc, cd.contribuicoes_pc, cd.transferencias_correntes_pc, cd.outras_receita_pc]
         ),
         "imposto_taxas_contribuicoes": get_chart_series(
@@ -617,7 +617,7 @@ def conjunto_detalhe_view(request):
     # ------- CHART DATA EXACTO (valores absolutos) -------
     chart_data = {
         "main_categories": {
-            "labels": ["ITC", "Contribuições", "Transf. Correntes", "Outras"],
+            "labels": ["Impostos, Taxas e Contribuições", "Contribuições", "Transf. Correntes", "Outras"],
             "values": [
                 v('total_imposto_taxas_contribuicoes'),
                 v('total_contribuicoes'),
@@ -1083,7 +1083,7 @@ def conjunto_chart_api(request):
 
     chart_data = {
         "main_categories": {
-            "labels": ["ITC", "Contribuições", "Transf. Correntes", "Outras"],
+            "labels": ["Impostos, Taxas e Contribuições", "Contribuições", "Transf. Correntes", "Outras"],
             "values": [
                 v('total_imposto_taxas_contribuicoes'),
                 v('total_contribuicoes'),
