@@ -10,22 +10,59 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 0;
 }
-/* Logo */
-.logo-fnp { max-height: 60px; height: auto; width: auto; margin-right: 12px; }
-/* Menu centralizado */
-.page-header .nav { display: flex; justify-content: center; gap: 2rem; flex: 1; }
-/* Links do menu */
-.page-header .nav-link { color: #333; font-weight: 500; padding: 6px 12px; transition: all 0.3s ease; }
-/* Hover */
-.page-header .nav-link:hover { background-color: rgba(25, 70, 133, 0.85); color: #fff !important; border-radius: 5px; }
-/* Link ativo */
-.page-header .nav-link.active { background-color: #194685; color: #fff !important; border-radius: 5px; }
-/* Responsividade */
-@media (max-width: 768px) {
-  .page-header header { flex-direction: column; gap: .5rem; }
-  .page-header .nav { gap: 1rem; }
-  .logo-fnp { max-height: 50px; }
+/* ===== Logos ===== */
+/* FNP: volta ao comportamento original (auto) e limite de altura maior */
+.page-header .logo-fnp{
+  height: auto;
+  width: auto;
+  max-height: 60px;   /* era assim antes — mantém o “tamanho certo” */
+  margin-right: 12px;
 }
+
+/* IFEM: acompanha a FNP, mas SEM forçar largura */
+.page-header .logo-ifem {
+  height: 84px;      
+  width: auto;
+  margin-right: 12px;
+  object-fit: contain;
+  display: inline-block; /* garante que não colapse */
+}
+
+/* ===== Menu (restaura tipografia e cores) ===== */
+.page-header .nav { display:flex; justify-content:center; gap:2rem; flex:1; }
+
+/* texto normal: cinza escuro; peso 600 (como antes) */
+.page-header .nav-link{
+  color:#333;               /* volta do cinza escuro */
+  font-weight:600;          /* reforça a tipografia que “sumiu” */
+  padding:6px 12px;
+  border-radius:6px;
+  transition:all .2s ease;
+}
+
+/* hover: fundo levemente azulado e texto no azul do tema */
+.page-header .nav-link:hover{
+  background-color:rgba(25,70,133,.12);
+  color:#194685 !important; /* azul correto do tema */
+}
+
+/* ativo: pílula azul do tema com texto branco */
+.page-header .nav-link.active{
+  background-color:#194685; /* azul correto */
+  color:#fff !important;
+}
+
+/* ===== Mobile ===== */
+@media (max-width:768px){
+  .page-header header{ flex-direction:column; gap:.5rem; }
+  .page-header .nav{ gap:1rem; }
+  .page-header .logo-fnp,
+  .page-header .logo-ifem{
+    max-height:50px;        /* menor para telas estreitas */
+  }
+}
+
+
 
 /* Estilo de botão da marca: só quando for explicitamente .btn-fnp ou .btn-primary */
 .btn-fnp,

@@ -25,40 +25,48 @@
 <body>
 
 <div class="page-header">
-    <div class="container">
-        <header>
-            <!-- Logo à esquerda -->
-            <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
-                <img src="{% static 'global/images/logo-FNP.png' %}" alt="Logo FNP" class="logo-fnp">
+  <div class="container">
+    <header class="d-flex align-items-center justify-content-between">
+
+      <!--  Marca à ESQUERDA -->
+      <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
+        <img src="{% static 'global/images/ifem-marca-03.svg' %}" alt="Marca IFEM" class="logo-ifem">
+      </a>
+
+      <!-- Menu CENTRALIZADO -->
+      {% with p=request.path %}
+      <nav class="flex-grow-1 d-flex justify-content-center">
+        <ul class="nav">
+          <li>
+            <a href="/" class="nav-link {% if p == '/' %}active{% endif %}">
+              Análise Gráfica
             </a>
+          </li>
 
-           <!-- Menu centralizado -->
-            {% with p=request.path %}
-            <ul class="nav">
-            <li>
-                <a href="/" class="nav-link {% if p == '/' %}active{% endif %}">
-                Análise Gráfica
-                </a>
-            </li>
+          <li>
+            <a href="/mapa" class="nav-link {% if p == '/mapa' or '/municipio/' in p %}active{% endif %}">
+              Análise Municipal
+            </a>
+          </li>
 
-            <li>
-                <a href="/mapa" class="nav-link {% if p == '/mapa' %}active{% endif %}">
-                Visualização no Mapa
-                </a>
-            </li>
+          <li>
+            <a href="/analise-municipal" class="nav-link {% if p == '/analise-municipal' or p == '/analise-municipal/' %}active{% endif %}">
+              Análise Agregada
+            </a>
+          </li>
+        </ul>
+      </nav>
+      {% endwith %}
 
-            <li>
-                <a href="/analise-municipal"
-                class="nav-link {% if p == '/analise-municipal/' or '/municipio/' in p %}active{% endif %}">
-                Análise Municipal
-                </a>
-            </li>
-            </ul>
-            {% endwith %}
+      <!-- Logo FNP à DIREITA (abre site oficial) -->
+      <a href="https://fnp.org.br/" target="_blank" rel="noopener" class="d-flex align-items-center text-dark text-decoration-none">
+        <img src="{% static 'global/images/logo-FNP.png' %}" alt="Logo FNP" class="logo-fnp">
+      </a>
 
-        </header>
-    </div>
+    </header>
+  </div>
 </div>
+
 
 {% block content %}{% endblock content %}
 

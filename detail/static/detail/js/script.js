@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Mapa de cliques das barras principais -> chave do select
   const MAIN_CLICK_TO_KEY = {
-    'ITC': 'imposto_taxas_contribuicoes',
+    'imposto_taxas_contribuicoes': 'imposto_taxas_contribuicoes',
     'Contribuições': 'contribuicoes',
     'Transf. Correntes': 'transferencias_correntes',
     'Outras': 'outras_receitas'
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Cores fixas p/ categorias principais (barras)
   const COLOR_BY_LABEL = {
-    'ITC': '#1f77b4',
+    'Impostos, Taxas e Contribuições': '#1f77b4',
     'Contribuições': '#ff7f0e',
     'Transf. Correntes': '#2ca02c',
     'Outras': '#d62728'
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Caminhos para abrir linhas na árvore
   const PATH_HINTS = {
     main_categories: {
-      'ITC':               ['Impostos, Taxas e Contribuições de Melhoria'],
+      'imposto_taxas_contribuicoes':               ['Impostos, Taxas e Contribuições de Melhoria'],
       'Contribuições':     ['Contribuições'],
       'Transf. Correntes': ['Transferências Correntes'],
       'Outras':            ['Outras Receitas Correntes'],
