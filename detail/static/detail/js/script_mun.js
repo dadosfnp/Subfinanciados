@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // rótulos “bonitos” para o SELECT 
   const labelOf = (k) => ({
     main_categories: 'Categorias Principais',
-    imposto_taxas_contribuicoes: 'Impostos, Taxas e Contribuições de Melhoria',
+    imposto_taxas_contribuicoes: 'Impostos, Taxas e Contribuições',
     imposto: 'Impostos',
     taxas: 'Taxas',
     contribuicoes_melhoria: 'Contribuições de Melhoria',
@@ -291,114 +291,296 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
 
+  // --- helper para notificar o gráfico de densidade sem trocar o <select> 
+  function notifyDensityKey(key){
+    const sel = document.getElementById('chart-category-select');
+    if (!sel || !key) return;
+    sel.dispatchEvent(new CustomEvent('composition-category-changed', {
+      bubbles: true,
+      detail: { key }
+    }));
+  }
+
+  // --- normalizador simples para chaves (fallback snake_case) ---
+  function toSnakeKey(str){
+    return String(str || '')
+      .normalize('NFD').replace(/\p{Diacritic}/gu,'')
+      .replace(/R\$\s?[\d\.,]+/g,' ')
+      .replace(/[\d\.,]+/g,' ')
+      .trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'');
+  }
+
+  
+
+  // --- resolver tolerante: tenta match exato, depois fuzzy, depois snake_case ---
+  function resolveDensityChildKey(groupKey, clickedLabel){
+    const n = normalize(clickedLabel);
+    const table = DENSITY_CHILD_KEYS[groupKey];
+    if (!table) return null;
+
+    // 1) exato
+    if (table.has(n)) return table.get(n);
+
+    // 2) fuzzy "contém"
+    for (const [k,v] of table.entries()){
+      if (n.includes(k) || k.includes(n)) return v;
+    }
+
+    // 3) fallback: gera snake_case do label
+    return toSnakeKey(clickedLabel);
+  }
+
+
   let chart = null;
+
+    // Texto normalizado (categorias principais -> chave interna)
+const MAIN_CLICK_TO_KEY = new Map([
+  [normalize('Impostos, Taxas e Contribuições'), 'imposto_taxas_contribuicoes'],
+  [normalize('Contribuições'),                   'contribuicoes'],
+  [normalize('Transf. Correntes'),               'transferencias_correntes'],
+  [normalize('Outras'),                          'outras_receitas'],
+]);
+
+// ===== Helpers para densidade por filho =====
+function notifyDensityKey(key){
+  const sel = document.getElementById('chart-category-select');
+  if (!sel || !key) return;
+  sel.dispatchEvent(new CustomEvent('composition-category-changed', {
+    bubbles: true,
+    detail: { key }
+  }));
+}
+function toSnakeKey(str){
+  return String(str||'')
+    .normalize('NFD').replace(/\p{Diacritic}/gu,'')
+    .replace(/R\$\s?[\d\.,]+/g,' ')
+    .replace(/[\d\.,]+/g,' ')
+    .trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+}
+
+// “Outros” por grupo (bate com #mun-data)
+const OUTROS_KEY_BY_GROUP = {
+  imposto: 'outros_impostos',
+  taxas: 'outras_taxas',
+  contribuicoes_melhoria: 'outras_contribuicoes_melhoria',
+  transferencias_uniao: 'outras_transferencias_uniao',
+  transferencias_estado: 'outras_transferencias_estado',
+  outras_receitas: 'outras_receitas_outras',
+};
+
+// Mapa rótulo->campo (#mun-data) para TODOS os filhos (pelos labels do seu print)
+const DENSITY_CHILD_KEYS = {
+  // IMPOSTOS
+  imposto: new Map([
+    [normalize('Imposto sobre Serviços'), 'iss'],
+    [normalize("Imposto sobre a Transmissão 'Inter Vivos'"), 'itbi'],
+    [normalize('Imposto sobre a Propriedade Predial e Territorial Urbana'), 'iptu'],
+    [normalize('Outros Impostos'), 'outros_impostos'],
+    [normalize('Outros'), 'outros_impostos'],
+  ]),
+  // TAXAS
+  taxas: new Map([
+    [normalize('Taxas pelo Exercício do Poder de Polícia'), 'taxa_policia'],
+    [normalize('Taxas pela Prestação de Serviços'),         'taxa_prestacao_servico'],
+    [normalize('Outras Taxas'),                             'outras_taxas'],
+    [normalize('Outros'),                                   'outras_taxas'],
+  ]),
+  // CONTRIBUIÇÕES DE MELHORIA
+  contribuicoes_melhoria: new Map([
+    [normalize('Contribuição de Melhoria para Pavimentação e Obras'), 'contribuicao_melhoria_pavimento_obras'],
+    [normalize('Contribuição de Melhoria para Rede de Água e Esgoto'), 'contribuicao_melhoria_agua_potavel'],
+    [normalize('Contribuição de Melhoria para Iluminação Pública'),     'contribuicao_melhoria_iluminacao_publica'],
+    [normalize('Outras Contribuições de Melhoria'),                      'outras_contribuicoes_melhoria'],
+    [normalize('Outros'),                                                'outras_contribuicoes_melhoria'],
+  ]),
+  // CONTRIBUIÇÕES
+  contribuicoes: new Map([
+    [normalize('Custeio do Serviço de Iluminação Pública'), 'contribuicoes_sociais'],
+    [normalize('Outras Contribuições'),                     'outras_contribuicoes'],
+    [normalize('Outros'),                                   'outras_contribuicoes'],
+  ]),
+  // TRANSF. UNIÃO (todos os filhos existentes no #mun-data)
+  transferencias_uniao: new Map([
+    [normalize('Cota-Parte do FPM'),                                   'transferencias_uniao_fpm'],
+    [normalize('Compensação Financeira (Recursos Naturais)'),          'transferencias_uniao_exploracao'],
+    [normalize('Recursos do SUS'),                                     'transferencias_uniao_sus'],
+    [normalize('Recursos do FNDE'),                                    'transferencias_uniao_fnde'],
+    [normalize('Recursos do FNAS'),                                    'transferencias_uniao_fnas'],
+    [normalize('Recursos do Fundo Especial'),                           'transferencias_uniao_fundo'],   // <== novo
+    [normalize('Outras Transferências da União'),                       'outras_transferencias_uniao'],
+    [normalize('Outras'),                                               'outras_transferencias_uniao'],
+  ]),
+
+  // TRANSF. ESTADOS (todos os filhos existentes no #mun-data)
+  transferencias_estado: new Map([
+    [normalize('Cota-Parte do ICMS'),                                   'transferencias_estado_icms'],
+    [normalize('Cota-Parte do IPVA'),                                   'transferencias_estado_ipva'],
+    [normalize('Recursos do SUS'),                                      'transferencias_estado_sus'],
+    [normalize('Assistência Social'),                                   'transferencias_estado_assistencia'], // <== novo
+    [normalize('Compensação Financeira (Recursos Naturais)'),           'transferencias_estado_exploracao'],  // <== novo
+    [normalize('Outras Transferências dos Estados'),                    'outras_transferencias_estado'],
+    [normalize('Outras'),                                               'outras_transferencias_estado'],
+  ]),
+
+  // OUTRAS RECEITAS
+  outras_receitas: new Map([
+    [normalize('Receita Patrimonial'),  'receita_patrimonial'],
+    [normalize('Receita Agropecuária'), 'receita_agropecuaria'],
+    [normalize('Receita Industrial'),   'receita_industrial'],
+    [normalize('Receita de Serviços'),  'receita_servicos'],
+    [normalize('Outras Receitas'),      'outras_receitas_outras'],
+    [normalize('Outras'),               'outras_receitas_outras'],
+  ]),
+};
+
+// Resolver: exato → fuzzy → “Outros” por grupo → fallback snake_case
+function resolveDensityChildKey(groupKey, clickedLabel){
+  const n = normalize(clickedLabel);
+  const table = DENSITY_CHILD_KEYS[groupKey];
+
+  if (table?.has(n)) return table.get(n);
+
+  if (table){
+    for (const [k,v] of table.entries()){
+      if (n.includes(k) || k.includes(n)) return v;
+    }
+  }
+
+  if (n.includes('outro')) return OUTROS_KEY_BY_GROUP[groupKey] || toSnakeKey(clickedLabel);
+
+  return toSnakeKey(clickedLabel);
+}
 
 // guarda a categoria atual para evitar renders desnecessários
 let currentKey = 'main_categories';
 
-  function setCategoryAndSync(key){
-    if (!selectEl) return;
-    if (currentKey === key) {
-      // ainda assim notifica densidade (pode vir de clique)
-      selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
+function setCategoryAndSync(key){
+  if (!selectEl) return;
+  if (currentKey === key) {
+    // ainda assim notifica densidade (pode vir de clique)
+    selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
+    return;
+  }
+  currentKey = key;
+
+  buildSelectFor(key);            // reconstrói a lista conforme Pai/Filhos
+  selectEl.value = key;
+  renderChart(key);               // composição
+
+  // avisa a densidade sem disparar 'change'
+  selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
+}
+
+// select → usuário trocou manualmente
+if (selectEl){
+  selectEl.addEventListener('change', () => setCategoryAndSync(selectEl.value));
+}
+
+function renderChart(key){
+  const d = allRevenueChartData?.[key];
+  if (!d){ warn('chave não encontrada no chart-data:', key); return; }
+  if (!Array.isArray(d.labels) || !Array.isArray(d.values)){ warn('estrutura inesperada:', d); return; }
+
+  const total = d.values.reduce((a,b)=>a+b,0);
+  const perc  = d.values.map(v=> total ? (v/total)*100 : 0);
+
+  const labels = d.labels.slice();
+  const background = labels.map((lbl,i)=> COLOR_BY_LABEL[lbl] || palette[i%palette.length]);
+
+  const dataset = {
+    label: labelOf(key).toUpperCase(),
+    data: perc,
+    backgroundColor: background,
+    borderWidth: 1,
+  };
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets: [dataset] },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      scales:{ x:{ min:0, max:100, ticks:{ callback:v=>v+'%'} }, y:{ ticks:{ autoSkip:false } } },
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+        label:(ct)=>{
+          const i = ct.dataIndex;
+          const raw = d.values[i];
+          const pct = ct.parsed.x || 0;
+          return `${labels[i]}: ${pct.toFixed(1)}% (${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(raw)})`;
+        },
+        footer:()=>`Total: ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(total)}`
+      } } }
+    }
+  });
+
+  // clique → muda chave / abre árvore / dispara densidade
+  canvas.onclick = (evt) => {
+    const pts = chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
+    if (!pts.length) return;
+    const idx = pts[0].index;
+    const clickedLabel = labels[idx];
+    const n = normalize(clickedLabel);
+
+    // 1) Categorias Principais → descer 1 nível (tolerante a renomes)
+    if (key === 'main_categories') {
+      const dynMap = new Map();
+      for (const lbl of labels) {
+        const nl = normalize(lbl);
+        if (nl.includes('transf')) { dynMap.set(nl,'transferencias_correntes'); continue; }
+        if (nl === 'outras' || nl.includes('outras receitas')) { dynMap.set(nl,'outras_receitas'); continue; }
+        if (nl.includes('imposto') || nl.includes('taxa') || nl.includes('melhoria')) { dynMap.set(nl,'imposto_taxas_contribuicoes'); continue; }
+        if (nl.startsWith('contribu')) { dynMap.set(nl,'contribuicoes'); continue; }
+      }
+      const nxt = dynMap.get(n);
+      if (nxt) setCategoryAndSync(nxt);
       return;
     }
-    currentKey = key;
 
-    buildSelectFor(key);            // reconstrói a lista conforme Pai/Filhos
-    selectEl.value = key;
-    renderChart(key);               // composição
+    // 2) ITC → filhos maiores
+    if (key === 'imposto_taxas_contribuicoes') {
+      if (n.includes('imposto'))  { setCategoryAndSync('imposto'); return; }
+      if (n.includes('taxa'))     { setCategoryAndSync('taxas'); return; }
+      if (n.includes('melhoria')) { setCategoryAndSync('contribuicoes_melhoria'); return; }
+      openByLabel(clickedLabel); return;
+    }
 
-    // avisa a densidade sem disparar 'change'
-    selectEl.dispatchEvent(new CustomEvent('composition-category-changed', { bubbles:true, detail:{ key } }));
-  }
+    // 3) Transferências Correntes → União/Estados
+    if (key === 'transferencias_correntes') {
+      if (n.includes('uniao'))  { setCategoryAndSync('transferencias_uniao');  return; }
+      if (n.includes('estado')) { setCategoryAndSync('transferencias_estado'); return; }
+      openByLabel(clickedLabel); return;
+    }
 
-  // select → usuário trocou manualmente
-  if (selectEl){
-    selectEl.addEventListener('change', () => setCategoryAndSync(selectEl.value));
-  }
-
-  function renderChart(key){
-    const d = allRevenueChartData?.[key];
-    if (!d){ warn('chave não encontrada no chart-data:', key); return; }
-    if (!Array.isArray(d.labels) || !Array.isArray(d.values)){ warn('estrutura inesperada:', d); return; }
-
-    const total = d.values.reduce((a,b)=>a+b,0);
-    const perc  = d.values.map(v=> total ? (v/total)*100 : 0);
-
-    const labels = d.labels.slice();
-    const background = labels.map((lbl,i)=> COLOR_BY_LABEL[lbl] || palette[i%palette.length]);
-
-    const dataset = {
-      label: labelOf(key).toUpperCase(),
-      data: perc,
-      backgroundColor: background,
-      borderWidth: 1,
-    };
-
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-      type:'bar',
-      data:{ labels, datasets: [dataset] },
-      options:{
-        responsive:true, maintainAspectRatio:false, indexAxis:'y',
-        scales:{
-          x:{ min:0, max:100, ticks:{ callback:v=>v+'%'} },
-          y:{ ticks:{ autoSkip:false } }
-        },
-        plugins:{
-          legend:{ display:false },
-          tooltip:{ callbacks:{
-            label:(ct)=>{
-              const i = ct.dataIndex;
-              const raw = d.values[i];
-              const pct = ct.parsed.x || 0;
-              return `${labels[i]}: ${pct.toFixed(1)}% (${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(raw)})`;
-            },
-            footer:()=>`Total: ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(total)}`
-          }}
-        }
-      }
-    });
-
-    // clique → muda chave e também reconfigura o select (pai/filhos)
-    canvas.onclick = (evt) => {
-      const pts = chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
-      if (!pts.length) return;
-      const idx = pts[0].index;
-      const clickedLabel = labels[idx];
-      const n = normalize(clickedLabel);
-
-      if (key === 'main_categories') {
-        if (n === 'imposto_taxas_contribuicoes') { setCategoryAndSync('imposto_taxas_contribuicoes'); return; }
-        if (n.includes('contribuicoes') && !n.includes('melhoria')) { setCategoryAndSync('contribuicoes'); return; }
-        if (n.includes('transf')) { setCategoryAndSync('transferencias_correntes'); return; }
-        if (n === 'outras') { setCategoryAndSync('outras_receitas'); return; }
-        return;
-      }
-
-      if (key === 'imposto_taxas_contribuicoes') {
-        if (n.includes('imposto'))  { setCategoryAndSync('imposto'); return; }
-        if (n.includes('taxa'))     { setCategoryAndSync('taxas'); return; }
-        if (n.includes('melhoria')) { setCategoryAndSync('contribuicoes_melhoria'); return; }
-        openByLabel(clickedLabel); return;
-      }
-
-      if (key === 'transferencias_correntes') {
-        if (n.includes('uniao'))  { setCategoryAndSync('transferencias_uniao');  return; }
-        if (n.includes('estado')) { setCategoryAndSync('transferencias_estado'); return; }
-        openByLabel(clickedLabel); return;
-      }
-
-      // demais: atalho → abre na árvore
+    // 3.1) Filhos: Impostos / Taxas / Contribuições de Melhoria
+    if (key === 'imposto' || key === 'taxas' || key === 'contribuicoes_melhoria') {
       openByLabel(clickedLabel);
-    };
-  }
+      notifyDensityKey(resolveDensityChildKey(key, clickedLabel));
+      return;
+    }
 
-  // select → troca chave (e reconstrói a lista)
-  if (selectEl){
-    selectEl.addEventListener('change', ()=> setCategoryAndSync(selectEl.value));
-  }
+    // 3.2) Filhos: Transferências da União / dos Estados
+    if (key === 'transferencias_uniao' || key === 'transferencias_estado') {
+      openByLabel(clickedLabel);
+      notifyDensityKey(resolveDensityChildKey(key, clickedLabel));
+      return;
+    }
+
+    // 3.3) Filhos: Outras Receitas
+    if (key === 'outras_receitas') {
+      openByLabel(clickedLabel);
+      notifyDensityKey(resolveDensityChildKey(key, clickedLabel));
+      return;
+    }
+
+    // 4) Demais → abre na árvore
+    openByLabel(clickedLabel);
+  };
+}
+
 
   // -------- Inicializações --------
   buildHeadingIndex();

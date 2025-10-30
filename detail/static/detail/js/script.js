@@ -83,7 +83,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function initializeToggleListeners(scope=document){
     const els = scope.querySelectorAll('.toggle-heading, .toggle-subheading');
-    els.forEach(el=>{ el.removeEventListener('click',handleToggleClick); el.addEventListener('click',handleToggleClick); });
+    els.forEach(el=>{
+      el.removeEventListener('click',handleToggleClick);
+      el.addEventListener('click',handleToggleClick);
+    });
   }
   const parseCurrencyValue = (str) => !str ? 0 : parseFloat(String(str).replace('R$','').replace(/\./g,'').replace(',','.').trim());
   function sortChildrenByValue(container,isPC){
@@ -110,7 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const filtroRm     = document.getElementById('filtro-rm');
 
   let initialChartData=null;
-  try{ initialChartData = parsePossiblyMultiSerialized(dataEl.textContent); }catch(e){ console.error('[chart] Falha JSON inicial',e); return; }
+  try{
+    initialChartData = parsePossiblyMultiSerialized(dataEl.textContent);
+  }catch(e){
+    console.error('[chart] Falha JSON inicial',e); return;
+  }
 
   // =============== Toggle PC/Real ===============
   let isShowingPerCapita = true;
@@ -137,9 +144,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const resp=await fetch('/api/get-dependent-filters/?regiao=todos&uf=todos&rm=todos');
       if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data=await resp.json();
-      filtroRegiao.innerHTML='<option value="todos">Todas</option>'; (data.regioes||[]).forEach(x=>filtroRegiao.add(new Option(x,x))); restoreSelectValue(filtroRegiao,r);
-      filtroRm.innerHTML   ='<option value="todos">Todos</option>';   (data.rms||[]).forEach(x=>filtroRm.add(new Option(x,x)));        restoreSelectValue(filtroRm,m);
-      filtroUf.innerHTML   ='<option value="todos">Todas</option>';   (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        restoreSelectValue(filtroUf,u);
+      filtroRegiao.innerHTML='<option value="todos">Todas</option>';
+      (data.regioes||[]).forEach(x=>filtroRegiao.add(new Option(x,x))); restoreSelectValue(filtroRegiao,r);
+      filtroRm.innerHTML   ='<option value="todos">Todos</option>';
+      (data.rms||[]).forEach(x=>filtroRm.add(new Option(x,x)));        restoreSelectValue(filtroRm,m);
+      filtroUf.innerHTML   ='<option value="todos">Todas</option>';
+      (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        restoreSelectValue(filtroUf,u);
     }catch(e){ console.error('[filtros] erro',e); }
   }
   const buildParams = () => {
@@ -155,27 +165,20 @@ document.addEventListener('DOMContentLoaded', function () {
       const r = await fetch(`/api/dados-detalhados/?${buildParams()}`);
       const d = await r.json();
 
-      // KPI: População
       document.getElementById('kpi-populacao').textContent =
         (d.kpis?.populacao || 0).toLocaleString('pt-BR');
 
-      // KPI: Quantidade de Municípios
       document.getElementById('kpi-quantidade').textContent =
         (d.kpis?.quantidade || 0).toLocaleString('pt-BR');
 
-      // KPI: Receita per capita
       document.getElementById('kpi-receita-per-capita').textContent =
         (d.kpis?.receita_per_capita || 0)
           .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-      // KPI: Diferença da média nacional
-      const diff = Number(d.kpis?.diferenca_media ?? 0); // valor real (ex.: -0.1871)
+      const diff = Number(d.kpis?.diferenca_media ?? 0);
       const elDiff = document.getElementById('kpi-diferenca-media');
       elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
-
-      // 👉 Chama o helper para aplicar a cor
       colorizeDiffKpi(diff);
-
     } catch(e) {
       console.error('[kpis] erro', e);
     }
@@ -232,15 +235,31 @@ document.addEventListener('DOMContentLoaded', function () {
     outras_receitas: { parent: 'main_categories', children: [] }
   };
 
+  // ---- Notificações de densidade (apenas quando muda a CATEGORIA) ----
+  function notifyDensity(key){
+    if(!selectEl) return;
+    const ev = new CustomEvent('composition-category-changed', { detail:{ key } });
+    selectEl.dispatchEvent(ev);
+  }
+
+  // Troca categoria (por select ou clique) + renderiza + notifica densidade
+  function setCategory(key){
+    if(!selectEl) return;
+    rebuildSelectOptions(key);
+    renderChart(key, currentChartData);
+    // >>> Mantemos a densidade sincronizada SOMENTE quando a categoria muda
+    notifyDensity(key);
+  }
+
   // Mapa de cliques das barras principais -> chave do select
   const MAIN_CLICK_TO_KEY = {
-    'imposto_taxas_contribuicoes': 'imposto_taxas_contribuicoes',
+    'Impostos, Taxas e Contribuições': 'imposto_taxas_contribuicoes',
     'Contribuições': 'contribuicoes',
     'Transf. Correntes': 'transferencias_correntes',
     'Outras': 'outras_receitas'
   };
 
-  // Cores fixas p/ categorias principais (barras)
+  // Cores das barras
   const COLOR_BY_LABEL = {
     'Impostos, Taxas e Contribuições': '#1f77b4',
     'Contribuições': '#ff7f0e',
@@ -264,10 +283,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // Caminhos para abrir linhas na árvore
   const PATH_HINTS = {
     main_categories: {
-      'imposto_taxas_contribuicoes':               ['Impostos, Taxas e Contribuições de Melhoria'],
-      'Contribuições':     ['Contribuições'],
+      'imposto_taxas_contribuicoes': ['Impostos, Taxas e Contribuições de Melhoria'],
+      'Contribuições': ['Contribuições'],
       'Transf. Correntes': ['Transferências Correntes'],
-      'Outras':            ['Outras Receitas Correntes'],
+      'Outras': ['Outras Receitas Correntes'],
     },
     imposto: {
       'IPTU': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','IPTU'],
@@ -284,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'Pavimentação': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Pavimentação e Obras'],
       'Água/Esgoto':  ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Rede de Água e Esgoto'],
       'Iluminação':   ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Contribuição de Melhoria para Iluminação Pública'],
-      'Outras':       ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Outras Contribuições de Melhoria'],
+      'Outras': ['Impostos, Taxas e Contribuições de Melhoria','Contribuições de Melhoria','Outras Contribuições de Melhoria'],
     },
     contribuicoes: {
       'Sociais': ['Contribuições','Contribuições Sociais'],
@@ -348,24 +367,9 @@ document.addEventListener('DOMContentLoaded', function () {
     selectEl.value = currentKey;
   }
 
-  // Notifica densidade sem disparar 'change'
-  function notifyDensity(key){
-    if(!selectEl) return;
-    const ev = new CustomEvent('composition-category-changed', { detail:{ key } });
-    selectEl.dispatchEvent(ev);
-  }
-
-  // Troca categoria (por select ou clique) + renderiza + notifica densidade
-  function setCategory(key){
-    if(!selectEl) return;
-    rebuildSelectOptions(key);
-    renderChart(key, currentChartData);
-    notifyDensity(key);
-  }
-
-  // Clique nas barras das categorias principais → chave do select
-  function nextKeyFromMainBar(label){
-    return MAIN_CLICK_TO_KEY[label] || null;
+  // Troca categoria (select)
+  if(selectEl){
+    selectEl.addEventListener('change', (e)=> setCategory(e.target.value));
   }
 
   function resolvePath(categoryKey, datasetLabel){
@@ -387,7 +391,6 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // prepara dados
     const raw = d.values.map(v=>Number(v)||0);
     const total = raw.reduce((a,b)=>a+b,0);
     const items = d.labels.map((label,i)=>({label, value:raw[i]})).filter(x=>x.value>0);
@@ -431,48 +434,42 @@ document.addEventListener('DOMContentLoaded', function () {
       const idx = pts[0].index;
       const clicked = labels[idx];
 
-      // 1) Categorias Principais → descer um nível
+      // 1) Categorias Principais → descer um nível (AQUI ainda sincroniza a densidade)
       if (categoryKey === 'main_categories') {
-        const nxt = nextKeyFromMainBar(clicked);
+        const nxt = MAIN_CLICK_TO_KEY[clicked] || null;
         if (nxt){ setCategory(nxt); }
         return;
       }
 
-      // 2) Grupo intermediário ITC → filhos
+      // 2) Grupo intermediário ITC → filhos (NÃO mexe densidade)
       if (categoryKey === 'imposto_taxas_contribuicoes') {
         const n = normalizeLabel(clicked);
-        if (n.includes('imposto'))  { setCategory('imposto'); return; }
-        if (n.includes('taxa'))     { setCategory('taxas'); return; }
-        if (n.includes('melhoria')) { setCategory('contribuicoes_melhoria'); return; }
-        // sem match, segue fallback
+        if (n.includes('imposto'))  { rebuildSelectOptions('imposto'); renderChart('imposto', currentChartData); return; }
+        if (n.includes('taxa'))     { rebuildSelectOptions('taxas'); renderChart('taxas', currentChartData); return; }
+        if (n.includes('melhoria')) { rebuildSelectOptions('contribuicoes_melhoria'); renderChart('contribuicoes_melhoria', currentChartData); return; }
       }
 
-      // 3) Transferências Correntes → União/Estados
+      // 3) Transferências Correntes → União/Estados (NÃO mexe densidade)
       if (categoryKey === 'transferencias_correntes') {
         const l = normalizeLabel(clicked);
-        if (l.includes('uniao'))  { setCategory('transferencias_uniao');  return; }
-        if (l.includes('estado')) { setCategory('transferencias_estado'); return; }
+        if (l.includes('uniao'))  { rebuildSelectOptions('transferencias_uniao');  renderChart('transferencias_uniao', currentChartData);  return; }
+        if (l.includes('estado')) { rebuildSelectOptions('transferencias_estado'); renderChart('transferencias_estado', currentChartData); return; }
         const pathTC = resolvePath(categoryKey, clicked);
         pathTC ? openByPath(pathTC) : openSectionByLabel(clicked);
         return;
       }
 
-      // 4) Demais: tenta abrir caminho conhecido, senão procura por rótulo
+      // 4) Filhos (qualquer categoria): apenas abre a árvore visual (NÃO notifica densidade)
       const path = resolvePath(categoryKey, clicked);
       path ? openByPath(path) : openSectionByLabel(clicked);
     };
-  }
-
-  if(selectEl){
-    // muda via select (sem disparar change extra)
-    selectEl.addEventListener('change', (e)=> setCategory(e.target.value));
   }
 
   // Render/Select inicial
   const initialKey = 'main_categories';
   rebuildSelectOptions(initialKey);
   renderChart(initialKey, initialChartData);
-  notifyDensity(initialKey);
+  notifyDensity(initialKey); // sincroniza densidade com a categoria inicial
 
   // =============== APLICAÇÃO / EVENTOS ===============
   async function applyFilters(){ await Promise.all([updateKPIs(), updateFiscalDetails(), updateChart()]); }
