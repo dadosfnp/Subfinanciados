@@ -46,7 +46,10 @@ function getJsonData(id) {
     const element = document.getElementById(id);
     if (element && element.textContent) {
         try { return JSON.parse(element.textContent); }
-        catch (e) { console.error(`Erro ao processar JSON do elemento #${id}:`, e); return null; }
+        catch (e) {
+            console.error(`Erro ao processar JSON do elemento #${id}:`, e);
+            return null;
+        }
     }
     return null;
 }
@@ -146,7 +149,15 @@ async function atualizarFiltros() {
     const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2023';
     const include2000Data = (selectedYearOption === '2000 e 2023');
 
-    const apiUrl = `/api/dashboard-data/?regiao=${selectedRegiao}&uf=${selectedUf}&rm=${selectedRm}&porte=${selectedPorte}&classification=${classificationFilter}&display_format=${displayFormat}&calculation_mode=${calculationMode}&include_2000_data=${include2000Data}`;
+    const apiUrl =
+        `/api/dashboard-data/?regiao=${selectedRegiao}` +
+        `&uf=${selectedUf}` +
+        `&rm=${selectedRm}` +
+        `&porte=${selectedPorte}` +
+        `&classification=${classificationFilter}` +
+        `&display_format=${displayFormat}` +
+        `&calculation_mode=${calculationMode}` +
+        `&include_2000_data=${include2000Data}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -159,16 +170,23 @@ async function atualizarFiltros() {
         // ==== Cards de resumo ====
         document.getElementById('summary-total-municipios').textContent =
             `${data.summaryCards.totalMunicipios.toLocaleString('pt-BR')} (${data.summaryCards.percTotalMunicipios.toFixed(1)}%)`;
+
         document.getElementById('summary-media-receita').textContent =
-            data.summaryCards.mediaReceitaPerCapita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            data.summaryCards.mediaReceitaPerCapita.toLocaleString(
+                'pt-BR',
+                { style: 'currency', currency: 'BRL' }
+            );
 
         const diffNational = data.summaryCards.diffMediaNacional; // valor em %
         const diffValueEl = document.getElementById('summary-diff-nacional');
         diffValueEl.textContent = `${diffNational.toFixed(1)}%`;
+
         const diffTrendElement = document.getElementById('summary-diff-nacional-trend');
-        diffTrendElement.textContent = diffNational > 0 ? 'Acima da média nacional' :
-            (diffNational < 0 ? 'Abaixo da média nacional' : 'Na média nacional');
-        diffTrendElement.className = `sub-value ${diffNational < 0 ? 'negative' : ''} ${diffNational > 0 ? 'positive' : ''}`;
+        diffTrendElement.textContent = diffNational > 0
+            ? 'Acima da média nacional'
+            : (diffNational < 0 ? 'Abaixo da média nacional' : 'Na média nacional');
+        diffTrendElement.className =
+            `sub-value ${diffNational < 0 ? 'negative' : ''} ${diffNational > 0 ? 'positive' : ''}`;
 
         // pinta o número conforme sinal
         applyDiffColor(diffNational);
@@ -179,14 +197,34 @@ async function atualizarFiltros() {
         populacaoQuintilChart.data.labels = data.chartData.labels;
         populacaoQuintilChart.data.datasets = [];
 
-        const colors = ['#194685', '#efae17']; // paleta da marca
+        // Paleta fixa por ano: 2000 = amarelo, 2023 = azul
+        const COLOR_2000 = '#efae17';
+        const COLOR_2023 = '#194685';
+
         if (data.chartData.datasets?.length > 0) {
-            data.chartData.datasets.forEach((dataset, index) => {
+
+            // (Opcional) Garante que 2000 venha antes de 2023 na legenda
+            if (data.chartData.datasets.length === 2) {
+                data.chartData.datasets.sort((a, b) => {
+                    if (a.label.includes('2000')) return -1;
+                    if (b.label.includes('2000')) return 1;
+                    return 0;
+                });
+            }
+
+            // Insere datasets com cor DEFINIDA PELO LABEL, não pelo índice
+            data.chartData.datasets.forEach((dataset) => {
+                let bgColor = COLOR_2023; // padrão = azul (2023)
+
+                if (dataset.label && dataset.label.toString().includes('2000')) {
+                    bgColor = COLOR_2000; // se for 2000 -> amarelo
+                }
+
                 populacaoQuintilChart.data.datasets.push({
                     label: dataset.label,
                     data: dataset.data,
-                    backgroundColor: dataset.data.map(() => colors[index % colors.length]),
-                    borderColor: dataset.data.map(() => colors[index % colors.length]),
+                    backgroundColor: dataset.data.map(() => bgColor),
+                    borderColor: dataset.data.map(() => bgColor),
                     borderWidth: 1,
                     fill: true,
                     barPercentage: 1,
@@ -195,17 +233,18 @@ async function atualizarFiltros() {
                     barThickness: 50
                 });
             });
-        } else {
-            console.warn("A API não retornou dados para o gráfico.");
-        }
 
-        populacaoQuintilChart.update();
+        } else {
+            console.warn('A API não retornou dados para o gráfico.');
+        }
 
         populacaoQuintilChart.options.scales.x.title.text = data.chartData.xAxisTitle;
         populacaoQuintilChart.options.scales.y.title.text = data.chartData.yAxisTitle;
 
         populacaoQuintilChart.options.scales.y.ticks.callback = function (value) {
-            return formatPorcentagemRadio.checked ? value.toFixed(0) + '%' : value.toLocaleString('pt-BR') + 'M';
+            return formatPorcentagemRadio.checked
+                ? value.toFixed(0) + '%'
+                : value.toLocaleString('pt-BR') + 'M';
         };
 
         populacaoQuintilChart.update();
@@ -225,8 +264,8 @@ async function atualizarFiltros() {
         enableSynchronizedHover('#table-2023', '#table-2000');
 
     } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
-        alert("Ocorreu um erro ao carregar os dados do dashboard. Por favor, tente novamente.");
+        console.error('Erro ao carregar dados do dashboard:', error);
+        alert('Ocorreu um erro ao carregar os dados do dashboard. Por favor, tente novamente.');
     }
 }
 
@@ -258,7 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     table2000Head = document.querySelector('#table-2000 thead');
     table2000Body = document.querySelector('#table-2000 tbody');
 
-    populacaoQuintilCtx = document.getElementById('populacaoQuintilChart').getContext('2d');
+    populacaoQuintilCtx = document
+        .getElementById('populacaoQuintilChart')
+        .getContext('2d');
+
     populacaoQuintilChart = new Chart(populacaoQuintilCtx, {
         type: 'bar',
         data: { labels: [], datasets: [] },
@@ -273,23 +315,30 @@ document.addEventListener('DOMContentLoaded', () => {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                if (formatPorcentagemRadio.checked) label += context.parsed.y.toFixed(1) + '%';
-                                else label += context.parsed.y.toLocaleString('pt-BR') + ' milhões';
+                                if (formatPorcentagemRadio.checked) {
+                                    label += context.parsed.y.toFixed(1) + '%';
+                                } else {
+                                    label += context.parsed.y.toLocaleString('pt-BR') + ' milhões';
+                                }
                             }
                             return label;
                         }
                     }
                 },
-                datalabels: { 
+                datalabels: {
                     anchor: 'end',
                     align: 'top',
-                    color: '#00000',
+                    color: '#000000',
                     font: { size: 12 },
                     formatter: function (value) {
-                        const isPercentage = document.getElementById('formatPorcentagem').checked;
+                        const isPercentage =
+                            document.getElementById('formatPorcentagem').checked;
                         return isPercentage
                             ? value.toFixed(1) + '%'
-                            : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
+                            : value.toLocaleString(
+                                  'pt-BR',
+                                  { minimumFractionDigits: 1, maximumFractionDigits: 1 }
+                              ) + 'M';
                     }
                 }
             },
@@ -299,7 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: { display: true, text: 'População (milhões)' },
                     ticks: {
                         callback: function (value) {
-                            return formatPorcentagemRadio.checked ? value.toFixed(0) + '%' : value.toLocaleString('pt-BR') + 'M';
+                            return formatPorcentagemRadio.checked
+                                ? value.toFixed(0) + '%'
+                                : value.toLocaleString('pt-BR') + 'M';
                         }
                     }
                 },
@@ -328,13 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
     calcModeFilteredRadio.addEventListener('change', atualizarFiltros);
 
     toggle2023.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+        document.querySelectorAll('.toggle-option')
+            .forEach(opt => opt.classList.remove('active'));
         toggle2023.classList.add('active');
         atualizarFiltros();
     });
 
     toggle2000e2023.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+        document.querySelectorAll('.toggle-option')
+            .forEach(opt => opt.classList.remove('active'));
         toggle2000e2023.classList.add('active');
         atualizarFiltros();
     });
@@ -349,7 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
         formatNumeroRadio.checked = true;
         calcModeTotalRadio.checked = true;
 
-        document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+        document.querySelectorAll('.toggle-option')
+            .forEach(opt => opt.classList.remove('active'));
         toggle2023.classList.add('active');
 
         // Repovoa com listas completas e atualiza a tela
@@ -376,8 +430,13 @@ function enableSynchronizedHover(tableId1, tableId2) {
                     const otherCell = otherRow.querySelectorAll('td')[colIndex];
                     if (!otherCell) return;
 
-                    if (tableIndex === 0) { otherCell.classList.add('highlight2'); cell.classList.add('highlight'); }
-                    else { otherCell.classList.add('highlight'); cell.classList.add('highlight2'); }
+                    if (tableIndex === 0) {
+                        otherCell.classList.add('highlight2');
+                        cell.classList.add('highlight');
+                    } else {
+                        otherCell.classList.add('highlight');
+                        cell.classList.add('highlight2');
+                    }
                 });
                 cell.addEventListener('mouseleave', () => {
                     const otherTable = tables[tableIndex === 0 ? 1 : 0];
@@ -386,8 +445,13 @@ function enableSynchronizedHover(tableId1, tableId2) {
                     const otherCell = otherRow.querySelectorAll('td')[colIndex];
                     if (!otherCell) return;
 
-                    if (tableIndex === 0) { otherCell.classList.remove('highlight2'); cell.classList.remove('highlight'); }
-                    else { otherCell.classList.remove('highlight'); cell.classList.remove('highlight2'); }
+                    if (tableIndex === 0) {
+                        otherCell.classList.remove('highlight2');
+                        cell.classList.remove('highlight');
+                    } else {
+                        otherCell.classList.remove('highlight');
+                        cell.classList.remove('highlight2');
+                    }
                 });
             });
         });
