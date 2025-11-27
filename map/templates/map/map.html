@@ -162,14 +162,31 @@
       </div>
     </div>
 
-    <div class="d-grid mt-3">
-      <button id="btn-limpar-filtros" class="btn btn-secondary">
+    <div class="d-grid gap-2 mt-3">
+
+      <button id="btn-limpar-filtros" class="btn btn-secondary w-100">
         <i class="bi bi-eraser-fill"></i> Limpar Pesquisa
       </button>
+
+    <button id="btn-screenshot"
+            type="button"
+            class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+      
+      <!-- Ícone recomendado (Opção 3) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+          viewBox="0 0 24 24" fill="currentColor">
+        <path d="M21 7h-2.586l-1.707-1.707A2 2 0 0 0 15 4H9a2 2 0 0 0-1.707.293L5.586 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-9 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/>
+      </svg>
+
+      <span>Print Mapa</span>
+    </button>
+
     </div>
 
-    <!-- Botão de download fixado no rodapé da sidebar -->
+    <!-- Espaço que empurra o botão final para o rodapé da sidebar -->
     <div class="sidebar-spacer"></div>
+
+    <!-- Botão fixado no rodapé -->
     <button id="download-table-btn"
             type="button"
             class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2 btn-download">
@@ -180,6 +197,7 @@
       </svg>
       <span>Baixar Dados</span>
     </button>
+
 
   </aside>
 
@@ -203,6 +221,12 @@
 <script>
   window.MAPBOX_PUBLIC_TOKEN = "{{ MAPBOX_PUBLIC_TOKEN|escapejs }}";
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  window.LOGO_IFEM_URL = "{% static 'global/images/ifem-marca-03.png' %}";
+  window.LOGO_FNP_URL  = "{% static 'global/images/logo-FNP.png' %}";
+</script>
+
 <script src="{% static 'map/js/script.js' %}"></script>
 
 <!-- Modal de busca reutilizável -->

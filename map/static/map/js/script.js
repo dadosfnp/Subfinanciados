@@ -7,7 +7,10 @@ const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/gatocangaceiro/cmbicxxq2006g01s2e0ht9l0l",
   zoom: 3.5,
-  center: [-54, -15]
+  center: [-54, -15],
+  preserveDrawingBuffer: true,
+  crossSourceCollisions: false
+
 });
 map.addControl(new mapboxgl.NavigationControl());
 
@@ -574,3 +577,198 @@ async function downloadTableData() {
   }
 }
 document.getElementById('download-table-btn').addEventListener('click', downloadTableData);
+
+// ======== PRINT DO MAPA =========
+document.getElementById("btn-screenshot").addEventListener("click", async () => {
+
+    await new Promise(r => requestAnimationFrame(r));
+
+    const mapCanvas = map.getCanvas();
+    const mapW = mapCanvas.width;
+    const mapH = mapCanvas.height;
+
+    // ===============================
+    // 1) DEFINIR TAMANHO FIXO DO PRINT
+    // ===============================
+    const FINAL_WIDTH = 2400;
+    const scaleFactor = FINAL_WIDTH / mapW;
+    const FINAL_MAP_H = mapH * scaleFactor;
+
+    const extraTop = 180;
+    const extraBottom = 80;
+
+    const FINAL_HEIGHT = extraTop + FINAL_MAP_H + extraBottom;
+
+    const finalCanvas = document.createElement("canvas");
+    finalCanvas.width = FINAL_WIDTH;
+    finalCanvas.height = FINAL_HEIGHT;
+    const ctx = finalCanvas.getContext("2d");
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, FINAL_WIDTH, FINAL_HEIGHT);
+
+
+
+    // ===============================
+    // 2) LOGOS
+    // ===============================
+    async function loadImg(url) {
+        return new Promise(resolve => {
+            const i = new Image();
+            i.crossOrigin = "anonymous";
+            i.onload = () => resolve(i);
+            i.onerror = () => resolve(null);
+            i.src = url;
+        });
+    }
+
+    const logo1 = await loadImg(window.LOGO_IFEM_URL);
+    if (logo1) ctx.drawImage(logo1, 20, 20, 300, 100);
+
+    const logo2 = await loadImg(window.LOGO_FNP_URL);
+    if (logo2) ctx.drawImage(logo2, FINAL_WIDTH - 330, 20, 310, 100);
+
+
+
+    // ===============================
+    // 3) FILTROS EM LINHA
+    // ===============================
+    const headerY = 150;
+
+    function boldIfNotAll(nome, valor) {
+        if (!valor || valor.toLowerCase() === "todos" || valor.toLowerCase() === "todas") {
+            return `${nome}: ${valor}`;
+        }
+        return `${nome}: **${valor}**`;
+    }
+
+    const filtros = [
+        boldIfNotAll("Faixa Populacional", document.getElementById("filtro-porte").value),
+        boldIfNotAll("Região Metropolitana", document.getElementById("filtro-rm").value),
+        boldIfNotAll("Região", document.getElementById("filtro-regiao").value),
+        boldIfNotAll("UF", document.getElementById("filtro-uf").value),
+        boldIfNotAll("Município", document.getElementById("filtro-municipio").value)
+    ];
+
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#333";
+
+    let x = 20;
+    const sep = "   |   ";
+
+    for (const f of filtros) {
+        const parts = f.split("**");
+        ctx.fillText(parts[0], x, headerY);
+
+        let offset = ctx.measureText(parts[0]).width;
+
+        if (parts.length > 1) {
+            ctx.font = "bold 24px Arial";
+            ctx.fillText(parts[1], x + offset, headerY);
+            offset += ctx.measureText(parts[1]).width;
+            ctx.font = "24px Arial";
+        }
+
+        x += offset + ctx.measureText(sep).width;
+    }
+
+    // ===============================
+    // 4) MAPA (ESCALADO)
+    // ===============================
+    const imgMap = new Image();
+    imgMap.src = mapCanvas.toDataURL("image/png");
+    await imgMap.decode();
+
+    ctx.drawImage(
+        imgMap,
+        0,
+        0,
+        mapW,
+        mapH,
+        0,
+        extraTop,
+        FINAL_WIDTH,
+        FINAL_MAP_H
+    );
+
+
+
+    // ===============================
+    // 5) LEGENDA AUTOMÁTICA 
+    // ===============================
+    const legendDOM =
+        document.querySelector(".legend-container") ||
+        document.querySelector("#legend") ||
+        document.querySelector(".map-legend");
+
+    if (legendDOM) {
+
+        const legendCanvas = await html2canvas(legendDOM, {
+            backgroundColor: "#ffffff",
+            scale: 2
+        });
+
+        const legendImg = new Image();
+        legendImg.src = legendCanvas.toDataURL("image/png");
+        await legendImg.decode();
+
+
+        const originalW = legendCanvas.width;
+        const originalH = legendCanvas.height;
+
+        const scale = 1.05;
+
+        let legendW = originalW * scale;
+        let legendH = originalH * scale;
+
+        // Limite seguro (máx 33% da largura final)
+        const maxWidth = FINAL_WIDTH * 0.33;
+        if (legendW > maxWidth) {
+            const factor = maxWidth / legendW;
+            legendW *= factor;
+            legendH *= factor;
+        }
+
+        // Posição canto inferior direito
+        const margin = 40;
+        const cardX = FINAL_WIDTH - legendW - margin;
+        const cardY = extraTop + FINAL_MAP_H - legendH - margin;
+
+        // Sombra
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fillRect(cardX + 4, cardY + 4, legendW, legendH);
+
+        // Card
+        ctx.fillStyle = "#FFFFFF";
+        ctx.strokeStyle = "rgba(0,0,0,0.18)";
+        ctx.lineWidth = 3;
+        ctx.roundRect(cardX, cardY, legendW, legendH, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        // Conteúdo da legenda
+        ctx.drawImage(legendImg, cardX + 20, cardY + 20, legendW - 40, legendH - 40);
+    }
+
+
+    // ===============================
+    // 6) RODAPÉ
+    // ===============================
+    ctx.font = "28px Arial";
+    ctx.fillStyle = "#777";
+    ctx.fillText(
+        "Fonte: Mapbox | OpenStreetMap | FNP – Frente Nacional de Prefeitas e Prefeitos",
+        20,
+        FINAL_HEIGHT - 30
+    );
+
+
+
+    // ===============================
+    // 7) DOWNLOAD
+    // ===============================
+    const a = document.createElement("a");
+    a.download = "mapa_ifem.png";
+    a.href = finalCanvas.toDataURL("image/png");
+    a.click();
+});
