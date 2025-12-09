@@ -1,3 +1,5 @@
+let popupAtivo = null;
+
 // ===================== Config Mapbox =====================
 const token = window.MAPBOX_PUBLIC_TOKEN || "";
 if (!token) console.error("MAPBOX_PUBLIC_TOKEN não definido no template.");
@@ -95,45 +97,65 @@ async function updateDependentFilters() {
 async function atualizarMapa() {
   const classificacaoAtual = filtroClassificacao.value;
 
-  const params = {
+  const paramsResumo = {
     regiao: filtroRegiao.value,
     uf: filtroUf.value,
-    municipio: filtroMunicipio.value,
+    municipio: filtroMunicipio.value, // ✅ aqui continua usando
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
     classification: classificacaoAtual,
     calculation_mode: filtroModoCalculo.value
   };
+
+  const paramsMapa = {
+    ...paramsResumo,
+    municipio: 'todos' // ✅ AQUI É A CORREÇÃO PRINCIPAL (NUNCA FILTRA O MAPA)
+  };
+
   const desiredKey = paramsKeyFromSelects();
-  const apiUrl = buildApiUrl('/api/dados-municipios/', params);
   const myId = ++lastRequestId;
 
   try {
-    const response = await fetch(apiUrl);
-    const geojsonData = await response.json();
+    const [respMapa, respResumo] = await Promise.all([
+      fetch(buildApiUrl('/api/dados-municipios/', paramsMapa)),
+      fetch(buildApiUrl('/api/dados-municipios/', paramsResumo))
+    ]);
+
+    const geojsonMapa   = await respMapa.json();
+    const geojsonResumo = await respResumo.json();
 
     if (myId !== lastRequestId) return;
     if (paramsKeyFromSelects() !== desiredKey) return;
 
-    const features = geojsonData.features || [];
+    // ===== RESUMO =====
+    const features = geojsonResumo.features || [];
     const count = features.length;
     const totalRevenue = features.reduce((s, f) => s + (f.properties.rc_23_pc || 0), 0);
     const averageRevenue = count > 0 ? totalRevenue / count : 0;
 
-    document.getElementById('summary-count').textContent = count.toLocaleString('pt-BR');
-    document.getElementById('summary-avg-revenue').textContent = averageRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('summary-count').textContent =
+      count.toLocaleString('pt-BR');
 
+    document.getElementById('summary-avg-revenue').textContent =
+      averageRevenue.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+
+    // ===== MAPA (SEMPRE TODOS OS MUNICÍPIOS) =====
     if (map.getSource('municipios')) {
-      map.getSource('municipios').setData(geojsonData);
-      applyZoom(geojsonData);
+      map.getSource('municipios').setData(geojsonMapa);
+      applyZoom(geojsonMapa); // ✅ zoom só destaca
     }
+
   } catch (err) {
     console.error("Erro ao atualizar os dados do mapa ou resumo:", err);
     document.getElementById('summary-count').textContent = '0';
     document.getElementById('summary-avg-revenue').textContent = 'R$ 0,00';
   }
 }
+
 
 function scheduleAtualizarMapa(delay = 150) {
   clearTimeout(debounceTimer);
@@ -240,6 +262,7 @@ map.on("click", "populacao-circulos", (e) => {
   const coordinates = e.features[0].geometry.coordinates.slice();
   if (!properties.cod_ibge) return;
 
+  
   // ---- Percentil: cor no trecho em negrito (verde/ vermelho) ----
   let percentil_texto = '';
   if (properties.percentil_n != null) {
@@ -285,6 +308,14 @@ map.on("click", "populacao-circulos", (e) => {
   new mapboxgl.Popup({ minWidth:'400px', maxWidth:'500px' }).setLngLat(coordinates).setHTML(html).addTo(map);
 });
 
+map.on("click", (e) => {
+  const features = map.queryRenderedFeatures(e.point, { layers: ["populacao-circulos"] });
+  if (!features.length && popupAtivo) {
+    popupAtivo.remove();
+    popupAtivo = null;
+  }
+});
+
 
 // ===================== Zoom helpers =====================
 function getGeoJSONBounds(geojson) {
@@ -301,22 +332,31 @@ function getGeoJSONBounds(geojson) {
   return [[minX,minY],[maxX,maxY]];
 }
 
+//====== Aplica Zoom ======
+
 function applyZoom(geojsonData) {
   if (filtroMunicipio.value !== 'todos') {
     const f = geojsonData.features?.find(ft =>
       (ft.properties?.name_muni === filtroMunicipio.value) ||
       (ft.properties?.name_muni_uf === filtroMunicipio.value)
     );
-    if (f && f.geometry) {
-      if (f.geometry.type === 'Point') {
-        const [lng, lat] = f.geometry.coordinates;
-        map.flyTo({ center:[lng,lat], zoom:9, speed:0.8, curve:1.3 });
-      } else {
-        const bbox = getGeoJSONBounds({ type:'FeatureCollection', features:[f] });
-        if (bbox) map.fitBounds(bbox, { padding:50, maxZoom:9, duration:700 });
+      if (f && f.geometry) {
+        if (f.geometry.type === 'Point') {
+          const [lng, lat] = f.geometry.coordinates;
+          map.flyTo({ center:[lng,lat], zoom:9, speed:0.8, curve:1.3 });
+        } else {
+          const bbox = getGeoJSONBounds({ type:'FeatureCollection', features:[f] });
+          if (bbox) map.fitBounds(bbox, { padding:50, maxZoom:9, duration:700 });
+        }
+
+        // ✅ AQUI ABRE O POPUP AUTOMATICAMENTE APÓS O ZOOM
+        setTimeout(() => {
+          abrirPopupDoMunicipioSelecionado(f);
+        }, 600);
+
+        return;
       }
-      return;
-    }
+
   }
 
   if (filtroUf.value !== 'todos' || filtroRm.value !== 'todos' ||
@@ -327,6 +367,62 @@ function applyZoom(geojsonData) {
   }
 
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed:0.8, curve:1.3 });
+}
+// ====== Ativa popup ao selecionar Município ======
+function abrirPopupDoMunicipioSelecionado(feature) {
+  if (!feature || !feature.geometry || !feature.properties) return;
+
+  const properties  = feature.properties;
+  const coordinates = feature.geometry.coordinates.slice();
+
+  if (!properties.cod_ibge) return;
+
+  let percentil_texto = '';
+  if (properties.percentil_n != null) {
+    const p = Number(properties.percentil_n);
+    const arred = Math.round(p);
+
+    const isSuperior = p > 50;
+    const palavra    = isSuperior ? 'superior a' : 'inferior a';
+    const percentual = isSuperior ? arred : (100 - arred);
+    const cor = isSuperior ? '#16a34a' : '#dc2626';
+
+    percentil_texto = `
+      <p class="mt-3 fst-italic small">
+        Este município tem receita per capita
+        <strong style="color:${cor}">${palavra} ${percentual}%</strong>
+        dos municípios do país.
+      </p>`;
+  }
+
+  let dynamicQuantileText = 'N/D';
+  if (properties.dynamic_quantile !== null && properties.dynamic_quantile !== undefined) {
+    if (filtroClassificacao.value === 'quintil')    dynamicQuantileText = `${properties.dynamic_quantile}º quintil`;
+    else if (filtroClassificacao.value === 'decil') dynamicQuantileText = `${properties.dynamic_quantile}º decil`;
+  }
+
+  const html = `
+    <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
+    <hr class="mt-0 mb-2">
+    <div class="popup-details">
+      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao23).toLocaleString("pt-BR")}</p>
+      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_23_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+      <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
+      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil || 'N/D'}</p>
+    </div>
+    ${percentil_texto}
+    <div class="d-grid mt-3">
+      <a href="/municipio/${properties.cod_ibge}/" class="btn btn-primary btn-sm" target="_blank">Ver Mais Detalhes</a>
+    </div>
+  `;
+
+  if (popupAtivo) popupAtivo.remove();
+
+  popupAtivo = new mapboxgl.Popup({ minWidth:'400px', maxWidth:'500px' })
+    .setLngLat(coordinates)
+    .setHTML(html)
+    .addTo(map);
+
 }
 
 function hideBaseMunicipalityLayers() {
@@ -511,10 +607,24 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
   await updateDependentFilters();
   atualizarClassificacao();
+  if (popupAtivo) {
+  popupAtivo.remove();
+  popupAtivo = null;
+}
 });
 
 [filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo]
-  .forEach(sel => sel.addEventListener('change', () => scheduleAtualizarMapa()));
+  .forEach(sel => sel.addEventListener('change', () => {
+
+    // ✅ FECHA O POPUP SE VOLTAR PRA "TODOS"
+    if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
+      popupAtivo.remove();
+      popupAtivo = null;
+    }
+
+    scheduleAtualizarMapa();
+  }));
+
 
 filtroModoCalculo.addEventListener('change', atualizarClassificacao);
 filtroClassificacao.addEventListener('change', atualizarClassificacao);
