@@ -205,15 +205,58 @@ Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretame
 
 ---
 
-## ✅ Ciclo Completo de Desenvolvimento
+# ============================================================
+# ✅ CICLO COMPLETO DE DESENVOLVIMENTO (FORK + BRANCH + PR)
+# ============================================================
 
-### Sincronizar a `main` do fork com a produção
-Sempre antes de iniciar uma nova feature:
-
-```bash
+# 1) Sincronizar a main do fork com a produção (ANTES de iniciar qualquer feature)
 git checkout main
 git pull upstream main
 git push origin main
+
+# ------------------------------------------------------------
+
+# 2) Criar uma nova branch para a feature
+git checkout -b feature/nome-da-melhoria
+
+# Exemplos de nomes:
+# feature/mapa-zoom
+# feature/popup-auto
+# feature/print-mapa
+# feature/novos-indicadores
+
+# ------------------------------------------------------------
+
+# 3) Trabalhar normalmente na feature
+git add .
+git commit -m "feat(map): adiciona zoom automático por município"
+git push -u origin feature/nome-da-melhoria
+
+# (Esse push envia a branch para: pedrofnp/IFEM:feature/nome-da-melhoria)
+
+# ------------------------------------------------------------
+
+# 4) Criar Pull Request no GitHub
+# Base:     dadosfnp/Subfinanciados:main
+# Compare: pedrofnp/IFEM:feature/nome-da-melhoria
+
+# ------------------------------------------------------------
+
+# 5) Após o merge do Pull Request, sincronizar novamente o fork
+git checkout main
+git pull upstream main
+git push origin main
+
+# ============================================================
+# ✅ REGRAS IMPORTANTES
+# ============================================================
+# - NUNCA desenvolver diretamente na main
+# - Toda mudança nasce em feature/*
+# - Toda entrega passa por Pull Request
+# - O fork (pedrofnp/IFEM) é o ambiente de desenvolvimento
+# - A main representa sempre a versão de produção
+# ============================================================
+
 
 
 ## 📝 Convenção de Commits
