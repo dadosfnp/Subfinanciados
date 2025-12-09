@@ -187,7 +187,33 @@ git push                     # Envia commits para o remoto
 git push -u origin main      # Primeira vez para setar upstream
 git push origin nome-branch  # Envia branch específica
 ```
+---
 
+## 🔁 Fluxo de Trabalho (Fork + Branch + Pull Request)
+
+Este projeto utiliza um **fluxo profissional baseado em Fork**, garantindo que o ambiente de **produção permaneça sempre estável**, enquanto as melhorias são desenvolvidas de forma isolada.
+
+### 🏗 Estrutura de Repositórios
+
+- **Produção oficial:**  
+  `dadosfnp/Subfinanciados` → branch `main`
+
+- **Ambiente de Desenvolvimento (Fork):**  
+  `pedrofnp/IFEM` → branch `main`
+
+Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretamente na `main` de produção.
+
+---
+
+## ✅ Ciclo Completo de Desenvolvimento
+
+### Sincronizar a `main` do fork com a produção
+Sempre antes de iniciar uma nova feature:
+
+```bash
+git checkout main
+git pull upstream main
+git push origin main
 
 
 ## 📝 Convenção de Commits
