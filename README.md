@@ -203,88 +203,40 @@ Este projeto utiliza um **fluxo profissional baseado em Fork**, garantindo que o
 
 Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretamente na `main` de produção.
 
----
-
-# ============================================================
-# ✅ CICLO COMPLETO DE DESENVOLVIMENTO (FORK + BRANCH + PR)
-# ============================================================
-
-# 1) Sincronizar a main do fork com a produção (ANTES de iniciar qualquer feature)
-git checkout main
-git pull upstream main
-git push origin main
-
-# ------------------------------------------------------------
-
-# 2) Criar uma nova branch para a feature
-git checkout -b feature/nome-da-melhoria
-
-# Exemplos de nomes:
-# feature/mapa-zoom
-# feature/popup-auto
-# feature/print-mapa
-# feature/novos-indicadores
-
-# ------------------------------------------------------------
-
-# 3) Trabalhar normalmente na feature
-git add .
-git commit -m "feat(map): adiciona zoom automático por município"
-git push -u origin feature/nome-da-melhoria
-
-# (Esse push envia a branch para: pedrofnp/IFEM:feature/nome-da-melhoria)
-
-# ------------------------------------------------------------
-
-# 4) Criar Pull Request no GitHub
-# Base:     dadosfnp/Subfinanciados:main
-# Compare: pedrofnp/IFEM:feature/nome-da-melhoria
-
-# ------------------------------------------------------------
-
-# 5) Após o merge do Pull Request, sincronizar novamente o fork
-git checkout main
-git pull upstream main
-git push origin main
-
-# ============================================================
-# ✅ REGRAS IMPORTANTES
-# ============================================================
-# - NUNCA desenvolver diretamente na main
-# - Toda mudança nasce em feature/*
-# - Toda entrega passa por Pull Request
-# - O fork (pedrofnp/IFEM) é o ambiente de desenvolvimento
-# - A main representa sempre a versão de produção
-# ============================================================
 
 ## 🔁 Ciclo Completo de Desenvolvimento (Fork + Branch + PR)
 
-```bash
 # 1) Sincronizar a main do fork com a produção
+```bash
 git checkout main
 git pull upstream main
 git push origin main
+```
 
 # 2) Criar nova branch de feature a partir da main do fork
+```bash
 git checkout -b feature/nome-da-feature
-
+```
 # 3) Desenvolver normalmente
+```bash
 git status
 git add .
 git commit -m "feat: descricao da feature"
-
+```
 # 4) Enviar a branch para o fork
+```bash
 git push -u origin feature/nome-da-feature
-
+```
 # 5) Abrir Pull Request no GitHub
 # Base:     dadosfnp/Subfinanciados -> main
 # Compare:  pedrofnp/IFEM           -> feature/nome-da-feature
 
 # 6) Depois que o PR for aprovado e mergeado na produção
+```bash
 git checkout main
 git pull upstream main
 git push origin main
-
+```
 
 ## 📝 Convenção de Commits
 
