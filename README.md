@@ -272,3 +272,4 @@ O formato geral é:
 ✍ **Autor:** FNP  
 📅 **Ano:** 2025  
 📄 **Licença:** Uso interno / restrito
+ 
