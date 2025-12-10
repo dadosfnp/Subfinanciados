@@ -206,32 +206,32 @@ Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretame
 
 ## 🔁 Ciclo Completo de Desenvolvimento (Fork + Branch + PR)
 
-# 1) Sincronizar a main do fork com a produção
+- 1) Sincronizar a main do fork com a produção
 ```bash
 git checkout main
 git pull upstream main
 git push origin main
 ```
 
-# 2) Criar nova branch de feature a partir da main do fork
+- 2) Criar nova branch de feature a partir da main do fork
 ```bash
 git checkout -b feature/nome-da-feature
 ```
-# 3) Desenvolver normalmente
+- 3) Desenvolver normalmente
 ```bash
 git status
 git add .
 git commit -m "feat: descricao da feature"
 ```
-# 4) Enviar a branch para o fork
+- 4) Enviar a branch para o fork
 ```bash
 git push -u origin feature/nome-da-feature
 ```
-# 5) Abrir Pull Request no GitHub
-# Base:     dadosfnp/Subfinanciados -> main
-# Compare:  pedrofnp/IFEM           -> feature/nome-da-feature
+- 5) Abrir Pull Request no GitHub
+ Base:     dadosfnp/Subfinanciados -> main
+ Compare:  pedrofnp/IFEM           -> feature/nome-da-feature
 
-# 6) Depois que o PR for aprovado e mergeado na produção
+- 6) Depois que o PR for aprovado e mergeado na produção
 ```bash
 git checkout main
 git pull upstream main
@@ -272,3 +272,4 @@ O formato geral é:
 ✍ **Autor:** FNP  
 📅 **Ano:** 2025  
 📄 **Licença:** Uso interno / restrito
+ 
