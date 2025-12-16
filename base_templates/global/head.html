@@ -37,37 +37,27 @@
       {% with p=request.path %}
       <nav class="flex-grow-1 d-flex justify-content-center">
         <ul class="nav">
-
           <li>
-            <a
-              href="/analise/"
-              class="nav-link {% if p|slice:':9' == '/analise/' %}active{% endif %}"
-            >
+            <a href="{% url 'home:home' %}" class="nav-link {% if p|slice:":9" == '/analise/' %}active{% endif %}">
               Análise Gráfica
             </a>
           </li>
 
           <li>
-            <a
-              href="/mapa/"
-              class="nav-link {% if p|slice:':6' == '/mapa/' or '/municipio/' in p %}active{% endif %}"
-            >
+            <a href="{% url 'map:mapa' %}" class="nav-link {% if p|slice:":6" == '/mapa/' or '/municipio/' in p %}active{% endif %}">
               Análise Municipal
             </a>
           </li>
 
           <li>
-            <a
-              href="/analise-municipal/"
-              class="nav-link {% if p|slice:':19' == '/analise-municipal/' %}active{% endif %}"
-            >
+            <a href="{% url 'detail:detalhes_conjunto' %}" class="nav-link {% if p == '/analise-municipal/' %}active{% endif %}">
               Análise Agregada
             </a>
           </li>
-
         </ul>
       </nav>
       {% endwith %}
+
 
 
       <!-- Logo FNP à DIREITA (abre site oficial) -->

@@ -4,15 +4,15 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    # 1. Landing do IFEM como home
+    # Landing IFEM como HOME do projeto
     path("", include("ifem.urls")),
 
-    # 3. Análise Gráfica
+    # Análise Gráfica (antiga home)
     path("analise/", include("home.urls")),
 
-    # 4. Análise Municipal
+    # Análise Municipal (mapa)
     path("mapa/", include("map.urls")),
 
-    # 5. Análise Agregada
-    path("analise-municipal/", include("detail.urls")),
+    # Análise Agregada (detail)
+    path("", include("detail.urls")),
 ]
