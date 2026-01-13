@@ -49,8 +49,6 @@ INSTALLED_APPS = [
     'home',
     'map',
     'detail',
-    'ifem',
-
 ]
 
 MIDDLEWARE = [

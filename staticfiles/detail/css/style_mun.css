@@ -1,0 +1,202 @@
+/* =========================================================
+   DETAIL (Município) 
+   ========================================================= */
+
+/* largura confortável do conteúdo principal */
+.container { max-width: 1200px; }
+
+/* Cartões no padrão do tema */
+.kpi-card,
+.metric-card{
+  background:#fff;
+  border-radius: var(--card-radius, 8px);
+  box-shadow:0 4px 8px rgba(0,0,0,.08);
+  border:1px solid transparent;
+}
+
+/* Títulos das seções */
+.metric-card h2{ color:var(--fnp-blue, #194685); }
+
+/* KPIs — rótulo discreto e valor em destaque */
+.kpi-card p:first-child{ color:#6b7280; margin:0; }
+.kpi-card .text-3xl,
+.kpi-card .text-4xl{ color:var(--fnp-blue, #194685); line-height:1.15; }
+
+/* Botão do valor (per capita / reais) apenas com polimento */
+#valor-toggle-btn{ box-shadow:0 1px 2px rgba(0,0,0,.06); }
+
+/* ----------- Detalhamento (árvore) ----------- */
+.metric-detail-row{
+  display:flex;
+  align-items:center;
+  padding:.5rem 0;
+  border-bottom:1px solid #f3f4f6;
+}
+.metric-detail-row:last-child{ border-bottom:none; }
+
+.toggle-heading,
+.toggle-subheading{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.toggle-heading .arrow,
+.toggle-subheading .arrow{ transition:transform .2s ease-in-out; }
+.toggle-heading.open .arrow,
+.toggle-subheading.open .arrow{ transform:rotate(90deg); }
+
+/* Indicadores/tooltip de ranking (mesmo padrão global) */
+.ranking-indicator-container{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  vertical-align:middle;
+}
+.ranking-indicator{ width:14px; height:14px; border-radius:3px; }
+.ranking-indicator-estadual{ width:14px; height:14px; border-radius:3px; }
+
+.quintil-1{ background:#d73027; }
+.quintil-2{ background:#fc8d59; }
+.quintil-3{ background:#fee08b; }
+.quintil-4{ background:#91cf60; }
+.quintil-5{ background:#1a9850; }
+
+.ranking-tooltip{
+  position: absolute;
+  z-index: 1000;                 /* fica por cima do cabeçalho/itens */
+  left: 50%;
+  bottom: calc(100% + 8px); top: auto;         /* aparece ACIMA do quadradinho */
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  border-radius: 6px;
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;           /* permite quebra de linha se precisar */
+  max-width: 260px;              /* não estoura em telas menores */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;          /* não intercepta o hover */
+}
+
+/* mostra o tooltip no hover */
+.ranking-indicator-container:hover .ranking-tooltip{
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* setinha decorativa opcional */
+.ranking-indicator-container{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.ranking-indicator-container:hover .ranking-tooltip::before{
+  content: "";
+  position: absolute;
+  top: -6px;                     /* setinha encostando no quadradinho */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(51,51,51,.95) transparent;
+}
+
+
+/* ----------- Gráfico ----------- */
+.metric-card canvas{
+  display:block;           /* evita “gaps” inline */
+  max-width:100%;
+}
+
+/* Responsivo leve */
+@media (max-width: 767.98px){
+  .kpi-card, .metric-card { border-radius:10px; }
+}
+
+/* Toggle segmentado — mesmo look do conjunto */
+.segmented{
+  display:inline-flex; align-items:center; gap:4px;
+  background:#e9eef6; border-radius:999px; padding:4px;
+}
+.segmented .segmented-option{
+  border:0; background:transparent; cursor:pointer;
+  padding:.35rem .8rem; border-radius:999px;
+  font-weight:600; color:#194685; transition:all .15s ease;
+}
+.segmented .segmented-option.active{
+  background:#194685; color:#fff;
+  box-shadow:0 2px 8px rgba(25,70,133,.25);
+}
+.segmented .segmented-option:focus{ outline:2px solid rgba(25,70,133,.35); outline-offset:2px; }
+
+/* ===== Scroll fix (página de detalhe) ===== */
+:root{
+  /* ajuste se o seu header for fixo e tiver outra altura */
+  --header-height: 64px;
+}
+
+/* fallback: garante que o documento pode rolar se nada mais pegar */
+html, body {
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* contêiner com rolagem própria (substitui o wrapper padrão das páginas com sidebar) */
+.detail-scroll{
+  position: relative;
+  /* ocupa a janela menos a barra do cabeçalho fixo */
+  height: calc(100vh - var(--header-height));
+  max-height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* rolagem suave em iOS */
+  padding-bottom: 1.5rem;            /* respiro pra última linha não colar na borda */
+}
+
+/* quando o navegador suportar 100dvh (corrige barras de endereço móveis) */
+@supports (height: 100dvh) {
+  .detail-scroll{
+    height: calc(100dvh - var(--header-height));
+    max-height: calc(100dvh - var(--header-height));
+  }
+}
+
+/* garante que tooltips possam “sair” do cartão sem serem cortados */
+.metric-card { overflow: visible; position: relative; }
+.metric-detail-row { overflow: visible; }
+
+/* ============================GRÁFICOS (Composição + Densidade)============================ */
+
+.metric-card .chart-section{
+  width: 100%;
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid #e5e7eb;   /* linha entre título e gráficos */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                        /* espaço entre os dois gráficos */
+}
+
+/* cada gráfico tem seu PRÓPRIO PAI com altura fixa */
+.metric-card .chart-slot{
+  height: 260px;                    /* ajuste fino aqui */
+  position: relative;               /* Chart.js mede este pai */
+  overflow: hidden;                 /* impede vazar do cartão */
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* canvases ocupam o slot por completo */
+.metric-card .chart-slot > canvas{
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}

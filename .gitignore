@@ -1,16 +1,16 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtualenv
+venv/
+.venv/
 
 # Django
-staticfiles/
-staticfiles/**
-
-# Ambiente virtual
-venv/
-
-# Node
-node_modules/
+*.sqlite3
+db.sqlite3
 
 # OS
 .DS_Store
