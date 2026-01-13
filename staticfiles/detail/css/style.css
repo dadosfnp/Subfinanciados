@@ -1,0 +1,141 @@
+/* DETAIL (Conjunto)  */
+body { font-family: 'Inter', sans-serif; }
+
+/* título grande padrão das páginas internas */
+.page-title { font-size: 2rem; font-weight: 700; color: #111827; display:flex; align-items:center; gap:.5rem; }
+.page-subtitle { color:#6b7280; }
+
+/* KPI / Summary cards (visuais idênticos à Home) */
+.summary-cards-row{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.summary-card{background:#fff;border-radius:8px;padding:1.25rem;box-shadow:0 4px 8px rgba(0,0,0,.08);flex:1;min-width:220px;display:flex;align-items:center;gap:1rem}
+.summary-card h6{margin:0 0 .25rem;color:#6c757d;font-size:.95rem;font-weight:600}
+.summary-card .value{font-size:1.6rem;font-weight:700;color:#194685}
+
+/* Cards de conteúdo */
+.metric-card{
+  background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 4px 8px rgba(0,0,0,.08);margin-bottom:1.25rem;
+  /* >>> permite que tooltips “saiam” do card sem serem cortados */
+  overflow: visible;
+  position: relative;
+}
+.metric-card h5{margin:0 0 1rem;color:#194685;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+
+/* Select compacto usado no cabeçalho dos cards */
+.select-compact{padding:.25rem .5rem;font-size:.875rem;border:1px solid #dee2e6;border-radius:.375rem;background:#fff}
+
+/* Toggle retangular (Per Capita / Valores Reais) reaproveitando o global .segmented */
+.segmented{display:inline-flex;align-items:center;background:#fff;border:1px solid #d9dee7;border-radius:6px;overflow:hidden}
+.segmented .segmented-option{appearance:none;background:transparent;border:0;margin:0;padding:8px 14px;border-radius:0;font-weight:700;font-size:.9rem;line-height:1;cursor:pointer;color:#194685}
+.segmented .segmented-option + .segmented-option{border-left:1px solid #e5e7eb}
+.segmented .segmented-option.active{background:#194685;color:#fff}
+
+/* Componentes de árvore/indicadores */
+.toggle-heading,.toggle-subheading{cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.toggle-subheading{padding:.5rem 0}
+.toggle-heading .arrow,.toggle-subheading .arrow{transition:transform .2s}
+.toggle-heading.open .arrow,.toggle-subheading.open .arrow{transform:rotate(90deg)}
+
+/* linhas do detalhamento não cortam tooltips */
+.metric-detail-row{ overflow: visible; }
+
+.ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.ranking-indicator{width:14px;height:14px;border-radius:3px}
+.quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
+
+/* Tooltip (mesmo padrão do município) */
+.ranking-tooltip{
+  position: absolute;
+  z-index: 1000;                         /* >>> sobe acima de tudo */
+  left: 50%;
+  bottom: calc(100% + 8px);              /* aparece acima do quadradinho */
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  border-radius: 6px;
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;                    /* pode quebrar linha */
+  max-width: 260px;                       /* largura máxima */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;                   /* não intercepta hover */
+}
+.ranking-indicator-container:hover .ranking-tooltip{
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+/* setinha do balão */
+.ranking-indicator-container:hover .ranking-tooltip::before{
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(51,51,51,.95) transparent;
+}
+
+/* ====== Lupa ao lado do <select> (Detail) ====== */
+.content-wrapper .sidebar .input-group{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:nowrap;        /* não quebra a lupa pra baixo */
+}
+.content-wrapper .sidebar .input-group .form-select,
+.content-wrapper .sidebar .input-group select{
+  flex:1 1 0;
+  width:auto !important;   /* ignora width:100% herdado */
+  min-width:0;
+}
+.content-wrapper .sidebar .input-group > .btn{
+  flex:0 0 auto;
+  padding:.25rem .5rem;
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* ============================ GRÁFICOS (Conjunto) ============================ */
+.metric-card .chart-section{
+  width: 100%;
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid #e5e7eb;   /* linha separando o título do gráfico */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                       /* espaço entre composição e densidade */
+}
+
+/* Cada gráfico possui seu próprio "pai" com altura controlada */
+.metric-card .chart-slot{
+  position: relative;              /* referência para o canvas */
+  height: 260px;                   /* ajuste fino da altura */
+  overflow: hidden;                /* impede vazar do card branco (só para o canvas) */
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* O canvas ocupa 100% do slot */
+.metric-card .chart-slot > canvas{
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+/* Responsivo: gráficos um pouco menores em telas pequenas */
+@media (max-width: 768px){
+  .metric-card .chart-slot{ height: 220px; }
+}
+
+/* Cores específicas para o KPI da diferença da média */
+.summary-card .value#kpi-diferenca-media.neg { color: #dc2626 !important; }  /* vermelho */
+.summary-card .value#kpi-diferenca-media.pos { color: #16a34a !important; }  /* verde */
+.summary-card .value#kpi-diferenca-media.neu { color: #111827 !important; }  /* neutro */
+
