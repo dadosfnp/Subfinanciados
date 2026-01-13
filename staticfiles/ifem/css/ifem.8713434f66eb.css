@@ -1,0 +1,433 @@
+
+html {
+    /* Rolagem suave para âncoras (#sec-sobre etc.) */
+    scroll-behavior: smooth;
+}
+
+.ifem-page {
+    /* Gradiente no padrão que você já curtiu */
+    background: radial-gradient(circle at top left, #0f234d 0%, #041528 45%, #021021 100%);
+    min-height: 100vh;
+    color: #f5f7ff;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Garante que o main ocupe largura máxima controlada e respire bem */
+.ifem-page main,
+.ifem-hero,
+.ifem-section {
+    width: 100%;
+}
+
+/* Contêiner padrão das seções */
+.ifem-hero-inner,
+.ifem-section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 72px 6vw;
+    box-sizing: border-box;
+}
+
+/* Em todas as seções, espaçamento vertical consistente */
+.ifem-section {
+    position: relative;
+}
+
+/* Textos genéricos */
+.ifem-page h1,
+.ifem-page h2,
+.ifem-page h3 {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.ifem-page p {
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+    color: #d0daee;
+}
+
+/* Botões genéricos da landing */
+.ifem-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.75rem;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease-out,
+        color 0.2s ease-out,
+        border-color 0.2s ease-out,
+        box-shadow 0.2s ease-out,
+        transform 0.1s ease-out;
+    white-space: nowrap;
+}
+
+.ifem-btn-primary {
+    background: #194685;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(1, 20, 50, 0.5);
+}
+
+.ifem-btn-primary:hover {
+    background: #2158a2;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(1, 20, 50, 0.7);
+}
+
+.ifem-btn-outline {
+    background: transparent;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ifem-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #ffffff;
+}
+
+
+/* =========================================================
+   2. HERO (SEÇÃO INICIAL)
+   ========================================================= */
+
+.ifem-hero {
+    position: relative;
+    /* deixo um pouco mais alto, mas sem travar o viewport */
+    padding-top: 96px;
+    padding-bottom: 96px;
+}
+
+.ifem-hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 48px;
+}
+
+.ifem-hero-text {
+    flex: 1.1;
+    min-width: 0;
+}
+
+.ifem-hero-text h1 {
+    font-size: 2.75rem;
+    line-height: 1.1;
+    margin: 0 0 1.25rem;
+    color: #ffffff;
+}
+
+.ifem-hero-text h1 span {
+    display: inline-block;
+    color: #2cd5b9;  /* verde IFEM */
+}
+
+.ifem-hero-text p {
+    max-width: 32rem;
+}
+
+.ifem-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+}
+
+.ifem-hero-media {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ifem-hero-frame {
+    width: 420px;
+    max-width: 100%;
+    border-radius: 32px;
+    padding: 10px;
+    background: radial-gradient(circle at top left, #2b63c8 0%, #0b244a 50%, #021021 100%);
+    box-shadow:
+        0 26px 50px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+}
+
+.ifem-hero-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 24px;
+}
+
+
+/* =========================================================
+   3. LAYOUT GENÉRICO DAS SEÇÕES
+   - alinhamento esquerdo/direito/central
+   ========================================================= */
+
+.ifem-layout-right,
+.ifem-layout-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 48px;
+}
+
+.ifem-layout-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.ifem-section-text {
+    flex: 1.1;
+    min-width: 0;
+}
+
+.ifem-section-media {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.ifem-text-center {
+    text-align: center;
+}
+
+/* Título das seções */
+.ifem-section h2 {
+    font-size: 2rem;
+    margin: 0 0 1rem;
+}
+
+/* “Pílulas” (PLATAFORMA IFEM, COMO FUNCIONA, etc.) */
+.ifem-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(6, 34, 80, 0.92);
+    color: rgba(210, 223, 255, 0.9);
+    margin-bottom: 0.8rem;
+}
+
+/* Cartão que envolve as imagens das seções */
+.ifem-media-card {
+    width: 420px;
+    max-width: 100%;
+    border-radius: 32px;
+    padding: 10px;
+    background: radial-gradient(circle at top, #295fbf 0%, #0a2346 40%, #020b18 100%);
+    box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+}
+
+.ifem-media-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 24px;
+}
+
+
+/* =========================================================
+   4. LISTAS E CARDS DE RECURSOS
+   ========================================================= */
+
+.ifem-list {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0 0 1rem;
+}
+
+.ifem-list li {
+    margin-bottom: 0.25rem;
+}
+
+/* Grid de cards “Principais recursos” */
+.ifem-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.ifem-card {
+    background: rgba(4, 23, 53, 0.9);
+    border-radius: 24px;
+    padding: 20px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ifem-card h3 {
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   5. SEÇÃO DE CITAÇÕES (KAYO / PERRE)
+   ========================================================= */
+
+.ifem-section--quotes {
+    margin-top: 32px;
+}
+
+.ifem-quotes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 12px;
+}
+
+.ifem-quote-card {
+    background: rgba(4, 23, 53, 0.95);
+    border-radius: 24px;
+    padding: 22px 22px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55);
+}
+
+.ifem-quote-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.ifem-quote-card blockquote {
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+    color: #e1ebff;
+    font-size: 0.98rem;
+}
+
+.ifem-quote-card figcaption {
+    font-size: 0.85rem;
+    color: #a9b7d8;
+}
+
+.ifem-quote-card figcaption span {
+    font-size: 0.8rem;
+    color: #8c9ab8;
+}
+
+
+/* =========================================================
+   6. CTA FINAL
+   ========================================================= */
+
+.ifem-section--cta {
+    padding-bottom: 96px;
+}
+
+.ifem-cta-text {
+    max-width: 720px;
+    margin: 0.75rem auto 1.75rem;
+}
+
+/* Deixo o CTA um pouco mais destacado, mudando levemente o fundo */
+.ifem-section--cta .ifem-section-inner {
+    background: radial-gradient(circle at top, #173764 0%, #07152b 45%, transparent 100%);
+    border-radius: 32px;
+}
+
+
+/* =========================================================
+   7. ANIMAÇÃO SUAVE NO SCROLL
+   - as classes .js-section começam escondidas
+   - .is-visible é adicionada via JS
+   ========================================================= */
+
+.js-section {
+    opacity: 0;
+    transform: translateY(40px);
+    transition:
+        opacity 0.7s ease-out,
+        transform 0.7s ease-out;
+    will-change: opacity, transform;
+}
+
+.js-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hero aparece um pouco antes para evitar flash */
+.ifem-hero.js-section {
+    opacity: 1;
+    transform: none;
+}
+
+
+/* =========================================================
+   8. RESPONSIVIDADE
+   ========================================================= */
+
+/* Telas até ~1024px: empilhar texto e imagem */
+@media (max-width: 1024px) {
+    .ifem-hero-inner,
+    .ifem-layout-right,
+    .ifem-layout-left {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ifem-hero-media,
+    .ifem-section-media {
+        justify-content: flex-start;
+    }
+
+    .ifem-hero-frame,
+    .ifem-media-card {
+        width: 100%;
+        max-width: 520px;
+    }
+}
+
+/* Telas pequenas (celular) */
+@media (max-width: 768px) {
+    .ifem-hero-inner,
+    .ifem-section-inner {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 56px;
+        padding-bottom: 56px;
+    }
+
+    .ifem-hero-text h1 {
+        font-size: 2.1rem;
+    }
+
+    .ifem-section h2 {
+        font-size: 1.6rem;
+    }
+
+    .ifem-hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ifem-cards-grid,
+    .ifem-quotes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ifem-section--cta .ifem-section-inner {
+        border-radius: 24px;
+    }
+}
