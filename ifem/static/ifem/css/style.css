@@ -1,0 +1,122 @@
+/* ifem/static/ifem/css/style.css */
+
+/* 1. RESET ESTRUTURAL */
+:root {
+    --fnp-dark-blue: #103758;
+    --fnp-blue: #1e4784;
+    --fnp-yellow: #eeaf19;
+    --fnp-green: #1c8846;
+}
+
+html, body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background-color: #fff !important;
+    height: auto !important;
+    margin: 0;
+}
+
+/* 2. HERO SECTION - EFEITO CORTINA (PARALLAX) */
+/* O Hero fica FIXO no fundo da tela (z-index 0) */
+.hero-section {
+    position: fixed; /* O segredo do efeito */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh; /* Ocupa a tela toda */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: var(--fnp-dark-blue);
+    color: #fff;
+    z-index: 0; /* Fica atrás de tudo */
+    will-change: transform;
+}
+
+.hero-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        radial-gradient(circle at center, rgba(30, 71, 132, 0.7) 0%, rgba(16, 55, 88, 1) 90%),
+        url('../images/fundo-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    padding: 0 20px;
+}
+
+/* 3. CAMADA DE CONTEÚDO (O que sobe por cima) */
+.main-content-layer {
+    position: relative;
+    z-index: 10; /* Fica NA FRENTE do Hero */
+    background-color: #fff; /* Fundo sólido para cobrir o hero */
+    margin-top: 100vh; /* Empurra o conteúdo para baixo da primeira tela */
+    box-shadow: 0 -20px 50px rgba(0,0,0,0.3); /* Sombra elegante no topo */
+}
+
+/* 4. TIPOGRAFIA HERO */
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin: 0 auto 3rem auto;
+    max-width: 780px;
+}
+
+/* 5. Destaques e Botões */
+.highlight-fnp {
+    display: inline-block;
+    color: #fff;
+    background-color: var(--fnp-green);
+    padding: 0 6px;
+    border-radius: 4px;
+    transform: skewX(-5deg);
+}
+
+.btn-fnp-cta {
+    display: inline-block;
+    background-color: var(--fnp-yellow);
+    color: var(--fnp-dark-blue);
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 22px 55px;
+    border-radius: 60px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(238, 175, 25, 0.3);
+    transition: transform 0.3s ease;
+}
+.btn-fnp-cta:hover {
+    background-color: #fff;
+    color: var(--fnp-blue);
+    transform: translateY(-5px);
+}
+
+/* 6. Animações */
+.hover-lift { transition: transform 0.3s ease; }
+.hover-lift:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+.pie-slice { transform-origin: center; }
+
+@media (max-width: 768px) {
+    .hero-title { font-size: 2.5rem; }
+    .hero-subtitle { font-size: 1.1rem; }
+}

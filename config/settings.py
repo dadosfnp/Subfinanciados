@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'home',
     'map',
     'detail',
+    
+    # [ADICIONADO] App da Landing Page
+    'ifem', 
 ]
 
 MIDDLEWARE = [

@@ -19,7 +19,13 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('home.urls')),
+    
+    # [NOVO] Rota raiz aponta para o app 'ifem' (Landing Page)
+    path('', include('ifem.urls')),
+    
+    # [ALTERADO] A antiga home agora é acessada via prefixo 'app/'
+    path('app/', include('home.urls')),
+    
     path('', include('map.urls')),
     path('', include('detail.urls')),
 ]

@@ -1,0 +1,163 @@
+{% extends 'global/head.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'ifem/css/style.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div id="smooth-wrapper">
+    <div id="smooth-content">
+
+        <section class="hero-section">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Quem paga a conta das<br>cidades brasileiras?
+                </h1>
+                <p class="hero-subtitle">
+                    A vida acontece nos <span class="highlight-fnp">municípios</span>. 
+                    É onde moram as oportunidades e os desafios.
+                    Entenda como o financiamento define o futuro de milhões de brasileiros.
+                </p>
+                <div>
+                    <a href="#comecar" class="btn-fnp-cta">ENTENDA O CENÁRIO</a>
+                </div>
+            </div>
+            </section>
+
+        <div class="main-content-layer">
+            
+            <section id="comecar" class="py-5 bg-white section-trigger">
+                <div class="container py-5">
+                    <div class="row align-items-center gx-5">
+                        <div class="col-lg-6 mb-5 mb-lg-0">
+                            <img src="{% static 'ifem/images/mapa-desigualdade.png' %}" class="img-fluid rounded shadow-lg parallax-img" alt="Mapa">
+                        </div>
+                        <div class="col-lg-6 fade-in-up">
+                            <h6 class="text-uppercase text-fnp-green fw-bold mb-2">Realidade Desigual</h6>
+                            <h2 class="mb-4 display-6 fw-bold text-fnp-dark">Por que os municípios são tão diferentes?</h2>
+                            <p class="fs-5 text-secondary">
+                                Para garantir serviços de qualidade, as cidades precisam de recursos compatíveis. Mas no Brasil, <strong>o CEP de uma criança define suas oportunidades.</strong>
+                            </p>
+                            <div class="p-4 bg-light rounded border-start border-4 border-success mt-4 shadow-sm">
+                                <p class="mb-0 fst-italic text-fnp-blue fw-bold">"Em um país como o Brasil, é essencial que crianças tenham oportunidades semelhantes, independentemente do município onde nasçam."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-5 bg-light-gray section-trigger">
+                <div class="container py-5">
+                    <div class="row align-items-center gx-5 flex-lg-row-reverse">
+                        <div class="col-lg-6 mb-5 mb-lg-0">
+                            <div class="ratio ratio-4x3 d-flex align-items-center justify-content-center bg-white rounded shadow-lg p-4 parallax-img">
+                                <svg class="pie-chart-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', sans-serif;">
+                                    <text x="200" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#103758">Composição das Receitas</text>
+                                    <g transform="translate(140, 160)">
+                                        <path class="pie-slice" d="M 0 0 L 100 0 A 100 100 0 1 1 -50 -86.6 Z" fill="#1e4784" stroke="white" stroke-width="2"/>
+                                        <path class="pie-slice" d="M 0 0 L -50 -86.6 A 100 100 0 0 1 100 0 Z" fill="#eeaf19" stroke="white" stroke-width="2"/>
+                                    </g>
+                                    <g transform="translate(280, 100)">
+                                        <rect class="pie-legend" x="0" y="0" width="15" height="15" fill="#1e4784" rx="4"/> <text class="pie-legend" x="20" y="12" font-size="14" fill="#103758" font-weight="bold">67%</text> <text class="pie-legend" x="0" y="30" font-size="12" fill="#666">Transferências</text>
+                                        <rect class="pie-legend" x="0" y="70" width="15" height="15" fill="#eeaf19" rx="4"/> <text class="pie-legend" x="20" y="82" font-size="14" fill="#103758" font-weight="bold">33%</text> <text class="pie-legend" x="0" y="100" font-size="12" fill="#666">Receitas Próprias</text>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 fade-in-up">
+                            <h2 class="mb-4 display-6 fw-bold text-fnp-dark">De onde vem o dinheiro?</h2>
+                            <div class="row mt-4 g-4">
+                                <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-4 hover-lift"><h3 class="fw-bold" style="color: #eeaf19 !important;">1/3</h3> <p class="fw-bold text-fnp-dark mb-0">Arrecadação Própria</p></div></div>
+                                <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-4 hover-lift"><h3 class="fw-bold" style="color: #1e4784 !important;">2/3</h3> <p class="fw-bold text-fnp-dark mb-0">Transferências</p></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-5 bg-white section-trigger">
+                <div class="container py-5">
+                    <div class="text-center mb-5 fade-in-up">
+                        <h2 class="display-6 fw-bold text-fnp-dark">Um país que mudou,<br>regras que ficaram para trás</h2>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="timeline-item timeline-step pb-5 position-relative border-start border-3 ms-3 ps-4" style="border-color: #e9ecef !important;">
+                                <div class="position-absolute start-0 top-0 translate-middle rounded-circle bg-success border border-4 border-white" style="width: 20px; height: 20px; margin-left: -1.5px;"></div>
+                                <h4 class="fw-bold text-fnp-blue">Crescimento das Cidades Médias</h4>
+                                <p class="text-secondary">Entre 2000 e 2023, municípios médios e grandes cresceram acima da média nacional.</p>
+                            </div>
+                            <div class="timeline-item timeline-step position-relative ms-3 ps-4">
+                                <div class="position-absolute start-0 top-0 translate-middle rounded-circle bg-danger border border-4 border-white" style="width: 20px; height: 20px; margin-left: -1.5px;"></div>
+                                <h4 class="fw-bold text-danger">O Descompasso</h4>
+                                <div class="p-3 bg-danger bg-opacity-10 rounded mt-2"><p class="mb-0 text-danger fw-bold">O dinheiro está indo para onde a população NÃO está.</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-5" style="background-color: var(--fnp-dark-blue); color: white;">
+                <div class="container py-5">
+                    <div class="row text-center">
+                        <div class="col-12 mb-5 fade-in-up">
+                            <h3 class="fw-light opacity-75">População vivendo nos municípios mais subfinanciados</h3>
+                        </div>
+                        <div class="col-md-6 mb-4 mb-md-0 border-end border-secondary">
+                            <div class="display-1 fw-bold" id="counter1">0 mi</div>
+                            <p class="lead text-fnp-yellow">Em 2000</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="display-1 fw-bold" id="counter2">0 mi</div>
+                            <p class="lead text-fnp-yellow">Em 2023</p>
+                            <p class="text-white opacity-75 mt-2">O problema dobrou de tamanho.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-5 bg-light-gray section-trigger">
+                <div class="container py-5">
+                    <div class="text-center mb-5 fade-in-up">
+                        <h6 class="text-fnp-green fw-bold text-uppercase">A Solução</h6>
+                        <h2 class="fw-bold text-fnp-dark display-6">Explore a Plataforma IFEM</h2>
+                    </div>
+                    <div class="row g-4 justify-content-center">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow hover-card text-center p-4 hover-lift">
+                                <h5 class="fw-bold text-fnp-blue">Análise Gráfica</h5>
+                                <p class="text-muted small my-3">Compare a distribuição de recursos.</p>
+                                <a href="/app/" class="btn btn-outline-primary btn-sm stretched-link rounded-pill px-4">Acessar</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow hover-card text-center p-4 hover-lift">
+                                <h5 class="fw-bold text-fnp-blue">Análise Municipal</h5>
+                                <p class="text-muted small my-3">Descubra se o seu município é subfinanciado.</p>
+                                <a href="/mapa" class="btn btn-outline-primary btn-sm stretched-link rounded-pill px-4">Ver no Mapa</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-5 bg-white text-center border-top">
+                <div class="container">
+                    <h2 class="fw-bold text-fnp-dark mb-4">Entenda o impacto na sua cidade</h2>
+                    <a href="/app/" class="btn btn-fnp-yellow btn-lg shadow px-5 rounded-pill fw-bold">Começar Agora</a>
+                </div>
+            </section>
+
+        </div> </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+    <script src="{% static 'ifem/js/landing.js' %}"></script>
+{% endblock %}
