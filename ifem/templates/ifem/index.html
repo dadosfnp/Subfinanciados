@@ -1,163 +1,326 @@
-{% extends 'global/head.html' %}
-{% load static %}
+{% extends 'global/head.html' %} {% load static %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'ifem/css/style.css' %}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
 {% endblock %}
 
 {% block content %}
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="big-title">
+                <span class="text-mais">Mais</span> gente,<br>
+                <span class="text-menos">menos</span> recurso.
+            </h1>
+            <p class="subtitle">Veja como o financiamento das cidades mudou no Brasil.</p>
+            <div class="scroll-indicator" data-target="problema">
+                ▼ Clique para descobrir
+            </div>
+        </div>
+    </section>
 
-<div id="smooth-wrapper">
-    <div id="smooth-content">
+    <section id="problema" class="book-section">
+        <div class="sticky-header" data-target="problema">
+            <h2>O Problema</h2>
+        </div>
+        
+        <div class="section-content">
+            <div class="text-col">
+                <h3>Dinheiro na contramão</h3>
+                
+                <div class="editorial-text">
+                    <p>O sistema de transferências é baseado em regras da <strong>década de 1960</strong>. O Brasil mudou, as cidades cresceram, mas o financiamento não acompanhou.</p>
+                </div>
+                
+                <div class="big-stat">
+                    <span class="number">2/3</span>
+                    <div class="stat-description">
+                        <p class="mb-2">das receitas vêm de transferências (Federal/Estadual).</p>
+                        <div class="highlight-line">
+                            <span>Apenas</span>
+                            <span class="fraction-highlight">1/3</span>
+                            <span>é arrecadado diretamente pelas próprias cidades.</span>
+                        </div>
+                    </div>
+                </div>
 
-        <section class="hero-section">
-            <div class="hero-bg"></div>
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    Quem paga a conta das<br>cidades brasileiras?
-                </h1>
-                <p class="hero-subtitle">
-                    A vida acontece nos <span class="highlight-fnp">municípios</span>. 
-                    É onde moram as oportunidades e os desafios.
-                    Entenda como o financiamento define o futuro de milhões de brasileiros.
-                </p>
-                <div>
-                    <a href="#comecar" class="btn-fnp-cta">ENTENDA O CENÁRIO</a>
+                <div class="editorial-text">
+                    <p>A desigualdade de receita por habitante é elevada e <strong>vem aumentando ao longo do tempo</strong>. Como consequência, o lugar onde uma pessoa vive passa a influenciar diretamente seu acesso a direitos e oportunidades.</p>
+                    <p>A vida das pessoas acontece nos municípios. Para que serviços essenciais sejam oferecidos com qualidade, os municípios precisam de <strong>recursos compatíveis com o tamanho da população que atendem</strong>.</p>
                 </div>
             </div>
-            </section>
 
-        <div class="main-content-layer">
+            <div class="visual-col">
+                <div class="stat-card">
+                    <h4>Municípios Pobres (População)</h4>
+                    <div class="chart-row">
+                        <span class="chart-label">2000</span>
+                        <div class="bar-container"><div class="bar" style="width: 50%"></div></div>
+                        <span class="chart-value">38,0 mi</span>
+                    </div>
+                    <div class="chart-row">
+                        <span class="chart-label">2023</span>
+                        <div class="bar-container"><div class="bar alert animate-trigger" data-width="90%"></div></div>
+                        <span class="chart-value counter" data-target="74.5">0</span> <span class="chart-value">mi</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h4>Municípios Ricos (População)</h4>
+                    <div class="chart-row">
+                        <span class="chart-label">2000</span>
+                        <div class="bar-container"><div class="bar" style="width: 60%"></div></div>
+                        <span class="chart-value">43,9 mi</span>
+                    </div>
+                    <div class="chart-row">
+                        <span class="chart-label">2023</span>
+                        <div class="bar-container"><div class="bar success animate-trigger" data-width="20%"></div></div>
+                        <span class="chart-value counter" data-target="13.9">0</span> <span class="chart-value">mi</span>
+                    </div>
+                </div>
+
+                <div class="insight-box">
+                    <h4>O Descompasso</h4>
+                    <div class="editorial-text">
+                        <p>Municípios mais populosos passaram a receber <strong>menos receita por habitante</strong>, enquanto uma parcela relevante dos recursos se concentra em localidades com pouca população.</p>
+                        <br>
+                        <p style="font-weight: 600; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
+                            Na prática, o dinheiro passou a seguir na direção oposta à população nas cidades brasileiras.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="intro" class="book-section">
+        <div class="sticky-header" data-target="intro">
+            <h2>O que é o IFEM?</h2>
+        </div>
+        <div class="section-content">
+            <div class="text-col">
+                <h3>A Ferramenta da Equidade</h3>
+                
+                <div class="editorial-text">
+                    <p>A <strong>Plataforma IFEM, Indicadores de Financiamento e Equidade Municipal</strong>, foi criada para ajudar a entender <strong>como os municípios brasileiros se financiam e como os recursos públicos estão distribuídos no território nacional</strong>. A ferramenta organiza e apresenta dados de forma simples, visual e comparável, permitindo enxergar <strong>desigualdades que, muitas vezes, ficam escondidas em tabelas e relatórios técnicos</strong>.</p>
+                    
+                    <p>O ponto de partida do IFEM é a <strong>receita corrente per capita</strong> de cada município brasileiro. A plataforma ordena todos os municípios do país <strong>do menor para o maior valor de receita por habitante</strong>. A partir dessa ordenação, os municípios são divididos em <strong>grupos com o mesmo número de cidades</strong>, chamados de <strong>quintis ou decis</strong>.</p>
+                </div>
+
+                <div class="highlight-box">
+                    <div class="editorial-text">
+                        <p>No caso dos quintis, o primeiro grupo reúne <strong>os 20% dos municípios com menor receita por habitante</strong>, enquanto o último concentra <strong>os 20% com maior receita per capita</strong>. Nos decis, a lógica é a mesma, com divisões de <strong>10% em 10%</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visual-col">
+                <div class="methodology-container" id="methodology-trigger">
+                    <div class="toggle-controls">
+                        <span class="toggle-label">Visualizar por:</span>
+                        <div class="btn-group">
+                            <button class="toggle-btn active" onclick="updateMethodology('quintil')" id="btn-quintil">Quintis (5)</button>
+                            <button class="toggle-btn" onclick="updateMethodology('decil')" id="btn-decil">Decis (10)</button>
+                        </div>
+                    </div>
+
+                    <div class="caption-top">1. Ordenamos todos os municípios (Receita Menor ➝ Maior)</div>
+                    
+                    <div class="bar-wrapper" id="bar-display"></div>
+
+                    <div class="caption-bottom" id="caption-dynamic">2. Dividimos em 5 grupos iguais (Quintis)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="plataforma" class="book-section">
+        <div class="sticky-header" data-target="plataforma">
+            <h2>Por dentro da Plataforma</h2>
+        </div>
+
+        <div class="section-content">
+            <div class="text-col full-width" style="text-align: center;">
+                <h3>Explore as 3 dimensões do IFEM</h3>
+                <p class="editorial-text" style="max-width: 700px; margin: 0 auto 20px;">
+                    Passe o mouse sobre os cards para ver a plataforma em ação.
+                </p>
+
+                <div class="carousel-container">
+                    <button class="nav-btn prev" onclick="moveSlide(-1)">&#10094;</button>
+                    
+                    <div class="carousel-track" id="track">
+                        
+                        <div class="platform-card">
+                            <div class="card-visual">
+                                <img src="https://via.placeholder.com/600x400/cccccc/333333?text=GIF+Analise+Grafica" class="hover-gif" alt="Demo Gráfica">
+                                <div class="css-chart">
+                                    <div class="chart-bar b1"></div><div class="chart-bar b2"></div>
+                                    <div class="chart-bar b3"></div><div class="chart-bar b4"></div>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <h4>1. Análise Gráfica</h4>
+                                <p class="description-text">Entenda a distribuição da população por níveis de receita em uma visão macro.</p>
+                                
+                                <div class="editorial-list">
+                                    <div class="editorial-item">
+                                        <span class="item-title">Série Histórica</span>
+                                        Visualize a migração da população entre faixas de riqueza ao longo das décadas.
+                                    </div>
+                                    <div class="editorial-item">
+                                        <span class="item-title">Filtros Avançados</span>
+                                        Recorte os dados por Região, UF ou Regiões Metropolitanas.
+                                    </div>
+                                </div>
+                                
+                                <a href="{% url 'home' %}" class="card-btn">Acessar Gráficos</a>
+                            </div>
+                        </div>
+
+                        <div class="platform-card">
+                            <div class="card-visual">
+                                <img src="https://via.placeholder.com/600x400/cccccc/333333?text=GIF+Analise+Municipal" class="hover-gif" alt="Demo Municipal">
+                                <div class="css-map">
+                                    <div class="map-dot p1"></div><div class="map-dot p2"></div>
+                                    <div class="map-dot p3"></div><div class="map-pulse"></div>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <h4>2. Análise Municipal</h4>
+                                <p class="description-text">Mapa interativo que revela a saúde financeira de cada um dos 5.570 municípios.</p>
+                                
+                                <div class="editorial-list">
+                                    <div class="editorial-item">
+                                        <span class="item-title">Raio-X Completo</span>
+                                        Detalhe da receita: quanto vem de fora vs. arrecadação própria.
+                                    </div>
+                                    <div class="editorial-item">
+                                        <span class="item-title">Comparação Relativa</span>
+                                        Compare com a média do estado e municípios de mesmo porte.
+                                    </div>
+                                </div>
+
+                                <a href="#" class="card-btn">Acessar Mapa</a>
+                            </div>
+                        </div>
+
+                        <div class="platform-card">
+                            <div class="card-visual">
+                                <img src="https://via.placeholder.com/600x400/cccccc/333333?text=GIF+Analise+Agregada" class="hover-gif" alt="Demo Agregada">
+                                <div class="css-pie">
+                                    <div class="pie-slice"></div><div class="pie-center"></div>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <h4>3. Análise Agregada</h4>
+                                <p class="description-text">Visão sistêmica para identificar padrões e distorções no financiamento nacional.</p>
+                                
+                                <div class="editorial-list">
+                                    <div class="editorial-item">
+                                        <span class="item-title">Fragilidades Estruturais</span>
+                                        Investigue quais regras de transferência impulsionam a desigualdade.
+                                    </div>
+                                    <div class="editorial-item">
+                                        <span class="item-title">Arrecadação por Tributo</span>
+                                        Explore os dados segregados por tipo de imposto ou fonte.
+                                    </div>
+                                </div>
+
+                                <a href="#" class="card-btn">Ver Análise Completa</a>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button class="nav-btn next" onclick="moveSlide(1)">&#10095;</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="noticias" class="book-section">
+        <div class="sticky-header" data-target="noticias">
+            <h2>Últimas do IFEM</h2>
+        </div>
+
+        <div class="section-content">
+            <div class="text-col full-width">
+                
+                <div class="news-container">
+                    <div class="news-track">
+                        
+                        {% for noticia in noticias %}
+                            <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
+                                {% if noticia.imagem %}
+                                    <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
+                                {% endif %}
+                                
+                                <div class="news-overlay"></div>
+                                
+                                <div class="news-info">
+                                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
+                                        <span class="news-tag">{{ noticia.tag }}</span>
+                                        <span style="color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            {{ noticia.data|date:"d M Y" }}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="news-title-pro">{{ noticia.titulo }}</h3>
+                                    <div class="news-read-more">Ler matéria completa &rarr;</div>
+                                </div>
+                            </a>
+                        {% empty %}
+                            <div class="news-card-pro" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
+                                <p style="color: #666; padding: 20px; text-align: center;">Em breve novas atualizações.</p>
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="footer-grid">
             
-            <section id="comecar" class="py-5 bg-white section-trigger">
-                <div class="container py-5">
-                    <div class="row align-items-center gx-5">
-                        <div class="col-lg-6 mb-5 mb-lg-0">
-                            <img src="{% static 'ifem/images/mapa-desigualdade.png' %}" class="img-fluid rounded shadow-lg parallax-img" alt="Mapa">
-                        </div>
-                        <div class="col-lg-6 fade-in-up">
-                            <h6 class="text-uppercase text-fnp-green fw-bold mb-2">Realidade Desigual</h6>
-                            <h2 class="mb-4 display-6 fw-bold text-fnp-dark">Por que os municípios são tão diferentes?</h2>
-                            <p class="fs-5 text-secondary">
-                                Para garantir serviços de qualidade, as cidades precisam de recursos compatíveis. Mas no Brasil, <strong>o CEP de uma criança define suas oportunidades.</strong>
-                            </p>
-                            <div class="p-4 bg-light rounded border-start border-4 border-success mt-4 shadow-sm">
-                                <p class="mb-0 fst-italic text-fnp-blue fw-bold">"Em um país como o Brasil, é essencial que crianças tenham oportunidades semelhantes, independentemente do município onde nasçam."</p>
-                            </div>
-                        </div>
-                    </div>
+            <div class="footer-brand">
+                <h3>IFEM.</h3>
+                <p>Indicadores de Financiamento e Equidade Municipal. Uma iniciativa para transformar dados em justiça fiscal.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Navegação</h4>
+                <div class="footer-links">
+                    <a data-target="problema">O Problema</a>
+                    <a data-target="intro">Metodologia</a>
+                    <a data-target="plataforma">Plataforma</a>
+                    <a data-target="noticias">Notícias</a>
                 </div>
-            </section>
+            </div>
 
-            <section class="py-5 bg-light-gray section-trigger">
-                <div class="container py-5">
-                    <div class="row align-items-center gx-5 flex-lg-row-reverse">
-                        <div class="col-lg-6 mb-5 mb-lg-0">
-                            <div class="ratio ratio-4x3 d-flex align-items-center justify-content-center bg-white rounded shadow-lg p-4 parallax-img">
-                                <svg class="pie-chart-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', sans-serif;">
-                                    <text x="200" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#103758">Composição das Receitas</text>
-                                    <g transform="translate(140, 160)">
-                                        <path class="pie-slice" d="M 0 0 L 100 0 A 100 100 0 1 1 -50 -86.6 Z" fill="#1e4784" stroke="white" stroke-width="2"/>
-                                        <path class="pie-slice" d="M 0 0 L -50 -86.6 A 100 100 0 0 1 100 0 Z" fill="#eeaf19" stroke="white" stroke-width="2"/>
-                                    </g>
-                                    <g transform="translate(280, 100)">
-                                        <rect class="pie-legend" x="0" y="0" width="15" height="15" fill="#1e4784" rx="4"/> <text class="pie-legend" x="20" y="12" font-size="14" fill="#103758" font-weight="bold">67%</text> <text class="pie-legend" x="0" y="30" font-size="12" fill="#666">Transferências</text>
-                                        <rect class="pie-legend" x="0" y="70" width="15" height="15" fill="#eeaf19" rx="4"/> <text class="pie-legend" x="20" y="82" font-size="14" fill="#103758" font-weight="bold">33%</text> <text class="pie-legend" x="0" y="100" font-size="12" fill="#666">Receitas Próprias</text>
-                                    </g>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 fade-in-up">
-                            <h2 class="mb-4 display-6 fw-bold text-fnp-dark">De onde vem o dinheiro?</h2>
-                            <div class="row mt-4 g-4">
-                                <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-4 hover-lift"><h3 class="fw-bold" style="color: #eeaf19 !important;">1/3</h3> <p class="fw-bold text-fnp-dark mb-0">Arrecadação Própria</p></div></div>
-                                <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-4 hover-lift"><h3 class="fw-bold" style="color: #1e4784 !important;">2/3</h3> <p class="fw-bold text-fnp-dark mb-0">Transferências</p></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <div class="footer-col fnp-box">
+                <h4>Realização</h4>
+                <img src="{% static 'global/images/dataFNP_white.png' %}" alt="Data FNP" class="footer-logo data-fnp-img">                
+                
+                <p style="text-align: right; font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 0;">
+                    Frente Nacional de<br>Prefeitas e Prefeitos
+                </p>
+            </div>
 
-            <section class="py-5 bg-white section-trigger">
-                <div class="container py-5">
-                    <div class="text-center mb-5 fade-in-up">
-                        <h2 class="display-6 fw-bold text-fnp-dark">Um país que mudou,<br>regras que ficaram para trás</h2>
-                    </div>
-                    <div class="row justify-content-center">
-                        <div class="col-lg-8">
-                            <div class="timeline-item timeline-step pb-5 position-relative border-start border-3 ms-3 ps-4" style="border-color: #e9ecef !important;">
-                                <div class="position-absolute start-0 top-0 translate-middle rounded-circle bg-success border border-4 border-white" style="width: 20px; height: 20px; margin-left: -1.5px;"></div>
-                                <h4 class="fw-bold text-fnp-blue">Crescimento das Cidades Médias</h4>
-                                <p class="text-secondary">Entre 2000 e 2023, municípios médios e grandes cresceram acima da média nacional.</p>
-                            </div>
-                            <div class="timeline-item timeline-step position-relative ms-3 ps-4">
-                                <div class="position-absolute start-0 top-0 translate-middle rounded-circle bg-danger border border-4 border-white" style="width: 20px; height: 20px; margin-left: -1.5px;"></div>
-                                <h4 class="fw-bold text-danger">O Descompasso</h4>
-                                <div class="p-3 bg-danger bg-opacity-10 rounded mt-2"><p class="mb-0 text-danger fw-bold">O dinheiro está indo para onde a população NÃO está.</p></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        </div>
 
-            <section class="py-5" style="background-color: var(--fnp-dark-blue); color: white;">
-                <div class="container py-5">
-                    <div class="row text-center">
-                        <div class="col-12 mb-5 fade-in-up">
-                            <h3 class="fw-light opacity-75">População vivendo nos municípios mais subfinanciados</h3>
-                        </div>
-                        <div class="col-md-6 mb-4 mb-md-0 border-end border-secondary">
-                            <div class="display-1 fw-bold" id="counter1">0 mi</div>
-                            <p class="lead text-fnp-yellow">Em 2000</p>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="display-1 fw-bold" id="counter2">0 mi</div>
-                            <p class="lead text-fnp-yellow">Em 2023</p>
-                            <p class="text-white opacity-75 mt-2">O problema dobrou de tamanho.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <div class="footer-bottom-bar">
+            &copy; 2026 FNP - Frente Nacional de Prefeitas e Prefeitos. Todos os direitos reservados.
+        </div>
+    </footer>
 
-            <section class="py-5 bg-light-gray section-trigger">
-                <div class="container py-5">
-                    <div class="text-center mb-5 fade-in-up">
-                        <h6 class="text-fnp-green fw-bold text-uppercase">A Solução</h6>
-                        <h2 class="fw-bold text-fnp-dark display-6">Explore a Plataforma IFEM</h2>
-                    </div>
-                    <div class="row g-4 justify-content-center">
-                        <div class="col-md-4">
-                            <div class="card h-100 border-0 shadow hover-card text-center p-4 hover-lift">
-                                <h5 class="fw-bold text-fnp-blue">Análise Gráfica</h5>
-                                <p class="text-muted small my-3">Compare a distribuição de recursos.</p>
-                                <a href="/app/" class="btn btn-outline-primary btn-sm stretched-link rounded-pill px-4">Acessar</a>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100 border-0 shadow hover-card text-center p-4 hover-lift">
-                                <h5 class="fw-bold text-fnp-blue">Análise Municipal</h5>
-                                <p class="text-muted small my-3">Descubra se o seu município é subfinanciado.</p>
-                                <a href="/mapa" class="btn btn-outline-primary btn-sm stretched-link rounded-pill px-4">Ver no Mapa</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="py-5 bg-white text-center border-top">
-                <div class="container">
-                    <h2 class="fw-bold text-fnp-dark mb-4">Entenda o impacto na sua cidade</h2>
-                    <a href="/app/" class="btn btn-fnp-yellow btn-lg shadow px-5 rounded-pill fw-bold">Começar Agora</a>
-                </div>
-            </section>
-
-        </div> </div>
-</div>
-
-{% endblock %}
-
-{% block footer_scripts %}
     <script src="{% static 'ifem/js/landing.js' %}"></script>
 {% endblock %}

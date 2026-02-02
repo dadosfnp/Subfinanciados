@@ -47,11 +47,10 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'home',
+    'ifem',
     'map',
     'detail',
-    
-    # [ADICIONADO] App da Landing Page
-    'ifem', 
+     
 ]
 
 MIDDLEWARE = [
@@ -144,12 +143,17 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Configuração de Armazenamento (Obrigatório no Django 5+)
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
