@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'home',
-    'ifem',
+    'IFEM',
     'map',
     'detail',
      
