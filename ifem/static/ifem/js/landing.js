@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 4. Animação dos Gráficos de Barra
+    // 4. Animação dos Gráficos de Barra (Problema)
     const chartRows = document.querySelectorAll('.chart-row');
     chartRows.forEach((row) => {
         const bar = row.querySelector('.bar');
@@ -73,15 +73,87 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // ======================================================================
+    // Gráfico de Pizza SVG (Receitas)
+    // ======================================================================
+    const pieContainer = document.querySelector('.pie-chart-container');
+    if (pieContainer) {
+        const tlPie = gsap.timeline({
+            scrollTrigger: {
+                trigger: pieContainer,
+                start: "top 80%", 
+                toggleActions: "play none none reverse"
+            }
+        });
+
+        // 1. Anima o desenho do círculo vermelho
+        const progressCircle = pieContainer.querySelector('.circle-progress');
+        const targetOffset = progressCircle.getAttribute('data-offset');
+        
+        tlPie.to(progressCircle, { 
+            strokeDashoffset: targetOffset,
+            duration: 2,
+            ease: "power4.out" 
+        }, 0);
+
+        // 2. Anima os contadores numéricos
+        pieContainer.querySelectorAll('.pie-counter').forEach(counter => {
+            const targetVal = parseInt(counter.getAttribute('data-target'));
+            let proxy = { val: 0 };
+            
+            tlPie.to(proxy, {
+                val: targetVal,
+                duration: 2,
+                ease: "power4.out",
+                onUpdate: function() {
+                    counter.innerText = Math.floor(this.targets()[0].val);
+                }
+            }, 0);
+        });
+
+        // 3. Animação de entrada do container
+        tlPie.from(pieContainer, {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            ease: "power2.out"
+        }, 0);
+    }
+
+    // ======================================================================
+    // ANIMAÇÃO: Gráficos de População (Barras Laterais - Coluna Direita)
+    // ======================================================================
+    const popGroups = document.querySelectorAll('.pop-chart-group');
+    popGroups.forEach(group => {
+        gsap.to(group.querySelectorAll('.pop-bar'), {
+            width: function(i, target) {
+                return target.getAttribute('data-width');
+            },
+            duration: 1.5,
+            ease: "power2.out",
+            stagger: 0.2, 
+            scrollTrigger: {
+                trigger: group,
+                start: "top 85%",
+                toggleActions: "play none none reverse"
+            }
+        });
+    });
 });
 
 // --- Scroll Suave (Instantâneo) ---
 window.scrollToId = function(id) {
     const navHeight = 80; 
+    
+    // Mata tweens anteriores para evitar conflito
+    gsap.killTweensOf(window);
+
     gsap.to(window, {
-        duration: 0.8, // Duração total reduzida para ficar mais ágil
+        duration: 0.8, 
         scrollTo: { y: `#${id}`, offsetY: navHeight },
-        ease: "expo.out" // Velocidade máxima já no primeiro frame (sem aceleração inicial)
+        ease: "expo.out",
+        overwrite: "auto"
     });
 };
 
@@ -133,8 +205,7 @@ window.moveSlide = function(direction) {
     if (currentSlide < 0) currentSlide = cards.length - 1;
     if (currentSlide >= cards.length) currentSlide = 0;
     
-    // Move usando scroll nativo para compatibilidade
-    const cardWidth = cards[0].offsetWidth + 30; // largura + gap
+    const cardWidth = cards[0].offsetWidth + 30; 
     track.parentElement.scrollTo({
         left: currentSlide * cardWidth,
         behavior: 'smooth'

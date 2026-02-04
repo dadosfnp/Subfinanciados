@@ -385,10 +385,23 @@ p {
 
 .slice.visible { opacity: 1; transform: translateY(0); }
 
-/* Cores das barras */
-.q-1 { background: #d73027; } .q-2 { background: #fc8d59; } .q-3 { background: #fee08b; } .q-4 { background: #91cf60; } .q-5 { background: #1a9850; }
-.d-1 { background: #a50026; } .d-10 { background: #006837; } /* Simplificado */
+/* Cores das barras - Gradiente Completo */
+.q-1 { background: #d73027; } 
+.q-2 { background: #fc8d59; } 
+.q-3 { background: #fee08b; } 
+.q-4 { background: #91cf60; } 
+.q-5 { background: #1a9850; }
 
+.d-1 { background: #a50026; }
+.d-2 { background: #d73027; }
+.d-3 { background: #f46d43; }
+.d-4 { background: #fdae61; }
+.d-5 { background: #fee08b; }
+.d-6 { background: #d9ef8b; }
+.d-7 { background: #a6d96a; }
+.d-8 { background: #66bd63; }
+.d-9 { background: #1a9850; }
+.d-10 { background: #006837; }
 /* ==========================================================================
    7. SEÇÃO: PLATAFORMA (CARDS INTERATIVOS)
    Cards que expandem no desktop e mostram GIF no hover.
@@ -682,4 +695,270 @@ p {
     .section-content { flex-direction: column; }
     .footer-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
     .fnp-box { align-items: center; }
+}
+
+
+/* ==========================================================================
+   11. GRÁFICO DE RECEITAS (PIE CHART SVG ANIMADO)
+   ========================================================================== */
+.pie-chart-container {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-top: 30px;
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* Wrapper do SVG para posicionamento */
+.svg-wrapper {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+}
+
+/* O SVG em si */
+.pie-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg); /* Começa do topo */
+}
+
+/* Estilo comum dos círculos */
+.pie-svg circle {
+    fill: none;
+    stroke-width: 40; /* Espessura do "donut" */
+}
+
+/* Círculo Fundo (Azul - 100% inicialmente) */
+.circle-base {
+    stroke: var(--fnp-blue);
+}
+
+/* Círculo Topo (Vermelho - Vai animar) */
+.circle-progress {
+    stroke: var(--accent-red);
+    stroke-dasharray: 502; /* Circunferência total */
+    stroke-dashoffset: 502; /* Começa escondido (offset total) */
+    stroke-linecap: butt;
+    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1); /* Animação suave */
+}
+
+/* Texto no meio do buraco do donut */
+.chart-center-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--fnp-dark-blue);
+    text-transform: uppercase;
+}
+
+/* Legendas Laterais */
+.pie-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.legend-item {
+    padding-left: 15px;
+    border-left: 4px solid #ddd;
+}
+
+.blue-theme { border-color: var(--fnp-blue); }
+.red-theme { border-color: var(--accent-red); }
+
+.legend-label {
+    display: block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.legend-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue);
+}
+
+.red-theme .legend-value { color: var(--accent-red); }
+
+/* Responsivo */
+@media (max-width: 480px) {
+    .pie-chart-container { flex-direction: column; text-align: center; }
+    .legend-item { border-left: none; border-top: 4px solid #ddd; padding-top: 10px; padding-left: 0; }
+}
+
+/* ==========================================================================
+   12. GRÁFICOS DE POPULAÇÃO (COLUNA DIREITA)
+   ========================================================================== */
+.pop-chart-group {
+    margin-bottom: 30px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.pop-chart-group h4 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.pop-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.pop-year {
+    font-weight: 700;
+    color: #888;
+    font-size: 0.9rem;
+    width: 40px;
+}
+
+.pop-track {
+    flex: 1;
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.pop-bar {
+    height: 100%;
+    width: 0; /* Animação via JS */
+    border-radius: 6px;
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pop-value {
+    font-weight: 800;
+    font-size: 0.95rem;
+    width: 60px;
+    text-align: right;
+    color: #333;
+}
+
+/* Cores das barras */
+.pop-bar.red { background: var(--accent-red); }
+.pop-bar.red-light { background: var(--accent-red); opacity: 0.3; } /* 2000: Vermelho Suave */
+
+.pop-bar.green { background: var(--fnp-green); }
+.pop-bar.green-light { background: var(--fnp-green); opacity: 0.3; } /* 2000: Verde Suave */
+/* Caixa Azul - Ajuste de Tipografia */
+.insight-box {
+    background: var(--fnp-dark-blue);
+    padding: 30px; /* Um pouco mais de respiro */
+    border-radius: 12px;
+    color: white;
+    /* Corrige a renderização da fonte em fundo escuro */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
+}
+
+.insight-box h4 {
+    color: var(--fnp-yellow);
+    margin-bottom: 15px;
+    text-transform: uppercase; /* Garante CAIXA ALTA igual à imagem */
+    letter-spacing: 1px; /* Espaçamento mais elegante */
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif; /* Força a fonte correta */
+}
+
+.insight-box p {
+    color: rgba(255,255,255,0.95);
+    font-size: 1rem;
+    line-height: 1.6; /* Melhora a leitura */
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+.insight-box strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   13. DETALHES VISUAIS (Ícones, Badges e Interação)
+   ========================================================================== */
+
+/* 1. Ícones na Legenda */
+.legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.legend-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.blue-theme .legend-icon { color: var(--fnp-blue); }
+.red-theme .legend-icon { color: var(--accent-red); }
+
+/* 2. Badges de Crescimento */
+.pop-value-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 60px; /* Mantém a largura fixa da coluna de valores */
+}
+
+.growth-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.badge-red {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--accent-red);
+}
+
+.badge-green {
+    background: rgba(26, 152, 80, 0.1);
+    color: var(--fnp-green);
+}
+
+/* 3. Micro-interação de Hover nas Barras */
+.pop-track {
+    cursor: pointer; /* Indica interatividade */
+}
+
+.pop-bar {
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1), 
+                filter 0.3s ease, 
+                transform 0.3s ease !important; /* Adiciona transição suave para o efeito */
+}
+
+/* Efeito ao passar o mouse: Brilho e leve aumento */
+.pop-chart-group:hover .pop-bar {
+    opacity: 0.7; /* Foco nas barras do grupo */
+}
+
+.pop-chart-group:hover .pop-bar:hover {
+    opacity: 1;
+    filter: brightness(1.1) saturate(1.2);
+    transform: scaleY(1.15); /* Cresce levemente na vertical */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }

@@ -47,70 +47,97 @@
 
     <section id="problema" class="book-section">
         <div class="section-header-mobile"><h2>1. O Problema</h2></div>
-        
+
         <div class="section-content">
             <div class="text-col">
-                <h3>Dinheiro na contramão</h3>
+                <h3 style="margin-bottom: 25px;">Dinheiro na contramão</h3>
+                
                 <div class="editorial-text">
                     <p>O sistema de transferências é baseado em regras da <strong>década de 1960</strong>. O Brasil mudou, as cidades cresceram, mas o financiamento não acompanhou.</p>
                 </div>
-                
-                <div class="big-stat">
-                    <span class="number">2/3</span>
-                    <div class="stat-description">
-                        <p class="mb-2">das receitas vêm de transferências (Federal/Estadual).</p>
-                        <div class="highlight-line">
-                            <span>Apenas</span>
-                            <span class="fraction-highlight">1/3</span>
-                            <span>é arrecadado diretamente pelas próprias cidades.</span>
+
+                <div class="pie-chart-container">
+                    <div class="svg-wrapper">
+                        <svg viewBox="0 0 200 200" class="pie-svg">
+                            <circle class="circle-base" cx="100" cy="100" r="80"></circle>
+                            <circle class="circle-progress" cx="100" cy="100" r="80" data-offset="336"></circle>
+                        </svg>
+                        <div class="chart-center-text"><span>Receitas</span></div>
+                    </div>
+
+                    <div class="pie-legend">
+                        <div class="legend-item blue-theme">
+                            <div class="legend-header">
+                                <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 10V21H8V14H16V21H20V10L12 3L4 10Z"></path>
+                                    <path d="M2 21H22"></path>
+                                </svg>
+                                <span class="legend-label">Transferências</span>
+                            </div>
+                            <span class="legend-value"><span class="pie-counter" data-target="67">0</span>%</span>
+                        </div>
+                        
+                        <div class="legend-item red-theme active-highlight">
+                            <div class="legend-header">
+                                <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 21H21"></path>
+                                    <path d="M5 21V7L13 3V21"></path>
+                                    <path d="M19 21V11L13 7"></path>
+                                    <path d="M9 9V9.01"></path>
+                                    <path d="M9 13V13.01"></path>
+                                    <path d="M9 17V17.01"></path>
+                                </svg>
+                                <span class="legend-label">Arrecadação Própria</span>
+                            </div>
+                            <span class="legend-value"><span class="pie-counter" data-target="33">0</span>%</span>
+                        </div>
+                        
+                        <div class="chart-context">
+                            <p>Transferências vêm dos governos federal e estaduais, enquanto a arrecadação própria é feita diretamente pelas cidades.</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="editorial-text">
-                    <p>A desigualdade de receita por habitante é elevada e <strong>vem aumentando ao longo do tempo</strong>. Como consequência, o lugar onde uma pessoa vive passa a influenciar diretamente seu acesso a direitos e oportunidades.</p>
-                    <p>A vida das pessoas acontece nos municípios. Para que serviços essenciais sejam oferecidos com qualidade, os municípios precisam de <strong>recursos compatíveis com o tamanho da população que atendem</strong>.</p>
                 </div>
             </div>
 
             <div class="visual-col">
-                <div class="stat-card">
+                
+                <div class="pop-chart-group">
                     <h4>Municípios Pobres (População)</h4>
-                    <div class="chart-row">
-                        <span class="chart-label">2000</span>
-                        <div class="bar-container"><div class="bar" data-width="50%"></div></div>
-                        <span class="chart-value">38,0 mi</span>
+                    <div class="pop-row">
+                        <span class="pop-year">2000</span>
+                        <div class="pop-track"><div class="pop-bar red-light" data-width="51%"></div></div>
+                        <span class="pop-value">38,0 mi</span>
                     </div>
-                    <div class="chart-row">
-                        <span class="chart-label">2023</span>
-                        <div class="bar-container"><div class="bar alert animate-trigger" data-width="90%"></div></div>
-                        <span class="chart-value counter" data-target="74.5">0</span> <span class="chart-value">mi</span>
+                    <div class="pop-row">
+                        <span class="pop-year">2023</span>
+                        <div class="pop-track"><div class="pop-bar red" data-width="100%"></div></div>
+                        <div class="pop-value-group">
+                            <span class="pop-value">74,5 mi</span>
+                            <span class="growth-badge badge-red">▲ +96%</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card">
+                <div class="pop-chart-group">
                     <h4>Municípios Ricos (População)</h4>
-                    <div class="chart-row">
-                        <span class="chart-label">2000</span>
-                        <div class="bar-container"><div class="bar" data-width="60%"></div></div>
-                        <span class="chart-value">43,9 mi</span>
+                    <div class="pop-row">
+                        <span class="pop-year">2000</span>
+                        <div class="pop-track"><div class="pop-bar green-light" data-width="59%"></div></div>
+                        <span class="pop-value">43,9 mi</span>
                     </div>
-                    <div class="chart-row">
-                        <span class="chart-label">2023</span>
-                        <div class="bar-container"><div class="bar success animate-trigger" data-width="20%"></div></div>
-                        <span class="chart-value counter" data-target="13.9">0</span> <span class="chart-value">mi</span>
+                    <div class="pop-row">
+                        <span class="pop-year">2023</span>
+                        <div class="pop-track"><div class="pop-bar green" data-width="19%"></div></div>
+                        <div class="pop-value-group">
+                            <span class="pop-value">13,9 mi</span>
+                            <span class="growth-badge badge-green">▼ -68%</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="insight-box">
                     <h4>O Descompasso</h4>
-                    <div class="editorial-text">
-                        <p>Municípios mais populosos passaram a receber <strong>menos receita por habitante</strong>, enquanto uma parcela relevante dos recursos se concentra em localidades com pouca população.</p>
-                        <br>
-                        <p style="font-weight: 600; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
-                            Na prática, o dinheiro passou a seguir na direção oposta à população nas cidades brasileiras.
-                        </p>
-                    </div>
+                    <p>Municípios mais populosos passaram a receber <strong>menos receita por habitante</strong>, enquanto uma parcela relevante dos recursos se concentra em localidades com pouca população.</p>
                 </div>
             </div>
         </div>
@@ -129,7 +156,8 @@
 
                 <div class="highlight-box">
                     <div class="editorial-text">
-                        <p>No caso dos <strong>quintis</strong>, o primeiro grupo reúne os 20% dos municípios com menor receita. Nos <strong>decis</strong>, a lógica é a mesma, com divisões de 10% em 10%.</p>
+                        <p>No caso dos <strong>quintis</strong>, o primeiro grupo reúne os 20% dos municípios com menor receita.</p>
+                        <p style="margin-top: 15px;">Nos <strong>decis</strong>, a lógica é a mesma, com divisões de 10%.</p>
                     </div>
                 </div>
             </div>
