@@ -2,7 +2,11 @@
    1. CONFIGURAÇÕES GLOBAIS
    Define variáveis de cor, resets básicos e estrutura principal.
    ========================================================================== */
-:root {
+html {
+    scroll-behavior: auto !important;
+}
+
+   :root {
     --nav-height: 70px; /* Altura da barra de navegação que fica no topo */
     --accent-red: #c62828; 
 }
@@ -81,7 +85,7 @@ p {
 }
 
 /* ==========================================================================
-   3. BARRA DE NAVEGAÇÃO "STORY" (MENU NARRATIVO)
+   3. BARRA DE NAVEGAÇÃO
    Barra branca que aparece no topo ao rolar a página.
    ========================================================================== */
 .story-nav {
