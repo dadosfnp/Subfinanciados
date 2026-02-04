@@ -1,25 +1,33 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+
+from home import views as home_views
+from detail import views as detail_views
+from map import views as map_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('home.urls')),
-    path('', include('map.urls')),
-    path('', include('detail.urls')),
-]
+
+    # --- PÁGINAS PRINCIPAIS ---
+    path('', home_views.index, name='index'),
+    path('analise/', home_views.home, name='home'),
+    path('mapa/', map_views.map, name='mapa'),
+    path('analise-municipal/', detail_views.conjunto_detalhe_view, name='analise_municipal'),
+    path('municipio/<str:municipio_id>/', detail_views.municipio_detalhe_view, name='municipio_detalhe'),
+
+    # --- APIS: HOME ---
+    path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),
+    path('api/dashboard-data/', home_views.api_get_dashboard_data, name='api_get_dashboard_data'),
+
+    # --- APIS: DETAIL ---
+    path('api/dados-detalhados/', detail_views.municipio_details_api, name='municipio_details_api'),
+    path('api/fiscal-details/', detail_views.conjunto_fiscal_api, name='conjunto_fiscal_api'),
+    path('api/conjunto-chart-data/', detail_views.conjunto_chart_api, name='conjunto_chart_api'),
+    path('api/conjunto-data/', detail_views.conjunto_data_api, name='conjunto_data_api'),
+
+    # --- APIS: MAPA ---
+    path('api/dados-municipios/', map_views.municipios_geojson_api, name='municipios_geojson_api'),
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

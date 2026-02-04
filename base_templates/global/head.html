@@ -48,23 +48,25 @@
       {% with p=request.path %}
       <nav class="flex-grow-1 d-flex justify-content-center">
         <ul class="nav">
+          
           <li>
-            <a href="/" class="nav-link {% if p == '/' %}active{% endif %}">
+            <a href="{% url 'home' %}" class="nav-link {% if '/analise/' in p %}active{% endif %}">
               Análise Gráfica
             </a>
           </li>
 
           <li>
-            <a href="/mapa" class="nav-link {% if p == '/mapa' or '/municipio/' in p %}active{% endif %}">
+            <a href="{% url 'mapa' %}" class="nav-link {% if '/mapa/' in p or '/municipio/' in p %}active{% endif %}">
               Análise Municipal
             </a>
           </li>
 
           <li>
-            <a href="/analise-municipal" class="nav-link {% if p == '/analise-municipal' or p == '/analise-municipal/' %}active{% endif %}">
+            <a href="{% url 'analise_municipal' %}" class="nav-link {% if '/analise-municipal/' in p %}active{% endif %}">
               Análise Agregada
             </a>
           </li>
+
         </ul>
       </nav>
       {% endwith %}
