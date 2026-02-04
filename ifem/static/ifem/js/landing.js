@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMethodology('quintil');
     }
 
-    // 2. Animação da Barra de Navegação (Aparece ao sair do Hero)
+    // 2. Animação da Barra de Navegação
     const nav = document.querySelector('.story-nav');
     if (nav) {
         ScrollTrigger.create({
@@ -75,13 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// --- Scroll Suave ---
+// --- Scroll Suave (Instantâneo) ---
 window.scrollToId = function(id) {
     const navHeight = 80; 
     gsap.to(window, {
-        duration: 1.2,
+        duration: 0.8, // Duração total reduzida para ficar mais ágil
         scrollTo: { y: `#${id}`, offsetY: navHeight },
-        ease: "power2.inOut"
+        ease: "expo.out" // Velocidade máxima já no primeiro frame (sem aceleração inicial)
     });
 };
 
