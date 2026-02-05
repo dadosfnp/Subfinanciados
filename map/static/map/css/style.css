@@ -234,4 +234,37 @@
   outline:none !important;
 }
 
+/* ============ PADRONIZAÇÃO DE BOTÕES (AZUL FNP) ============ */
 
+/* 1. Botão Limpar Pesquisa */
+#btn-limpar-filtros {
+    background-color: var(--fnp-blue, #194685) !important;
+    border-color: var(--fnp-blue, #194685) !important;
+    color: #fff !important;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* 2. Botão Print Mapa e Baixar Dados */
+/* Selecionamos pela classe e por seletores genéricos de botão na sidebar */
+.map-page .sidebar .btn-download,
+.map-page .sidebar .btn-secondary,
+.map-page .sidebar button:not(.btn-info-tooltip) {
+    background-color: var(--fnp-blue, #194685) !important;
+    border-color: var(--fnp-blue, #194685) !important;
+    color: #fff !important;
+}
+
+/* 3. Ajuste de ícones e Hovers */
+.map-page .sidebar button:hover,
+#btn-limpar-filtros:hover,
+.btn-download:hover {
+    background-color: #123361 !important; /* Tom mais escuro para o feedback visual */
+    border-color: #123361 !important;
+}
+
+.map-page .sidebar button svg, 
+.map-page .sidebar button i {
+    fill: #fff !important;
+    color: #fff !important;
+}
