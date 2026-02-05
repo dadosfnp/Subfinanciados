@@ -10,12 +10,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Animação da Barra de Navegação
     const nav = document.querySelector('.story-nav');
     if (nav) {
-        ScrollTrigger.create({
-            trigger: ".hero-section",
-            start: "bottom top", 
-            onEnter: () => nav.classList.add('visible'),
-            onLeaveBack: () => nav.classList.remove('visible')
-        });
+        const toggleNav = () => {
+            if (window.scrollY > 50) { 
+                nav.classList.add('visible');
+            } else {
+                nav.classList.remove('visible');
+            }
+        };
+
+        window.addEventListener('scroll', toggleNav);
+        
+        toggleNav();
     }
 
     // 3. Highlight dos Itens do Menu
