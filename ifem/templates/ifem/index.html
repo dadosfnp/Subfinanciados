@@ -164,44 +164,121 @@
                     <p>Desde então, o país passou por um intenso processo de urbanização, com crescimento acelerado de cidades médias e grandes. Os dados indicam que, entre 2000 e 2023, esses municípios cresceram acima da média nacional, mas passaram a receber <strong>menos receita por habitante</strong>.</p>
                     
                     <p>Enquanto isso, uma parcela relevante dos recursos — especialmente das transferências — continua concentrada em localidades com pouca população ou até em declínio demográfico. Na prática, o dinheiro passou a seguir na direção oposta à população.</p>
+
+                    <p>Os indicadores mostram que, entre 2000 e 2023, os municípios médios e grandes apresentaram taxas de crescimento populacional superiores à média nacional. Em contraste, os municípios com <strong>menos de 20 mil habitantes</strong> cresceram abaixo da média do país, sendo que aqueles com até cinco mil habitantes registraram, em média, decréscimo populacional ao longo dos últimos 25 anos.</p>
+
+                    <p>Ao mesmo tempo, os dados revelam um descompasso entre população e recursos. Municípios mais populosos, apesar de continuarem crescendo, passaram a receber menos receita por habitante. Essa combinação entre dinâmica populacional e alocação de recursos fez com que, na prática, o dinheiro passasse a seguir na direção oposta à população nas cidades brasileiras.</p>
+
+                    <p>Os números ajudam a dimensionar esse movimento. Em 2000, os 20% de municípios com menor receita por habitante concentravam cerca de <strong>38 milhões</strong> de pessoas. Em 2023, esse contingente chegou a <strong>74,5 milhões</strong>. No sentido oposto, os 20% de municípios com maior receita per capita viram sua população cair de 43,9 milhões para <strong>13,9 milhões</strong> no mesmo período. Como ambos os grupos reúnem a mesma quantidade de municípios, o resultado é claro: cada vez mais brasileiros vivem hoje em municípios estruturalmente subfinanciados.</p>
                 </div>
             </div>
         </div>
 
     </section>
 
-    <section id="intro" class="book-section">
-        <div class="section-header-mobile"><h2>2. Metodologia</h2></div>
+<section id="metodologia" class="book-section">
+        <div class="section-header-mobile"><h2>2. Como funciona</h2></div>
 
         <div class="section-content">
             <div class="text-col">
-                <h3>A Ferramenta da Equidade</h3>
+                <h3 style="margin-bottom: 20px;">A Ferramenta da Equidade</h3>
+                
                 <div class="editorial-text">
-                    <p>A <strong>Plataforma IFEM, Indicadores de Financiamento e Equidade Municipal</strong>, foi criada para ajudar a entender <strong>como os municípios brasileiros se financiam e como os recursos públicos estão distribuídos no território nacional</strong>.</p>
-                    <p>O ponto de partida do IFEM é a <strong>receita corrente per capita</strong> de cada município brasileiro. A plataforma ordena todos os municípios do país <strong>do menor para o maior valor de receita por habitante</strong>.</p>
+                    <p>Para comparar realidades tão distintas, o IFEM utiliza um método simples e justo: <strong>ordenar para entender</strong>.</p>
+                    <p>Organizamos todos os municípios brasileiros pela receita disponível e os dividimos em grupos iguais.</p>
                 </div>
 
-                <div class="highlight-box">
-                    <div class="editorial-text">
-                        <p>No caso dos <strong>quintis</strong>, o primeiro grupo reúne os 20% dos municípios com menor receita.</p>
-                        <p style="margin-top: 15px;">Nos <strong>decis</strong>, a lógica é a mesma, com divisões de 10%.</p>
+                <div class="expandable-wrapper">
+                    <button class="btn-read-more" aria-expanded="false">
+                        <span class="btn-text">Saiba mais</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9L12 15L18 9"></path>
+                        </svg>
+                    </button>
+                    
+                    <div class="expandable-content">
+                        <div class="content-inner editorial-text">
+                            <p>Desenvolvida pela <strong>Frente Nacional de Prefeitas e Prefeitos</strong>, a ferramenta organiza e apresenta dados de forma simples, visual e comparável, permitindo enxergar desigualdades que, muitas vezes, ficam escondidas em tabelas e relatórios técnicos.</p>
+                            
+                            <p>O ponto de partida do IFEM é a <strong>receita corrente per capita</strong>. A plataforma ordena todos os municípios do país do menor para o maior valor de receita por habitante.</p>
+                            
+                            <p>A partir dessa ordenação, os municípios são divididos em grupos com o mesmo número de cidades. No caso dos <strong>Quintis</strong>, o primeiro grupo reúne os 20% com menor receita, enquanto o último concentra os 20% com maior receita. Nos <strong>Decis</strong>, a lógica é a mesma, mas com divisões de 10% em 10%.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="visual-col">
-                <div class="methodology-container" id="methodology-trigger">
-                    <div class="toggle-controls">
-                        <span class="toggle-label">Visualizar por:</span>
-                        <div class="btn-group">
-                            <button class="toggle-btn active" onclick="updateMethodology('quintil')" id="btn-quintil">Quintis (5)</button>
-                            <button class="toggle-btn" onclick="updateMethodology('decil')" id="btn-decil">Decis (10)</button>
+                <div class="metodologia-infographic">
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-number">1</span>
+                            <span class="step-title">Ordenamos todos os municípios</span>
+                            <span class="step-subtitle">(Menor Receita → Maior Receita)</span>
+                        </div>
+                        <div class="bars-container">
+                            <div class="bar b1"></div>
+                            <div class="bar b2"></div>
+                            <div class="bar b3"></div>
+                            <div class="bar b4"></div>
+                            <div class="bar b5"></div>
+                            <div class="bar b6"></div>
+                            <div class="bar b7"></div>
+                            <div class="bar b8"></div>
+                            <div class="bar b9"></div>
                         </div>
                     </div>
 
-                    <div class="caption-top">1. Ordenamos todos os municípios (Receita Menor ➝ Maior)</div>
-                    <div class="bar-wrapper" id="bar-display"></div>
-                    <div class="caption-bottom" id="caption-dynamic">2. Dividimos em 5 grupos iguais (Quintis)</div>
+                    <div class="flow-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5V19"></path>
+                            <path d="M19 12L12 19L5 12"></path>
+                        </svg>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Dividimos em grupos iguais</span>
+                        </div>
+                        
+                        <span class="step-subtitle" style="margin-bottom: 10px; display:block;">Quintis (20% cada)</span>
+                        <div class="quintis-row">
+                            <div class="q-box q-red">
+                                <span class="q-perc">1º</span>
+                                <span class="q-label">Menor<br>Receita</span>
+                            </div>
+                            
+                            <div class="q-box q-orange"><span class="q-perc">2º</span></div>
+                            <div class="q-box q-yellow"><span class="q-perc">3º</span></div>
+                            <div class="q-box q-green-light"><span class="q-perc">4º</span></div>
+                            
+                            <div class="q-box q-green">
+                                <span class="q-perc">5º</span>
+                                <span class="q-label">Maior<br>Receita</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-divider">
+                            <span>ou em maior detalhe</span>
+                        </div>
+
+                        <span class="step-subtitle" style="margin-bottom: 10px; display:block;">Decis (10% cada)</span>
+                        <div class="decis-row">
+                            <div class="d-box d-1" title="1º Decil"></div>
+                            <div class="d-box d-2" title="2º Decil"></div>
+                            <div class="d-box d-3" title="3º Decil"></div>
+                            <div class="d-box d-4" title="4º Decil"></div>
+                            <div class="d-box d-5" title="5º Decil"></div>
+                            <div class="d-box d-6" title="6º Decil"></div>
+                            <div class="d-box d-7" title="7º Decil"></div>
+                            <div class="d-box d-8" title="8º Decil"></div>
+                            <div class="d-box d-9" title="9º Decil"></div>
+                            <div class="d-box d-10" title="10º Decil"></div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

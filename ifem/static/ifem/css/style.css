@@ -995,9 +995,14 @@ p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: -50px;
+    margin-top: 25px; 
     position: relative;
     z-index: 10;
+}
+
+/* REGRA ESPECÍFICA: Só puxa para cima na seção Problema */
+#problema .expandable-wrapper {
+    margin-top: -50px;
 }
 
 .btn-read-more {
@@ -1060,4 +1065,282 @@ p {
     font-size: 1rem;
     line-height: 1.7;
     color: #444;
+}
+
+/* ==========================================================================
+   15. SEÇÃO METODOLOGIA (INFOGRÁFICO)
+   ========================================================================== */
+.metodologia-infographic {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+}
+
+.step-card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.step-number {
+    background: var(--fnp-blue);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.step-title {
+    font-weight: 700;
+    color: var(--fnp-dark-blue);
+    font-size: 0.95rem;
+}
+
+.step-subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* Ilustração de Barras (Passo 1) */
+.bars-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 80px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #eee;
+}
+
+.bar {
+    width: 8%;
+    background: #ddd;
+    border-radius: 4px 4px 0 0;
+    animation: growBar 1.5s ease-out forwards; /* Animação simples ao carregar */
+}
+
+/* Alturas escalonadas para simular ordenação */
+.b1 { height: 10%; animation-delay: 0.1s; }
+.b2 { height: 20%; animation-delay: 0.2s; }
+.b3 { height: 30%; animation-delay: 0.3s; }
+.b4 { height: 40%; animation-delay: 0.4s; }
+.b5 { height: 50%; animation-delay: 0.5s; }
+.b6 { height: 60%; animation-delay: 0.6s; }
+.b7 { height: 70%; animation-delay: 0.7s; }
+.b8 { height: 85%; animation-delay: 0.8s; }
+.b9 { height: 100%; animation-delay: 0.9s; background: var(--fnp-blue); } /* Destaque na última */
+
+@keyframes growBar {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+}
+
+/* Seta de conexão */
+.flow-arrow {
+    color: #ccc;
+    width: 24px;
+    height: 24px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+}
+
+/* Blocos de Quintis (Passo 2) */
+.quintis-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.q-box {
+    flex: 1;
+    height: 70px; /* Quadrados gordinhos */
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8rem;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.q-box:hover {
+    transform: translateY(-3px);
+}
+
+.q-perc {
+    font-size: 0.9rem;
+}
+
+.q-label {
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+/* Cores do IFEM (Baseadas no seu print) */
+.q-red { background-color: #C0392B; }
+.q-orange { background-color: #E67E22; }
+.q-yellow { background-color: #F1C40F; }
+.q-green-light { background-color: #27AE60; opacity: 0.7; }
+.q-green { background-color: #27AE60; }
+
+/* ==========================================================================
+   VISUAL DOS DECIS (10 GRUPOS)
+   ========================================================================== */
+.chart-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.chart-divider::before {
+    content: "";
+    height: 1px;
+    background: #eee;
+    width: 100%;
+    position: absolute;
+    z-index: 1;
+}
+
+.chart-divider span {
+    background: white;
+    padding: 0 10px;
+    font-size: 0.75rem;
+    color: #999;
+    position: relative;
+    z-index: 2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.decis-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px; /* Espaço menor entre os blocos */
+    width: 100%;
+}
+
+.d-box {
+    flex: 1;
+    height: 40px; /* Mais baixo que os quintis */
+    border-radius: 4px;
+    transition: transform 0.2s ease;
+    cursor: default;
+}
+
+.d-box:hover {
+    transform: scale(1.1); /* Efeito de destaque ao passar o mouse */
+}
+
+/* Gradiente de Cores para os 10 Decis */
+.d-1 { background-color: #C0392B; } /* Vermelho Forte */
+.d-2 { background-color: #D94530; }
+.d-3 { background-color: #E67E22; } /* Laranja */
+.d-4 { background-color: #F39C12; }
+.d-5 { background-color: #F1C40F; } /* Amarelo */
+.d-6 { background-color: #F7DC6F; }
+.d-7 { background-color: #82E0AA; } /* Verde Claro */
+.d-8 { background-color: #58D68D; }
+.d-9 { background-color: #2ECC71; }
+.d-10 { background-color: #27AE60; } /* Verde Forte */
+
+/* Tooltip Customizado nos Decis */
+.d-box {
+    position: relative; /* Necessário para posicionar o tooltip */
+}
+
+.d-box:hover::after {
+    content: attr(title); /* Pega o texto do atributo title */
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    margin-bottom: 6px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 0.2s forwards;
+}
+
+/* Setinha do tooltip */
+.d-box:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+    margin-bottom: -4px;
+    opacity: 0;
+    animation: fadeIn 0.2s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+@media (max-width: 480px) {
+    .decis-row {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .d-box {
+        flex: 1 1 18%; /* Ocupa aprox 20% espaço, forçando 5 por linha */
+        margin-bottom: 4px;
+    }
+}
+
+/* Texto "Menor/Maior Receita" dentro dos Quintis */
+.q-label {
+    font-size: 0.6rem;       /* Fonte pequena para caber */
+    text-transform: uppercase;
+    margin-top: 4px;         /* Espaço do número */
+    line-height: 1.1;        /* Entrelinha apertada */
+    text-align: center;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+/* Ajuste fino para o número não brigar com o texto */
+.q-box .q-perc {
+    font-size: 1.1rem;
+    font-weight: 800;
 }
