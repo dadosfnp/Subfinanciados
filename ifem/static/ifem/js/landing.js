@@ -258,3 +258,52 @@ window.moveSlide = function(direction) {
             }
         });
     });
+
+// ======================================================================
+    //  Navegação Horizontal de Notícias
+    // ======================================================================
+    const newsContainer = document.getElementById('news-scroll-container');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+
+    if (newsContainer && prevBtn && nextBtn) {
+        
+        // Função para scrollar
+        const scrollAmount = 344; // Largura do card (320) + gap (24)
+        
+        nextBtn.addEventListener('click', () => {
+            newsContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+
+        prevBtn.addEventListener('click', () => {
+            newsContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+
+        // Função para mostrar/esconder setas baseado na posição do scroll
+        const updateArrows = () => {
+            const scrollLeft = newsContainer.scrollLeft;
+            const scrollWidth = newsContainer.scrollWidth;
+            const clientWidth = newsContainer.clientWidth;
+            const maxScroll = scrollWidth - clientWidth;
+
+            // Tolerância de 10px para evitar bugs de arredondamento
+            if (scrollLeft > 10) {
+                prevBtn.classList.add('visible');
+            } else {
+                prevBtn.classList.remove('visible');
+            }
+
+            if (scrollLeft < maxScroll - 10) {
+                nextBtn.classList.add('visible');
+            } else {
+                nextBtn.classList.remove('visible');
+            }
+        };
+
+        // Inicializa e adiciona listener de scroll
+        newsContainer.addEventListener('scroll', updateArrows);
+        window.addEventListener('resize', updateArrows);
+        
+        // Chamada inicial (delay curto para garantir renderização)
+        setTimeout(updateArrows, 100);
+    }

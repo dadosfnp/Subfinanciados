@@ -371,11 +371,19 @@
         <div class="section-header-mobile"><h2>9. Notícias</h2></div>
         
         <div class="section-content">
-            <div class="text-col full-width">
-                <div class="news-container">
+            <div class="news-wrapper">
+                
+                <button class="news-nav-btn prev-btn" aria-label="Ver anteriores">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+
+                <div class="news-container" id="news-scroll-container">
                     <div class="news-track">
                         {% for noticia in noticias %}
                             <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
+                                
                                 {% if noticia.imagem %}
                                     <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
                                 {% else %}
@@ -388,9 +396,7 @@
                                     <span class="news-date-badge">
                                         {{ noticia.data_publicacao|default:noticia.data|date:"d M Y" }}
                                     </span>
-                                    
                                     <h3 class="news-title-pro">{{ noticia.titulo }}</h3>
-                                    
                                     <div class="news-read-more">Ler matéria completa &rarr;</div>
                                 </div>
                             </a>
@@ -401,10 +407,17 @@
                         {% endfor %}
                     </div>
                 </div>
+
+                <button class="news-nav-btn next-btn" aria-label="Ver próximas">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                
             </div>
         </div>
-    </section>
-    
+</section>
+
     <footer class="main-footer">
         <div class="footer-grid">
             <div class="footer-brand">
