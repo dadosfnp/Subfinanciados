@@ -4,6 +4,7 @@
    ========================================================================== */
 html {
     scroll-behavior: auto !important;
+    scroll-padding-top: 140px;
 }
 
    :root {
@@ -29,18 +30,19 @@ p {
    2. HERO SECTION (CAPA)
    A primeira tela que o usuário vê. Fundo azul FNP.
    ========================================================================== */
+/* Ajuste na Hero Section */
 .hero-section {
-    min-height: 90vh;
+    position: relative;
+    width: 100%;
+    min-height: 85vh; 
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--fnp-dark-blue);
-    text-align: center;
+    background-color: var(--fnp-dark-blue);
     color: white;
-    position: relative;
-    z-index: 1;
-    padding-top: var(--nav-height);
+    padding: 100px 20px 60px 20px; 
+    text-align: center;
+    overflow: hidden;
 }
 
 .big-title {
