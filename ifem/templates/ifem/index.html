@@ -298,12 +298,13 @@
 
             <div class="features-grid">
                 
-                <div class="feature-card video-card">
+                <a href="/analise/" class="feature-card video-card">
                     <div class="media-container">
                         <video autoplay muted loop playsinline class="card-video">
                             <source src="{% static 'ifem/videos/analise_grafica.mp4' %}" type="video/mp4">
                         </video>
-                        <div class="video-overlay"></div> </div>
+                        <div class="video-overlay"></div> 
+                    </div>
 
                     <div class="card-info">
                         <div class="info-header">
@@ -319,13 +320,13 @@
                                 <li><strong>Comparação de Quintis:</strong> Quem tem mais receita?</li>
                                 <li><strong>Linha do Tempo:</strong> A evolução desde 2000.</li>
                             </ul>
+                            <span class="cta-link">Ver Gráficos &rarr;</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="feature-card">
-                    <div class="media-container static-media map-bg">
-                        </div>
+                <a href="/mapa/" class="feature-card">
+                    <div class="media-container static-media map-bg"></div>
                     <div class="card-info">
                         <div class="info-header">
                             <div class="icon-box green-icon">
@@ -339,13 +340,13 @@
                                 <li>Filtros por Estado e Região.</li>
                                 <li>Raio-X financeiro de cada cidade.</li>
                             </ul>
+                            <span class="cta-link">Explorar Mapa &rarr;</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="feature-card">
-                    <div class="media-container static-media chart-bg">
-                        </div>
+                <a href="/analise-municipal/" class="feature-card">
+                    <div class="media-container static-media chart-bg"></div>
                     <div class="card-info">
                         <div class="info-header">
                             <div class="icon-box orange-icon">
@@ -359,9 +360,10 @@
                                 <li>Composição Tributária.</li>
                                 <li>Indicadores Macroeconômicos.</li>
                             </ul>
+                            <span class="cta-link">Ver Dados Agregados &rarr;</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
             </div>
         </div>
@@ -379,44 +381,54 @@
                     </svg>
                 </button>
 
-                <div class="news-container" id="news-scroll-container">
-                    <div class="news-track">
-                        {% for noticia in noticias %}
-                            <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
-                                
-                                {% if noticia.imagem %}
-                                    <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
-                                {% else %}
-                                    <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
-                                {% endif %}
-                                
-                                <div class="news-overlay"></div>
-                                
-                                <div class="news-info">
-                                    <span class="news-date-badge">
-                                        {{ noticia.data_publicacao|default:noticia.data|date:"d M Y" }}
-                                    </span>
-                                    <h3 class="news-title-pro">{{ noticia.titulo }}</h3>
-                                    <div class="news-read-more">Ler matéria completa &rarr;</div>
+                    <div class="news-container" id="news-scroll-container">
+                        <div class="news-track">
+                            {% for noticia in noticias %}
+                                <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
+                                    
+                                    {% if noticia.imagem %}
+                                        <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
+                                    {% endif %}
+                                    
+                                    <div class="news-overlay"></div>
+                                    
+                                    <div class="news-info">
+                                        <span class="news-date-badge">
+                                            {{ noticia.data_publicacao|default:noticia.data|date:"d M Y" }}
+                                        </span>
+                                        <h3 class="news-title-pro">{{ noticia.titulo }}</h3>
+                                        <div class="news-read-more">Ler matéria completa &rarr;</div>
+                                    </div>
+                                </a>
+                            {% empty %}
+                                <div class="news-card-pro" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
+                                    <p style="color: #666; padding: 20px;">Em breve novas atualizações.</p>
                                 </div>
-                            </a>
-                        {% empty %}
-                            <div class="news-card-pro" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
-                                <p style="color: #666; padding: 20px;">Em breve novas atualizações.</p>
-                            </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
 
-                <button class="news-nav-btn next-btn" aria-label="Ver próximas">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
-                
+                    <button class="news-nav-btn next-btn" aria-label="Ver próximas">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                </div>
             </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Pronto para explorar os dados?</h2>
+            <p>Acesse a plataforma completa e visualize os indicadores do seu município.</p>
+            <a href="/analise/" class="btn-primary-cta">
+                Acessar Plataforma IFEM
+            </a>
         </div>
-</section>
+    </section>
 
     <footer class="main-footer">
         <div class="footer-grid">

@@ -244,6 +244,8 @@ p {
     background: #fff;
     min-height: 100vh; 
     border-bottom: 1px solid #eee;
+    padding-bottom: 0 !important; /* Força o fim da seção a subir */
+    margin-bottom: 0 !important;
     scroll-margin-top: var(--nav-height); /* Ajuste de scroll para âncoras */
 }
 
@@ -754,52 +756,130 @@ p {
 }
 
 /* ==========================================================================
-   7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS)
+   7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS) - REVISADO
    ========================================================================== */
+/* Cores do Tema FNP */
+:root {
+    --fnp-blue: #003366;
+    --fnp-green: #27AE60;
+    --fnp-yellow: #F3A912;
+}
+
+/* Base do botão CTA Link */
+.cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 12px 20px;
+    color: white !important;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    border: none;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 1. Análise Gráfica (Azul) */
+.feature-card:nth-child(1) .cta-link {
+    background: var(--fnp-blue);
+}
+.feature-card:nth-child(1):hover .cta-link {
+    background: #004a94;
+    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);
+}
+
+/* 2. Mapa Interativo (Verde) */
+.feature-card:nth-child(2) .cta-link {
+    background: var(--fnp-green);
+}
+.feature-card:nth-child(2):hover .cta-link {
+    background: #2ecc71;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+/* 3. Análise Agregada (Amarelo FNP) */
+.feature-card:nth-child(3) .orange-icon {
+    background: var(--fnp-yellow) !important;
+    color: #000 !important;
+}
+
+.feature-card:nth-child(3) .cta-link {
+    background: var(--fnp-yellow) !important;
+    color: #000 !important; /* Texto preto para legibilidade */
+}
+
+.feature-card:nth-child(3):hover .cta-link {
+    background: #f39c12; /* Laranja suave no hover para feedback */
+    box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+}
+
+/* Garante que o texto dentro dos cards use Inter */
+.feature-card h4, 
+.hover-details p, 
+.hover-details li {
+    font-family: 'Inter', sans-serif !important;
+}
+
+.feature-card h4 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
 
 /* Intro centralizada da seção */
-.section-intro { width: 100%; text-align: center; margin-bottom: 40px; }
-.intro-text { max-width: 600px; margin: 0 auto; color: #666; }
+.section-intro { 
+    width: 100%; 
+    text-align: center; 
+    margin-bottom: 40px; 
+    font-family: 'Inter', sans-serif;
+}
+.intro-text { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    color: #666; 
+    line-height: 1.6;
+}
 
-/* * Grid principal de funcionalidades.
- * Define estratégia Mobile First (1 coluna) evoluindo para 3 colunas em Desktop.
- */
+/* Grid principal */
 .features-grid {
     display: grid;
     gap: 30px;
     margin-top: 40px;
     width: 100%;
-    grid-template-columns: 1fr; /* Mobile First */
+    grid-template-columns: 1fr;
 }
 
 @media (min-width: 1024px) {
     .features-grid {
-        grid-template-columns: repeat(3, 1fr); /* Breakpoint Desktop */
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* * Card de funcionalidade com comportamento interativo.
- * Controla overflow e posicionamento de camadas (z-index).
- */
+/* Card de funcionalidade (Tag <a>) */
 .feature-card {
     background: white; 
     border-radius: 16px; 
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     position: relative; 
-    height: 420px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: default;
+    height: 440px; /* Aumentado levemente para acomodar o botão */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
     display: flex; 
     flex-direction: column;
+    text-decoration: none !important; /* Remove sublinhado de link */
+    color: inherit !important; /* Mantém a cor do texto original */
+    font-family: 'Inter', sans-serif;
 }
 
 .feature-card:hover {
-    transform: translateY(-5px); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    transform: translateY(-8px); 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
 }
 
-/* Container absoluto para mídia de fundo (Vídeo/Imagem) */
+/* Container de mídia */
 .media-container {
     width: 100%; 
     height: 100%;
@@ -813,21 +893,14 @@ p {
 .static-media.map-bg { background: #e0f2f1; }
 .static-media.chart-bg { background: #fff3e0; }
 
-/* Máscara de gradiente para melhorar legibilidade de texto sobre vídeo */
 .video-overlay {
     position: absolute; 
-    top: 0; 
-    left: 0; 
-    right: 0; 
-    bottom: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%);
     pointer-events: none;
 }
 
-/* * Painel de informações deslizante.
- * Inicialmente posicionado para mostrar apenas o título.
- * Desliza para cima (translateY: 0) no hover do card pai.
- */
+/* Painel de informações deslizante */
 .card-info {
     position: absolute; 
     bottom: 0; 
@@ -836,34 +909,79 @@ p {
     padding: 25px; 
     z-index: 2; 
     background: white;
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transform: translateY(calc(100% - 85px)); /* Estado inicial oculto */
+    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(calc(100% - 90px)); /* Mostra apenas o header */
+    box-sizing: border-box;
 }
 
-.feature-card:hover .card-info { transform: translateY(0); }
+.feature-card:hover .card-info { 
+    transform: translateY(0); 
+}
 
-/* Cabeçalho do painel de informações com ícone */
-.info-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-.info-header h4 { margin: 0; font-size: 1.2rem; color: var(--fnp-dark-blue); }
+/* Cabeçalho */
+.info-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    margin-bottom: 20px; 
+}
 
-/* Detalhes que aparecem apenas durante o hover */
+.info-header h4 { 
+    margin: 0; 
+    font-size: 1.15rem; 
+    font-weight: 700;
+    color: var(--fnp-dark-blue); 
+    letter-spacing: -0.01em;
+}
+
+/* Detalhes no hover */
 .hover-details {
     opacity: 0; 
-    transition: opacity 0.3s ease 0.1s;
-    font-size: 0.9rem; 
-    color: #555;
+    transition: opacity 0.3s ease 0.15s;
+    font-size: 0.92rem; 
+    color: #444;
+    line-height: 1.5;
 }
 
-.feature-card:hover .hover-details { opacity: 1; }
+.feature-card:hover .hover-details { 
+    opacity: 1; 
+}
 
-.hover-details ul { margin-top: 10px; padding-left: 20px; }
-.hover-details li { margin-bottom: 5px; }
+.hover-details ul { 
+    margin: 15px 0; 
+    padding-left: 18px; 
+}
 
-/* Container de ícone com cores de fundo variáveis */
-.icon-box {
-    width: 40px; 
-    height: 40px; 
+.hover-details li { 
+    margin-bottom: 8px; 
+}
+
+/* ESTILO DO BOTÃO "VER ACESSAR" */
+.cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 16px;
+    background: var(--fnp-dark-blue);
+    color: white !important;
     border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: background 0.2s ease;
+}
+
+.feature-card:hover .cta-link {
+    background: #27AE60; /* Muda para verde no hover para feedback visual */
+}
+
+/* Ícones */
+.icon-box {
+    width: 42px; 
+    height: 42px; 
+    border-radius: 10px;
     display: flex; 
     align-items: center; 
     justify-content: center; 
@@ -874,6 +992,8 @@ p {
 .blue-icon { background: var(--fnp-dark-blue); }
 .green-icon { background: #27AE60; }
 .orange-icon { background: #E67E22; }
+
+.icon-box svg { width: 22px; height: 22px; }
 
 /* ==========================================================================
    8. UTILITÁRIOS (BOTÃO SAIBA MAIS)
@@ -950,6 +1070,7 @@ p {
     width: 100%;
     display: flex;
     align-items: center;
+    margin-bottom: 20px;
 }
 
 /* Container de Scroll: Esconde a barra nativa mas mantém funcionalidade */
@@ -1170,4 +1291,183 @@ p {
         background: rgba(255,255,255,0.9);
         backdrop-filter: blur(2px);
     }
+}
+
+/* ==========================================================================
+   SEÇÃO 10: RODAPÉ 
+   ========================================================================== */
+
+.main-footer {
+    background-color: var(--fnp-dark-blue, #003366);
+    color: white;
+    padding: 50px 20px 20px; 
+    font-family: 'Inter', sans-serif;
+    margin-top: 0 !important;
+    padding-top: 60px;
+}
+
+/* Grid Principal (3 Colunas) */
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    max-width: 1200px;
+    /* Reduzi a margem inferior interna de 60px para 40px */
+    margin: 0 auto 40px; 
+    align-items: start;
+}
+
+/* 1. Coluna da Marca (Esquerda) */
+.footer-brand h3 {
+    font-size: 2.5rem; /* IFEM grande */
+    font-weight: 800;
+    margin: 0 0 20px 0;
+    letter-spacing: -0.02em;
+    color: white;
+}
+
+.footer-brand p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 320px;
+    margin: 0;
+}
+
+/* Títulos das Colunas (Navegação/Realização) */
+.footer-col h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 25px;
+}
+
+/* 2. Coluna de Navegação (Centro) */
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #6AC074; /* Verde destaque */
+    padding-left: 5px; /* Efeito sutil de movimento */
+}
+
+/* 3. Coluna de Realização (Direita) */
+.fnp-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Alinha tudo à direita */
+    text-align: right;
+}
+
+/* Controle de Tamanho da Logo (O Fix Principal) */
+.footer-logo {
+    display: block;
+    max-width: 180px; /* Tamanho controlado */
+    height: auto;
+    margin-bottom: 15px;
+    filter: brightness(0) invert(1); /* Garante que fique branca se for PNG transparente */
+    opacity: 0.9;
+}
+
+/* Barra de Copyright */
+.footer-bottom-bar {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 30px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Responsividade (Mobile) --- */
+@media (max-width: 768px) {
+    .footer-grid {
+        grid-template-columns: 1fr; /* Empilha tudo */
+        gap: 50px;
+        text-align: center;
+    }
+
+    .footer-brand p {
+        margin: 0 auto; /* Centraliza texto */
+    }
+
+    .fnp-box {
+        align-items: center; /* Centraliza logo e texto */
+        text-align: center;
+    }
+    
+    .fnp-box p {
+        text-align: center !important; /* Força centralização do texto inline */
+    }
+
+    .footer-links {
+        align-items: center;
+    }
+}
+
+/* ==========================================================================
+   SEÇÃO EXTRA: CTA FINAL (Call to Action)
+   ========================================================================== */
+
+.cta-section {
+    background-color: #f8f9fa; /* Cinza bem claro para diferenciar */
+    padding: 80px 20px;
+    text-align: center;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.cta-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.cta-content h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue, #003366);
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.cta-content p {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+/* Botão Principal Grande */
+.btn-primary-cta {
+    display: inline-block;
+    background-color: #6AC074; /* Verde IFEM */
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 18px 40px;
+    border-radius: 50px; /* Redondo estilo "Pill" */
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(106, 192, 116, 0.4); /* Sombra verde */
+}
+
+.btn-primary-cta:hover {
+    background-color: #58a862;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(106, 192, 116, 0.6);
 }
