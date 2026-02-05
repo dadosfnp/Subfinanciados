@@ -211,3 +211,38 @@ window.moveSlide = function(direction) {
         behavior: 'smooth'
     });
 };
+
+// ======================================================================
+    // Lógica do Botão "Saiba Mais" (Expansível + Scroll Automático)
+    // ======================================================================
+    const expandButtons = document.querySelectorAll('.btn-read-more');
+
+    expandButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const isExpanded = this.classList.contains('active');
+            const spanText = this.querySelector('.btn-text');
+
+            if (isExpanded) {
+                // Fechar
+                this.classList.remove('active');
+                this.setAttribute('aria-expanded', 'false');
+                content.style.maxHeight = null;
+                spanText.textContent = "Saiba mais";
+            } else {
+                // Abrir
+                this.classList.add('active');
+                this.setAttribute('aria-expanded', 'true');
+                content.style.maxHeight = content.scrollHeight + "px";
+                spanText.textContent = "Mostrar menos";
+
+                // Scroll suave para centralizar o texto ---
+                setTimeout(() => {
+                    content.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }, 30); 
+            }
+        });
+    });
