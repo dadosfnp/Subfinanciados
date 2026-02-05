@@ -137,54 +137,55 @@ def municipio_detalhe_view(request, municipio_id):
     # Prepare Chart Data
     def get_chart_series(labels, values):
         series = [(label, value) for label, value in zip(labels, values) if value and value > 0]
-        # Se não houver dados, retorna listas vazias para evitar erros no frontend
         if not series:
             return {"labels": [], "values": []}
-        # Descompacta a lista de tuplas em duas listas separadas
         unzipped_series = list(zip(*series))
         return {"labels": list(unzipped_series[0]), "values": list(unzipped_series[1])}
 
-    # Prepara os dados do gráfico usando a função auxiliar e os valores PER CAPITA (_pc)
+    # Calculamos a população uma vez para usar em todas as divisões
+    # Isso evita os erros de "attribute _pc not found"
+    pop = municipio.populacao23 if municipio.populacao23 > 0 else 1
+
     chart_data = {
         "main_categories": get_chart_series(
             ["Impostos, Taxas e Contribuições de Melhoria", "Contribuições", "Transf. Correntes", "Outras"],
-            [cd.imposto_taxas_contribuicoes_pc, cd.contribuicoes_pc, cd.transferencias_correntes_pc, cd.outras_receita_pc]
+            [cd.imposto_taxas_contribuicoes / pop, cd.contribuicoes / pop, cd.transferencias_correntes / pop, cd.outras_receita / pop]
         ),
         "imposto_taxas_contribuicoes": get_chart_series(
             ["Impostos", "Taxas", "Contrib. Melhoria"],
-            [cs.imposto_pc, cs.taxas_pc, cs.contribuicoes_melhoria_pc]
+            [cs.imposto / pop, cs.taxas / pop, cs.contribuicoes_melhoria / pop]
         ),
         "imposto": get_chart_series(
             ["IPTU", "ITBI", "ISS", "Outros"],
-            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.outros_impostos_pc]
+            [cme.iptu / pop, cme.itbi / pop, cme.iss / pop, cme.outros_impostos / pop]
         ),
         "taxas": get_chart_series(
             ["Poder de Polícia", "Prestação de Serviços", "Outras"],
-            [cme.taxa_policia_pc, cme.taxa_prestacao_servico_pc, cme.outras_taxas_pc]
+            [cme.taxa_policia / pop, cme.taxa_prestacao_servico / pop, cme.outras_taxas / pop]
         ),
         "contribuicoes_melhoria": get_chart_series(
             ["Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
-           [cme.contribuicao_melhoria_pavimento_obras_pc, cme.contribuicao_melhoria_agua_potavel_pc, cme.contribuicao_melhoria_iluminacao_publica_pc, cme.outras_contribuicoes_melhoria_pc]
+            [cme.contribuicao_melhoria_pavimento_obras / pop, cme.contribuicao_melhoria_agua_potavel / pop, cme.contribuicao_melhoria_iluminacao_publica / pop, cme.outras_contribuicoes_melhoria / pop]
         ),
         "contribuicoes": get_chart_series(
             ["Sociais", "Iluminação Pública", "Outras"],
-            [cs.contribuicoes_sociais_pc, cs.contribuicoes_iluminacao_publica_pc, cs.outras_contribuicoes_pc]
+            [cs.contribuicoes_sociais / pop, cs.contribuicoes_iluminacao_publica / pop, cs.outras_contribuicoes / pop]
         ),
         "transferencias_correntes": get_chart_series(
             ["União", "Estados", "Outras"],
-            [cs.tranferencias_uniao_pc, cs.tranferencias_estados_pc, cs.outras_tranferencias_pc]
+            [cs.tranferencias_uniao / pop, cs.tranferencias_estados / pop, cs.outras_tranferencias / pop]
         ),
         "transferencias_uniao": get_chart_series(
             ["FPM", "Rec. Naturais", "SUS", "FNDE", "FNAS", "Outras"],
-            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
+            [cme.transferencia_uniao_fpm / pop, cme.transferencia_uniao_exploracao / pop, cme.transferencia_uniao_sus / pop, cme.transferencia_uniao_fnde / pop, cme.transferencia_uniao_fnas / pop, cme.outras_transferencias_uniao / pop]
         ),
         "transferencias_estado": get_chart_series(
             ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
-            [cme.transferencia_estado_icms_pc, cme.transferencia_estado_ipva_pc, cme.transferencia_estado_exploracao_pc, cme.transferencia_estado_sus_pc, cme.transferencia_estado_assistencia_pc, cme.outras_transferencias_estado_pc]
+            [cme.transferencia_estado_icms / pop, cme.transferencia_estado_ipva / pop, cme.transferencia_estado_exploracao / pop, cme.transferencia_estado_sus / pop, cme.transferencia_estado_assistencia / pop, cme.outras_transferencias_estado / pop]
         ),
         "outras_receitas": get_chart_series(
             ["Patrimonial", "Agropecuária", "Industrial", "Serviços", "Outras"],
-            [cs.receita_patrimonial_pc, cs.receita_agropecuaria_pc, cs.receita_industrial_pc, cs.receita_servicos_pc, cs.outras_receitas_pc]
+            [cs.receita_patrimonial / pop, cs.receita_agropecuaria / pop, cs.receita_industrial / pop, cs.receita_servicos / pop, cs.outras_receitas / pop]
         ),
     }
 
