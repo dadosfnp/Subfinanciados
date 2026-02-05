@@ -1,61 +1,101 @@
 /* ==========================================================================
-   1. CONFIGURAÇÕES GLOBAIS
-   Define variáveis de cor, resets básicos e estrutura principal.
+   1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS
    ========================================================================== */
+
+/* * Define variáveis CSS (Custom Properties) no escopo global.
+ * Centraliza a gestão de cores e dimensões estruturais.
+ */
+:root {
+    --nav-height: 70px;          /* Altura fixa da barra de navegação */
+    --fnp-dark-blue: #103758;    /* Cor primária escura (Brand) */
+    --fnp-blue: #2F80ED;         /* Cor primária padrão (Brand) */
+    --fnp-yellow: #EEAF19;       /* Cor secundária/destaque (Brand) */
+    --fnp-green: #27AE60;        /* Cor de sucesso/positivo (Brand) */
+    --fnp-light-gray: #f8f9fa;   /* Cor de fundo para seções secundárias */
+    --accent-red: #c62828;       /* Cor de alerta/negativo */
+}
+
+/* * Configurações do elemento raiz HTML.
+ * scroll-behavior: auto evita conflitos com animações JS.
+ * scroll-padding-top compensa a navbar fixa ao usar âncoras.
+ */
 html {
     scroll-behavior: auto !important;
     scroll-padding-top: 140px;
 }
 
-   :root {
-    --nav-height: 70px; /* Altura da barra de navegação que fica no topo */
-    --accent-red: #c62828; 
+/* * Definições base do corpo da página.
+ * Aplica a tipografia 'Inter' globalmente e remove margens padrão.
+ */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background-color: #fff;
 }
 
-/* Herda a fonte definida no global (Inter) para consistência */
-h1, h2, h3, h4 {
-    font-weight: 800; 
+/* * Reset e padronização de títulos.
+ * Garante peso da fonte e cor consistente para hierarquia H1-H6.
+ */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
     color: #111;
     margin: 0;
+    font-family: 'Inter', sans-serif;
 }
 
+/* * Padronização de parágrafos.
+ * Define altura de linha para legibilidade e cor de texto suave.
+ */
 p {
     line-height: 1.6;
-    color: #333;
+    color: #444;
 }
 
-.full-width { width: 100%; }
+/* Classe utilitária para largura total */
+.full-width { 
+    width: 100%; 
+}
 
 /* ==========================================================================
    2. HERO SECTION (CAPA)
-   A primeira tela que o usuário vê. Fundo azul FNP.
    ========================================================================== */
-/* Ajuste na Hero Section */
+
+/* * Container principal da primeira dobra (Above the fold).
+ * Utiliza Flexbox para centralização vertical/horizontal e altura mínima relativa à viewport.
+ */
 .hero-section {
     position: relative;
     width: 100%;
-    min-height: 85vh; 
+    min-height: 85vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: var(--fnp-dark-blue);
     color: white;
-    padding: 100px 20px 60px 20px; 
+    padding: 100px 20px 60px 20px;
     text-align: center;
     overflow: hidden;
 }
 
+/* * Título principal da Hero Section.
+ * Utiliza função clamp() para tipografia fluida responsiva.
+ */
 .big-title {
-    font-size: clamp(3rem, 5vw, 5rem); /* Texto responsivo */
+    font-size: clamp(3rem, 5vw, 5rem);
     line-height: 1.1;
     margin-bottom: 20px;
     color: #ffffff;
 }
 
-/* Cores de destaque no título principal */
+/* Classes utilitárias para coloração de palavras-chave no título */
 .text-mais { color: var(--fnp-green); }
 .text-menos { color: var(--fnp-yellow); }
 
+/* * Subtítulo da Hero Section.
+ * Aplica decoração de sublinhado customizada com cor e espaçamento específicos.
+ */
 .subtitle {
     font-size: 1.5rem;
     color: rgba(255,255,255,0.9);
@@ -68,19 +108,21 @@ p {
     text-underline-offset: 8px;
 }
 
-/* Seta animada indicando scroll */
+/* * Indicador visual de rolagem (Seta).
+ * Inclui animação infinita 'bounce' para incentivar a interação.
+ */
 .scroll-indicator {
     margin-top: 40px;
     font-size: 0.9rem;
     color: rgba(255,255,255,0.8);
     animation: bounce 2s infinite;
     cursor: pointer;
-    padding: 10px;
     text-transform: uppercase;
     font-weight: 600;
     letter-spacing: 1px;
 }
 
+/* Keyframes para a animação de salto vertical do indicador */
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -88,841 +130,343 @@ p {
 
 /* ==========================================================================
    3. BARRA DE NAVEGAÇÃO
-   Barra branca que aparece no topo ao rolar a página.
    ========================================================================== */
+
+/* * Container da barra de navegação fixa (Sticky).
+ * Inicialmente invisível (opacity: 0) e não clicável (pointer-events: none).
+ * O estado visível é controlado via JavaScript adicionando a classe .visible.
+ */
 .story-nav {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; 
+    left: 0; 
     width: 100%;
     height: var(--nav-height);
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px); /* Efeito de vidro */
+    backdrop-filter: blur(12px); /* Efeito de vidro fosco (Glassmorphism) */
     border-bottom: 1px solid rgba(0,0,0,0.08);
     z-index: 900;
-    display: flex;
+    display: flex; 
     flex-direction: column;
-    opacity: 0; /* Começa invisível */
+    opacity: 0; 
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
 
-.story-nav.visible {
-    opacity: 1;
-    pointer-events: all;
+/* Estado ativo da barra de navegação */
+.story-nav.visible { 
+    opacity: 1; 
+    pointer-events: all; 
 }
 
+/* Container interno para alinhamento dos itens de navegação */
 .story-track {
-    flex: 1;
-    display: flex;
-    align-items: center;
+    flex: 1; 
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    gap: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    gap: 20px; 
+    max-width: 1200px; 
+    margin: 0 auto; 
     padding: 0 20px;
 }
 
+/* * Item individual de navegação (Link).
+ * Define estilos base e transições para hover/active.
+ */
 .story-item {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     gap: 8px;
-    padding: 6px 14px;
+    padding: 6px 14px; 
     border-radius: 20px;
-    color: #888;
+    color: #888; 
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.85rem; 
     font-weight: 600;
-    cursor: pointer;
+    cursor: pointer; 
     transition: all 0.3s ease;
     border: 1px solid transparent;
 }
 
-.story-item:hover {
-    color: var(--fnp-blue);
+/* Estados Hover e Active do item de navegação */
+.story-item:hover, .story-item.active {
+    color: var(--fnp-dark-blue); 
     background: rgba(25, 70, 133, 0.05);
 }
 
-/* Estilo do item ativo na barra */
 .story-item.active {
-    color: var(--fnp-blue);
-    background: rgba(25, 70, 133, 0.1);
+    background: rgba(25, 70, 133, 0.1); 
     border-color: rgba(25, 70, 133, 0.2);
 }
 
-/* Bolinha com número da seção */
+/* * Indicador numérico circular dentro do item de navegação.
+ */
 .story-num {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 20px; 
+    height: 20px; 
     border-radius: 50%;
-    background: #eee;
-    font-size: 0.7rem;
+    background: #eee; 
+    font-size: 0.7rem; 
     color: #666;
 }
 
-.story-item.active .story-num {
-    background: var(--fnp-blue);
-    color: white;
+/* Estado ativo do indicador numérico */
+.story-item.active .story-num { 
+    background: var(--fnp-dark-blue); 
+    color: white; 
 }
 
-/* Barra de progresso amarela fina */
-.story-progress-bar {
-    height: 3px;
-    background: var(--fnp-yellow);
-    width: 0%;
-    transition: width 0.2s linear;
+/* Cabeçalho da seção visível apenas em dispositivos móveis */
+.section-header-mobile { 
+    display: none; 
 }
 
-/* Cabeçalho para Mobile (aparece dentro da seção) */
-.section-header-mobile { display: none; }
-
+/* Media Query para dispositivos móveis (Tablet/Celular) */
 @media(max-width: 768px) {
-    .story-label { display: none; } /* Esconde texto no mobile */
-    .section-header-mobile { 
-        display: block; 
-        padding: 30px 5% 10px; 
-        text-align: center; 
-    }
-    .section-header-mobile h2 { 
-        font-size: 1.8rem; 
-        color: var(--fnp-blue); 
-    }
+    .story-label { display: none; } /* Oculta labels de texto para economizar espaço */
+    .section-header-mobile { display: block; padding: 30px 5% 10px; text-align: center; }
+    .section-header-mobile h2 { font-size: 1.8rem; color: var(--fnp-dark-blue); }
 }
 
 /* ==========================================================================
-   4. ESTRUTURA GERAL DAS SEÇÕES (O LIVRO)
-   Define o layout padrão para "O Problema", "Metodologia", etc.
+   4. ESTRUTURA GERAL DAS SEÇÕES
    ========================================================================== */
+
+/* * Container padrão para seções de conteúdo (Estilo "Livro").
+ * Define altura mínima de tela cheia e background branco.
+ */
 .book-section {
-    position: relative;
+    position: relative; 
     background: #fff;
-    min-height: 100vh;
+    min-height: 100vh; 
     border-bottom: 1px solid #eee;
-    scroll-margin-top: var(--nav-height); /* Ajuste para o scroll parar no lugar certo */
+    scroll-margin-top: var(--nav-height); /* Ajuste de scroll para âncoras */
 }
 
+/* Container de conteúdo centralizado e limitado a 1200px */
 .section-content {
     padding: 40px 5% 100px;
-    display: flex;
+    display: flex; 
     gap: 50px;
-    max-width: 1200px;
+    max-width: 1200px; 
     margin: 0 auto;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Permite quebra de linha em telas menores */
 }
 
-/* Colunas de texto e visual */
+/* * Colunas flexíveis para layout de Texto e Visual.
+ * min-width garante legibilidade antes da quebra de linha (wrap).
+ */
 .text-col, .visual-col {
-    flex: 1;
+    flex: 1; 
     min-width: 320px;
-    display: flex;
-    flex-direction: column;
+    display: flex; 
+    flex-direction: column; 
     justify-content: center;
 }
 
-/* Estilo dos textos longos */
+/* Estilo tipográfico para textos longos (Editorial) */
 .editorial-text {
-    text-align: justify;
+    text-align: justify; 
     font-size: 1.1rem;
-    line-height: 1.8;
+    line-height: 1.8; 
     color: #444;
 }
 
-/* Caixa de destaque amarela */
+/* Componente de caixa de destaque lateral */
 .highlight-box {
     background: rgba(238, 175, 25, 0.1);
     border-left: 4px solid var(--fnp-yellow);
-    padding: 20px;
+    padding: 20px; 
     margin-top: 30px;
     border-radius: 0 8px 8px 0;
 }
 
 /* ==========================================================================
-   5. SEÇÃO: O PROBLEMA (GRÁFICOS E STATS)
+   5. SEÇÃO: O PROBLEMA
    ========================================================================== */
+
+/* * Componente de Estatística em destaque (Número Grande).
+ * Borda lateral esquerda vermelha para ênfase.
+ */
 .big-stat {
-    margin: 30px 0;
+    margin: 30px 0; 
     padding-left: 20px;
     border-left: 4px solid var(--accent-red);
 }
 
 .big-stat .number {
-    display: block;
-    font-size: 4rem;
+    display: block; 
+    font-size: 4rem; 
     font-weight: 800;
-    color: var(--fnp-blue);
+    color: var(--fnp-dark-blue); 
     line-height: 1;
 }
 
-.highlight-line {
-    margin-top: 10px !important;
-    display: block;
-    font-weight: 600;
-}
-
-.fraction-highlight {
-    font-size: 1.5rem;
-    color: var(--fnp-dark-blue);
-    font-weight: 800;
-}
-
-/* Cartões com gráficos de barra */
-.stat-card {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-}
-
-.chart-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-.bar-container {
-    flex: 1;
-    height: 18px;
-    background: #e9ecef;
-    border-radius: 9px;
-    margin: 0 15px;
-    overflow: hidden;
-}
-
-.bar {
-    height: 100%;
-    width: 0;
-    background: #adb5bd;
-    border-radius: 9px;
-}
-
-.bar.alert { background: var(--accent-red); }
-.bar.success { background: var(--fnp-green); }
-
-/* Caixa azul de conclusão */
+/* * Caixa de Insight (Conclusão).
+ * Fundo escuro com texto claro e sombra elevada.
+ */
 .insight-box {
-    margin-top: 30px;
-    padding: 30px;
-    background: var(--fnp-blue);
+    margin-top: 30px; 
+    background: var(--fnp-dark-blue);
+    padding: 30px; 
+    border-radius: 12px; 
     color: white;
-    border-radius: 12px;
     box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
+    -webkit-font-smoothing: antialiased; /* Renderização de fonte otimizada para fundo escuro */
 }
 
 .insight-box h4 {
-    color: var(--fnp-yellow);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: var(--fnp-yellow); 
     margin-bottom: 15px;
-}
-
-.insight-box p { color: rgba(255,255,255,0.95); margin: 0; }
-
-/* ==========================================================================
-   6. SEÇÃO: METODOLOGIA (QUINTIS/DECIS)
-   ========================================================================== */
-.methodology-container {
-    padding: 30px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-}
-
-.toggle-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.toggle-btn {
-    border: 1px solid #ddd;
-    background: #f8f9fa;
-    padding: 8px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    color: #666;
-    transition: all 0.3s;
-}
-
-.toggle-btn.active {
-    background: var(--fnp-blue);
-    color: white;
-    border-color: var(--fnp-blue);
-}
-
-.bar-wrapper {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    height: 80px;
-    width: 100%;
-    margin: 20px 0;
-}
-
-.slice {
-    flex: 1 1 0px; /* Garante tamanho igual */
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 0.75rem;
-    border-radius: 4px;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.4s ease;
-}
-
-.slice.visible { opacity: 1; transform: translateY(0); }
-
-/* Cores das barras - Gradiente Completo */
-.q-1 { background: #d73027; } 
-.q-2 { background: #fc8d59; } 
-.q-3 { background: #fee08b; } 
-.q-4 { background: #91cf60; } 
-.q-5 { background: #1a9850; }
-
-.d-1 { background: #a50026; }
-.d-2 { background: #d73027; }
-.d-3 { background: #f46d43; }
-.d-4 { background: #fdae61; }
-.d-5 { background: #fee08b; }
-.d-6 { background: #d9ef8b; }
-.d-7 { background: #a6d96a; }
-.d-8 { background: #66bd63; }
-.d-9 { background: #1a9850; }
-.d-10 { background: #006837; }
-/* ==========================================================================
-   7. SEÇÃO: PLATAFORMA (CARDS INTERATIVOS)
-   Cards que expandem no desktop e mostram GIF no hover.
-   ========================================================================== */
-.carousel-container {
-    position: relative;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-bottom: 40px;
-    overflow: visible;
-    z-index: 1;
-}
-
-.carousel-track {
-    display: flex;
-    gap: 30px;
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.platform-card {
-    min-width: 100%;
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    min-height: 450px;
-}
-
-/* Comportamento Hover no Desktop */
-@media (min-width: 900px) {
-    .platform-card { min-width: calc(33.333% - 20px); }
-    .nav-btn { display: none; }
-
-    .platform-card:hover {
-        z-index: 500;
-        min-width: 60% !important; /* Expande */
-        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-        border-color: transparent;
-        transform: translateY(-10px);
-    }
-    
-    .platform-card:hover .card-content { width: 40%; border-right: 1px solid #eee; }
-    .platform-card:hover .card-visual { 
-        position: absolute; top: 0; right: 0; 
-        width: 60%; height: 100%; border-bottom: none; 
-    }
-    .platform-card:hover .hover-gif { opacity: 1; transform: scale(1); }
-    .platform-card:hover .css-chart, .platform-card:hover .css-pie, .platform-card:hover .css-map { opacity: 0; }
-    .platform-card:hover .editorial-list, .platform-card:hover .card-btn { display: flex; }
-    .platform-card:hover .description-text { display: none; }
-}
-
-.card-visual {
-    height: 220px;
-    width: 100%;
-    background: #f8f9fa;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden; border-bottom: 1px solid #eee;
-}
-
-.hover-gif {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    opacity: 0; /* Escondido até o hover */
-    transform: scale(1.1);
-    transition: all 0.5s ease;
-    z-index: 2;
-}
-
-.card-content { padding: 30px; flex: 1; display: flex; flex-direction: column; background: #fff; }
-.platform-card h4 { font-size: 1.4rem; color: var(--fnp-blue); margin-bottom: 10px; }
-.description-text { font-size: 1rem; color: #666; margin-bottom: 0; transition: opacity 0.3s; }
-
-.editorial-list {
-    display: none;
-    flex-direction: column; gap: 15px; margin-top: 20px;
-    animation: fadeInList 0.5s ease forwards;
-}
-
-.editorial-item {
-    font-size: 0.9rem;
-    border-left: 2px solid var(--fnp-yellow);
-    padding-left: 10px;
-    color: #555;
-}
-
-.item-title {
-    font-weight: 700;
-    color: var(--fnp-dark-blue);
-    display: block;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    margin-bottom: 4px;
-}
-
-.card-btn {
-    display: none;
-    margin-top: auto; align-self: flex-start;
-    padding: 12px 24px;
-    background: var(--fnp-blue); color: white;
-    font-weight: 700; border-radius: 6px;
-    text-decoration: none; opacity: 0;
-    animation: fadeInList 0.5s ease forwards 0.2s;
-}
-.card-btn:hover { background: var(--fnp-dark-blue); }
-
-@keyframes fadeInList { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Elementos Gráficos (CSS Art) */
-.css-chart { display: flex; align-items: flex-end; gap: 6px; height: 60px; z-index: 1; }
-.chart-bar { width: 12px; background: var(--fnp-blue); border-radius: 2px 2px 0 0; animation: growBar 2s infinite alternate; }
-.b1 { height: 30%; animation-delay: 0s; opacity: 0.5; } .b2 { height: 60%; animation-delay: 0.2s; opacity: 0.7; } .b3 { height: 80%; animation-delay: 0.4s; opacity: 1; }
-@keyframes growBar { from { transform: scaleY(0.5); } to { transform: scaleY(1); } }
-
-/* Botões do Carrossel (Mobile) */
-.nav-btn {
-    position: absolute; top: 50%; transform: translateY(-50%);
-    background: white; border: 1px solid #ddd; color: var(--fnp-blue);
-    width: 40px; height: 40px; border-radius: 50%;
-    cursor: pointer; z-index: 20;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.nav-btn.prev { left: -15px; } .nav-btn.next { right: -15px; }
-
-/* ==========================================================================
-   8. SEÇÃO: NOTÍCIAS (LAYOUT CORRIGIDO)
-   ========================================================================== */
-.news-container {
-    width: 100%;
-    overflow: hidden;
-    padding: 20px 0 60px;
-}
-
-.news-track {
-    display: flex;
-    gap: 30px;
-    overflow-x: auto; /* Permite scroll horizontal */
-    padding: 20px 40px;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none; /* Esconde barra de rolagem */
-    flex-wrap: nowrap; /* GARANTE QUE NÃO QUEBRE LINHA */
-}
-
-.news-card-pro {
-    min-width: 320px; /* Largura fixa para cada card */
-    height: 420px;
-    background: #fff;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    scroll-snap-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    text-decoration: none;
-    flex-shrink: 0; /* IMPEDE QUE O CARD ENCOLHA */
-}
-
-.news-card-pro:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-.news-bg-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.news-card-pro:hover .news-bg-img { transform: scale(1.05); }
-
-.news-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
-}
-
-.news-info {
-    position: absolute;
-    bottom: 0; left: 0;
-    padding: 25px;
-    width: 100%;
-    z-index: 2;
-    color: white;
-}
-
-.news-tag {
-    background: var(--fnp-yellow);
-    color: var(--fnp-dark-blue);
-    padding: 4px 10px;
-    font-size: 0.7rem;
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    font-size: 1rem; 
     font-weight: 800;
-    text-transform: uppercase;
-    border-radius: 4px;
 }
 
-.news-title-pro {
-    font-size: 1.3rem;
-    margin: 10px 0;
-    color: #fff;
-    line-height: 1.3;
+.insight-box p { 
+    color: rgba(255,255,255,0.95); 
+    margin: 0; 
+    font-family: 'Inter', sans-serif !important;
 }
 
-.news-read-more {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: rgba(255,255,255,0.8);
-    margin-top: 10px;
-}
-
-/* ==========================================================================
-   9. FOOTER
-   ========================================================================== */
-.main-footer {
-    background-color: var(--fnp-dark-blue);
-    color: white;
-    padding: 80px 0 20px;
-    position: relative;
-    z-index: 10;
-}
-
-.footer-grid {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.footer-brand h3 {
-    color: white;
-    font-size: 2rem;
-    margin-bottom: 15px;
-}
-
-.footer-brand p {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.95rem;
-}
-
-.footer-col h4 {
-    color: var(--fnp-yellow);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
-}
-
-.footer-links a {
-    display: block;
-    color: rgba(255,255,255,0.7);
+/* * Restrição de dimensão para ícones na legenda do gráfico.
+ * Previne distorção de layout com imagens SVG ou PNG grandes.
+ */
+.pie-legend img, 
+.pie-legend svg,
+.legend-icon-large {
+    width: 32px;
+    height: auto;
     margin-bottom: 8px;
-    cursor: pointer;
-    text-decoration: none;
+    display: block;
 }
 
-.footer-links a:hover { color: var(--fnp-yellow); }
-
-.fnp-box {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.data-fnp-img {
-    height: 60px !important;
-    width: auto;
-    opacity: 0.9;
-    margin-bottom: 10px;
-}
-
-.footer-bottom-bar {
-    text-align: center;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin-top: 40px;
-    padding-top: 20px;
-    font-size: 0.8rem;
-    opacity: 0.5;
-}
-
-@media (max-width: 768px) {
-    .section-content { flex-direction: column; }
-    .footer-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
-    .fnp-box { align-items: center; }
-}
-
-
-/* ==========================================================================
-   11. GRÁFICO DE RECEITAS (PIE CHART SVG ANIMADO)
-   ========================================================================== */
+/* Container flex para o gráfico de pizza e suas legendas */
 .pie-chart-container {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     gap: 30px;
-    margin-top: 30px;
+    margin-top: 30px; 
     background: #f8f9fa;
-    padding: 25px;
+    padding: 25px; 
     border-radius: 16px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* Wrapper do SVG para posicionamento */
-.svg-wrapper {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    flex-shrink: 0;
+/* Container da coluna de legendas */
+.pie-legend { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
 }
 
-/* O SVG em si */
-.pie-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg); /* Começa do topo */
+/* Item individual da legenda com borda colorida indicativa */
+.legend-item { 
+    padding-left: 15px; 
+    border-left: 4px solid #ddd; 
 }
 
-/* Estilo comum dos círculos */
-.pie-svg circle {
-    fill: none;
-    stroke-width: 40; /* Espessura do "donut" */
-}
-
-/* Círculo Fundo (Azul - 100% inicialmente) */
-.circle-base {
-    stroke: var(--fnp-blue);
-}
-
-/* Círculo Topo (Vermelho - Vai animar) */
-.circle-progress {
-    stroke: var(--accent-red);
-    stroke-dasharray: 502; /* Circunferência total */
-    stroke-dashoffset: 502; /* Começa escondido (offset total) */
-    stroke-linecap: butt;
-    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1); /* Animação suave */
-}
-
-/* Texto no meio do buraco do donut */
-.chart-center-text {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--fnp-dark-blue);
-    text-transform: uppercase;
-}
-
-/* Legendas Laterais */
-.pie-legend {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.legend-item {
-    padding-left: 15px;
-    border-left: 4px solid #ddd;
-}
-
-.blue-theme { border-color: var(--fnp-blue); }
+/* Variações de tema para a borda da legenda */
+.blue-theme { border-color: var(--fnp-dark-blue); }
 .red-theme { border-color: var(--accent-red); }
 
-.legend-label {
-    display: block;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 4px;
+/* Tipografia dos rótulos e valores da legenda */
+.legend-label { 
+    display: block; 
+    font-size: 0.85rem; 
+    text-transform: uppercase; 
+    font-weight: 600; 
+    color: #666; 
 }
 
-.legend-value {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--fnp-dark-blue);
+.legend-value { 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: var(--fnp-dark-blue); 
 }
 
 .red-theme .legend-value { color: var(--accent-red); }
 
-/* Responsivo */
-@media (max-width: 480px) {
-    .pie-chart-container { flex-direction: column; text-align: center; }
-    .legend-item { border-left: none; border-top: 4px solid #ddd; padding-top: 10px; padding-left: 0; }
+/* Wrapper para posicionamento relativo do SVG */
+.svg-wrapper { 
+    position: relative; 
+    width: 160px; 
+    height: 160px; 
+    flex-shrink: 0; 
 }
 
-/* ==========================================================================
-   12. GRÁFICOS DE POPULAÇÃO (COLUNA DIREITA)
-   ========================================================================== */
+/* Configuração do SVG de Pizza. Rotacionado -90deg para iniciar no topo */
+.pie-svg { 
+    width: 100%; 
+    height: 100%; 
+    transform: rotate(-90deg); 
+}
+
+.pie-svg circle { 
+    fill: none; 
+    stroke-width: 40; 
+}
+
+/* Círculos de progresso do gráfico */
+.circle-base { stroke: var(--fnp-dark-blue); }
+
+.circle-progress {
+    stroke: var(--accent-red); 
+    stroke-dasharray: 502; /* Circunferência total */
+    stroke-dashoffset: 502; /* Offset inicial para animação */
+    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Texto centralizado no gráfico de Donut */
+.chart-center-text {
+    position: absolute; 
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700; 
+    font-size: 0.9rem;
+    color: var(--fnp-dark-blue); 
+    text-transform: uppercase;
+}
+
+/* Grupo de gráficos de barras laterais (População) */
 .pop-chart-group {
-    margin-bottom: 30px;
+    margin-bottom: 30px; 
     background: #fff;
-    padding: 20px;
+    padding: 20px; 
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 
-.pop-chart-group h4 {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    color: #333;
+.pop-row { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    margin-bottom: 12px; 
 }
 
-.pop-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 12px;
+.pop-year { 
+    font-weight: 700; 
+    color: #888; 
+    font-size: 0.9rem; 
+    width: 40px; 
 }
 
-.pop-year {
-    font-weight: 700;
-    color: #888;
-    font-size: 0.9rem;
-    width: 40px;
-}
-
-.pop-track {
-    flex: 1;
-    height: 12px;
-    background: #f0f0f0;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.pop-bar {
-    height: 100%;
-    width: 0; /* Animação via JS */
-    border-radius: 6px;
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.pop-value {
-    font-weight: 800;
-    font-size: 0.95rem;
-    width: 60px;
-    text-align: right;
-    color: #333;
-}
-
-/* Cores das barras */
-.pop-bar.red { background: var(--accent-red); }
-.pop-bar.red-light { background: var(--accent-red); opacity: 0.3; } /* 2000: Vermelho Suave */
-
-.pop-bar.green { background: var(--fnp-green); }
-.pop-bar.green-light { background: var(--fnp-green); opacity: 0.3; } /* 2000: Verde Suave */
-/* Caixa Azul - Ajuste de Tipografia */
-.insight-box {
-    background: var(--fnp-dark-blue);
-    padding: 30px; /* Um pouco mais de respiro */
-    border-radius: 12px;
-    color: white;
-    /* Corrige a renderização da fonte em fundo escuro */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
-}
-
-.insight-box h4 {
-    color: var(--fnp-yellow);
-    margin-bottom: 15px;
-    text-transform: uppercase; /* Garante CAIXA ALTA igual à imagem */
-    letter-spacing: 1px; /* Espaçamento mais elegante */
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: 'Inter', sans-serif; /* Força a fonte correta */
-}
-
-.insight-box p {
-    color: rgba(255,255,255,0.95);
-    font-size: 1rem;
-    line-height: 1.6; /* Melhora a leitura */
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-}
-
-.insight-box strong {
-    color: #fff;
-    font-weight: 700;
-}
-
-/* ==========================================================================
-   13. DETALHES VISUAIS (Ícones, Badges e Interação)
-   ========================================================================== */
-
-/* 1. Ícones na Legenda */
-.legend-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-.legend-icon {
-    width: 18px;
-    height: 18px;
-    opacity: 0.7;
-}
-
-.blue-theme .legend-icon { color: var(--fnp-blue); }
-.red-theme .legend-icon { color: var(--accent-red); }
-
-/* 2. Badges de Crescimento */
+/* Agrupamento vertical para valor absoluto e porcentagem */
 .pop-value-group {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    width: 60px; /* Mantém a largura fixa da coluna de valores */
+    width: 60px;
 }
 
+/* Estilo base para a etiqueta de variação percentual */
 .growth-badge {
     font-size: 0.7rem;
     font-weight: 800;
@@ -930,419 +474,468 @@ p {
     border-radius: 4px;
     margin-top: 2px;
     white-space: nowrap;
+    display: inline-block;
 }
 
+/* Variação de cor para crescimento positivo (Verde) */
+.badge-green {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--fnp-green);
+}
+
+/* Variação de cor para crescimento negativo ou alerta (Vermelho) */
 .badge-red {
     background: rgba(198, 40, 40, 0.1);
     color: var(--accent-red);
 }
 
-.badge-green {
-    background: rgba(26, 152, 80, 0.1);
-    color: var(--fnp-green);
+/* Trilha de fundo da barra de progresso */
+.pop-track { 
+    flex: 1; 
+    height: 12px; 
+    background: #f0f0f0; 
+    border-radius: 6px; 
+    overflow: hidden; 
+    cursor: pointer; 
 }
 
-/* 3. Micro-interação de Hover nas Barras */
-.pop-track {
-    cursor: pointer; /* Indica interatividade */
+/* Barra de progresso preenchida com transição de largura */
+.pop-bar { 
+    height: 100%; 
+    width: 0; 
+    border-radius: 6px; 
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
 }
 
-.pop-bar {
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1), 
-                filter 0.3s ease, 
-                transform 0.3s ease !important; /* Adiciona transição suave para o efeito */
-}
+/* Variações de cores para as barras */
+.pop-bar.red { background: var(--accent-red); }
+.pop-bar.red-light { background: var(--accent-red); opacity: 0.3; }
+.pop-bar.green { background: var(--fnp-green); }
+.pop-bar.green-light { background: var(--fnp-green); opacity: 0.3; }
 
-/* Efeito ao passar o mouse: Brilho e leve aumento */
-.pop-chart-group:hover .pop-bar {
-    opacity: 0.7; /* Foco nas barras do grupo */
-}
-
-.pop-chart-group:hover .pop-bar:hover {
-    opacity: 1;
-    filter: brightness(1.1) saturate(1.2);
-    transform: scaleY(1.15); /* Cresce levemente na vertical */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* Detalhes da Legenda em Lista */
-.legend-details {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0 0 0;
-    border-top: 1px solid #eee;
-    padding-top: 15px;
-}
-
-.legend-details li {
-    font-size: 0.9rem;
-    color: #555;
-    margin-bottom: 12px;
-    display: block; 
-    line-height: 1.4;
-}
-
-.legend-details strong {
-    color: var(--fnp-dark-blue);
-    font-weight: 700;
-    display: block; 
-    margin-bottom: 4px; 
+.pop-value { 
+    font-weight: 800; 
+    font-size: 0.95rem; 
+    width: 60px; 
+    text-align: right; 
 }
 
 /* ==========================================================================
-   14. COMPONENTE "SAIBA MAIS" (Expansível)
+   6. SEÇÃO: METODOLOGIA
    ========================================================================== */
-.expandable-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 25px; 
-    position: relative;
-    z-index: 10;
-}
 
-/* REGRA ESPECÍFICA: Só puxa para cima na seção Problema */
-#problema .expandable-wrapper {
-    margin-top: -50px;
-}
-
-.btn-read-more {
-    background: transparent;
-    border: 1px solid #ddd;
-    border-radius: 50px;
-    padding: 10px 24px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--fnp-blue);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-
-.btn-read-more:hover {
-    background: var(--fnp-light-gray); /* Fundo cinza bem clarinho */
-    border-color: var(--fnp-blue);
-    transform: translateY(-2px);
-}
-
-.chevron-icon {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.4s ease;
-}
-
-/* Estado Aberto (Classe controlada via JS) */
-.btn-read-more.active {
-    background: var(--fnp-blue);
-    color: white;
-    border-color: var(--fnp-blue);
-}
-
-.btn-read-more.active .chevron-icon {
-    transform: rotate(180deg);
-}
-
-/* Área de Conteúdo Oculto */
-.expandable-content {
-    max-height: 0;
-    overflow: hidden;
-    width: 100%;
-    max-width: 800px; /* Largura ideal para leitura */
-    transition: max-height 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* Animação suave */
-}
-
-.content-inner {
-    padding-top: 30px;
-    padding-bottom: 10px;
-    border-top: 1px solid transparent; /* Reserva espaço */
-}
-
-/* Ajuste fino no texto expandido */
-.content-inner p {
-    margin-bottom: 20px;
-    font-size: 1rem;
-    line-height: 1.7;
-    color: #444;
-}
-
-/* ==========================================================================
-   15. SEÇÃO METODOLOGIA (INFOGRÁFICO)
-   ========================================================================== */
+/* Container flexível para o infográfico vertical */
 .metodologia-infographic {
-    display: flex;
-    flex-direction: column;
+    display: flex; 
+    flex-direction: column; 
     gap: 15px;
-    align-items: center;
+    align-items: center; 
     width: 100%;
 }
-
+.metodologia-infographic .step-card,
+.step-header,
+.q-box, 
+.d-box,
+.q-label,
+.step-title, 
+.step-subtitle {
+    font-family: 'Inter', sans-serif !important;
+}
+/* Card individual de cada passo da metodologia */
 .step-card {
-    background: white;
-    border: 1px solid #eee;
+    background: white; 
+    border: 1px solid #eee; 
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px; 
     width: 100%;
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    position: relative;
+    position: relative; 
     overflow: hidden;
 }
 
 .step-header {
-    display: flex;
-    flex-direction: column;
+    display: flex; 
+    flex-direction: column; 
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 20px; 
     text-align: center;
 }
 
+.step-subtitle {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1rem;
+    display: block; /* Garante que o padding e border funcionem */
+    width: 100%;
+}
+
+/* Indicador numérico do passo (Badge) */
 .step-number {
-    background: var(--fnp-blue);
+    background: var(--fnp-dark-blue); 
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 24px; 
+    height: 24px; 
     border-radius: 50%;
-    font-size: 0.8rem;
+    font-size: 0.8rem; 
     font-weight: 700;
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     justify-content: center;
     margin-bottom: 8px;
 }
 
-.step-title {
-    font-weight: 700;
-    color: var(--fnp-dark-blue);
-    font-size: 0.95rem;
-}
-
-.step-subtitle {
-    font-size: 0.8rem;
-    color: #888;
-    margin-top: 2px;
-}
-
-/* Ilustração de Barras (Passo 1) */
+/* Container para gráfico de barras de ordenação */
 .bars-container {
-    display: flex;
-    align-items: flex-end;
+    display: flex; 
+    align-items: flex-end; 
     justify-content: center;
-    gap: 6px;
-    height: 80px;
+    gap: 6px; 
+    height: 80px; 
     padding-bottom: 5px;
     border-bottom: 2px solid #eee;
 }
 
+/* Barra individual com animação de crescimento vertical */
 .bar {
-    width: 8%;
-    background: #ddd;
+    width: 8%; 
+    background: #ddd; 
     border-radius: 4px 4px 0 0;
-    animation: growBar 1.5s ease-out forwards; /* Animação simples ao carregar */
+    animation: growBar 1.5s ease-out forwards;
 }
 
-/* Alturas escalonadas para simular ordenação */
-.b1 { height: 10%; animation-delay: 0.1s; }
-.b2 { height: 20%; animation-delay: 0.2s; }
-.b3 { height: 30%; animation-delay: 0.3s; }
-.b4 { height: 40%; animation-delay: 0.4s; }
-.b5 { height: 50%; animation-delay: 0.5s; }
-.b6 { height: 60%; animation-delay: 0.6s; }
-.b7 { height: 70%; animation-delay: 0.7s; }
-.b8 { height: 85%; animation-delay: 0.8s; }
-.b9 { height: 100%; animation-delay: 0.9s; background: var(--fnp-blue); } /* Destaque na última */
+/* Definição de alturas e atrasos de animação para efeito cascata */
+.b1 { height: 10%; animation-delay: 0.1s; } .b2 { height: 20%; animation-delay: 0.2s; }
+.b3 { height: 30%; animation-delay: 0.3s; } .b4 { height: 40%; animation-delay: 0.4s; }
+.b5 { height: 50%; animation-delay: 0.5s; } .b6 { height: 60%; animation-delay: 0.6s; }
+.b7 { height: 70%; animation-delay: 0.7s; } .b8 { height: 85%; animation-delay: 0.8s; }
+.b9 { height: 100%; animation-delay: 0.9s; background: var(--fnp-dark-blue); }
 
-@keyframes growBar {
-    from { transform: scaleY(0); }
-    to { transform: scaleY(1); }
-}
+@keyframes growBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
-/* Seta de conexão */
+/* Seta direcional entre os passos */
 .flow-arrow {
-    color: #ccc;
-    width: 24px;
-    height: 24px;
-    animation: bounce 2s infinite;
+    color: #ccc; 
+    width: 24px; 
+    height: 24px; 
+    margin: 0 auto;
+    display: block;
+    animation: bounce 2s infinite; 
 }
 
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(5px); }
+/* Containers flex para grupos de Quintis e Decis */
+.quintis-row, .decis-row { 
+    display: flex; 
+    justify-content: space-between; 
+    width: 100%; 
 }
+.quintis-row { gap: 6px; } 
+.decis-row { gap: 4px; }
 
-/* Blocos de Quintis (Passo 2) */
-.quintis-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-}
-
-.q-box {
-    flex: 1;
-    height: 70px; /* Quadrados gordinhos */
-    border-radius: 6px;
-    display: flex;
+/* * Caixas visuais para Quintis e Decis.
+ * Inclui transição para efeitos de hover.
+ */
+.q-box, .d-box {
+    flex: 1; 
+    display: flex; 
     flex-direction: column;
-    align-items: center;
+    align-items: center; 
     justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 0.8rem;
-    position: relative;
-    transition: transform 0.3s ease;
+    color: white; 
+    font-weight: 700; 
+    border-radius: 4px;
+    transition: transform 0.2s ease;
 }
 
-.q-box:hover {
-    transform: translateY(-3px);
-}
+.q-box { height: 70px; border-radius: 6px; }
+.d-box { height: 40px; cursor: default; }
 
-.q-perc {
-    font-size: 0.9rem;
-}
-
-.q-label {
-    font-size: 0.65rem;
-    font-weight: 400;
-    opacity: 0.9;
-    margin-top: 2px;
-}
-
-/* Cores do IFEM (Baseadas no seu print) */
-.q-red { background-color: #C0392B; }
-.q-orange { background-color: #E67E22; }
-.q-yellow { background-color: #F1C40F; }
-.q-green-light { background-color: #27AE60; opacity: 0.7; }
-.q-green { background-color: #27AE60; }
+/* Efeitos de escala no hover */
+.q-box:hover { transform: translateY(-3px); }
+.d-box:hover { transform: scale(1.1); }
 
 /* ==========================================================================
-   VISUAL DOS DECIS (10 GRUPOS)
+   PALETA DE CORES OFICIAL (EXTRAÍDA DA PLATAFORMA)
    ========================================================================== */
+
+/* Quintis (5 Grupos) */
+.q-red         { background: #A81C21; } /* 1º Quintil - Vermelho Escuro */
+.q-orange      { background: #E47326; } /* 2º Quintil - Laranja */
+.q-yellow      { background: #F4D01D; } /* 3º Quintil - Amarelo */
+.q-green-light { background: #6AC074; } /* 4º Quintil - Verde Claro */
+.q-green       { background: #1C9148; } /* 5º Quintil - Verde FNP */
+
+/* Decis (10 Grupos - Gradiente exato da legenda) */
+.d-1  { background: #960E16; } /* 1º Decil - Vinho */
+.d-2  { background: #CF3026; } /* 2º Decil - Vermelho */
+.d-3  { background: #EB6630; } /* 3º Decil - Laranja Escuro */
+.d-4  { background: #F8A555; } /* 4º Decil - Laranja Claro */
+.d-5  { background: #FCE182; } /* 5º Decil - Amarelo Pálido */
+.d-6  { background: #DDEC88; } /* 6º Decil - Lima Pálido */
+.d-7  { background: #9DD57D; } /* 7º Decil - Verde Pastel */
+.d-8  { background: #60BA69; } /* 8º Decil - Verde Médio */
+.d-9  { background: #2D964D; } /* 9º Decil - Verde Forte */
+.d-10 { background: #076931; } /* 10º Decil - Verde Escuro */
+
+/* Tipografia interna das caixas */
+.q-perc { font-size: 0.9rem; font-weight: 800; }
+.q-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
+
+/* Divisor visual com texto centralizado */
 .chart-divider {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    margin: 20px 0;
+    margin: 20px 0; 
     position: relative;
 }
 
-.chart-divider::before {
-    content: "";
-    height: 1px;
-    background: #eee;
+.chart-divider::before { 
+    content: ""; 
+    height: 1px; 
+    background: #eee; 
+    width: 100%; 
+    position: absolute; 
+}
+
+.chart-divider span { 
+    background: white; 
+    padding: 0 10px; 
+    font-size: 0.75rem; 
+    color: #999; 
+    z-index: 2; 
+    position: relative; 
+}
+
+/* * Tooltip CSS puro para os Decis.
+ * Exibe atributo 'title' ao passar o mouse.
+ */
+.d-box { position: relative; }
+
+.d-box:hover::after {
+    content: attr(title); 
+    position: absolute; 
+    bottom: 100%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    background: #333; 
+    color: white;
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-size: 0.7rem;
+    white-space: nowrap; 
+    margin-bottom: 6px; 
+    pointer-events: none;
+    animation: fadeIn 0.2s forwards; 
+    z-index: 10;
+}
+
+/* Seta indicadora do Tooltip */
+.d-box:hover::before {
+    content: ""; 
+    position: absolute; 
+    bottom: 100%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    border: 5px solid transparent;
+    border-top-color: #333; 
+    margin-bottom: -4px; 
+    animation: fadeIn 0.2s forwards;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* Ajuste responsivo para Decis em telas muito pequenas */
+@media (max-width: 480px) { 
+    .decis-row { flex-wrap: wrap; } 
+    .d-box { flex: 1 1 18%; margin-bottom: 4px; } 
+}
+
+/* ==========================================================================
+   7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS)
+   ========================================================================== */
+
+/* Intro centralizada da seção */
+.section-intro { width: 100%; text-align: center; margin-bottom: 40px; }
+.intro-text { max-width: 600px; margin: 0 auto; color: #666; }
+
+/* * Grid principal de funcionalidades.
+ * Define estratégia Mobile First (1 coluna) evoluindo para 3 colunas em Desktop.
+ */
+.features-grid {
+    display: grid;
+    gap: 30px;
+    margin-top: 40px;
     width: 100%;
-    position: absolute;
+    grid-template-columns: 1fr; /* Mobile First */
+}
+
+@media (min-width: 1024px) {
+    .features-grid {
+        grid-template-columns: repeat(3, 1fr); /* Breakpoint Desktop */
+    }
+}
+
+/* * Card de funcionalidade com comportamento interativo.
+ * Controla overflow e posicionamento de camadas (z-index).
+ */
+.feature-card {
+    background: white; 
+    border-radius: 16px; 
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    position: relative; 
+    height: 420px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+    display: flex; 
+    flex-direction: column;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* Container absoluto para mídia de fundo (Vídeo/Imagem) */
+.media-container {
+    width: 100%; 
+    height: 100%;
+    position: absolute; 
+    top: 0; 
+    left: 0; 
     z-index: 1;
 }
 
-.chart-divider span {
-    background: white;
-    padding: 0 10px;
-    font-size: 0.75rem;
-    color: #999;
-    position: relative;
-    z-index: 2;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.card-video { width: 100%; height: 100%; object-fit: cover; }
+.static-media.map-bg { background: #e0f2f1; }
+.static-media.chart-bg { background: #fff3e0; }
 
-.decis-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px; /* Espaço menor entre os blocos */
-    width: 100%;
-}
-
-.d-box {
-    flex: 1;
-    height: 40px; /* Mais baixo que os quintis */
-    border-radius: 4px;
-    transition: transform 0.2s ease;
-    cursor: default;
-}
-
-.d-box:hover {
-    transform: scale(1.1); /* Efeito de destaque ao passar o mouse */
-}
-
-/* Gradiente de Cores para os 10 Decis */
-.d-1 { background-color: #C0392B; } /* Vermelho Forte */
-.d-2 { background-color: #D94530; }
-.d-3 { background-color: #E67E22; } /* Laranja */
-.d-4 { background-color: #F39C12; }
-.d-5 { background-color: #F1C40F; } /* Amarelo */
-.d-6 { background-color: #F7DC6F; }
-.d-7 { background-color: #82E0AA; } /* Verde Claro */
-.d-8 { background-color: #58D68D; }
-.d-9 { background-color: #2ECC71; }
-.d-10 { background-color: #27AE60; } /* Verde Forte */
-
-/* Tooltip Customizado nos Decis */
-.d-box {
-    position: relative; /* Necessário para posicionar o tooltip */
-}
-
-.d-box:hover::after {
-    content: attr(title); /* Pega o texto do atributo title */
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    margin-bottom: 6px;
-    z-index: 10;
+/* Máscara de gradiente para melhorar legibilidade de texto sobre vídeo */
+.video-overlay {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);
     pointer-events: none;
-    opacity: 0;
-    animation: fadeIn 0.2s forwards;
 }
 
-/* Setinha do tooltip */
-.d-box:hover::before {
-    content: "";
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: #333;
-    margin-bottom: -4px;
-    opacity: 0;
-    animation: fadeIn 0.2s forwards;
+/* * Painel de informações deslizante.
+ * Inicialmente posicionado para mostrar apenas o título.
+ * Desliza para cima (translateY: 0) no hover do card pai.
+ */
+.card-info {
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%;
+    padding: 25px; 
+    z-index: 2; 
+    background: white;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(calc(100% - 85px)); /* Estado inicial oculto */
 }
 
-@keyframes fadeIn {
-    to { opacity: 1; }
-}
-@media (max-width: 480px) {
-    .decis-row {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    .d-box {
-        flex: 1 1 18%; /* Ocupa aprox 20% espaço, forçando 5 por linha */
-        margin-bottom: 4px;
-    }
+.feature-card:hover .card-info { transform: translateY(0); }
+
+/* Cabeçalho do painel de informações com ícone */
+.info-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+.info-header h4 { margin: 0; font-size: 1.2rem; color: var(--fnp-dark-blue); }
+
+/* Detalhes que aparecem apenas durante o hover */
+.hover-details {
+    opacity: 0; 
+    transition: opacity 0.3s ease 0.1s;
+    font-size: 0.9rem; 
+    color: #555;
 }
 
-/* Texto "Menor/Maior Receita" dentro dos Quintis */
-.q-label {
-    font-size: 0.6rem;       /* Fonte pequena para caber */
-    text-transform: uppercase;
-    margin-top: 4px;         /* Espaço do número */
-    line-height: 1.1;        /* Entrelinha apertada */
-    text-align: center;
-    opacity: 0.9;
-    font-weight: 600;
+.feature-card:hover .hover-details { opacity: 1; }
+
+.hover-details ul { margin-top: 10px; padding-left: 20px; }
+.hover-details li { margin-bottom: 5px; }
+
+/* Container de ícone com cores de fundo variáveis */
+.icon-box {
+    width: 40px; 
+    height: 40px; 
+    border-radius: 8px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: white; 
+    flex-shrink: 0;
 }
 
-/* Ajuste fino para o número não brigar com o texto */
-.q-box .q-perc {
-    font-size: 1.1rem;
-    font-weight: 800;
+.blue-icon { background: var(--fnp-dark-blue); }
+.green-icon { background: #27AE60; }
+.orange-icon { background: #E67E22; }
+
+/* ==========================================================================
+   8. UTILITÁRIOS (BOTÃO SAIBA MAIS)
+   ========================================================================== */
+
+/* Wrapper para centralização do botão expansível */
+.expandable-wrapper {
+    width: 100%; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    margin-top: 25px; 
+    position: relative; 
+    z-index: 10;
 }
+
+/* Ajuste de margem específico para a seção Problema */
+#problema .expandable-wrapper { margin-top: -50px; }
+
+/* Botão de ação para expandir conteúdo */
+.btn-read-more {
+    background: transparent; 
+    border: 1px solid #ddd;
+    border-radius: 50px; 
+    padding: 10px 24px;
+    font-family: 'Inter', sans-serif; 
+    font-size: 0.9rem;
+    font-weight: 600; 
+    color: var(--fnp-dark-blue);
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-read-more:hover { 
+    background: var(--fnp-light-gray); 
+    border-color: var(--fnp-dark-blue); 
+    transform: translateY(-2px); 
+}
+
+/* Estado ativo do botão (Conteúdo expandido) */
+.btn-read-more.active { 
+    background: var(--fnp-dark-blue); 
+    color: white; 
+    border-color: var(--fnp-dark-blue); 
+}
+
+/* Rotação do ícone Chevron quando ativo */
+.btn-read-more.active .chevron-icon { transform: rotate(180deg); }
+.chevron-icon { width: 16px; height: 16px; transition: transform 0.4s ease; }
+
+/* * Container de conteúdo oculto.
+ * Controlado via max-height para animação de abertura suave.
+ */
+.expandable-content {
+    max-height: 0; 
+    overflow: hidden; 
+    width: 100%; 
+    max-width: 800px;
+    transition: max-height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content-inner { padding-top: 30px; padding-bottom: 10px; }

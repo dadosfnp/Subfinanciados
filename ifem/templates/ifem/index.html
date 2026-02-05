@@ -284,108 +284,82 @@
         </div>
     </section>
 
-    <section id="plataforma" class="book-section">
-        <div class="section-header-mobile"><h2>3. Plataforma</h2></div>
+    <section id="funcionalidades" class="book-section">
+        <div class="section-header-mobile"><h2>3. Funcionalidades</h2></div>
 
-        <div class="section-content">
-            <div class="text-col full-width" style="text-align: center;">
-                <h3>Explore as 3 dimensões do IFEM</h3>
-                <p class="editorial-text" style="max-width: 700px; margin: 0 auto 30px;">
-                    Passe o mouse sobre os cards para ver a plataforma em ação.
-                </p>
+        <div class="section-content column-layout">
+            <div class="section-intro">
+                <h3>O que você encontra na plataforma</h3>
+                <p class="intro-text">Três eixos de análise para entender o financiamento municipal.</p>
+            </div>
 
-                <div class="carousel-container">
-                    <button class="nav-btn prev" onclick="moveSlide(-1)">&#10094;</button>
-                    
-                    <div class="carousel-track" id="track">
+            <div class="features-grid">
+                
+                <div class="feature-card video-card">
+                    <div class="media-container">
+                        <video autoplay muted loop playsinline class="card-video">
+                            <source src="{% static 'ifem/videos/analise_grafica.mp4' %}" type="video/mp4">
+                        </video>
+                        <div class="video-overlay"></div> </div>
+
+                    <div class="card-info">
+                        <div class="info-header">
+                            <div class="icon-box blue-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20V14"></path></svg>
+                            </div>
+                            <h4>Análise Gráfica</h4>
+                        </div>
                         
-                        <div class="platform-card">
-                            <div class="card-visual">
-                                <img src="{% static 'global/images/gif-analise-grafica.gif' %}" 
-                                     class="hover-gif" 
-                                     onerror="this.style.display='none'" 
-                                     alt="Demo Gráfica">
-                                <div class="css-chart">
-                                    <div class="chart-bar b1"></div>
-                                    <div class="chart-bar b2"></div>
-                                    <div class="chart-bar b3"></div>
-                                </div>
-                            </div>
-                            <div class="card-content">
-                                <h4>1. Análise Gráfica</h4>
-                                <p class="description-text">Entenda a distribuição da população por níveis de receita em uma visão macro.</p>
-                                <div class="editorial-list">
-                                    <div class="editorial-item">
-                                        <span class="item-title">Série Histórica</span>
-                                        Visualize a migração da riqueza ao longo das décadas.
-                                    </div>
-                                    <div class="editorial-item">
-                                        <span class="item-title">Filtros Avançados</span>
-                                        Recorte por Região, UF ou Regiões Metropolitanas.
-                                    </div>
-                                </div>
-                                <a href="{% url 'home' %}" class="card-btn">Acessar Gráficos</a>
-                            </div>
+                        <div class="hover-details">
+                            <p>Visualize a desigualdade em duas dimensões:</p>
+                            <ul>
+                                <li><strong>Comparação de Quintis:</strong> Quem tem mais receita?</li>
+                                <li><strong>Linha do Tempo:</strong> A evolução desde 2000.</li>
+                            </ul>
                         </div>
-
-                        <div class="platform-card">
-                            <div class="card-visual">
-                                <img src="{% static 'global/images/gif-analise-municipal.gif' %}" 
-                                     class="hover-gif" 
-                                     onerror="this.style.display='none'" 
-                                     alt="Demo Municipal">
-                                <div class="css-map">
-                                    <div class="map-dot p1"></div><div class="map-dot p2"></div>
-                                    <div class="map-dot p3"></div><div class="map-pulse"></div>
-                                </div>
-                            </div>
-                            <div class="card-content">
-                                <h4>2. Análise Municipal</h4>
-                                <p class="description-text">Mapa interativo que revela a saúde financeira de cada um dos 5.570 municípios.</p>
-                                <div class="editorial-list">
-                                    <div class="editorial-item">
-                                        <span class="item-title">Raio-X Completo</span>
-                                        Detalhe da receita: quanto vem de fora vs. arrecadação própria.
-                                    </div>
-                                    <div class="editorial-item">
-                                        <span class="item-title">Comparação Relativa</span>
-                                        Compare com a média do estado e municípios de mesmo porte.
-                                    </div>
-                                </div>
-                                <a href="{% url 'mapa' %}" class="card-btn">Acessar Mapa</a>
-                            </div>
-                        </div>
-
-                        <div class="platform-card">
-                            <div class="card-visual">
-                                <img src="{% static 'global/images/gif-analise-agregada.gif' %}" 
-                                     class="hover-gif" 
-                                     onerror="this.style.display='none'" 
-                                     alt="Demo Agregada">
-                                <div class="css-pie">
-                                    <div class="pie-slice"></div><div class="pie-center"></div>
-                                </div>
-                            </div>
-                            <div class="card-content">
-                                <h4>3. Análise Agregada</h4>
-                                <p class="description-text">Visão sistêmica para identificar padrões e distorções no financiamento nacional.</p>
-                                <div class="editorial-list">
-                                    <div class="editorial-item">
-                                        <span class="item-title">Fragilidades Estruturais</span>
-                                        Investigue quais regras de transferência impulsionam a desigualdade.
-                                    </div>
-                                    <div class="editorial-item">
-                                        <span class="item-title">Arrecadação por Tributo</span>
-                                        Explore os dados segregados por tipo de imposto ou fonte.
-                                    </div>
-                                </div>
-                                <a href="{% url 'analise_municipal' %}" class="card-btn">Ver Análise Completa</a>
-                            </div>
-                        </div>
-
                     </div>
-                    <button class="nav-btn next" onclick="moveSlide(1)">&#10095;</button>
                 </div>
+
+                <div class="feature-card">
+                    <div class="media-container static-media map-bg">
+                        </div>
+                    <div class="card-info">
+                        <div class="info-header">
+                            <div class="icon-box green-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            </div>
+                            <h4>Mapa Interativo</h4>
+                        </div>
+                        <div class="hover-details">
+                            <p>Navegue pelo território nacional.</p>
+                            <ul>
+                                <li>Filtros por Estado e Região.</li>
+                                <li>Raio-X financeiro de cada cidade.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="media-container static-media chart-bg">
+                        </div>
+                    <div class="card-info">
+                        <div class="info-header">
+                            <div class="icon-box orange-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                            </div>
+                            <h4>Análise Agregada</h4>
+                        </div>
+                        <div class="hover-details">
+                            <p>Entenda a estrutura das receitas.</p>
+                            <ul>
+                                <li>Composição Tributária.</li>
+                                <li>Indicadores Macroeconômicos.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
