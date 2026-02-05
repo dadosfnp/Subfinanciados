@@ -23,12 +23,18 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleNav();
     }
 
-    // 3. Highlight dos Itens do Menu
-    const sections = ['problema', 'intro', 'plataforma', 'noticias'];
+// 3. Highlight dos Itens do Menu
+    /* Mapeamento explícito para corrigir divergência entre ID da Seção e ID do Nav */
+    const sectionMap = [
+        { id: 'problema', navId: 'nav-problema' },
+        { id: 'metodologia', navId: 'nav-intro' },        /* HTML id="metodologia" vs Nav id="nav-intro" */
+        { id: 'funcionalidades', navId: 'nav-plataforma' }, /* HTML id="funcionalidades" vs Nav id="nav-plataforma" */
+        { id: 'noticias', navId: 'nav-noticias' }
+    ];
     
-    sections.forEach((id, index) => {
-        const section = document.getElementById(id);
-        const navItem = document.getElementById(`nav-${id}`);
+    sectionMap.forEach((item, index) => {
+        const section = document.getElementById(item.id);
+        const navItem = document.getElementById(item.navId);
         
         if (section && navItem) {
             ScrollTrigger.create({
@@ -40,7 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.querySelectorAll('.story-item').forEach(el => el.classList.remove('active'));
                         navItem.classList.add('active');
                         
-                        const progress = ((index + 1) / sections.length) * 100;
+                        /* Calcula o progresso baseado no índice atual do array mapeado */
+                        const progress = ((index + 1) / sectionMap.length) * 100;
                         gsap.to('#reading-progress', { width: `${progress}%`, duration: 0.3 });
                     }
                 }
