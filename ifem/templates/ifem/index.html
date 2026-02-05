@@ -368,7 +368,8 @@
     </section>
 
     <section id="noticias" class="book-section">
-        <div class="section-header-mobile"><h2>4. Notícias</h2></div>
+        <div class="section-header-mobile"><h2>9. Notícias</h2></div>
+        
         <div class="section-content">
             <div class="text-col full-width">
                 <div class="news-container">
@@ -380,10 +381,16 @@
                                 {% else %}
                                     <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
                                 {% endif %}
+                                
                                 <div class="news-overlay"></div>
+                                
                                 <div class="news-info">
-                                    <span class="news-tag">{{ noticia.tag }}</span>
+                                    <span class="news-date-badge">
+                                        {{ noticia.data_publicacao|default:noticia.data|date:"d M Y" }}
+                                    </span>
+                                    
                                     <h3 class="news-title-pro">{{ noticia.titulo }}</h3>
+                                    
                                     <div class="news-read-more">Ler matéria completa &rarr;</div>
                                 </div>
                             </a>
@@ -397,7 +404,7 @@
             </div>
         </div>
     </section>
-
+    
     <footer class="main-footer">
         <div class="footer-grid">
             <div class="footer-brand">
