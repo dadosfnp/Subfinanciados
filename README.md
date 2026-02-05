@@ -199,7 +199,7 @@ Este projeto utiliza um **fluxo profissional baseado em Fork**, garantindo que o
   `dadosfnp/Subfinanciados` → branch `main`
 
 - **Ambiente de Desenvolvimento (Fork):**  
-  `pedrofnp/IFEM` → branch `next`
+  `pedrofnp/IFEM` → branch `main`
 
 Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretamente na `main` de produção.
 
