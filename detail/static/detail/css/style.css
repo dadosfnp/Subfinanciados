@@ -102,7 +102,7 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 /* ==========================================================================
-   SIDEBAR E FILTROS (BRANCO PURO)
+   SIDEBAR E FILTROS - CORREÇÃO FINAL (FUNDO BRANCO TOTAL)
    ========================================================================== */
 
 /* 1. Container da Sidebar */
@@ -118,159 +118,110 @@ body { font-family: 'Inter', sans-serif; }
     z-index: 10;
 }
 
-/* 2. Reset e Estilização das Boxes (Selects/Inputs) */
+/* 2. Container de Grupo (para os filtros com lupa) */
+.content-wrapper .sidebar .input-group {
+    display: flex !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+}
+
+/* 3. ESTILIZAÇÃO DE TODOS OS SELECTS E INPUTS (COM OU SEM LUPA) 
+   Aqui garantimos que Classificar, Subgrupo, etc. fiquem BRANCOS.
+*/
 .content-wrapper .sidebar .form-select,
 .content-wrapper .sidebar select,
 .content-wrapper .sidebar .form-control {
-    background-color: #ffffff !important;
-    color: #374151 !important;
-    border: 1px solid #d1d5db !important;
+    /* Cor de Fundo e Borda */
+    background-color: #ffffff !important;  /* GARANTE FUNDO BRANCO */
+    border: 1px solid #d1d5db !important;  /* Borda Cinza Clara */
+    color: #374151 !important;             /* Texto Cinza Escuro */
+    
+    /* Geometria Padrão */
     border-radius: 0.375rem !important;
     font-size: 0.875rem;
+    padding: .25rem .5rem;
+    height: calc(1.8125rem + 2px);
     
-    /* Remove o cinza nativo de navegadores (Chrome/Safari/Edge) */
+    /* Remove estilo nativo e sombra */
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
+    box-shadow: none !important;
 
-    /* Re-insere a seta customizada sobre o fundo branco */
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    /* Seta do Select (Cinza Escura) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
     background-position: right 0.75rem center !important;
     background-size: 16px 12px !important;
+    
+    width: 100%;
 }
 
-/* Estado de Foco */
+/* 4. REGRAS ESPECÍFICAS PARA SELECTS DENTRO DE GRUPO (LADO DA LUPA) */
+.content-wrapper .sidebar .input-group .form-select,
+.content-wrapper .sidebar .input-group select,
+.content-wrapper .sidebar .input-group .form-control {
+    /* Remove a curva e a borda direita para colar na lupa */
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important; 
+    
+    flex: 1 1 auto;
+    width: 1% !important;
+}
+
+/* Estado de Foco (Fica azul ao clicar) */
 .content-wrapper .sidebar .form-select:focus,
 .content-wrapper .sidebar .form-control:focus {
     border-color: #194685 !important;
-    box-shadow: 0 0 0 2px rgba(25, 70, 133, 0.1) !important;
     outline: none !important;
+    z-index: 2;
 }
 
-/* 3. Lupa e Grupos de Entrada */
-.content-wrapper .sidebar .input-group {
-    display: flex;
-    align-items: stretch;
-    flex-wrap: nowrap;
-}
-
-/*Labels em Azul Marinho (Limpar Filtros)*/
-.content-wrapper .sidebar .input-group .form-select {
-    flex: 1 1 0;
-    width: auto !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
-
-.content-wrapper .sidebar .input-group > .btn {
+/* 5. A LUPA (LADO DIREITO) - AZUL */
+.content-wrapper .sidebar .input-group > .btn,
+.content-wrapper .sidebar .input-group > button {
     background-color: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    border-left: none !important;
-    color: #6b7280;
-    padding: .25rem .5rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+    color: #194685 !important;
+    
+    /* Borda AZUL */
+    border: 1px solid #194685 !important;
+    border-left: 1px solid #194685 !important; /* Divisória Azul */
+    
+    /* Arredondamento só na direita */
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+    
+    margin-left: -1px !important; /* Puxa para cobrir a borda cinza */
+    padding: .25rem .75rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    z-index: 5;
 }
 
-.content-wrapper .sidebar .input-group > .btn {
-    background-color: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    border-left: none !important;
-    color: #6b7280;
-    padding: .25rem .5rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    display: flex;
-    align-items: center;
+/* Ícone da Lupa */
+.content-wrapper .sidebar .input-group > .btn svg,
+.content-wrapper .sidebar .input-group > .btn i,
+.content-wrapper .sidebar .input-group > button i {
+    fill: #194685 !important;
+    color: #194685 !important;
 }
 
-/*  Botões Buscar em Azul */
-.metric-card .chart-section{
-  width: 100%;
-  margin-top: .75rem;
-  padding-top: .75rem;
-  border-top: 1px solid #e5e7eb;   /* linha separando o título do gráfico */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;                       /* espaço entre composição e densidade */
+/* Hover da Lupa */
+.content-wrapper .sidebar .input-group > .btn:hover,
+.content-wrapper .sidebar .input-group > button:hover {
+    background-color: #f0f8ff !important;
+    color: #143a6e !important;
+    z-index: 10;
 }
-
-/*  Botão Limpar Filtros em Azul */
-.content-wrapper .sidebar button.w-100,
-.content-wrapper .sidebar .btn-secondary { 
-    background-color: #194685 !important;
-    border-color: #194685 !important;
-    color: #fff !important;
-    font-weight: 600;
-    border-radius: 6px;
-    margin-top: 1rem;
-}
-
-/* Cada gráfico possui seu próprio "pai" com altura controlada */
-.metric-card .chart-slot{
-  position: relative;              /* referência para o canvas */
-  height: 260px;                   /* ajuste fino da altura */
-  overflow: hidden;                /* impede vazar do card branco (só para o canvas) */
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-}
-
-/* O canvas ocupa 100% do slot */
-.metric-card .chart-slot > canvas{
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-}
-
-/* Responsivo: gráficos um pouco menores em telas pequenas */
-@media (max-width: 768px){
-  .metric-card .chart-slot{ height: 220px; }
-}
-
-/* Cores específicas para o KPI da diferença da média */
-.summary-card .value#kpi-diferenca-media.neg { color: #dc2626 !important; }  /* vermelho */
-.summary-card .value#kpi-diferenca-media.pos { color: #16a34a !important; }  /* verde */
-.summary-card .value#kpi-diferenca-media.neu { color: #111827 !important; }  /* neutro */
 
 /* ==========================================================================
-   AJUSTE DOS BUSCADORES (LUPAS) E BOTÕES
+   BOTÕES DE AÇÃO (Limpar / Baixar)
    ========================================================================== */
-
-/* 1. Transforma o botão da lupa (input-group > .btn) em Azul */
-.content-wrapper .sidebar .input-group > .btn {
-    background-color: #194685 !important; /* Azul padrão */
-    border: 1px solid #194685 !important;
-    border-left: none !important;
-    color: #ffffff !important; /* Ícone da lupa branco */
-    padding: .25rem .75rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.15s ease;
-}
-
-/* 2. Efeito de Hover na Lupa */
-.content-wrapper .sidebar .input-group > .btn:hover {
-    background-color: #123361 !important; /* Tom mais escuro */
-    border-color: #123361 !important;
-    color: #ffffff !important;
-}
-
-/* 3. Ajuste do Select para casar perfeitamente com a lupa azul */
-.content-wrapper .sidebar .input-group .form-select {
-    flex: 1 1 0;
-    width: auto !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-right: none !important; /* Remove linha dupla entre select e lupa */
-}
-
-/* 4. Padronização dos demais botões (Limpar, Print, Baixar) */
 .content-wrapper .sidebar button.w-100,
 .content-wrapper .sidebar .btn-secondary,
 .content-wrapper .sidebar .btn-download { 
@@ -284,6 +235,17 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .content-wrapper .sidebar button.w-100:hover,
-.content-wrapper .sidebar .btn-secondary:hover {
+.content-wrapper .sidebar .btn-secondary:hover,
+.content-wrapper .sidebar .btn-download:hover {
     background-color: #123361 !important;
+    border-color: #123361 !important;
 }
+
+/* Mantém ajustes gráficos e KPI */
+.metric-card .chart-section{ width: 100%; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 16px; }
+.metric-card .chart-slot{ position: relative; height: 260px; overflow: hidden; border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
+.metric-card .chart-slot > canvas{ display: block; width: 100%; height: 100%; max-width: 100%; }
+@media (max-width: 768px){ .metric-card .chart-slot{ height: 220px; } }
+.summary-card .value#kpi-diferenca-media.neg { color: #dc2626 !important; }
+.summary-card .value#kpi-diferenca-media.pos { color: #16a34a !important; }
+.summary-card .value#kpi-diferenca-media.neu { color: #111827 !important; }
