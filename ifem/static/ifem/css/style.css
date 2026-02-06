@@ -886,6 +886,48 @@ p {
     .decis-row { flex-wrap: wrap; } 
     .d-box { flex: 1 1 18%; margin-bottom: 4px; } 
 }
+/* ==========================================================================
+   METODOLOGIA - TÓPICOS (Dentro do Saiba Mais)
+   ========================================================================== */
+
+.methodology-topics {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding-top: 10px;
+    text-align: left; /* Garante alinhamento à esquerda */
+}
+
+.topic-item {
+    border-left: 3px solid #e0e0e0; /* Linha lateral para guiar a leitura */
+    padding-left: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.topic-item:hover {
+    border-left-color: var(--fnp-blue); /* Destaque azul ao passar o mouse */
+}
+
+.topic-item h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--fnp-dark-blue);
+    font-family: 'Inter', sans-serif;
+}
+
+.topic-item p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #555;
+    font-family: 'Inter', sans-serif;
+}
+
+.topic-item strong {
+    color: var(--fnp-dark-blue);
+    font-weight: 600;
+}
 
 /* ==========================================================================
    7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS) - REVISADO
