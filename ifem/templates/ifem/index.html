@@ -46,11 +46,16 @@
     <section class="hero-section">
         <div class="hero-content">
             <h1 class="big-title">
-                O dinheiro na contramão da
+                O dinheiro na <span class="highlight-contramao">contramão</span><br>
+                da população.
             </h1>
-            <p class="subtitle">Veja como o financiamento das cidades mudou no Brasil.</p>
+            
+            <p class="hero-subtitle">
+                Veja como o financiamento das cidades mudou no Brasil.
+            </p>
+            
             <div class="scroll-indicator" onclick="scrollToId('problema')">
-                ▼ COMEÇAR A HISTÓRIA
+                Começar a história
             </div>
         </div>
     </section>
@@ -119,7 +124,24 @@
             <div class="visual-col">
                 
                 <div class="pop-chart-group">
-                    <h4>Municípios Pobres (População)</h4>
+                    <div class="chart-header-row">
+                        <div class="header-title-wrapper">
+                            <h4>Municípios de menor renda</h4>
+                            
+                            <div class="info-tooltip">
+                                <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <div class="tooltip-content">
+                                    Refere-se ao <strong>1º Quintil</strong>: os 20% de municípios com a menor Receita Corrente <em>per capita</em> do país.
+                                </div>
+                            </div>
+                        </div>
+                        <span class="header-unit">(População)</span>
+                    </div>
+
                     <div class="pop-row">
                         <span class="pop-year">2000</span>
                         <div class="pop-track"><div class="pop-bar red-light" data-width="51%"></div></div>
@@ -136,7 +158,24 @@
                 </div>
 
                 <div class="pop-chart-group">
-                    <h4>Municípios Ricos (População)</h4>
+                    <div class="chart-header-row">
+                        <div class="header-title-wrapper">
+                            <h4>Municípios de maior renda</h4>
+                            
+                            <div class="info-tooltip">
+                                <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <div class="tooltip-content">
+                                    Refere-se ao <strong>5º Quintil</strong>: os 20% de municípios com a maior Receita Corrente <em>per capita</em> do país.
+                                </div>
+                            </div>
+                        </div>
+                        <span class="header-unit">(População)</span>
+                    </div>
+
                     <div class="pop-row">
                         <span class="pop-year">2000</span>
                         <div class="pop-track"><div class="pop-bar green-light" data-width="59%"></div></div>
@@ -157,7 +196,6 @@
                     <p>Municípios mais populosos passaram a receber <strong>menos receita por habitante</strong>, enquanto uma parcela relevante dos recursos se concentra em localidades com pouca população.</p>
                 </div>
             </div>
-        </div>
 
         <div class="expandable-wrapper">
             <button class="btn-read-more" aria-expanded="false">

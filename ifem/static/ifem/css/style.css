@@ -59,75 +59,88 @@ p {
 }
 
 /* ==========================================================================
-   2. HERO SECTION (CAPA)
+   HERO SECTION
    ========================================================================== */
 
-/* * Container principal da primeira dobra (Above the fold).
- * Utiliza Flexbox para centralização vertical/horizontal e altura mínima relativa à viewport.
- */
 .hero-section {
     position: relative;
     width: 100%;
-    min-height: 85vh;
+    min-height: 90vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--fnp-dark-blue);
-    color: white;
-    padding: 100px 20px 60px 20px;
-    text-align: center;
+    background-color: var(--fnp-blue, #1D437A);
+    padding: 0 20px;
     overflow: hidden;
+    z-index: 1;
 }
 
-/* * Título principal da Hero Section.
- * Utiliza função clamp() para tipografia fluida responsiva.
- */
+.hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1000px;
+    text-align: center;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .big-title {
-    font-size: clamp(3rem, 5vw, 5rem);
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
     line-height: 1.1;
-    margin-bottom: 20px;
     color: #ffffff;
+    letter-spacing: -0.04em;
+    margin: 0 0 30px 0;
 }
 
-/* Classes utilitárias para coloração de palavras-chave no título */
-.text-mais { color: var(--fnp-green); }
-.text-menos { color: var(--fnp-yellow); }
-
-/* * Subtítulo da Hero Section.
- * Aplica decoração de sublinhado customizada com cor e espaçamento específicos.
- */
-.subtitle {
-    font-size: 1.5rem;
-    color: rgba(255,255,255,0.9);
-    max-width: 700px;
-    margin: 0 auto 40px;
-    font-weight: 500;
-    text-decoration: underline;
-    text-decoration-color: var(--fnp-yellow);
-    text-decoration-thickness: 3px;
-    text-underline-offset: 8px;
+.highlight-contramao {
+    color: var(--fnp-yellow, #F3A912);
+    display: inline-block;
+    font-weight: 900;
+    transform: skewX(12deg);
+    margin: 0 6px;
+    text-shadow: 0 4px 15px rgba(243, 169, 18, 0.25);
 }
 
-/* * Indicador visual de rolagem (Seta).
- * Inclui animação infinita 'bounce' para incentivar a interação.
- */
+.hero-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 auto 50px auto;
+    max-width: 640px;
+    line-height: 1.5;
+}
+
 .scroll-indicator {
-    margin-top: 40px;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.8);
-    animation: bounce 2s infinite;
-    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ffffff;
     text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 1px;
+    letter-spacing: 0.15em;
+    padding: 16px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s ease;
 }
 
-/* Keyframes para a animação de salto vertical do indicador */
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+.scroll-indicator:hover {
+    background-color: #ffffff;
+    color: var(--fnp-blue, #1D437A);
+    border-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
-
 /* ==========================================================================
    3. BARRA DE NAVEGAÇÃO (Sticky com Ícones SVG)
    ========================================================================== */
@@ -320,9 +333,7 @@ p {
    5. SEÇÃO: O PROBLEMA
    ========================================================================== */
 
-/* * Componente de Estatística em destaque (Número Grande).
- * Borda lateral esquerda vermelha para ênfase.
- */
+/* Componente de Estatística em destaque (Número Grande) */
 .big-stat {
     margin: 30px 0; 
     padding-left: 20px;
@@ -337,17 +348,16 @@ p {
     line-height: 1;
 }
 
-/* * Caixa de Insight (Conclusão).
- * Fundo escuro com texto claro e sombra elevada.
- */
+/* Caixa de Insight (Conclusão) */
 .insight-box {
-    margin-top: 30px; 
+    margin-top: 30px;
+    margin-bottom: 40px;
     background: var(--fnp-dark-blue);
     padding: 30px; 
     border-radius: 12px; 
     color: white;
     box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
-    -webkit-font-smoothing: antialiased; /* Renderização de fonte otimizada para fundo escuro */
+    -webkit-font-smoothing: antialiased;
 }
 
 .insight-box h4 {
@@ -365,9 +375,7 @@ p {
     font-family: 'Inter', sans-serif !important;
 }
 
-/* * Restrição de dimensão para ícones na legenda do gráfico.
- * Previne distorção de layout com imagens SVG ou PNG grandes.
- */
+/* Restrição de dimensão para ícones na legenda do gráfico */
 .pie-legend img, 
 .pie-legend svg,
 .legend-icon-large {
@@ -432,7 +440,7 @@ p {
     flex-shrink: 0; 
 }
 
-/* Configuração do SVG de Pizza. Rotacionado -90deg para iniciar no topo */
+/* Configuração do SVG de Pizza */
 .pie-svg { 
     width: 100%; 
     height: 100%; 
@@ -449,8 +457,8 @@ p {
 
 .circle-progress {
     stroke: var(--accent-red); 
-    stroke-dasharray: 502; /* Circunferência total */
-    stroke-dashoffset: 502; /* Offset inicial para animação */
+    stroke-dasharray: 502;
+    stroke-dashoffset: 502;
     transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -473,6 +481,32 @@ p {
     padding: 20px; 
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+/* Novo Container do Cabeçalho para separar Título e Unidade */
+.chart-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 8px;
+}
+
+.chart-header-row h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--fnp-dark-blue);
+    font-weight: 700;
+}
+
+/* Estilo da unidade (População) acima dos números */
+.header-unit {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .pop-row { 
@@ -549,6 +583,75 @@ p {
     font-size: 0.95rem; 
     width: 60px; 
     text-align: right; 
+}
+
+/* Wrapper para agrupar Título + Ícone */
+.header-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Componente Tooltip */
+.info-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+}
+
+/* Ícone "i" */
+.info-icon {
+    width: 18px;
+    height: 18px;
+    color: #9ca3af; /* Cinza suave */
+    transition: color 0.2s ease;
+}
+
+.info-tooltip:hover .info-icon {
+    color: var(--fnp-blue);
+}
+
+/* Caixa de Texto do Tooltip (Hidden por padrão) */
+.tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 140%; /* Posiciona acima do ícone */
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    width: 220px;
+    background-color: var(--fnp-dark-blue);
+    color: #fff;
+    text-align: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none; /* Evita flicker */
+}
+
+/* Seta do Tooltip */
+.tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%; /* Embaixo da caixa */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--fnp-dark-blue) transparent transparent transparent;
+}
+
+/* Estado Hover (Show) */
+.info-tooltip:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* ==========================================================================
@@ -1030,12 +1133,13 @@ p {
 
 /* Wrapper para centralização do botão expansível */
 .expandable-wrapper {
-    width: 100%; 
-    display: flex; 
+    display: flex;
     flex-direction: column;
-    align-items: center; 
-    margin-top: 25px; 
-    position: relative; 
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    width: 100%;
+    position: relative;
     z-index: 10;
 }
 
