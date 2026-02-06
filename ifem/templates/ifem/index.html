@@ -229,7 +229,7 @@
 
         <div class="section-content">
             <div class="text-col">
-                <h3 style="margin-bottom: 20px;">A Ferramenta da Equidade</h3>
+                <h3 style="margin-bottom: 20px;">Indicadores de Financiamento e Equidade Municipal.</h3>
                 
                 <div class="editorial-text">
                     <p>Para comparar realidades tão distintas, o IFEM utiliza um método simples e justo: <strong>ordenar para entender</strong>.</p>
@@ -332,7 +332,7 @@
         </div>
     </section>
 
-    <section id="funcionalidades" class="book-section">
+<section id="funcionalidades" class="book-section">
         <div class="section-header-mobile"><h2>3. Funcionalidades</h2></div>
 
         <div class="section-content column-layout">
@@ -420,6 +420,28 @@
                     </div>
                 </a>
 
+            </div>
+
+            <div class="section-action-footer">
+                <button class="btn-tutorial" onclick="toggleTutorial()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+                    </svg>
+                    Veja tutorial
+                </button>
+            </div>
+        </div>
+
+        <div id="tutorialModal" class="video-modal-overlay" onclick="toggleTutorial()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <button class="close-modal-btn" onclick="toggleTutorial()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <video controls class="modal-video-player" id="tutorialVideo">
+                    <source src="{% static 'ifem/videos/tutorial_plataforma.mp4' %}" type="video/mp4">
+                    Seu navegador não suporta vídeos HTML5.
+                </video>
             </div>
         </div>
     </section>

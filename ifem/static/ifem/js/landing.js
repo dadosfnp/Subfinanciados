@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleNav();
     }
 
-// 3. Highlight dos Itens do Menu
+    // 3. Highlight dos Itens do Menu
     /* Mapeamento explícito para corrigir divergência entre ID da Seção e ID do Nav */
     const sectionMap = [
         { id: 'problema', navId: 'nav-problema' },
@@ -225,85 +225,106 @@ window.moveSlide = function(direction) {
 };
 
 // ======================================================================
-    // Lógica do Botão "Saiba Mais" (Expansível + Scroll Automático)
-    // ======================================================================
-    const expandButtons = document.querySelectorAll('.btn-read-more');
+// Lógica do Botão "Saiba Mais" (Expansível + Scroll Automático)
+// ======================================================================
+const expandButtons = document.querySelectorAll('.btn-read-more');
 
-    expandButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const isExpanded = this.classList.contains('active');
-            const spanText = this.querySelector('.btn-text');
+expandButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+        const content = this.nextElementSibling;
+        const isExpanded = this.classList.contains('active');
+        const spanText = this.querySelector('.btn-text');
 
-            if (isExpanded) {
-                // Fechar
-                this.classList.remove('active');
-                this.setAttribute('aria-expanded', 'false');
-                content.style.maxHeight = null;
-                spanText.textContent = "Saiba mais";
-            } else {
-                // Abrir
-                this.classList.add('active');
-                this.setAttribute('aria-expanded', 'true');
-                content.style.maxHeight = content.scrollHeight + "px";
-                spanText.textContent = "Mostrar menos";
+        if (isExpanded) {
+            // Fechar
+            this.classList.remove('active');
+            this.setAttribute('aria-expanded', 'false');
+            content.style.maxHeight = null;
+            spanText.textContent = "Saiba mais";
+        } else {
+            // Abrir
+            this.classList.add('active');
+            this.setAttribute('aria-expanded', 'true');
+            content.style.maxHeight = content.scrollHeight + "px";
+            spanText.textContent = "Mostrar menos";
 
-                // Scroll suave para centralizar o texto ---
-                setTimeout(() => {
-                    content.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
-                    });
-                }, 30); 
-            }
-        });
+            // Scroll suave para centralizar o texto
+            setTimeout(() => {
+                content.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 30); 
+        }
     });
+});
 
 // ======================================================================
-    //  Navegação Horizontal de Notícias
-    // ======================================================================
-    const newsContainer = document.getElementById('news-scroll-container');
-    const prevBtn = document.querySelector('.prev-btn');
-    const nextBtn = document.querySelector('.next-btn');
+// Navegação Horizontal de Notícias
+// ======================================================================
+const newsContainer = document.getElementById('news-scroll-container');
+const prevBtn = document.querySelector('.prev-btn');
+const nextBtn = document.querySelector('.next-btn');
 
-    if (newsContainer && prevBtn && nextBtn) {
-        
-        // Função para scrollar
-        const scrollAmount = 344; // Largura do card (320) + gap (24)
-        
-        nextBtn.addEventListener('click', () => {
-            newsContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        });
+if (newsContainer && prevBtn && nextBtn) {
+    
+    // Função para scrollar
+    const scrollAmount = 344; // Largura do card (320) + gap (24)
+    
+    nextBtn.addEventListener('click', () => {
+        newsContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
 
-        prevBtn.addEventListener('click', () => {
-            newsContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-        });
+    prevBtn.addEventListener('click', () => {
+        newsContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
 
-        // Função para mostrar/esconder setas baseado na posição do scroll
-        const updateArrows = () => {
-            const scrollLeft = newsContainer.scrollLeft;
-            const scrollWidth = newsContainer.scrollWidth;
-            const clientWidth = newsContainer.clientWidth;
-            const maxScroll = scrollWidth - clientWidth;
+    // Função para mostrar/esconder setas baseado na posição do scroll
+    const updateArrows = () => {
+        const scrollLeft = newsContainer.scrollLeft;
+        const scrollWidth = newsContainer.scrollWidth;
+        const clientWidth = newsContainer.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
 
-            // Tolerância de 10px para evitar bugs de arredondamento
-            if (scrollLeft > 10) {
-                prevBtn.classList.add('visible');
-            } else {
-                prevBtn.classList.remove('visible');
-            }
+        // Tolerância de 10px para evitar bugs de arredondamento
+        if (scrollLeft > 10) {
+            prevBtn.classList.add('visible');
+        } else {
+            prevBtn.classList.remove('visible');
+        }
 
-            if (scrollLeft < maxScroll - 10) {
-                nextBtn.classList.add('visible');
-            } else {
-                nextBtn.classList.remove('visible');
-            }
-        };
+        if (scrollLeft < maxScroll - 10) {
+            nextBtn.classList.add('visible');
+        } else {
+            nextBtn.classList.remove('visible');
+        }
+    };
 
-        // Inicializa e adiciona listener de scroll
-        newsContainer.addEventListener('scroll', updateArrows);
-        window.addEventListener('resize', updateArrows);
-        
-        // Chamada inicial (delay curto para garantir renderização)
-        setTimeout(updateArrows, 100);
+    // Inicializa e adiciona listener de scroll
+    newsContainer.addEventListener('scroll', updateArrows);
+    window.addEventListener('resize', updateArrows);
+    
+    // Chamada inicial (delay curto para garantir renderização)
+    setTimeout(updateArrows, 100);
+}
+
+// ======================================================================
+// Lógica do Modal de Vídeo Tutorial
+// ======================================================================
+window.toggleTutorial = function() {
+    const modal = document.getElementById('tutorialModal');
+    const video = document.getElementById('tutorialVideo');
+    
+    if (!modal || !video) return;
+
+    modal.classList.toggle('active');
+    
+    // Se fechou o modal, pausa o vídeo e reseta
+    if (!modal.classList.contains('active')) {
+        video.pause();
+        video.currentTime = 0;
+    } else {
+        // Tenta iniciar o vídeo automaticamente ao abrir
+        video.play().catch(e => console.log("Autoplay bloqueado pelo navegador", e));
     }
+};
