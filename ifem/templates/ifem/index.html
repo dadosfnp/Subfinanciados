@@ -12,34 +12,41 @@
 
     <nav class="story-nav" id="story-nav">
         <div class="story-track">
-            <a onclick="scrollToId('problema')" class="story-item" id="nav-problema">
-                <span class="story-num">1</span>
+            <a onclick="scrollToId('problema')" class="story-item active" id="nav-problema">
+                <div class="story-icon-wrapper">
+                    <img src="{% static 'ifem/images/icones_problema.svg' %}" alt="Ícone Problema">
+                </div>
                 <span class="story-label">O Problema</span>
             </a>
             
             <a onclick="scrollToId('metodologia')" class="story-item" id="nav-intro">
-                <span class="story-num">2</span>
+                <div class="story-icon-wrapper">
+                    <img src="{% static 'ifem/images/icones_metodologia.svg' %}" alt="Ícone Metodologia">
+                </div>
                 <span class="story-label">Metodologia</span>
             </a>
             
             <a onclick="scrollToId('funcionalidades')" class="story-item" id="nav-plataforma">
-                <span class="story-num">3</span>
+                <div class="story-icon-wrapper">
+                    <img src="{% static 'ifem/images/icones_Plataforma.svg' %}" alt="Ícone Plataforma">
+                </div>
                 <span class="story-label">Plataforma</span>
             </a>
             
             <a onclick="scrollToId('noticias')" class="story-item" id="nav-noticias">
-                <span class="story-num">4</span>
+                <div class="story-icon-wrapper">
+                    <img src="{% static 'ifem/images/icones_Notícias.svg' %}" alt="Ícone Notícias">
+                </div>
                 <span class="story-label">Notícias</span>
             </a>
         </div>
         <div class="story-progress-bar" id="reading-progress"></div>
     </nav>
-    
+
     <section class="hero-section">
         <div class="hero-content">
             <h1 class="big-title">
-                <span class="text-mais">Mais</span> gente,<br>
-                <span class="text-menos">menos</span> recurso.
+                O dinheiro na contramão da
             </h1>
             <p class="subtitle">Veja como o financiamento das cidades mudou no Brasil.</p>
             <div class="scroll-indicator" onclick="scrollToId('problema')">
