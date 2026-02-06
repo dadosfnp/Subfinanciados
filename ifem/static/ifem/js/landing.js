@@ -10,20 +10,31 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Animação da Barra de Navegação
     const nav = document.querySelector('.story-nav');
     if (nav) {
-        ScrollTrigger.create({
-            trigger: ".hero-section",
-            start: "bottom top", 
-            onEnter: () => nav.classList.add('visible'),
-            onLeaveBack: () => nav.classList.remove('visible')
-        });
+        const toggleNav = () => {
+            if (window.scrollY > 50) { 
+                nav.classList.add('visible');
+            } else {
+                nav.classList.remove('visible');
+            }
+        };
+
+        window.addEventListener('scroll', toggleNav);
+        
+        toggleNav();
     }
 
-    // 3. Highlight dos Itens do Menu
-    const sections = ['problema', 'intro', 'plataforma', 'noticias'];
+// 3. Highlight dos Itens do Menu
+    /* Mapeamento explícito para corrigir divergência entre ID da Seção e ID do Nav */
+    const sectionMap = [
+        { id: 'problema', navId: 'nav-problema' },
+        { id: 'metodologia', navId: 'nav-intro' },        /* HTML id="metodologia" vs Nav id="nav-intro" */
+        { id: 'funcionalidades', navId: 'nav-plataforma' }, /* HTML id="funcionalidades" vs Nav id="nav-plataforma" */
+        { id: 'noticias', navId: 'nav-noticias' }
+    ];
     
-    sections.forEach((id, index) => {
-        const section = document.getElementById(id);
-        const navItem = document.getElementById(`nav-${id}`);
+    sectionMap.forEach((item, index) => {
+        const section = document.getElementById(item.id);
+        const navItem = document.getElementById(item.navId);
         
         if (section && navItem) {
             ScrollTrigger.create({
@@ -35,7 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.querySelectorAll('.story-item').forEach(el => el.classList.remove('active'));
                         navItem.classList.add('active');
                         
-                        const progress = ((index + 1) / sections.length) * 100;
+                        /* Calcula o progresso baseado no índice atual do array mapeado */
+                        const progress = ((index + 1) / sectionMap.length) * 100;
                         gsap.to('#reading-progress', { width: `${progress}%`, duration: 0.3 });
                     }
                 }
@@ -211,3 +223,87 @@ window.moveSlide = function(direction) {
         behavior: 'smooth'
     });
 };
+
+// ======================================================================
+    // Lógica do Botão "Saiba Mais" (Expansível + Scroll Automático)
+    // ======================================================================
+    const expandButtons = document.querySelectorAll('.btn-read-more');
+
+    expandButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const isExpanded = this.classList.contains('active');
+            const spanText = this.querySelector('.btn-text');
+
+            if (isExpanded) {
+                // Fechar
+                this.classList.remove('active');
+                this.setAttribute('aria-expanded', 'false');
+                content.style.maxHeight = null;
+                spanText.textContent = "Saiba mais";
+            } else {
+                // Abrir
+                this.classList.add('active');
+                this.setAttribute('aria-expanded', 'true');
+                content.style.maxHeight = content.scrollHeight + "px";
+                spanText.textContent = "Mostrar menos";
+
+                // Scroll suave para centralizar o texto ---
+                setTimeout(() => {
+                    content.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }, 30); 
+            }
+        });
+    });
+
+// ======================================================================
+    //  Navegação Horizontal de Notícias
+    // ======================================================================
+    const newsContainer = document.getElementById('news-scroll-container');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+
+    if (newsContainer && prevBtn && nextBtn) {
+        
+        // Função para scrollar
+        const scrollAmount = 344; // Largura do card (320) + gap (24)
+        
+        nextBtn.addEventListener('click', () => {
+            newsContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+
+        prevBtn.addEventListener('click', () => {
+            newsContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+
+        // Função para mostrar/esconder setas baseado na posição do scroll
+        const updateArrows = () => {
+            const scrollLeft = newsContainer.scrollLeft;
+            const scrollWidth = newsContainer.scrollWidth;
+            const clientWidth = newsContainer.clientWidth;
+            const maxScroll = scrollWidth - clientWidth;
+
+            // Tolerância de 10px para evitar bugs de arredondamento
+            if (scrollLeft > 10) {
+                prevBtn.classList.add('visible');
+            } else {
+                prevBtn.classList.remove('visible');
+            }
+
+            if (scrollLeft < maxScroll - 10) {
+                nextBtn.classList.add('visible');
+            } else {
+                nextBtn.classList.remove('visible');
+            }
+        };
+
+        // Inicializa e adiciona listener de scroll
+        newsContainer.addEventListener('scroll', updateArrows);
+        window.addEventListener('resize', updateArrows);
+        
+        // Chamada inicial (delay curto para garantir renderização)
+        setTimeout(updateArrows, 100);
+    }

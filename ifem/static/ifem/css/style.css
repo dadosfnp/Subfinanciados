@@ -1,59 +1,101 @@
 /* ==========================================================================
-   1. CONFIGURAÇÕES GLOBAIS
-   Define variáveis de cor, resets básicos e estrutura principal.
+   1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS
    ========================================================================== */
+
+/* * Define variáveis CSS (Custom Properties) no escopo global.
+ * Centraliza a gestão de cores e dimensões estruturais.
+ */
+:root {
+    --nav-height: 70px;          /* Altura fixa da barra de navegação */
+    --fnp-dark-blue: #103758;    /* Cor primária escura (Brand) */
+    --fnp-blue: #2F80ED;         /* Cor primária padrão (Brand) */
+    --fnp-yellow: #EEAF19;       /* Cor secundária/destaque (Brand) */
+    --fnp-green: #27AE60;        /* Cor de sucesso/positivo (Brand) */
+    --fnp-light-gray: #f8f9fa;   /* Cor de fundo para seções secundárias */
+    --accent-red: #c62828;       /* Cor de alerta/negativo */
+}
+
+/* * Configurações do elemento raiz HTML.
+ * scroll-behavior: auto evita conflitos com animações JS.
+ * scroll-padding-top compensa a navbar fixa ao usar âncoras.
+ */
 html {
     scroll-behavior: auto !important;
+    scroll-padding-top: 140px;
 }
 
-   :root {
-    --nav-height: 70px; /* Altura da barra de navegação que fica no topo */
-    --accent-red: #c62828; 
+/* * Definições base do corpo da página.
+ * Aplica a tipografia 'Inter' globalmente e remove margens padrão.
+ */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background-color: #fff;
 }
 
-/* Herda a fonte definida no global (Inter) para consistência */
-h1, h2, h3, h4 {
-    font-weight: 800; 
+/* * Reset e padronização de títulos.
+ * Garante peso da fonte e cor consistente para hierarquia H1-H6.
+ */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
     color: #111;
     margin: 0;
+    font-family: 'Inter', sans-serif;
 }
 
+/* * Padronização de parágrafos.
+ * Define altura de linha para legibilidade e cor de texto suave.
+ */
 p {
     line-height: 1.6;
-    color: #333;
+    color: #444;
 }
 
-.full-width { width: 100%; }
+/* Classe utilitária para largura total */
+.full-width { 
+    width: 100%; 
+}
 
 /* ==========================================================================
    2. HERO SECTION (CAPA)
-   A primeira tela que o usuário vê. Fundo azul FNP.
    ========================================================================== */
+
+/* * Container principal da primeira dobra (Above the fold).
+ * Utiliza Flexbox para centralização vertical/horizontal e altura mínima relativa à viewport.
+ */
 .hero-section {
-    min-height: 90vh;
+    position: relative;
+    width: 100%;
+    min-height: 85vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--fnp-dark-blue);
-    text-align: center;
+    background-color: var(--fnp-dark-blue);
     color: white;
-    position: relative;
-    z-index: 1;
-    padding-top: var(--nav-height);
+    padding: 100px 20px 60px 20px;
+    text-align: center;
+    overflow: hidden;
 }
 
+/* * Título principal da Hero Section.
+ * Utiliza função clamp() para tipografia fluida responsiva.
+ */
 .big-title {
-    font-size: clamp(3rem, 5vw, 5rem); /* Texto responsivo */
+    font-size: clamp(3rem, 5vw, 5rem);
     line-height: 1.1;
     margin-bottom: 20px;
     color: #ffffff;
 }
 
-/* Cores de destaque no título principal */
+/* Classes utilitárias para coloração de palavras-chave no título */
 .text-mais { color: var(--fnp-green); }
 .text-menos { color: var(--fnp-yellow); }
 
+/* * Subtítulo da Hero Section.
+ * Aplica decoração de sublinhado customizada com cor e espaçamento específicos.
+ */
 .subtitle {
     font-size: 1.5rem;
     color: rgba(255,255,255,0.9);
@@ -66,19 +108,21 @@ p {
     text-underline-offset: 8px;
 }
 
-/* Seta animada indicando scroll */
+/* * Indicador visual de rolagem (Seta).
+ * Inclui animação infinita 'bounce' para incentivar a interação.
+ */
 .scroll-indicator {
     margin-top: 40px;
     font-size: 0.9rem;
     color: rgba(255,255,255,0.8);
     animation: bounce 2s infinite;
     cursor: pointer;
-    padding: 10px;
     text-transform: uppercase;
     font-weight: 600;
     letter-spacing: 1px;
 }
 
+/* Keyframes para a animação de salto vertical do indicador */
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -86,841 +130,345 @@ p {
 
 /* ==========================================================================
    3. BARRA DE NAVEGAÇÃO
-   Barra branca que aparece no topo ao rolar a página.
    ========================================================================== */
+
+/* * Container da barra de navegação fixa (Sticky).
+ * Inicialmente invisível (opacity: 0) e não clicável (pointer-events: none).
+ * O estado visível é controlado via JavaScript adicionando a classe .visible.
+ */
 .story-nav {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; 
+    left: 0; 
     width: 100%;
     height: var(--nav-height);
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px); /* Efeito de vidro */
+    backdrop-filter: blur(12px); /* Efeito de vidro fosco (Glassmorphism) */
     border-bottom: 1px solid rgba(0,0,0,0.08);
     z-index: 900;
-    display: flex;
+    display: flex; 
     flex-direction: column;
-    opacity: 0; /* Começa invisível */
+    opacity: 0; 
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
 
-.story-nav.visible {
-    opacity: 1;
-    pointer-events: all;
+/* Estado ativo da barra de navegação */
+.story-nav.visible { 
+    opacity: 1; 
+    pointer-events: all; 
 }
 
+/* Container interno para alinhamento dos itens de navegação */
 .story-track {
-    flex: 1;
-    display: flex;
-    align-items: center;
+    flex: 1; 
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    gap: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    gap: 20px; 
+    max-width: 1200px; 
+    margin: 0 auto; 
     padding: 0 20px;
 }
 
+/* * Item individual de navegação (Link).
+ * Define estilos base e transições para hover/active.
+ */
 .story-item {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     gap: 8px;
-    padding: 6px 14px;
+    padding: 6px 14px; 
     border-radius: 20px;
-    color: #888;
+    color: #888; 
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.85rem; 
     font-weight: 600;
-    cursor: pointer;
+    cursor: pointer; 
     transition: all 0.3s ease;
     border: 1px solid transparent;
 }
 
-.story-item:hover {
-    color: var(--fnp-blue);
+/* Estados Hover e Active do item de navegação */
+.story-item:hover, .story-item.active {
+    color: var(--fnp-dark-blue); 
     background: rgba(25, 70, 133, 0.05);
 }
 
-/* Estilo do item ativo na barra */
 .story-item.active {
-    color: var(--fnp-blue);
-    background: rgba(25, 70, 133, 0.1);
+    background: rgba(25, 70, 133, 0.1); 
     border-color: rgba(25, 70, 133, 0.2);
 }
 
-/* Bolinha com número da seção */
+/* * Indicador numérico circular dentro do item de navegação.
+ */
 .story-num {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 20px; 
+    height: 20px; 
     border-radius: 50%;
-    background: #eee;
-    font-size: 0.7rem;
+    background: #eee; 
+    font-size: 0.7rem; 
     color: #666;
 }
 
-.story-item.active .story-num {
-    background: var(--fnp-blue);
-    color: white;
+/* Estado ativo do indicador numérico */
+.story-item.active .story-num { 
+    background: var(--fnp-dark-blue); 
+    color: white; 
 }
 
-/* Barra de progresso amarela fina */
-.story-progress-bar {
-    height: 3px;
-    background: var(--fnp-yellow);
-    width: 0%;
-    transition: width 0.2s linear;
+/* Cabeçalho da seção visível apenas em dispositivos móveis */
+.section-header-mobile { 
+    display: none; 
 }
 
-/* Cabeçalho para Mobile (aparece dentro da seção) */
-.section-header-mobile { display: none; }
-
+/* Media Query para dispositivos móveis (Tablet/Celular) */
 @media(max-width: 768px) {
-    .story-label { display: none; } /* Esconde texto no mobile */
-    .section-header-mobile { 
-        display: block; 
-        padding: 30px 5% 10px; 
-        text-align: center; 
-    }
-    .section-header-mobile h2 { 
-        font-size: 1.8rem; 
-        color: var(--fnp-blue); 
-    }
+    .story-label { display: none; } /* Oculta labels de texto para economizar espaço */
+    .section-header-mobile { display: block; padding: 30px 5% 10px; text-align: center; }
+    .section-header-mobile h2 { font-size: 1.8rem; color: var(--fnp-dark-blue); }
 }
 
 /* ==========================================================================
-   4. ESTRUTURA GERAL DAS SEÇÕES (O LIVRO)
-   Define o layout padrão para "O Problema", "Metodologia", etc.
+   4. ESTRUTURA GERAL DAS SEÇÕES
    ========================================================================== */
+
+/* * Container padrão para seções de conteúdo (Estilo "Livro").
+ * Define altura mínima de tela cheia e background branco.
+ */
 .book-section {
-    position: relative;
+    position: relative; 
     background: #fff;
-    min-height: 100vh;
+    min-height: 100vh; 
     border-bottom: 1px solid #eee;
-    scroll-margin-top: var(--nav-height); /* Ajuste para o scroll parar no lugar certo */
+    padding-bottom: 0 !important; /* Força o fim da seção a subir */
+    margin-bottom: 0 !important;
+    scroll-margin-top: var(--nav-height); /* Ajuste de scroll para âncoras */
 }
 
+/* Container de conteúdo centralizado e limitado a 1200px */
 .section-content {
     padding: 40px 5% 100px;
-    display: flex;
+    display: flex; 
     gap: 50px;
-    max-width: 1200px;
+    max-width: 1200px; 
     margin: 0 auto;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Permite quebra de linha em telas menores */
 }
 
-/* Colunas de texto e visual */
+/* * Colunas flexíveis para layout de Texto e Visual.
+ * min-width garante legibilidade antes da quebra de linha (wrap).
+ */
 .text-col, .visual-col {
-    flex: 1;
+    flex: 1; 
     min-width: 320px;
-    display: flex;
-    flex-direction: column;
+    display: flex; 
+    flex-direction: column; 
     justify-content: center;
 }
 
-/* Estilo dos textos longos */
+/* Estilo tipográfico para textos longos (Editorial) */
 .editorial-text {
-    text-align: justify;
+    text-align: justify; 
     font-size: 1.1rem;
-    line-height: 1.8;
+    line-height: 1.8; 
     color: #444;
 }
 
-/* Caixa de destaque amarela */
+/* Componente de caixa de destaque lateral */
 .highlight-box {
     background: rgba(238, 175, 25, 0.1);
     border-left: 4px solid var(--fnp-yellow);
-    padding: 20px;
+    padding: 20px; 
     margin-top: 30px;
     border-radius: 0 8px 8px 0;
 }
 
 /* ==========================================================================
-   5. SEÇÃO: O PROBLEMA (GRÁFICOS E STATS)
+   5. SEÇÃO: O PROBLEMA
    ========================================================================== */
+
+/* * Componente de Estatística em destaque (Número Grande).
+ * Borda lateral esquerda vermelha para ênfase.
+ */
 .big-stat {
-    margin: 30px 0;
+    margin: 30px 0; 
     padding-left: 20px;
     border-left: 4px solid var(--accent-red);
 }
 
 .big-stat .number {
-    display: block;
-    font-size: 4rem;
+    display: block; 
+    font-size: 4rem; 
     font-weight: 800;
-    color: var(--fnp-blue);
+    color: var(--fnp-dark-blue); 
     line-height: 1;
 }
 
-.highlight-line {
-    margin-top: 10px !important;
-    display: block;
-    font-weight: 600;
-}
-
-.fraction-highlight {
-    font-size: 1.5rem;
-    color: var(--fnp-dark-blue);
-    font-weight: 800;
-}
-
-/* Cartões com gráficos de barra */
-.stat-card {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-}
-
-.chart-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-.bar-container {
-    flex: 1;
-    height: 18px;
-    background: #e9ecef;
-    border-radius: 9px;
-    margin: 0 15px;
-    overflow: hidden;
-}
-
-.bar {
-    height: 100%;
-    width: 0;
-    background: #adb5bd;
-    border-radius: 9px;
-}
-
-.bar.alert { background: var(--accent-red); }
-.bar.success { background: var(--fnp-green); }
-
-/* Caixa azul de conclusão */
+/* * Caixa de Insight (Conclusão).
+ * Fundo escuro com texto claro e sombra elevada.
+ */
 .insight-box {
-    margin-top: 30px;
-    padding: 30px;
-    background: var(--fnp-blue);
+    margin-top: 30px; 
+    background: var(--fnp-dark-blue);
+    padding: 30px; 
+    border-radius: 12px; 
     color: white;
-    border-radius: 12px;
     box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
+    -webkit-font-smoothing: antialiased; /* Renderização de fonte otimizada para fundo escuro */
 }
 
 .insight-box h4 {
-    color: var(--fnp-yellow);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: var(--fnp-yellow); 
     margin-bottom: 15px;
-}
-
-.insight-box p { color: rgba(255,255,255,0.95); margin: 0; }
-
-/* ==========================================================================
-   6. SEÇÃO: METODOLOGIA (QUINTIS/DECIS)
-   ========================================================================== */
-.methodology-container {
-    padding: 30px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-}
-
-.toggle-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.toggle-btn {
-    border: 1px solid #ddd;
-    background: #f8f9fa;
-    padding: 8px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    color: #666;
-    transition: all 0.3s;
-}
-
-.toggle-btn.active {
-    background: var(--fnp-blue);
-    color: white;
-    border-color: var(--fnp-blue);
-}
-
-.bar-wrapper {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    height: 80px;
-    width: 100%;
-    margin: 20px 0;
-}
-
-.slice {
-    flex: 1 1 0px; /* Garante tamanho igual */
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 0.75rem;
-    border-radius: 4px;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.4s ease;
-}
-
-.slice.visible { opacity: 1; transform: translateY(0); }
-
-/* Cores das barras - Gradiente Completo */
-.q-1 { background: #d73027; } 
-.q-2 { background: #fc8d59; } 
-.q-3 { background: #fee08b; } 
-.q-4 { background: #91cf60; } 
-.q-5 { background: #1a9850; }
-
-.d-1 { background: #a50026; }
-.d-2 { background: #d73027; }
-.d-3 { background: #f46d43; }
-.d-4 { background: #fdae61; }
-.d-5 { background: #fee08b; }
-.d-6 { background: #d9ef8b; }
-.d-7 { background: #a6d96a; }
-.d-8 { background: #66bd63; }
-.d-9 { background: #1a9850; }
-.d-10 { background: #006837; }
-/* ==========================================================================
-   7. SEÇÃO: PLATAFORMA (CARDS INTERATIVOS)
-   Cards que expandem no desktop e mostram GIF no hover.
-   ========================================================================== */
-.carousel-container {
-    position: relative;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-bottom: 40px;
-    overflow: visible;
-    z-index: 1;
-}
-
-.carousel-track {
-    display: flex;
-    gap: 30px;
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.platform-card {
-    min-width: 100%;
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    min-height: 450px;
-}
-
-/* Comportamento Hover no Desktop */
-@media (min-width: 900px) {
-    .platform-card { min-width: calc(33.333% - 20px); }
-    .nav-btn { display: none; }
-
-    .platform-card:hover {
-        z-index: 500;
-        min-width: 60% !important; /* Expande */
-        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-        border-color: transparent;
-        transform: translateY(-10px);
-    }
-    
-    .platform-card:hover .card-content { width: 40%; border-right: 1px solid #eee; }
-    .platform-card:hover .card-visual { 
-        position: absolute; top: 0; right: 0; 
-        width: 60%; height: 100%; border-bottom: none; 
-    }
-    .platform-card:hover .hover-gif { opacity: 1; transform: scale(1); }
-    .platform-card:hover .css-chart, .platform-card:hover .css-pie, .platform-card:hover .css-map { opacity: 0; }
-    .platform-card:hover .editorial-list, .platform-card:hover .card-btn { display: flex; }
-    .platform-card:hover .description-text { display: none; }
-}
-
-.card-visual {
-    height: 220px;
-    width: 100%;
-    background: #f8f9fa;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden; border-bottom: 1px solid #eee;
-}
-
-.hover-gif {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    opacity: 0; /* Escondido até o hover */
-    transform: scale(1.1);
-    transition: all 0.5s ease;
-    z-index: 2;
-}
-
-.card-content { padding: 30px; flex: 1; display: flex; flex-direction: column; background: #fff; }
-.platform-card h4 { font-size: 1.4rem; color: var(--fnp-blue); margin-bottom: 10px; }
-.description-text { font-size: 1rem; color: #666; margin-bottom: 0; transition: opacity 0.3s; }
-
-.editorial-list {
-    display: none;
-    flex-direction: column; gap: 15px; margin-top: 20px;
-    animation: fadeInList 0.5s ease forwards;
-}
-
-.editorial-item {
-    font-size: 0.9rem;
-    border-left: 2px solid var(--fnp-yellow);
-    padding-left: 10px;
-    color: #555;
-}
-
-.item-title {
-    font-weight: 700;
-    color: var(--fnp-dark-blue);
-    display: block;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    margin-bottom: 4px;
-}
-
-.card-btn {
-    display: none;
-    margin-top: auto; align-self: flex-start;
-    padding: 12px 24px;
-    background: var(--fnp-blue); color: white;
-    font-weight: 700; border-radius: 6px;
-    text-decoration: none; opacity: 0;
-    animation: fadeInList 0.5s ease forwards 0.2s;
-}
-.card-btn:hover { background: var(--fnp-dark-blue); }
-
-@keyframes fadeInList { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Elementos Gráficos (CSS Art) */
-.css-chart { display: flex; align-items: flex-end; gap: 6px; height: 60px; z-index: 1; }
-.chart-bar { width: 12px; background: var(--fnp-blue); border-radius: 2px 2px 0 0; animation: growBar 2s infinite alternate; }
-.b1 { height: 30%; animation-delay: 0s; opacity: 0.5; } .b2 { height: 60%; animation-delay: 0.2s; opacity: 0.7; } .b3 { height: 80%; animation-delay: 0.4s; opacity: 1; }
-@keyframes growBar { from { transform: scaleY(0.5); } to { transform: scaleY(1); } }
-
-/* Botões do Carrossel (Mobile) */
-.nav-btn {
-    position: absolute; top: 50%; transform: translateY(-50%);
-    background: white; border: 1px solid #ddd; color: var(--fnp-blue);
-    width: 40px; height: 40px; border-radius: 50%;
-    cursor: pointer; z-index: 20;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.nav-btn.prev { left: -15px; } .nav-btn.next { right: -15px; }
-
-/* ==========================================================================
-   8. SEÇÃO: NOTÍCIAS (LAYOUT CORRIGIDO)
-   ========================================================================== */
-.news-container {
-    width: 100%;
-    overflow: hidden;
-    padding: 20px 0 60px;
-}
-
-.news-track {
-    display: flex;
-    gap: 30px;
-    overflow-x: auto; /* Permite scroll horizontal */
-    padding: 20px 40px;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none; /* Esconde barra de rolagem */
-    flex-wrap: nowrap; /* GARANTE QUE NÃO QUEBRE LINHA */
-}
-
-.news-card-pro {
-    min-width: 320px; /* Largura fixa para cada card */
-    height: 420px;
-    background: #fff;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    scroll-snap-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    text-decoration: none;
-    flex-shrink: 0; /* IMPEDE QUE O CARD ENCOLHA */
-}
-
-.news-card-pro:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-.news-bg-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.news-card-pro:hover .news-bg-img { transform: scale(1.05); }
-
-.news-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
-}
-
-.news-info {
-    position: absolute;
-    bottom: 0; left: 0;
-    padding: 25px;
-    width: 100%;
-    z-index: 2;
-    color: white;
-}
-
-.news-tag {
-    background: var(--fnp-yellow);
-    color: var(--fnp-dark-blue);
-    padding: 4px 10px;
-    font-size: 0.7rem;
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    font-size: 1rem; 
     font-weight: 800;
-    text-transform: uppercase;
-    border-radius: 4px;
 }
 
-.news-title-pro {
-    font-size: 1.3rem;
-    margin: 10px 0;
-    color: #fff;
-    line-height: 1.3;
+.insight-box p { 
+    color: rgba(255,255,255,0.95); 
+    margin: 0; 
+    font-family: 'Inter', sans-serif !important;
 }
 
-.news-read-more {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: rgba(255,255,255,0.8);
-    margin-top: 10px;
-}
-
-/* ==========================================================================
-   9. FOOTER
-   ========================================================================== */
-.main-footer {
-    background-color: var(--fnp-dark-blue);
-    color: white;
-    padding: 80px 0 20px;
-    position: relative;
-    z-index: 10;
-}
-
-.footer-grid {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.footer-brand h3 {
-    color: white;
-    font-size: 2rem;
-    margin-bottom: 15px;
-}
-
-.footer-brand p {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.95rem;
-}
-
-.footer-col h4 {
-    color: var(--fnp-yellow);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
-}
-
-.footer-links a {
-    display: block;
-    color: rgba(255,255,255,0.7);
+/* * Restrição de dimensão para ícones na legenda do gráfico.
+ * Previne distorção de layout com imagens SVG ou PNG grandes.
+ */
+.pie-legend img, 
+.pie-legend svg,
+.legend-icon-large {
+    width: 32px;
+    height: auto;
     margin-bottom: 8px;
-    cursor: pointer;
-    text-decoration: none;
+    display: block;
 }
 
-.footer-links a:hover { color: var(--fnp-yellow); }
-
-.fnp-box {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.data-fnp-img {
-    height: 60px !important;
-    width: auto;
-    opacity: 0.9;
-    margin-bottom: 10px;
-}
-
-.footer-bottom-bar {
-    text-align: center;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin-top: 40px;
-    padding-top: 20px;
-    font-size: 0.8rem;
-    opacity: 0.5;
-}
-
-@media (max-width: 768px) {
-    .section-content { flex-direction: column; }
-    .footer-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
-    .fnp-box { align-items: center; }
-}
-
-
-/* ==========================================================================
-   11. GRÁFICO DE RECEITAS (PIE CHART SVG ANIMADO)
-   ========================================================================== */
+/* Container flex para o gráfico de pizza e suas legendas */
 .pie-chart-container {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     gap: 30px;
-    margin-top: 30px;
+    margin-top: 30px; 
     background: #f8f9fa;
-    padding: 25px;
+    padding: 25px; 
     border-radius: 16px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* Wrapper do SVG para posicionamento */
-.svg-wrapper {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    flex-shrink: 0;
+/* Container da coluna de legendas */
+.pie-legend { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
 }
 
-/* O SVG em si */
-.pie-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg); /* Começa do topo */
+/* Item individual da legenda com borda colorida indicativa */
+.legend-item { 
+    padding-left: 15px; 
+    border-left: 4px solid #ddd; 
 }
 
-/* Estilo comum dos círculos */
-.pie-svg circle {
-    fill: none;
-    stroke-width: 40; /* Espessura do "donut" */
-}
-
-/* Círculo Fundo (Azul - 100% inicialmente) */
-.circle-base {
-    stroke: var(--fnp-blue);
-}
-
-/* Círculo Topo (Vermelho - Vai animar) */
-.circle-progress {
-    stroke: var(--accent-red);
-    stroke-dasharray: 502; /* Circunferência total */
-    stroke-dashoffset: 502; /* Começa escondido (offset total) */
-    stroke-linecap: butt;
-    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1); /* Animação suave */
-}
-
-/* Texto no meio do buraco do donut */
-.chart-center-text {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--fnp-dark-blue);
-    text-transform: uppercase;
-}
-
-/* Legendas Laterais */
-.pie-legend {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.legend-item {
-    padding-left: 15px;
-    border-left: 4px solid #ddd;
-}
-
-.blue-theme { border-color: var(--fnp-blue); }
+/* Variações de tema para a borda da legenda */
+.blue-theme { border-color: var(--fnp-dark-blue); }
 .red-theme { border-color: var(--accent-red); }
 
-.legend-label {
-    display: block;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 4px;
+/* Tipografia dos rótulos e valores da legenda */
+.legend-label { 
+    display: block; 
+    font-size: 0.85rem; 
+    text-transform: uppercase; 
+    font-weight: 600; 
+    color: #666; 
 }
 
-.legend-value {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--fnp-dark-blue);
+.legend-value { 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: var(--fnp-dark-blue); 
 }
 
 .red-theme .legend-value { color: var(--accent-red); }
 
-/* Responsivo */
-@media (max-width: 480px) {
-    .pie-chart-container { flex-direction: column; text-align: center; }
-    .legend-item { border-left: none; border-top: 4px solid #ddd; padding-top: 10px; padding-left: 0; }
+/* Wrapper para posicionamento relativo do SVG */
+.svg-wrapper { 
+    position: relative; 
+    width: 160px; 
+    height: 160px; 
+    flex-shrink: 0; 
 }
 
-/* ==========================================================================
-   12. GRÁFICOS DE POPULAÇÃO (COLUNA DIREITA)
-   ========================================================================== */
+/* Configuração do SVG de Pizza. Rotacionado -90deg para iniciar no topo */
+.pie-svg { 
+    width: 100%; 
+    height: 100%; 
+    transform: rotate(-90deg); 
+}
+
+.pie-svg circle { 
+    fill: none; 
+    stroke-width: 40; 
+}
+
+/* Círculos de progresso do gráfico */
+.circle-base { stroke: var(--fnp-dark-blue); }
+
+.circle-progress {
+    stroke: var(--accent-red); 
+    stroke-dasharray: 502; /* Circunferência total */
+    stroke-dashoffset: 502; /* Offset inicial para animação */
+    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Texto centralizado no gráfico de Donut */
+.chart-center-text {
+    position: absolute; 
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700; 
+    font-size: 0.9rem;
+    color: var(--fnp-dark-blue); 
+    text-transform: uppercase;
+}
+
+/* Grupo de gráficos de barras laterais (População) */
 .pop-chart-group {
-    margin-bottom: 30px;
+    margin-bottom: 30px; 
     background: #fff;
-    padding: 20px;
+    padding: 20px; 
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 
-.pop-chart-group h4 {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    color: #333;
+.pop-row { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    margin-bottom: 12px; 
 }
 
-.pop-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 12px;
+.pop-year { 
+    font-weight: 700; 
+    color: #888; 
+    font-size: 0.9rem; 
+    width: 40px; 
 }
 
-.pop-year {
-    font-weight: 700;
-    color: #888;
-    font-size: 0.9rem;
-    width: 40px;
-}
-
-.pop-track {
-    flex: 1;
-    height: 12px;
-    background: #f0f0f0;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.pop-bar {
-    height: 100%;
-    width: 0; /* Animação via JS */
-    border-radius: 6px;
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.pop-value {
-    font-weight: 800;
-    font-size: 0.95rem;
-    width: 60px;
-    text-align: right;
-    color: #333;
-}
-
-/* Cores das barras */
-.pop-bar.red { background: var(--accent-red); }
-.pop-bar.red-light { background: var(--accent-red); opacity: 0.3; } /* 2000: Vermelho Suave */
-
-.pop-bar.green { background: var(--fnp-green); }
-.pop-bar.green-light { background: var(--fnp-green); opacity: 0.3; } /* 2000: Verde Suave */
-/* Caixa Azul - Ajuste de Tipografia */
-.insight-box {
-    background: var(--fnp-dark-blue);
-    padding: 30px; /* Um pouco mais de respiro */
-    border-radius: 12px;
-    color: white;
-    /* Corrige a renderização da fonte em fundo escuro */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    box-shadow: 0 10px 30px rgba(25, 70, 133, 0.2);
-}
-
-.insight-box h4 {
-    color: var(--fnp-yellow);
-    margin-bottom: 15px;
-    text-transform: uppercase; /* Garante CAIXA ALTA igual à imagem */
-    letter-spacing: 1px; /* Espaçamento mais elegante */
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: 'Inter', sans-serif; /* Força a fonte correta */
-}
-
-.insight-box p {
-    color: rgba(255,255,255,0.95);
-    font-size: 1rem;
-    line-height: 1.6; /* Melhora a leitura */
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-}
-
-.insight-box strong {
-    color: #fff;
-    font-weight: 700;
-}
-
-/* ==========================================================================
-   13. DETALHES VISUAIS (Ícones, Badges e Interação)
-   ========================================================================== */
-
-/* 1. Ícones na Legenda */
-.legend-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-.legend-icon {
-    width: 18px;
-    height: 18px;
-    opacity: 0.7;
-}
-
-.blue-theme .legend-icon { color: var(--fnp-blue); }
-.red-theme .legend-icon { color: var(--accent-red); }
-
-/* 2. Badges de Crescimento */
+/* Agrupamento vertical para valor absoluto e porcentagem */
 .pop-value-group {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    width: 60px; /* Mantém a largura fixa da coluna de valores */
+    width: 60px;
 }
 
+/* Estilo base para a etiqueta de variação percentual */
 .growth-badge {
     font-size: 0.7rem;
     font-weight: 800;
@@ -928,37 +476,998 @@ p {
     border-radius: 4px;
     margin-top: 2px;
     white-space: nowrap;
+    display: inline-block;
 }
 
+/* Variação de cor para crescimento positivo (Verde) */
+.badge-green {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--fnp-green);
+}
+
+/* Variação de cor para crescimento negativo ou alerta (Vermelho) */
 .badge-red {
     background: rgba(198, 40, 40, 0.1);
     color: var(--accent-red);
 }
 
-.badge-green {
-    background: rgba(26, 152, 80, 0.1);
-    color: var(--fnp-green);
+/* Trilha de fundo da barra de progresso */
+.pop-track { 
+    flex: 1; 
+    height: 12px; 
+    background: #f0f0f0; 
+    border-radius: 6px; 
+    overflow: hidden; 
+    cursor: pointer; 
 }
 
-/* 3. Micro-interação de Hover nas Barras */
-.pop-track {
-    cursor: pointer; /* Indica interatividade */
+/* Barra de progresso preenchida com transição de largura */
+.pop-bar { 
+    height: 100%; 
+    width: 0; 
+    border-radius: 6px; 
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
 }
 
-.pop-bar {
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1), 
-                filter 0.3s ease, 
-                transform 0.3s ease !important; /* Adiciona transição suave para o efeito */
+/* Variações de cores para as barras */
+.pop-bar.red { background: var(--accent-red); }
+.pop-bar.red-light { background: var(--accent-red); opacity: 0.3; }
+.pop-bar.green { background: var(--fnp-green); }
+.pop-bar.green-light { background: var(--fnp-green); opacity: 0.3; }
+
+.pop-value { 
+    font-weight: 800; 
+    font-size: 0.95rem; 
+    width: 60px; 
+    text-align: right; 
 }
 
-/* Efeito ao passar o mouse: Brilho e leve aumento */
-.pop-chart-group:hover .pop-bar {
-    opacity: 0.7; /* Foco nas barras do grupo */
+/* ==========================================================================
+   6. SEÇÃO: METODOLOGIA
+   ========================================================================== */
+
+/* Container flexível para o infográfico vertical */
+.metodologia-infographic {
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px;
+    align-items: center; 
+    width: 100%;
+}
+.metodologia-infographic .step-card,
+.step-header,
+.q-box, 
+.d-box,
+.q-label,
+.step-title, 
+.step-subtitle {
+    font-family: 'Inter', sans-serif !important;
+}
+/* Card individual de cada passo da metodologia */
+.step-card {
+    background: white; 
+    border: 1px solid #eee; 
+    border-radius: 12px;
+    padding: 20px; 
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    position: relative; 
+    overflow: hidden;
 }
 
-.pop-chart-group:hover .pop-bar:hover {
+.step-header {
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    margin-bottom: 20px; 
+    text-align: center;
+}
+
+.step-subtitle {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1rem;
+    display: block; /* Garante que o padding e border funcionem */
+    width: 100%;
+}
+
+/* Indicador numérico do passo (Badge) */
+.step-number {
+    background: var(--fnp-dark-blue); 
+    color: white;
+    width: 24px; 
+    height: 24px; 
+    border-radius: 50%;
+    font-size: 0.8rem; 
+    font-weight: 700;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+/* Container para gráfico de barras de ordenação */
+.bars-container {
+    display: flex; 
+    align-items: flex-end; 
+    justify-content: center;
+    gap: 6px; 
+    height: 80px; 
+    padding-bottom: 5px;
+    border-bottom: 2px solid #eee;
+}
+
+/* Barra individual com animação de crescimento vertical */
+.bar {
+    width: 8%; 
+    background: #ddd; 
+    border-radius: 4px 4px 0 0;
+    animation: growBar 1.5s ease-out forwards;
+}
+
+/* Definição de alturas e atrasos de animação para efeito cascata */
+.b1 { height: 10%; animation-delay: 0.1s; } .b2 { height: 20%; animation-delay: 0.2s; }
+.b3 { height: 30%; animation-delay: 0.3s; } .b4 { height: 40%; animation-delay: 0.4s; }
+.b5 { height: 50%; animation-delay: 0.5s; } .b6 { height: 60%; animation-delay: 0.6s; }
+.b7 { height: 70%; animation-delay: 0.7s; } .b8 { height: 85%; animation-delay: 0.8s; }
+.b9 { height: 100%; animation-delay: 0.9s; background: var(--fnp-dark-blue); }
+
+@keyframes growBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Seta direcional entre os passos */
+.flow-arrow {
+    color: #ccc; 
+    width: 24px; 
+    height: 24px; 
+    margin: 0 auto;
+    display: block;
+    animation: bounce 2s infinite; 
+}
+
+/* Containers flex para grupos de Quintis e Decis */
+.quintis-row, .decis-row { 
+    display: flex; 
+    justify-content: space-between; 
+    width: 100%; 
+}
+.quintis-row { gap: 6px; } 
+.decis-row { gap: 4px; }
+
+/* * Caixas visuais para Quintis e Decis.
+ * Inclui transição para efeitos de hover.
+ */
+.q-box, .d-box {
+    flex: 1; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+    color: white; 
+    font-weight: 700; 
+    border-radius: 4px;
+    transition: transform 0.2s ease;
+}
+
+.q-box { height: 70px; border-radius: 6px; }
+.d-box { height: 40px; cursor: default; }
+
+/* Efeitos de escala no hover */
+.q-box:hover { transform: translateY(-3px); }
+.d-box:hover { transform: scale(1.1); }
+
+/* ==========================================================================
+   PALETA DE CORES OFICIAL (EXTRAÍDA DA PLATAFORMA)
+   ========================================================================== */
+
+/* Quintis (5 Grupos) */
+.q-red         { background: #A81C21; } /* 1º Quintil - Vermelho Escuro */
+.q-orange      { background: #E47326; } /* 2º Quintil - Laranja */
+.q-yellow      { background: #F4D01D; } /* 3º Quintil - Amarelo */
+.q-green-light { background: #6AC074; } /* 4º Quintil - Verde Claro */
+.q-green       { background: #1C9148; } /* 5º Quintil - Verde FNP */
+
+/* Decis (10 Grupos - Gradiente exato da legenda) */
+.d-1  { background: #960E16; } /* 1º Decil - Vinho */
+.d-2  { background: #CF3026; } /* 2º Decil - Vermelho */
+.d-3  { background: #EB6630; } /* 3º Decil - Laranja Escuro */
+.d-4  { background: #F8A555; } /* 4º Decil - Laranja Claro */
+.d-5  { background: #FCE182; } /* 5º Decil - Amarelo Pálido */
+.d-6  { background: #DDEC88; } /* 6º Decil - Lima Pálido */
+.d-7  { background: #9DD57D; } /* 7º Decil - Verde Pastel */
+.d-8  { background: #60BA69; } /* 8º Decil - Verde Médio */
+.d-9  { background: #2D964D; } /* 9º Decil - Verde Forte */
+.d-10 { background: #076931; } /* 10º Decil - Verde Escuro */
+
+/* Tipografia interna das caixas */
+.q-perc { font-size: 0.9rem; font-weight: 800; }
+.q-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
+
+/* Divisor visual com texto centralizado */
+.chart-divider {
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    margin: 20px 0; 
+    position: relative;
+}
+
+.chart-divider::before { 
+    content: ""; 
+    height: 1px; 
+    background: #eee; 
+    width: 100%; 
+    position: absolute; 
+}
+
+.chart-divider span { 
+    background: white; 
+    padding: 0 10px; 
+    font-size: 0.75rem; 
+    color: #999; 
+    z-index: 2; 
+    position: relative; 
+}
+
+/* * Tooltip CSS puro para os Decis.
+ * Exibe atributo 'title' ao passar o mouse.
+ */
+.d-box { position: relative; }
+
+.d-box:hover::after {
+    content: attr(title); 
+    position: absolute; 
+    bottom: 100%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    background: #333; 
+    color: white;
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-size: 0.7rem;
+    white-space: nowrap; 
+    margin-bottom: 6px; 
+    pointer-events: none;
+    animation: fadeIn 0.2s forwards; 
+    z-index: 10;
+}
+
+/* Seta indicadora do Tooltip */
+.d-box:hover::before {
+    content: ""; 
+    position: absolute; 
+    bottom: 100%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    border: 5px solid transparent;
+    border-top-color: #333; 
+    margin-bottom: -4px; 
+    animation: fadeIn 0.2s forwards;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* Ajuste responsivo para Decis em telas muito pequenas */
+@media (max-width: 480px) { 
+    .decis-row { flex-wrap: wrap; } 
+    .d-box { flex: 1 1 18%; margin-bottom: 4px; } 
+}
+
+/* ==========================================================================
+   7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS) - REVISADO
+   ========================================================================== */
+/* Cores do Tema FNP */
+:root {
+    --fnp-blue: #003366;
+    --fnp-green: #27AE60;
+    --fnp-yellow: #F3A912;
+}
+
+/* Base do botão CTA Link */
+.cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 12px 20px;
+    color: white !important;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    border: none;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 1. Análise Gráfica (Azul) */
+.feature-card:nth-child(1) .cta-link {
+    background: var(--fnp-blue);
+}
+.feature-card:nth-child(1):hover .cta-link {
+    background: #004a94;
+    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);
+}
+
+/* 2. Mapa Interativo (Verde) */
+.feature-card:nth-child(2) .cta-link {
+    background: var(--fnp-green);
+}
+.feature-card:nth-child(2):hover .cta-link {
+    background: #2ecc71;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+/* 3. Análise Agregada (Amarelo FNP) */
+.feature-card:nth-child(3) .orange-icon {
+    background: var(--fnp-yellow) !important;
+    color: #000 !important;
+}
+
+.feature-card:nth-child(3) .cta-link {
+    background: var(--fnp-yellow) !important;
+    color: #000 !important; /* Texto preto para legibilidade */
+}
+
+.feature-card:nth-child(3):hover .cta-link {
+    background: #f39c12; /* Laranja suave no hover para feedback */
+    box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+}
+
+/* Garante que o texto dentro dos cards use Inter */
+.feature-card h4, 
+.hover-details p, 
+.hover-details li {
+    font-family: 'Inter', sans-serif !important;
+}
+
+.feature-card h4 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Intro centralizada da seção */
+.section-intro { 
+    width: 100%; 
+    text-align: center; 
+    margin-bottom: 40px; 
+    font-family: 'Inter', sans-serif;
+}
+.intro-text { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    color: #666; 
+    line-height: 1.6;
+}
+
+/* Grid principal */
+.features-grid {
+    display: grid;
+    gap: 30px;
+    margin-top: 40px;
+    width: 100%;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .features-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Card de funcionalidade (Tag <a>) */
+.feature-card {
+    background: white; 
+    border-radius: 16px; 
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    position: relative; 
+    height: 440px; /* Aumentado levemente para acomodar o botão */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+    display: flex; 
+    flex-direction: column;
+    text-decoration: none !important; /* Remove sublinhado de link */
+    color: inherit !important; /* Mantém a cor do texto original */
+    font-family: 'Inter', sans-serif;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px); 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+}
+
+/* Container de mídia */
+.media-container {
+    width: 100%; 
+    height: 100%;
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    z-index: 1;
+}
+
+.card-video { width: 100%; height: 100%; object-fit: cover; }
+.static-media.map-bg { background: #e0f2f1; }
+.static-media.chart-bg { background: #fff3e0; }
+
+.video-overlay {
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+}
+
+/* Painel de informações deslizante */
+.card-info {
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%;
+    padding: 25px; 
+    z-index: 2; 
+    background: white;
+    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(calc(100% - 90px)); /* Mostra apenas o header */
+    box-sizing: border-box;
+}
+
+.feature-card:hover .card-info { 
+    transform: translateY(0); 
+}
+
+/* Cabeçalho */
+.info-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    margin-bottom: 20px; 
+}
+
+.info-header h4 { 
+    margin: 0; 
+    font-size: 1.15rem; 
+    font-weight: 700;
+    color: var(--fnp-dark-blue); 
+    letter-spacing: -0.01em;
+}
+
+/* Detalhes no hover */
+.hover-details {
+    opacity: 0; 
+    transition: opacity 0.3s ease 0.15s;
+    font-size: 0.92rem; 
+    color: #444;
+    line-height: 1.5;
+}
+
+.feature-card:hover .hover-details { 
+    opacity: 1; 
+}
+
+.hover-details ul { 
+    margin: 15px 0; 
+    padding-left: 18px; 
+}
+
+.hover-details li { 
+    margin-bottom: 8px; 
+}
+
+/* ESTILO DO BOTÃO "VER ACESSAR" */
+.cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 16px;
+    background: var(--fnp-dark-blue);
+    color: white !important;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: background 0.2s ease;
+}
+
+.feature-card:hover .cta-link {
+    background: #27AE60; /* Muda para verde no hover para feedback visual */
+}
+
+/* Ícones */
+.icon-box {
+    width: 42px; 
+    height: 42px; 
+    border-radius: 10px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: white; 
+    flex-shrink: 0;
+}
+
+.blue-icon { background: var(--fnp-dark-blue); }
+.green-icon { background: #27AE60; }
+.orange-icon { background: #E67E22; }
+
+.icon-box svg { width: 22px; height: 22px; }
+
+/* ==========================================================================
+   8. UTILITÁRIOS (BOTÃO SAIBA MAIS)
+   ========================================================================== */
+
+/* Wrapper para centralização do botão expansível */
+.expandable-wrapper {
+    width: 100%; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    margin-top: 25px; 
+    position: relative; 
+    z-index: 10;
+}
+
+/* Ajuste de margem específico para a seção Problema */
+#problema .expandable-wrapper { margin-top: -50px; }
+
+/* Botão de ação para expandir conteúdo */
+.btn-read-more {
+    background: transparent; 
+    border: 1px solid #ddd;
+    border-radius: 50px; 
+    padding: 10px 24px;
+    font-family: 'Inter', sans-serif; 
+    font-size: 0.9rem;
+    font-weight: 600; 
+    color: var(--fnp-dark-blue);
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-read-more:hover { 
+    background: var(--fnp-light-gray); 
+    border-color: var(--fnp-dark-blue); 
+    transform: translateY(-2px); 
+}
+
+/* Estado ativo do botão (Conteúdo expandido) */
+.btn-read-more.active { 
+    background: var(--fnp-dark-blue); 
+    color: white; 
+    border-color: var(--fnp-dark-blue); 
+}
+
+/* Rotação do ícone Chevron quando ativo */
+.btn-read-more.active .chevron-icon { transform: rotate(180deg); }
+.chevron-icon { width: 16px; height: 16px; transition: transform 0.4s ease; }
+
+/* * Container de conteúdo oculto.
+ * Controlado via max-height para animação de abertura suave.
+ */
+.expandable-content {
+    max-height: 0; 
+    overflow: hidden; 
+    width: 100%; 
+    max-width: 800px;
+    transition: max-height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content-inner { padding-top: 30px; padding-bottom: 10px; }
+
+/* ==========================================================================
+   SEÇÃO 9: NOTÍCIAS (Carrossel, Cards e Navegação)
+   ========================================================================== */
+
+/* Wrapper Principal: Posicionamento relativo para ancorar as setas */
+.news-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Container de Scroll: Esconde a barra nativa mas mantém funcionalidade */
+.news-container {
+    width: 100%;
+    padding: 20px 5px; /* Padding para não cortar sombras dos cards */
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Esconder Scrollbar (Firefox) */
+    scrollbar-width: none; 
+    /* Esconder Scrollbar (IE/Edge) */
+    -ms-overflow-style: none;  
+}
+
+/* Esconder Scrollbar (Chrome/Safari/Opera) */
+.news-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Trilho Flexível */
+.news-track {
+    display: flex;
+    gap: 24px;
+    padding: 10px 5px;
+}
+
+/* --- ESTILO DO CARD --- */
+.news-card-pro {
+    position: relative !important;;
+    display: block;
+    flex: 0 0 320px; /* Largura fixa */
+    height: 450px;   /* Altura fixa */
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    background-color: var(--fnp-dark-blue, #003366);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+}
+
+.news-card-pro:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+/* Imagem de Fundo */
+.news-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    transition: transform 0.6s ease;
+}
+
+.news-card-pro:hover .news-bg-img {
+    transform: scale(1.05);
+}
+
+/* Overlay Escuro (Gradiente) */
+.news-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.9) 100%);
+    z-index: 2;
+}
+
+/* Informações do Card */
+.news-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+/* Badge de Data */
+.news-date-badge {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Título da Notícia */
+.news-title-pro {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+    display: block; /* Garante que o texto flua naturalmente */
+}
+
+/* Link "Ler mais" */
+.news-read-more {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6AC074;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease;
+}
+
+.news-card-pro:hover .news-read-more {
+    color: #8CE095;
+}
+
+/* --- BOTÕES DE NAVEGAÇÃO (SETAS) --- */
+.news-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    
+    /* Estado inicial: invisível até o mouse entrar ou scroll ser necessário */
+    opacity: 0; 
+    pointer-events: none;
+}
+
+.news-nav-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+}
+
+/* Posicionamento */
+.prev-btn { left: -24px; }
+.next-btn { right: -24px; }
+
+/* Visibilidade: Só mostra se tiver a classe .visible (controlada via JS) E mouse no wrapper */
+.news-wrapper:hover .news-nav-btn.visible {
     opacity: 1;
-    filter: brightness(1.1) saturate(1.2);
-    transform: scaleY(1.15); /* Cresce levemente na vertical */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    pointer-events: auto;
+}
+
+/* Em telas touch, mostra sempre se for navegável */
+@media (hover: none) {
+    .news-nav-btn.visible {
+        opacity: 0.9;
+        pointer-events: auto;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+}
+
+/* Hover no Botão */
+.news-nav-btn:hover {
+    background: var(--fnp-dark-blue, #003366);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* --- ANIMAÇÃO PULSE (Convite ao clique) --- */
+@keyframes nudgeRight {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(3px); }
+}
+
+@keyframes nudgeLeft {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(-3px); }
+}
+
+/* Aplica animação quando visível mas não hover */
+.next-btn.visible:not(:hover) {
+    animation: nudgeRight 2s infinite ease-in-out;
+}
+.prev-btn.visible:not(:hover) {
+    animation: nudgeLeft 2s infinite ease-in-out;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 768px) {
+    .prev-btn { left: 10px; }
+    .next-btn { right: 10px; }
+    
+    .news-nav-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.9);
+        backdrop-filter: blur(2px);
+    }
+}
+
+/* ==========================================================================
+   SEÇÃO 10: RODAPÉ 
+   ========================================================================== */
+
+.main-footer {
+    background-color: var(--fnp-dark-blue, #003366);
+    color: white;
+    padding: 50px 20px 20px; 
+    font-family: 'Inter', sans-serif;
+    margin-top: 0 !important;
+    padding-top: 60px;
+}
+
+/* Grid Principal (3 Colunas) */
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    max-width: 1200px;
+    /* Reduzi a margem inferior interna de 60px para 40px */
+    margin: 0 auto 40px; 
+    align-items: start;
+}
+
+/* 1. Coluna da Marca (Esquerda) */
+.footer-brand h3 {
+    font-size: 2.5rem; /* IFEM grande */
+    font-weight: 800;
+    margin: 0 0 20px 0;
+    letter-spacing: -0.02em;
+    color: white;
+}
+
+.footer-brand p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 320px;
+    margin: 0;
+}
+
+/* Títulos das Colunas (Navegação/Realização) */
+.footer-col h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 25px;
+}
+
+/* 2. Coluna de Navegação (Centro) */
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #6AC074; /* Verde destaque */
+    padding-left: 5px; /* Efeito sutil de movimento */
+}
+
+/* 3. Coluna de Realização (Direita) */
+.fnp-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Alinha tudo à direita */
+    text-align: right;
+}
+
+/* Controle de Tamanho da Logo (O Fix Principal) */
+.footer-logo {
+    display: block;
+    max-width: 180px; /* Tamanho controlado */
+    height: auto;
+    margin-bottom: 15px;
+    filter: brightness(0) invert(1); /* Garante que fique branca se for PNG transparente */
+    opacity: 0.9;
+}
+
+/* Barra de Copyright */
+.footer-bottom-bar {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 30px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Responsividade (Mobile) --- */
+@media (max-width: 768px) {
+    .footer-grid {
+        grid-template-columns: 1fr; /* Empilha tudo */
+        gap: 50px;
+        text-align: center;
+    }
+
+    .footer-brand p {
+        margin: 0 auto; /* Centraliza texto */
+    }
+
+    .fnp-box {
+        align-items: center; /* Centraliza logo e texto */
+        text-align: center;
+    }
+    
+    .fnp-box p {
+        text-align: center !important; /* Força centralização do texto inline */
+    }
+
+    .footer-links {
+        align-items: center;
+    }
+}
+
+/* ==========================================================================
+   SEÇÃO EXTRA: CTA FINAL (Call to Action)
+   ========================================================================== */
+
+.cta-section {
+    background-color: #f8f9fa; /* Cinza bem claro para diferenciar */
+    padding: 80px 20px;
+    text-align: center;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.cta-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.cta-content h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue, #003366);
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.cta-content p {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+/* Botão Principal Grande */
+.btn-primary-cta {
+    display: inline-block;
+    background-color: #6AC074; /* Verde IFEM */
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 18px 40px;
+    border-radius: 50px; /* Redondo estilo "Pill" */
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(106, 192, 116, 0.4); /* Sombra verde */
+}
+
+.btn-primary-cta:hover {
+    background-color: #58a862;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(106, 192, 116, 0.6);
 }
