@@ -1618,14 +1618,13 @@ p {
     grid-template-columns: 2fr 1fr 1fr;
     gap: 40px;
     max-width: 1200px;
-    /* Reduzi a margem inferior interna de 60px para 40px */
     margin: 0 auto 40px; 
     align-items: start;
 }
 
 /* 1. Coluna da Marca (Esquerda) */
 .footer-brand h3 {
-    font-size: 2.5rem; /* IFEM grande */
+    font-size: 2.5rem; 
     font-weight: 800;
     margin: 0 0 20px 0;
     letter-spacing: -0.02em;
@@ -1640,7 +1639,7 @@ p {
     margin: 0;
 }
 
-/* Títulos das Colunas (Navegação/Realização) */
+/* Títulos das Colunas */
 .footer-col h4 {
     font-size: 0.85rem;
     font-weight: 700;
@@ -1667,60 +1666,130 @@ p {
 }
 
 .footer-links a:hover {
-    color: #6AC074; /* Verde destaque */
-    padding-left: 5px; /* Efeito sutil de movimento */
+    color: #6AC074; 
+    padding-left: 5px; 
 }
 
 /* 3. Coluna de Realização (Direita) */
 .fnp-box {
     display: flex;
     flex-direction: column;
-    align-items: flex-end; /* Alinha tudo à direita */
+    align-items: flex-end; 
     text-align: right;
 }
 
-/* Controle de Tamanho da Logo (O Fix Principal) */
+/* Link da Logo (Novo) */
+.logo-link {
+    display: inline-block;
+    transition: opacity 0.3s;
+}
+.logo-link:hover {
+    opacity: 0.8;
+}
+
+/* Logo da FNP */
 .footer-logo {
     display: block;
-    max-width: 180px; /* Tamanho controlado */
+    max-width: 180px; 
     height: auto;
-    margin-bottom: 15px;
-    filter: brightness(0) invert(1); /* Garante que fique branca se for PNG transparente */
+    margin-bottom: 20px;
+    filter: brightness(0) invert(1); 
     opacity: 0.9;
 }
 
-/* Barra de Copyright */
+/* --- Redes Sociais (Novo) --- */
+.fnp-social {
+    display: flex;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.social-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.social-icon:hover {
+    background: white;
+    color: var(--fnp-dark-blue, #003366);
+    transform: translateY(-3px);
+}
+
+/* Barra de Copyright e Voltar ao Topo */
 .footer-bottom-bar {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 30px;
-    text-align: center;
+    display: flex;
+    justify-content: space-between; /* Separa texto e botão */
+    align-items: center;
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: #ffffff !important;
+    max-width: 1200px;
+    margin: 0 auto;
+    opacity: 0.5;
 }
 
-/* --- Responsividade (Mobile) --- */
+.footer-bottom-bar .copyright {
+    color: #ffffff !important;
+    opacity: 1;
+    margin: 0;
+}
+
+/* Botão Voltar ao Topo (Novo) */
+.back-to-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.back-to-top:hover {
+    color: #ffffff;
+    opacity: 1;
+
+}
+
+.back-to-top svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* --- Responsividade --- */
 @media (max-width: 768px) {
     .footer-grid {
-        grid-template-columns: 1fr; /* Empilha tudo */
+        grid-template-columns: 1fr;
         gap: 50px;
         text-align: center;
     }
 
-    .footer-brand p {
-        margin: 0 auto; /* Centraliza texto */
-    }
+    .footer-brand p { margin: 0 auto; }
 
     .fnp-box {
-        align-items: center; /* Centraliza logo e texto */
+        align-items: center; 
         text-align: center;
     }
     
-    .fnp-box p {
-        text-align: center !important; /* Força centralização do texto inline */
-    }
+    .footer-links { align-items: center; }
 
-    .footer-links {
-        align-items: center;
+    /* Ajuste mobile do rodapé inferior */
+    .footer-bottom-bar {
+        flex-direction: column;
+        gap: 20px;
     }
 }
 
