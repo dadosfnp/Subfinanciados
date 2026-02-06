@@ -325,8 +325,13 @@
                     </div>
                 </a>
 
-                <a href="/mapa/" class="feature-card">
-                    <div class="media-container static-media map-bg"></div>
+                <a href="/mapa/" class="feature-card video-card">
+                    <div class="media-container">
+                        <video autoplay muted loop playsinline class="card-video">
+                            <source src="{% static 'ifem/videos/analise_municipal.mp4' %}" type="video/mp4">
+                        </video>
+                        <div class="video-overlay"></div> 
+                    </div>
                     <div class="card-info">
                         <div class="info-header">
                             <div class="icon-box green-icon">
@@ -335,7 +340,7 @@
                             <h4>Mapa Interativo</h4>
                         </div>
                         <div class="hover-details">
-                            <p>Navegue pelo território nacional.</p>
+                            <p>Navegue pelo território nacional:</p>
                             <ul>
                                 <li>Filtros por Estado e Região.</li>
                                 <li>Raio-X financeiro de cada cidade.</li>
@@ -345,8 +350,13 @@
                     </div>
                 </a>
 
-                <a href="/analise-municipal/" class="feature-card">
-                    <div class="media-container static-media chart-bg"></div>
+                <a href="/analise-municipal/" class="feature-card video-card">
+                    <div class="media-container">
+                        <video autoplay muted loop playsinline class="card-video">
+                            <source src="{% static 'ifem/videos/analise_agregada.mp4' %}" type="video/mp4">
+                        </video>
+                        <div class="video-overlay"></div> 
+                    </div>
                     <div class="card-info">
                         <div class="info-header">
                             <div class="icon-box orange-icon">
@@ -355,7 +365,7 @@
                             <h4>Análise Agregada</h4>
                         </div>
                         <div class="hover-details">
-                            <p>Entenda a estrutura das receitas.</p>
+                            <p>Entenda a estrutura das receitas:</p>
                             <ul>
                                 <li>Composição Tributária.</li>
                                 <li>Indicadores Macroeconômicos.</li>
