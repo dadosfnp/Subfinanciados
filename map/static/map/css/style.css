@@ -97,11 +97,22 @@
 .map-page #btn-limpar-filtros{ width:100%; }
 
 /* ---------- Bloco de download ---------- */
-.map-page .sidebar .sidebar-spacer{ margin-top:auto; }
-.map-page .sidebar .btn-download{
-  margin-top:.75rem;
-  color:#fff;
-  box-shadow:0 2px 6px rgba(25,70,133,.10);
+
+/* 1. Removemos o spacer que empurrava o botão para baixo */
+.map-page .sidebar .sidebar-spacer { 
+    display: none !important; 
+}
+
+/* 2. Ajustamos a margem para ficar igual ao espaço entre os botões de cima */
+.map-page .sidebar .btn-download {
+    margin-top: 0.5rem !important; /* Equivale ao 'gap-2' do Bootstrap */
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(25,70,133,.10);
+}
+
+.map-page .sidebar .btn-download svg { 
+    display: inline-block; 
+    line-height: 0; 
 }
 .map-page .sidebar .btn-download svg{ display:inline-block; line-height:0; }
 
@@ -234,9 +245,9 @@
   outline:none !important;
 }
 
-/* ============ PADRONIZAÇÃO DE BOTÕES (AZUL FNP) ============ */
+/* ============ PADRONIZAÇÃO DE BOTÕES E BUSCA ============ */
 
-/* 1. Botão Limpar Pesquisa */
+/* 1. Botão "Limpar Pesquisa" (Ação principal - Mantém AZUL) */
 #btn-limpar-filtros {
     background-color: var(--fnp-blue, #194685) !important;
     border-color: var(--fnp-blue, #194685) !important;
@@ -245,26 +256,58 @@
     margin-top: 1rem;
 }
 
-/* 2. Botão Print Mapa e Baixar Dados */
-/* Selecionamos pela classe e por seletores genéricos de botão na sidebar */
+/* 2. Botões de Ação: Print e Baixar Dados (ALTERADO PARA CINZA) */
 .map-page .sidebar .btn-download,
-.map-page .sidebar .btn-secondary,
-.map-page .sidebar button:not(.btn-info-tooltip) {
-    background-color: var(--fnp-blue, #194685) !important;
-    border-color: var(--fnp-blue, #194685) !important;
+.map-page .sidebar .btn-secondary {
+    background-color: #6c757d !important; /* Cinza padrão */
+    border-color: #6c757d !important;
     color: #fff !important;
 }
 
-/* 3. Ajuste de ícones e Hovers */
-.map-page .sidebar button:hover,
-#btn-limpar-filtros:hover,
-.btn-download:hover {
-    background-color: #123361 !important; /* Tom mais escuro para o feedback visual */
+/* 3. Botões de Busca / Lupas (Fundo BRANCO com Ícone Azul) */
+.map-page .sidebar .input-group > .btn {
+    background-color: #ffffff !important;
+    border: 1px solid #194685 !important;
+    color: #194685 !important;
+    
+    /* Centralização e z-index */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+/* Garante que o ícone (SVG ou i) dentro da lupa seja azul */
+.map-page .sidebar .input-group > .btn svg,
+.map-page .sidebar .input-group > .btn i {
+    fill: #194685 !important;
+    color: #194685 !important;
+}
+
+/* --- ESTADOS DE HOVER (Interação) --- */
+
+/* Hover do Botão LIMPAR (Fica azul escuro) */
+#btn-limpar-filtros:hover {
+    background-color: #123361 !important;
     border-color: #123361 !important;
 }
 
-.map-page .sidebar button svg, 
-.map-page .sidebar button i {
-    fill: #fff !important;
-    color: #fff !important;
+/* Hover dos Botões CINZA (Fica cinza escuro) */
+.map-page .sidebar .btn-download:hover,
+.map-page .sidebar .btn-secondary:hover {
+    background-color: #5c636a !important;
+    border-color: #565e64 !important;
+}
+
+/* Hover das Lupas Brancas (Fica azul bem clarinho) */
+.map-page .sidebar .input-group > .btn:hover {
+    background-color: #f0f8ff !important;
+    color: #143a6e !important;
+    border-color: #143a6e !important;
+}
+
+.map-page .sidebar .input-group > .btn:hover svg,
+.map-page .sidebar .input-group > .btn:hover i {
+    fill: #143a6e !important;
+    color: #143a6e !important;
 }
