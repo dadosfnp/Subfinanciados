@@ -197,13 +197,55 @@ async function atualizarFiltros() {
         populacaoQuintilChart.data.labels = data.chartData.labels;
         populacaoQuintilChart.data.datasets = [];
 
-        // Paleta fixa por ano: 2000 = amarelo, 2023 = azul
-        const COLOR_2000 = '#efae17';
-        const COLOR_2023 = '#194685';
+        // ==== Gráfico ====
+        populacaoQuintilChart.data.labels = data.chartData.labels;
+        populacaoQuintilChart.data.datasets = [];
+
+        // =====================================================
+        // NOVA PALETA (QUINTIS): Vermelho -> Verde
+        // =====================================================
+        const QUINTIL_PALETTE = [
+            '#A33232', // 1º Quintil (Vermelho)
+            '#D97636', // 2º Quintil (Laranja)
+            '#E8C83E', // 3º Quintil (Amarelo)
+            '#72BA6A', // 4º Quintil (Verde Claro)
+            '#2D8A4E'  // 5º Quintil (Verde Escuro)
+        ];
+
+        // Se for Decil, precisamos de 10 cores (estendendo a lógica ou repetindo)
+        // Aqui garantimos que, se houver mais de 5 barras, não quebra
+        const getColors = (count) => {
+            // Se for exatamente 5, usa a paleta fixa. Se for mais (decil), repete ou adapta.
+            if (count <= 5) return QUINTIL_PALETTE;
+            // Fallback para Decil ou outros (retorna a paleta repetida ou estendida se necessário)
+            return QUINTIL_PALETTE.concat(QUINTIL_PALETTE); 
+        };
 
         if (data.chartData.datasets?.length > 0) {
 
-            // (Opcional) Garante que 2000 venha antes de 2023 na legenda
+            // 1. Função Auxiliar para criar a Hachura (Listra Diagonal)
+            const createDiagonalPattern = (color) => {
+                const shape = document.createElement('canvas');
+                shape.width = 10;
+                shape.height = 10;
+                const c = shape.getContext('2d');
+                
+                // Fundo Branco
+                c.fillStyle = '#ffffff';
+                c.fillRect(0, 0, 10, 10);
+                
+                // Linha Diagonal na cor do Quintil
+                c.strokeStyle = color;
+                c.lineWidth = 2; 
+                c.beginPath();
+                c.moveTo(0, 10);
+                c.lineTo(10, 0);
+                c.stroke();
+                
+                return populacaoQuintilChart.ctx.createPattern(shape, 'repeat');
+            };
+
+            // 2. Ordena para garantir que 2000 venha antes (Visualmente melhor)
             if (data.chartData.datasets.length === 2) {
                 data.chartData.datasets.sort((a, b) => {
                     if (a.label.includes('2000')) return -1;
@@ -212,25 +254,40 @@ async function atualizarFiltros() {
                 });
             }
 
-            // Insere datasets com cor DEFINIDA PELO LABEL, não pelo índice
             data.chartData.datasets.forEach((dataset) => {
-                let bgColor = COLOR_2023; // padrão = azul (2023)
+                // Pega as cores sólidas do Quintil
+                const barColors = getColors(dataset.data.length);
+                
+                // Identifica se é 2023
+                const is2023 = dataset.label.toString().includes('2023');
 
-                if (dataset.label && dataset.label.toString().includes('2000')) {
-                    bgColor = COLOR_2000; // se for 2000 -> amarelo
-                }
+                // Lógica de Fundo:
+                // Se for 2023: Usa a Hachura (Pattern) baseada na cor
+                // Se for 2000: Usa a Cor Sólida normal
+                const backgroundColors = barColors.map(color => 
+                    is2023 ? createDiagonalPattern(color) : color
+                );
+
+                // Lógica de Borda:
+                // Se quiser borda preta igual ao print: use '#000000'
+                // Se quiser borda colorida combinando: use barColors
+                // Vou manter 'barColors' para garantir a identidade visual
+                const borderColors = barColors; 
 
                 populacaoQuintilChart.data.datasets.push({
                     label: dataset.label,
                     data: dataset.data,
-                    backgroundColor: dataset.data.map(() => bgColor),
-                    borderColor: dataset.data.map(() => bgColor),
-                    borderWidth: 1,
+                    
+                    // Aplica as cores definidas acima
+                    backgroundColor: backgroundColors,
+                    
+                    borderColor: borderColors, 
+                    borderWidth: 2, // Espessura da borda
+                    
                     fill: true,
-                    barPercentage: 1,
-                    categoryPercentage: 1,
-                    grouped: true,
-                    barThickness: 50
+                    barPercentage: 0.9,
+                    categoryPercentage: 0.9,
+                    grouped: true
                 });
             });
 
@@ -238,7 +295,7 @@ async function atualizarFiltros() {
             console.warn('A API não retornou dados para o gráfico.');
         }
 
-        populacaoQuintilChart.options.scales.x.title.text = data.chartData.xAxisTitle;
+        // populacaoQuintilChart.options.scales.x.title.text = data.chartData.xAxisTitle; \\
         populacaoQuintilChart.options.scales.y.title.text = data.chartData.yAxisTitle;
 
         populacaoQuintilChart.options.scales.y.ticks.callback = function (value) {
@@ -308,14 +365,67 @@ document.addEventListener('DOMContentLoaded', () => {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true, position: 'top' },
+                // 1. LEGENDA CUSTOMIZADA (PRETO E BRANCO COM TEXTURA)
+                legend: { 
+                    display: true, 
+                    position: 'top',
+                    labels: {
+                        usePointStyle: false, // Mantém retangular
+                        boxWidth: 40,
+                        padding: 20,
+                        
+                        generateLabels: function(chart) {
+                            // Gera os labels originais
+                            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+
+                            original.forEach(label => {
+                                // Configuração Base (Borda Preta para todos)
+                                label.strokeStyle = '#000000';
+                                label.lineWidth = 1; // Espessura da borda da caixinha
+
+                                // Se for 2023, cria a Hachura PRETA E BRANCA
+                                if (label.text.includes('2023')) {
+                                    // 1. Cria um mini-canvas para desenhar a textura
+                                    const patternCanvas = document.createElement('canvas');
+                                    patternCanvas.width = 10;
+                                    patternCanvas.height = 10;
+                                    const ctx = patternCanvas.getContext('2d');
+
+                                    // 2. Fundo Branco
+                                    ctx.fillStyle = '#ffffff';
+                                    ctx.fillRect(0, 0, 10, 10);
+
+                                    // 3. Linha Diagonal PRETA
+                                    ctx.strokeStyle = '#000000';
+                                    ctx.lineWidth = 2;
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, 10);
+                                    ctx.lineTo(10, 0);
+                                    ctx.stroke();
+
+                                    // 4. Aplica como preenchimento da legenda
+                                    const pattern = chart.ctx.createPattern(patternCanvas, 'repeat');
+                                    label.fillStyle = pattern;
+                                    
+                                } else {
+                                    // Se for 2000 (ou outros), Fundo Branco Sólido
+                                    label.fillStyle = '#FFFFFF';
+                                }
+                            });
+
+                            return original;
+                        }
+                    }
+                },
+
+                // 2. TOOLTIP (Mantido)
                 tooltip: {
                     callbacks: {
                         label: function (context) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                if (formatPorcentagemRadio.checked) {
+                                if (document.getElementById('formatPorcentagem').checked) {
                                     label += context.parsed.y.toFixed(1) + '%';
                                 } else {
                                     label += context.parsed.y.toLocaleString('pt-BR') + ' milhões';
@@ -325,20 +435,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 },
+
+                // 3. DATALABELS (Mantido - Negrito)
                 datalabels: {
                     anchor: 'end',
                     align: 'top',
                     color: '#000000',
-                    font: { size: 12 },
+                    font: { size: 12, weight: 'bold' },
                     formatter: function (value) {
-                        const isPercentage =
-                            document.getElementById('formatPorcentagem').checked;
+                        const isPercentage = document.getElementById('formatPorcentagem').checked;
                         return isPercentage
                             ? value.toFixed(1) + '%'
-                            : value.toLocaleString(
-                                  'pt-BR',
-                                  { minimumFractionDigits: 1, maximumFractionDigits: 1 }
-                              ) + 'M';
+                            : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
                     }
                 }
             },
@@ -348,14 +456,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: { display: true, text: 'População (milhões)' },
                     ticks: {
                         callback: function (value) {
-                            return formatPorcentagemRadio.checked
+                            return document.getElementById('formatPorcentagem').checked
                                 ? value.toFixed(0) + '%'
                                 : value.toLocaleString('pt-BR') + 'M';
                         }
                     }
                 },
                 x: {
-                    title: { display: true, text: 'Quintil' }
+                    // --- 2. REMOVE O TÍTULO DUPLICADO ---
+                    title: { 
+                        display: false, // <--- Isso garante que o título "Quintil" não apareça solto
+                        text: '' 
+                    },
+                    // --- 3. NEGRITO NOS RÓTULOS DE BAIXO (1º Quintil, etc) ---
+                    ticks: {
+                        color: '#333', // Cor do texto
+                        font: {
+                            size: 12,
+                            weight: 'bold' // <--- Força negrito no eixo X
+                        }
+                    }
                 }
             }
         },
