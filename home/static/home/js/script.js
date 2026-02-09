@@ -261,12 +261,12 @@ async function atualizarFiltros() {
                 // Identifica se é 2023
                 const is2023 = dataset.label.toString().includes('2023');
 
-                // Lógica de Fundo:
-                // Se for 2023: Usa a Hachura (Pattern) baseada na cor
-                // Se for 2000: Usa a Cor Sólida normal
+                // Lógica de Fundo (INVERTIDA):
+                // Se for 2023: Usa a Cor Sólida normal (color)
+                // Se for 2000 (else): Usa a Hachura (createDiagonalPattern)
                 const backgroundColors = barColors.map(color => 
-                    is2023 ? createDiagonalPattern(color) : color
-                );
+                    is2023 ? color : createDiagonalPattern(color) 
+            );
 
                 // Lógica de Borda:
                 // Se quiser borda preta igual ao print: use '#000000'
@@ -361,80 +361,61 @@ document.addEventListener('DOMContentLoaded', () => {
     populacaoQuintilChart = new Chart(populacaoQuintilCtx, {
         type: 'bar',
         data: { labels: [], datasets: [] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                // 1. LEGENDA CUSTOMIZADA (PRETO E BRANCO COM TEXTURA)
-                legend: { 
-                    display: true, 
-                    position: 'top',
-                    labels: {
-                        usePointStyle: false, // Mantém retangular
-                        boxWidth: 40,
-                        padding: 20,
-                        
-                        generateLabels: function(chart) {
-                            // Gera os labels originais
-                            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { 
+    display: true, 
+    position: 'top',
+    labels: {
+        usePointStyle: false, // Mantém retangular
+        boxWidth: 40,
+        padding: 20,
+        
+        generateLabels: function(chart) {
+            // Gera os labels originais
+            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
 
-                            original.forEach(label => {
-                                // Configuração Base (Borda Preta para todos)
-                                label.strokeStyle = '#000000';
-                                label.lineWidth = 1; // Espessura da borda da caixinha
+            original.forEach(label => {
+                // 1. Configuração Base (Borda Preta para todos)
+                label.strokeStyle = '#000000';
+                label.lineWidth = 1;
 
-                                // Se for 2023, cria a Hachura PRETA E BRANCA
-                                if (label.text.includes('2023')) {
-                                    // 1. Cria um mini-canvas para desenhar a textura
-                                    const patternCanvas = document.createElement('canvas');
-                                    patternCanvas.width = 10;
-                                    patternCanvas.height = 10;
-                                    const ctx = patternCanvas.getContext('2d');
+                // 2. Lógica de Preenchimento (Preto e Branco apenas)
+                if (label.text.includes('2000')) {
+                    // === ANO 2000: HACHURA PRETA E BRANCA ===
+                    const patternCanvas = document.createElement('canvas');
+                    patternCanvas.width = 10;
+                    patternCanvas.height = 10;
+                    const ctx = patternCanvas.getContext('2d');
 
-                                    // 2. Fundo Branco
-                                    ctx.fillStyle = '#ffffff';
-                                    ctx.fillRect(0, 0, 10, 10);
+                    // Fundo Branco
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, 10, 10);
 
-                                    // 3. Linha Diagonal PRETA
-                                    ctx.strokeStyle = '#000000';
-                                    ctx.lineWidth = 2;
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, 10);
-                                    ctx.lineTo(10, 0);
-                                    ctx.stroke();
+                    // Linha Diagonal PRETA
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 10);
+                    ctx.lineTo(10, 0);
+                    ctx.stroke();
 
-                                    // 4. Aplica como preenchimento da legenda
-                                    const pattern = chart.ctx.createPattern(patternCanvas, 'repeat');
-                                    label.fillStyle = pattern;
-                                    
-                                } else {
-                                    // Se for 2000 (ou outros), Fundo Branco Sólido
-                                    label.fillStyle = '#FFFFFF';
-                                }
-                            });
+                    // Aplica padrão
+                    const pattern = chart.ctx.createPattern(patternCanvas, 'repeat');
+                    label.fillStyle = pattern;
+                    
+                } else {
+                    // === ANO 2023: PRETO SÓLIDO ===
+                    label.fillStyle = '#000000'; // <--- Força preto sólido aqui
+                }
+            });
 
-                            return original;
-                        }
-                    }
-                },
-
-                // 2. TOOLTIP (Mantido)
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                if (document.getElementById('formatPorcentagem').checked) {
-                                    label += context.parsed.y.toFixed(1) + '%';
-                                } else {
-                                    label += context.parsed.y.toLocaleString('pt-BR') + ' milhões';
-                                }
-                            }
-                            return label;
-                        }
-                    }
-                },
+            return original;
+        }
+    }
+},
 
                 // 3. DATALABELS (Mantido - Negrito)
                 datalabels: {
