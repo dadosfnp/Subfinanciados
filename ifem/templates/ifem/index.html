@@ -11,37 +11,47 @@
 {% block content %}
 
     <nav class="story-nav" id="story-nav">
-        <div class="story-track">
-            <a onclick="scrollToId('problema')" class="story-item active" id="nav-problema">
-                <div class="story-icon-wrapper">
-                    <img src="{% static 'ifem/images/icones_problema.svg' %}" alt="Ícone Problema">
-                </div>
-                <span class="story-label">O Problema</span>
-            </a>
-            
-            <a onclick="scrollToId('metodologia')" class="story-item" id="nav-intro">
-                <div class="story-icon-wrapper">
-                    <img src="{% static 'ifem/images/icones_metodologia.svg' %}" alt="Ícone Metodologia">
-                </div>
-                <span class="story-label">Metodologia</span>
-            </a>
-            
-            <a onclick="scrollToId('funcionalidades')" class="story-item" id="nav-plataforma">
-                <div class="story-icon-wrapper">
-                    <img src="{% static 'ifem/images/icones_Plataforma.svg' %}" alt="Ícone Plataforma">
-                </div>
-                <span class="story-label">Plataforma</span>
-            </a>
-            
-            <a onclick="scrollToId('noticias')" class="story-item" id="nav-noticias">
-                <div class="story-icon-wrapper">
-                    <img src="{% static 'ifem/images/icones_Notícias.svg' %}" alt="Ícone Notícias">
-                </div>
-                <span class="story-label">Notícias</span>
-            </a>
-        </div>
-        <div class="story-progress-bar" id="reading-progress"></div>
-    </nav>
+    <div class="story-track">
+        
+        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="nav-logo logo-left">
+            <img src="{% static 'ifem/images/ifem1-marca-03.svg' %}" alt="IFEM">
+        </a>
+
+        <a onclick="scrollToId('problema')" class="story-item active" id="nav-problema">
+            <div class="story-icon-wrapper">
+                <img src="{% static 'ifem/images/icones_problema.svg' %}" alt="">
+            </div>
+            <span class="story-label">O Problema</span>
+        </a>
+        
+        <a onclick="scrollToId('metodologia')" class="story-item" id="nav-intro">
+            <div class="story-icon-wrapper">
+                <img src="{% static 'ifem/images/icones_metodologia.svg' %}" alt="">
+            </div>
+            <span class="story-label">Metodologia</span>
+        </a>
+        
+        <a onclick="scrollToId('funcionalidades')" class="story-item" id="nav-plataforma">
+            <div class="story-icon-wrapper">
+                <img src="{% static 'ifem/images/icones_Plataforma.svg' %}" alt="">
+            </div>
+            <span class="story-label">Plataforma</span>
+        </a>
+        
+        <a onclick="scrollToId('noticias')" class="story-item" id="nav-noticias">
+            <div class="story-icon-wrapper">
+                <img src="{% static 'ifem/images/icones_Notícias.svg' %}" alt="">
+            </div>
+            <span class="story-label">Notícias</span>
+        </a>
+
+        <a href="https://fnp.org.br" target="_blank" class="nav-logo logo-right">
+            <img src="{% static 'ifem/images/logo1-FNP.png' %}" alt="FNP">
+        </a>
+
+    </div>
+    <div class="story-progress-bar" id="reading-progress"></div>
+</nav>
 
     <section class="hero-section">
         <div class="hero-content">

@@ -142,10 +142,10 @@ p {
     box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 /* ==========================================================================
-   3. BARRA DE NAVEGAÇÃO (Sticky com Ícones SVG)
+   3. BARRA DE NAVEGAÇÃO (TRAVADA E CENTRALIZADA)
    ========================================================================== */
 
-/* Container principal (Mantido original) */
+/* Container principal (Barra Branca) */
 .story-nav {
     position: fixed;
     top: 0; 
@@ -154,41 +154,83 @@ p {
     height: var(--nav-height);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px); /* Suporte Safari */
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(0,0,0,0.08);
     z-index: 900;
+    
     display: flex; 
     flex-direction: column;
-    opacity: 0; 
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    
+    /* Garante que o container pai não mova */
+    transform: none !important;
 }
 
-/* Estado visível (via JS) */
+/* Estado visível */
 .story-nav.visible { 
     opacity: 1; 
     pointer-events: all; 
 }
 
-/* Trilho centralizado */
+/* --- TRILHO PRINCIPAL --- */
 .story-track {
-    flex: 1; 
-    display: flex; 
-    align-items: center; 
+    /* position: relative;  <--- APAGUE OU COMENTE ESTA LINHA!!! */
+    
+    /* Ao remover o 'relative', os logos (que são absolute) vão ignorar este container
+       e buscar a próxima referência, que é a barra .story-nav (largura total da tela). 
+       Assim, eles vão colar na borda real do monitor. */
+
+    flex: 1;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 20px; 
-    max-width: 1200px; 
-    margin: 0 auto; 
+    height: 100%;
+    
+    /* Dimensões do menu central */
+    width: 100%;
+    max-width: 1400px;
     padding: 0 20px;
+    
+    /* Bloqueios de animação (MANTENHA ISSO) */
+    margin: 0 auto !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
 }
 
-/* Item de navegação (Pill Shape) */
+/* --- LOGOS (FIXOS NAS PONTAS) --- */
+.nav-logo {
+    position: absolute; /* Tira do fluxo para não empurrar o menu */
+    top: 50%;
+    transform: translateY(-50%); /* Centraliza verticalmente */
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s ease;
+    height: 100%;
+}
+
+.nav-logo:hover { opacity: 0.8; }
+
+.nav-logo img {
+    height: 40px; 
+    width: auto;
+}
+
+/* Posicionamento exato (30px das bordas) */
+.logo-left { left: 15px; }
+.logo-right { right: 15px; }
+
+/* Limpeza de margens antigas dos itens do menu */
+#nav-problema, #nav-noticias { margin: 0 !important; }
+
+
+/* --- ITEM DE NAVEGAÇÃO (Menu Central) --- */
 .story-item {
     display: flex; 
     align-items: center; 
-    gap: 14px; /* Aumentei levemente o gap para o ícone */
-    padding: 6px 18px 6px 8px; /* Padding ajustado para o círculo do ícone */
-    border-radius: 30px; /* Mais arredondado */
+    gap: 14px;
+    padding: 6px 18px 6px 8px;
+    border-radius: 30px;
     color: #888; 
     text-decoration: none;
     font-size: 0.9rem; 
@@ -199,10 +241,9 @@ p {
     font-family: 'Inter', sans-serif;
 }
 
-/* Hover e Active do container geral */
 .story-item:hover, .story-item.active {
     color: var(--fnp-dark-blue, #1D437A); 
-    background: rgba(29, 67, 122, 0.05); /* Azul FNP bem claro */
+    background: rgba(29, 67, 122, 0.05);
 }
 
 .story-item.active {
@@ -210,7 +251,7 @@ p {
     border-color: rgba(29, 67, 122, 0.15);
 }
 
-/* --- NOVO: Wrapper do Ícone (Substitui o story-num) --- */
+/* Wrapper do Ícone */
 .story-icon-wrapper {
     display: flex; 
     align-items: center; 
@@ -218,47 +259,42 @@ p {
     width: 34px; 
     height: 34px; 
     border-radius: 50%;
-    background: #f0f2f5; /* Cinza neutro inativo */
+    background: #f0f2f5;
     transition: all 0.3s ease;
     flex-shrink: 0;
 }
 
-/* Estilo do SVG dentro da bolinha */
 .story-icon-wrapper img {
     width: 32px;
     height: 32px;
-    opacity: 0.6; /* Ícone levemente apagado quando inativo */
+    opacity: 0.6;
     transition: all 0.3s ease;
     transform: scale(1.1);
 }
 
-/* --- ESTADO ATIVO DO ÍCONE --- */
 .story-item.active .story-icon-wrapper { 
-    background: var(--fnp-dark-blue, #1D437A); /* Fundo Azul FNP */
+    background: var(--fnp-dark-blue, #1D437A);
     box-shadow: 0 2px 5px rgba(29, 67, 122, 0.2);
 }
 
 .story-item.active .story-icon-wrapper img {
     opacity: 1;
-    filter: brightness(0) invert(1); /* Inverte a cor para BRANCO */
+    filter: brightness(0) invert(1);
     transform: scale(1.5);
 }
 
-/* Label de Texto */
-.story-label {
-    white-space: nowrap;
-}
+.story-label { white-space: nowrap; }
 
-/* Mobile: Ajustes de Header e Labels */
-.section-header-mobile { 
-    display: none; 
+/* --- RESPONSIVIDADE --- */
+.section-header-mobile { display: none; }
+
+@media(max-width: 1100px) {
+    /* Esconde logos em telas médias para não sobrepor o menu */
+    .nav-logo { display: none; }
 }
 
 @media(max-width: 768px) {
-    /* Esconde o texto, mostra apenas os ícones */
     .story-label { display: none; } 
-    
-    /* Ajusta o padding do item para ficar circular no mobile */
     .story-item { padding: 6px; border-radius: 50%; }
     
     .section-header-mobile { 
@@ -269,8 +305,7 @@ p {
     .section-header-mobile h2 { 
         font-size: 1.8rem; 
         color: var(--fnp-dark-blue, #1D437A); 
-        font-weight: 800;
-        letter-spacing: -0.02em;
+        font-weight: 800; 
     }
 }
 
@@ -932,7 +967,13 @@ p {
 /* ==========================================================================
    7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS) - REVISADO
    ========================================================================== */
-/* Cores do Tema FNP */
+
+/* Adicione isso para expandir a área horizontal somente nesta seção */
+#funcionalidades .section-content {
+    max-width: 1400px; /* Aumentado de 1200px para 1400px */
+}
+
+   /* Cores do Tema FNP */
 :root {
     --fnp-blue: #003366;
     --fnp-green: #27AE60;
@@ -1246,7 +1287,7 @@ p {
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     position: relative; 
-    height: 440px; /* Aumentado levemente para acomodar o botão */
+    height: 550px; /* Aumentado levemente para acomodar o botão */
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
     display: flex; 
     flex-direction: column;
@@ -1309,7 +1350,7 @@ p {
 
 .info-header h4 { 
     margin: 0; 
-    font-size: 1.15rem; 
+    font-size: 1.35rem; 
     font-weight: 700;
     color: var(--fnp-dark-blue); 
     letter-spacing: -0.01em;
