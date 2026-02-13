@@ -311,20 +311,15 @@ if (newsContainer && prevBtn && nextBtn) {
 // ======================================================================
 // Lógica do Modal de Vídeo Tutorial
 // ======================================================================
+// ======================================================================
+// Lógica do Modal (Simplificado: Apenas Toggle)
+// ======================================================================
 window.toggleTutorial = function() {
     const modal = document.getElementById('tutorialModal');
-    const video = document.getElementById('tutorialVideo');
     
-    if (!modal || !video) return;
-
-    modal.classList.toggle('active');
-    
-    // Se fechou o modal, pausa o vídeo e reseta
-    if (!modal.classList.contains('active')) {
-        video.pause();
-        video.currentTime = 0;
+    if (modal) {
+        modal.classList.toggle('active');
     } else {
-        // Tenta iniciar o vídeo automaticamente ao abrir
-        video.play().catch(e => console.log("Autoplay bloqueado pelo navegador", e));
+        console.error('Modal #tutorialModal não encontrado.');
     }
 };
