@@ -311,20 +311,18 @@ if (newsContainer && prevBtn && nextBtn) {
 // ======================================================================
 // Lógica do Modal de Vídeo Tutorial
 // ======================================================================
+// Localize e substitua a função toggleTutorial no final do seu landing.js
 window.toggleTutorial = function() {
     const modal = document.getElementById('tutorialModal');
-    const video = document.getElementById('tutorialVideo');
     
-    if (!modal || !video) return;
+    if (!modal) return;
 
-    modal.classList.toggle('active');
+    const isActive = modal.classList.toggle('active');
     
-    // Se fechou o modal, pausa o vídeo e reseta
-    if (!modal.classList.contains('active')) {
-        video.pause();
-        video.currentTime = 0;
+    // Trava o scroll do corpo da página quando o modal está aberto
+    if (isActive) {
+        document.body.style.overflow = 'hidden';
     } else {
-        // Tenta iniciar o vídeo automaticamente ao abrir
-        video.play().catch(e => console.log("Autoplay bloqueado pelo navegador", e));
+        document.body.style.overflow = '';
     }
 };

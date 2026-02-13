@@ -459,14 +459,16 @@
         </div>
 
         <div id="tutorialModal" class="video-modal-overlay" onclick="toggleTutorial()">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <button class="close-modal-btn" onclick="toggleTutorial()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <video controls class="modal-video-player" id="tutorialVideo">
-                    <source src="{% static 'ifem/videos/tutorial_plataforma.mp4' %}" type="video/mp4">
-                    Seu navegador não suporta vídeos HTML5.
-                </video>
+    <div class="modal-content" onclick="event.stopPropagation()" style="background: none; box-shadow: none;">
+        <button class="close-modal-btn" onclick="toggleTutorial()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+        </button>
+                <img src="{% static 'ifem/images/em-construcao.png' %}" 
+                    alt="Tutorial em Construção" 
+                    style="width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
             </div>
         </div>
     </section>
