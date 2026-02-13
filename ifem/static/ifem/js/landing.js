@@ -311,15 +311,18 @@ if (newsContainer && prevBtn && nextBtn) {
 // ======================================================================
 // Lógica do Modal de Vídeo Tutorial
 // ======================================================================
-// ======================================================================
-// Lógica do Modal (Simplificado: Apenas Toggle)
-// ======================================================================
+// Localize e substitua a função toggleTutorial no final do seu landing.js
 window.toggleTutorial = function() {
     const modal = document.getElementById('tutorialModal');
     
-    if (modal) {
-        modal.classList.toggle('active');
+    if (!modal) return;
+
+    const isActive = modal.classList.toggle('active');
+    
+    // Trava o scroll do corpo da página quando o modal está aberto
+    if (isActive) {
+        document.body.style.overflow = 'hidden';
     } else {
-        console.error('Modal #tutorialModal não encontrado.');
+        document.body.style.overflow = '';
     }
 };
