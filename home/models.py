@@ -255,7 +255,7 @@ class ContaMaisEspecifica(models.Model):
             return valor / self.municipio.populacao23
         return 0
     
-    # Propriedades per capita (abreviadas para economizar espaço, mantenha suas lógicas se tiverem mais detalhes)
+    # --- Propriedades Impostos ---
     @property
     def iptu_pc(self): return self._calcular_pc(self.iptu)
     @property
@@ -264,7 +264,52 @@ class ContaMaisEspecifica(models.Model):
     def iss_pc(self): return self._calcular_pc(self.iss)
     @property
     def outros_impostos_pc(self): return self._calcular_pc(self.outros_impostos)
-    # ... (demais propriedades seguem o mesmo padrão)
+
+    # --- Propriedades Taxas (AQUI ESTAVA FALTANDO) ---
+    @property
+    def taxa_policia_pc(self): return self._calcular_pc(self.taxa_policia)
+    @property
+    def taxa_prestacao_servico_pc(self): return self._calcular_pc(self.taxa_prestacao_servico)
+    @property
+    def outras_taxas_pc(self): return self._calcular_pc(self.outras_taxas)
+
+    # --- Propriedades Contribuições de Melhoria ---
+    @property
+    def contribuicao_melhoria_pavimento_obras_pc(self): return self._calcular_pc(self.contribuicao_melhoria_pavimento_obras)
+    @property
+    def contribuicao_melhoria_agua_potavel_pc(self): return self._calcular_pc(self.contribuicao_melhoria_agua_potavel)
+    @property
+    def contribuicao_melhoria_iluminacao_publica_pc(self): return self._calcular_pc(self.contribuicao_melhoria_iluminacao_publica)
+    @property
+    def outras_contribuicoes_melhoria_pc(self): return self._calcular_pc(self.outras_contribuicoes_melhoria)
+
+    # --- Propriedades Transferências União ---
+    @property
+    def transferencia_uniao_fpm_pc(self): return self._calcular_pc(self.transferencia_uniao_fpm)
+    @property
+    def transferencia_uniao_exploracao_pc(self): return self._calcular_pc(self.transferencia_uniao_exploracao)
+    @property
+    def transferencia_uniao_sus_pc(self): return self._calcular_pc(self.transferencia_uniao_sus)
+    @property
+    def transferencia_uniao_fnde_pc(self): return self._calcular_pc(self.transferencia_uniao_fnde)
+    @property
+    def transferencia_uniao_fnas_pc(self): return self._calcular_pc(self.transferencia_uniao_fnas)
+    @property
+    def outras_transferencias_uniao_pc(self): return self._calcular_pc(self.outras_transferencias_uniao)
+
+    # --- Propriedades Transferências Estado ---
+    @property
+    def transferencia_estado_icms_pc(self): return self._calcular_pc(self.transferencia_estado_icms)
+    @property
+    def transferencia_estado_ipva_pc(self): return self._calcular_pc(self.transferencia_estado_ipva)
+    @property
+    def transferencia_estado_exploracao_pc(self): return self._calcular_pc(self.transferencia_estado_exploracao)
+    @property
+    def transferencia_estado_sus_pc(self): return self._calcular_pc(self.transferencia_estado_sus)
+    @property
+    def transferencia_estado_assistencia_pc(self): return self._calcular_pc(self.transferencia_estado_assistencia)
+    @property
+    def outras_transferencias_estado_pc(self): return self._calcular_pc(self.outras_transferencias_estado)
 
     def __str__(self):
         return f"Receita Mais Específica de {self.municipio.name_muni_uf}"
