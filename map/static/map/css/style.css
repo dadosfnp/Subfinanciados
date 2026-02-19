@@ -311,3 +311,28 @@
     fill: #143a6e !important;
     color: #143a6e !important;
 }
+
+/* Ajuste para o Card de Resumo com Badge */
+#summary-card {
+    transition: all 0.3s ease; /* Suaviza a expansão quando a imagem aparece */
+    max-height: 500px;
+}
+
+/* Garante que o fundo da imagem no resumo lateral seja transparente */
+#municipio-badge-img {
+    background-color: transparent !important;
+    mix-blend-mode: multiply; /* Tenta remover fundos brancos/claros automaticamente */
+}
+
+#municipio-badge-container {
+    background: none !important;
+}
+
+/* Garante que o container de overlays não suba demais no mobile */
+@media (max-width: 767.98px) {
+    .map-overlay-container {
+        bottom: 10px;
+        right: 10px;
+        scale: 0.9; /* Reduz um pouco o tamanho para telas pequenas */
+    }
+}
