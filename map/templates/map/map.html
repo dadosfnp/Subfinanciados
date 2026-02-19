@@ -35,30 +35,33 @@
     <div id="filters">
       <!-- Faixa Populacional -->
       <div class="filter-group">
-        <label for="filtro-porte" class="form-label">Faixa Populacional:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-porte" class="form-select form-select-sm">
-            <option value="todos">Todos</option>
-            <option value="Até 5 mil">Até 5 mil</option>
-            <option value="5 mil a 10 mil">5 mil a 10 mil</option>
-            <option value="10 mil a 20 mil">10 mil a 20 mil</option>
-            <option value="20 mil a 50 mil">20 mil a 50 mil</option>
-            <option value="50 mil a 100 mil">50 mil a 100 mil</option>
-            <option value="100 mil a 200 mil">100 mil a 200 mil</option>
-            <option value="200 mil a 500 mil">200 mil a 500 mil</option>
-            <option value="Acima de 500 mil">Acima de 500 mil</option>
-          </select>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-porte" title="Buscar na lista">
-            <!-- ícone lupa -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                 viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 
-                       1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 
-                       0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+  <label for="filtro-porte" class="form-label">Faixa Populacional:</label>
+  <div class="input-group input-group-sm">
+    <select id="filtro-porte" class="form-select form-select-sm">
+      <option value="todos">Todos</option>
+      <option value="Até 5 mil">Até 5 mil</option>
+      <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+      <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+      <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+      <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+      <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+      <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+      <option value="Acima de 500 mil">Acima de 500 mil</option>
+
+      <optgroup label="────── - ──────" style="color: #6c757d; background-color: #f8f9fa; text-align: center; font-size: 0.75rem;">
+          </optgroup>
+        
+        <option value="Abaixo de 80 mil" >Abaixo de 80 mil</option>
+        <option value="Acima de 80 mil" >Acima de 80 mil</option>
+    
+    </select>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-porte" title="Buscar na lista">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+      </svg>
+    </button>
+  </div>
+</div>
 
       <!-- Região Metropolitana -->
       <div class="filter-group">
