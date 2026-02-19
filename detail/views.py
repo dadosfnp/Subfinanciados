@@ -354,20 +354,14 @@ def municipio_details_api(request):
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
             queryset = queryset.filter(populacao23__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao23__gte=500000)
+        
+        # --- FILTROS FNP ---
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao23__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao23__lt=80000)
     
     national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_23_pc'))['avg_rc'] or 0
 
