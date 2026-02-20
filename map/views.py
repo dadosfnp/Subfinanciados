@@ -53,21 +53,21 @@ def municipios_geojson_api(request):
     # Aplica filtro de porte populacional
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
 
     # Lógica de cálculo de quantil dinâmico
     num_quantiles = 5 if classification_filter == 'quintil' else 10
@@ -81,11 +81,11 @@ def municipios_geojson_api(request):
         # Calcula o quantil sobre o queryset já filtrado
         base_queryset_for_quantile = queryset
     
-    # Extrai os valores de 'rc_23_pc' para o cálculo
+    # Extrai os valores de 'rc_24_pc' para o cálculo
     rc_values = np.array([
-        muni['rc_23_pc']
-        for muni in base_queryset_for_quantile.values('rc_23_pc')
-        if muni.get('rc_23_pc') is not None
+        muni['rc_24_pc']
+        for muni in base_queryset_for_quantile.values('rc_24_pc')
+        if muni.get('rc_24_pc') is not None
     ])
 
     if len(rc_values) > 0:
@@ -94,7 +94,7 @@ def municipios_geojson_api(request):
     
     # Agora, aplica o filtro de subgrupo APÓS os cálculos de quantil,
     # se o subgrupo for uma classificação (quintil/decil)
-    # ou se for um filtro natural sobre o rc_23_pc.
+    # ou se for um filtro natural sobre o rc_24_pc.
     if subgroup_filter and subgroup_filter != "todos":
         # Se o modo de cálculo é 'por_filtro', o campo dinâmico será usado
         # para aplicar o filtro de subgrupo.
@@ -108,11 +108,11 @@ def municipios_geojson_api(request):
                     max_val_quantile = quantile_boundaries[target_quantile_idx] if target_quantile_idx < num_quantiles -1 else float('inf')
                     
                     if max_val_quantile == float('inf'): # Último quantil
-                        queryset = queryset.filter(rc_23_pc__gte=min_val_quantile)
+                        queryset = queryset.filter(rc_24_pc__gte=min_val_quantile)
                     elif min_val_quantile == -float('inf'): # Primeiro quantil
-                        queryset = queryset.filter(rc_23_pc__lt=max_val_quantile)
+                        queryset = queryset.filter(rc_24_pc__lt=max_val_quantile)
                     else:
-                        queryset = queryset.filter(rc_23_pc__gte=min_val_quantile, rc_23_pc__lt=max_val_quantile)
+                        queryset = queryset.filter(rc_24_pc__gte=min_val_quantile, rc_24_pc__lt=max_val_quantile)
                 
             except ValueError:
                 # Trata o caso onde subgroup_filter não é um inteiro para quantil
@@ -121,19 +121,19 @@ def municipios_geojson_api(request):
         # Se o modo de cálculo é 'total' (quantis pré-calculados) OU se o filtro é 'natural'
         elif classification_filter == 'quintil':
             quintil_filter = f"{subgroup_filter}º quintil"
-            queryset = queryset.filter(quintil23=quintil_filter)
+            queryset = queryset.filter(quintil24=quintil_filter)
         elif classification_filter == 'decil':
             decil_filter = f"{subgroup_filter}º decil"
-            queryset = queryset.filter(decil23=decil_filter)
+            queryset = queryset.filter(decil24=decil_filter)
         elif classification_filter == 'natural':
             try:
                 min_str, max_str = subgroup_filter.split('-')
                 min_val = int(min_str)
                 if max_str.lower() == '999999': # Representa "acima de X"
-                    queryset = queryset.filter(rc_23_pc__gte=min_val)
+                    queryset = queryset.filter(rc_24_pc__gte=min_val)
                 else:
                     max_val = int(max_str)
-                    queryset = queryset.filter(rc_23_pc__gte=min_val, rc_23_pc__lt=max_val)
+                    queryset = queryset.filter(rc_24_pc__gte=min_val, rc_24_pc__lt=max_val)
             except ValueError:
                 pass # Lida graciosamente com filtros de subgrupo "natural" malformados
 
@@ -142,15 +142,15 @@ def municipios_geojson_api(request):
     for municipio in queryset:
         # Adiciona o quantil calculado dinamicamente ou o pré-calculado
         current_muni_quantile = None
-        if municipio.rc_23_pc is not None and len(quantile_boundaries) > 0:
-            current_muni_quantile_idx = np.searchsorted(quantile_boundaries, municipio.rc_23_pc)
+        if municipio.rc_24_pc is not None and len(quantile_boundaries) > 0:
+            current_muni_quantile_idx = np.searchsorted(quantile_boundaries, municipio.rc_24_pc)
             current_muni_quantile = int(current_muni_quantile_idx + 1)
         elif quantil_calculation == 'total':
              # Se o cálculo é 'total', usa o campo pré-calculado do modelo
             if classification_filter == 'quintil':
-                current_muni_quantile = municipio.quintil23
+                current_muni_quantile = municipio.quintil24
             elif classification_filter == 'decil':
-                current_muni_quantile = municipio.decil23
+                current_muni_quantile = municipio.decil24
 
         feature = {
             "type": "Feature",
@@ -164,13 +164,15 @@ def municipios_geojson_api(request):
                 'cod_ibge': municipio.cod_ibge,
                 'name_muni': municipio.name_muni,
                 'name_muni_uf': municipio.name_muni_uf,
-                'Populacao23': municipio.populacao23,
+                'Populacao24': municipio.populacao24,
                 'uf': municipio.uf,
-                'rc_23_pc': municipio.rc_23_pc,
-                'quintil23_pre_calculado': municipio.quintil23, # Manter para referência
-                'decil23_pre_calculado': municipio.decil23,   # Manter para referência
-                'percentil': municipio.percentil,
-                'percentil_n': municipio.percentil_n,
+                'rc_24_pc': municipio.rc_24_pc,
+                'pib_pc': municipio.pib,
+                'perc_pop_cadunico': (municipio.cadunico / municipio.populacao24 * 100) if (municipio.cadunico / municipio.populacao24 * 100) < 100 else 100,
+                'quintil24_pre_calculado': municipio.quintil24, # Manter para referência
+                'decil24_pre_calculado': municipio.decil24,   # Manter para referência
+                'percentil24': municipio.percentil24,
+                'percentil24_n': municipio.percentil24_n,
                 # NOVO CAMPO: Quantil dinamicamente calculado
                 'dynamic_quantile': current_muni_quantile
             }

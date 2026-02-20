@@ -131,7 +131,7 @@ async function atualizarMapa() {
     // ===== RESUMO =====
     const features = geojsonResumo.features || [];
     const count = features.length;
-    const totalRevenue = features.reduce((s, f) => s + (f.properties.rc_23_pc || 0), 0);
+    const totalRevenue = features.reduce((s, f) => s + (f.properties.rc_24_pc || 0), 0);
     const averageRevenue = count > 0 ? totalRevenue / count : 0;
 
     document.getElementById('summary-count').textContent =
@@ -171,7 +171,7 @@ map.on("load", async () => {
     type: "circle",
     source: "municipios",
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["get", "Populacao23"],
+      "circle-radius": ["interpolate", ["linear"], ["get", "Populacao24"],
         100000, 7, 1000000, 14, 10000000, 28],
       "circle-opacity": 0.8,
       "circle-stroke-width": 1,
@@ -265,8 +265,8 @@ map.on("click", "populacao-circulos", (e) => {
   
   // ---- Percentil: cor no trecho em negrito (verde/ vermelho) ----
   let percentil_texto = '';
-  if (properties.percentil_n != null) {
-    const p = Number(properties.percentil_n);
+  if (properties.percentil24_n != null) {
+    const p = Number(properties.percentil24_n);
     const arred = Math.round(p);
 
     const isSuperior = p > 50;
@@ -295,10 +295,12 @@ map.on("click", "populacao-circulos", (e) => {
     <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
     <hr class="mt-0 mb-2">
     <div class="popup-details">
-      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao23).toLocaleString("pt-BR")}</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_23_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
+      <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
+      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+      <p><i class="fa-solid fa-coins"></i> <strong>PIB p/c:</strong> ${(+properties.pib_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
-      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil || 'N/D'}</p>
+      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
     </div>
     ${percentil_texto}
     <div class="d-grid mt-3">
@@ -378,8 +380,8 @@ function abrirPopupDoMunicipioSelecionado(feature) {
   if (!properties.cod_ibge) return;
 
   let percentil_texto = '';
-  if (properties.percentil_n != null) {
-    const p = Number(properties.percentil_n);
+  if (properties.percentil24_n != null) {
+    const p = Number(properties.percentil24_n);
     const arred = Math.round(p);
 
     const isSuperior = p > 50;
@@ -405,10 +407,12 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
     <hr class="mt-0 mb-2">
     <div class="popup-details">
-      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao23).toLocaleString("pt-BR")}</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_23_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
+      <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
+      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+      <p><i class="fa-solid fa-coins"></i> <strong>PIB p/c:</strong> ${(+properties.pib_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
-      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil || 'N/D'}</p>
+      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
     </div>
     ${percentil_texto}
     <div class="d-grid mt-3">
@@ -451,7 +455,7 @@ function getMapPaintConfig(classification) {
         6,'#d9ef8b',7,'#a6d96a',8,'#66bd63',9,'#1a9850',10,'#006837',
         '#cccccc'];
     case 'natural':
-      return ['step',['get','rc_23_pc'],
+      return ['step',['get','rc_24_pc'],
         '#d73027', 2500,'#fc8d59', 4000,'#fee08b', 6000,'#91cf60', 10000,'#1a9850'];
     case 'quintil':
     default:
@@ -654,13 +658,13 @@ async function downloadTableData() {
 
     const columns = [
       { header:"Município", property:"name_muni_uf" },
-      { header:"População 2023", property:"Populacao23" },
-      { header:"Receita Per Capita 2023", property:"rc_23_pc" },
+      { header:"População 2024", property:"Populacao24" },
+      { header:"Receita Per Capita 2024", property:"rc_24_pc" },
       { header:"Quantil Dinâmico", property:"dynamic_quantile" },
-      { header:"Quintil Pré-Calculado", property:"quintil23_pre_calculado" },
-      { header:"Decil Pré-Calculado", property:"decil23_pre_calculado" },
-      { header:"Percentil Nacional", property:"percentil" },
-      { header:"Percentil N", property:"percentil_n" },
+      { header:"Quintil Pré-Calculado", property:"quintil24_pre_calculado" },
+      { header:"Decil Pré-Calculado", property:"decil24_pre_calculado" },
+      { header:"Percentil Nacional", property:"percentil24" },
+      { header:"Percentil N", property:"percentil24_n" },
       { header:"Cód. IBGE", property:"cod_ibge" }
     ];
 

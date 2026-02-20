@@ -18,17 +18,20 @@ class Municipio(models.Model):
     uf = models.CharField(max_length=2)
     coordx = models.FloatField()
     coordy = models.FloatField()
-    populacao23 = models.IntegerField(null=True)
+    populacao24 = models.IntegerField(null=True)
     populacao00 = models.IntegerField(null=True)
-    rc_2023 = models.FloatField(null=True)
-    rc_23_pc = models.FloatField(null=True)
+    rc_2024 = models.FloatField(null=True)
+    rc_2000 = models.FloatField(null=True)
+    rc_24_pc = models.FloatField(null=True)
     rc_00_pc = models.FloatField(null=True)
-    quintil23 = models.CharField(max_length=50, null=True)
-    decil23 = models.CharField(max_length=50, null=True)
+    quintil24 = models.CharField(max_length=50, null=True)
+    decil24 = models.CharField(max_length=50, null=True)
     quintil00 = models.CharField(max_length=50, null=True)
     decil00 = models.CharField(max_length=50, null=True)
-    percentil = models.CharField(max_length=50, null=True)
-    percentil_n = models.IntegerField(null=True, blank=True)
+    percentil24 = models.CharField(max_length=50, null=True)
+    percentil24_n = models.IntegerField(null=True, blank=True)
+    percentil00 = models.CharField(max_length=50, null=True)
+    percentil00_n = models.IntegerField(null=True, blank=True)
     regiao = models.CharField(max_length=255)
     rank_nacional = models.IntegerField(null=True, blank=True)
     total_nacional = models.IntegerField(null=True, blank=True)
@@ -36,6 +39,8 @@ class Municipio(models.Model):
     total_estadual = models.IntegerField(null=True, blank=True)
     rank_faixa = models.IntegerField(null=True, blank=True)
     total_faixa = models.IntegerField(null=True, blank=True)
+    cadunico = models.IntegerField(null=True, blank=True)
+    pib = models.FloatField(null=True, blank=True)
     rm = models.ForeignKey(
         RegiaoMetropolitana, 
         on_delete=models.SET_NULL,
@@ -61,8 +66,8 @@ class ContaDetalhada(models.Model):
     outras_receita = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao23 and self.municipio.populacao23 > 0:
-            return valor / self.municipio.populacao23
+        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
+            return valor / self.municipio.populacao24
         return 0
     
     @property
@@ -125,8 +130,8 @@ class ContaEspecifica(models.Model):
     outras_receitas = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao23 and self.municipio.populacao23 > 0:
-            return valor / self.municipio.populacao23
+        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
+            return valor / self.municipio.populacao24
         return 0
 
     @property
@@ -229,6 +234,7 @@ class ContaMaisEspecifica(models.Model):
     iptu = models.FloatField()
     itbi = models.FloatField()
     iss = models.FloatField()
+    imposto_renda = models.FloatField()
     outros_impostos = models.FloatField()
     taxa_policia = models.FloatField()
     taxa_prestacao_servico = models.FloatField()
@@ -241,6 +247,7 @@ class ContaMaisEspecifica(models.Model):
     transferencia_uniao_exploracao = models.FloatField()
     transferencia_uniao_sus = models.FloatField()
     transferencia_uniao_fnde = models.FloatField()
+    transferencia_uniao_fundeb = models.FloatField()
     transferencia_uniao_fnas = models.FloatField()
     outras_transferencias_uniao = models.FloatField()
     transferencia_estado_icms = models.FloatField()
@@ -251,21 +258,102 @@ class ContaMaisEspecifica(models.Model):
     outras_transferencias_estado = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao23 and self.municipio.populacao23 > 0:
-            return valor / self.municipio.populacao23
+        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
+            return valor / self.municipio.populacao24
         return 0
     
     # Propriedades per capita (abreviadas para economizar espaço, mantenha suas lógicas se tiverem mais detalhes)
     @property
     def iptu_pc(self): return self._calcular_pc(self.iptu)
+
     @property
     def itbi_pc(self): return self._calcular_pc(self.itbi)
+
     @property
     def iss_pc(self): return self._calcular_pc(self.iss)
+
+    @property
+    def imposto_renda_pc(self): return self._calcular_pc(self.imposto_renda)
+
     @property
     def outros_impostos_pc(self): return self._calcular_pc(self.outros_impostos)
-    # ... (demais propriedades seguem o mesmo padrão)
 
+    @property
+    def taxa_policia_pc(self): return self._calcular_pc(self.taxa_policia)
+
+    @property
+    def taxa_prestacao_servico_pc(self): return self._calcular_pc(self.taxa_prestacao_servico)
+
+    @property
+    def outras_taxas_pc(self): return self._calcular_pc(self.outras_taxas)
+
+    @property
+    def contribuicao_melhoria_pavimento_obras_pc(self):
+        return self._calcular_pc(self.contribuicao_melhoria_pavimento_obras)
+
+    @property
+    def contribuicao_melhoria_agua_potavel_pc(self):
+        return self._calcular_pc(self.contribuicao_melhoria_agua_potavel)
+
+    @property
+    def contribuicao_melhoria_iluminacao_publica_pc(self):
+        return self._calcular_pc(self.contribuicao_melhoria_iluminacao_publica)
+
+    @property
+    def outras_contribuicoes_melhoria_pc(self):
+        return self._calcular_pc(self.outras_contribuicoes_melhoria)
+
+    @property
+    def transferencia_uniao_fpm_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_fpm)
+
+    @property
+    def transferencia_uniao_exploracao_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_exploracao)
+
+    @property
+    def transferencia_uniao_sus_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_sus)
+
+    @property
+    def transferencia_uniao_fnde_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_fnde)
+
+    @property
+    def transferencia_uniao_fundeb_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_fundeb)
+
+    @property
+    def transferencia_uniao_fnas_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_fnas)
+
+    @property
+    def outras_transferencias_uniao_pc(self):
+        return self._calcular_pc(self.outras_transferencias_uniao)
+
+    @property
+    def transferencia_estado_icms_pc(self):
+        return self._calcular_pc(self.transferencia_estado_icms)
+
+    @property
+    def transferencia_estado_ipva_pc(self):
+        return self._calcular_pc(self.transferencia_estado_ipva)
+
+    @property
+    def transferencia_estado_exploracao_pc(self):
+        return self._calcular_pc(self.transferencia_estado_exploracao)
+
+    @property
+    def transferencia_estado_sus_pc(self):
+        return self._calcular_pc(self.transferencia_estado_sus)
+
+    @property
+    def transferencia_estado_assistencia_pc(self):
+        return self._calcular_pc(self.transferencia_estado_assistencia)
+
+    @property
+    def outras_transferencias_estado_pc(self):
+        return self._calcular_pc(self.outras_transferencias_estado)
     def __str__(self):
         return f"Receita Mais Específica de {self.municipio.name_muni_uf}"
 
@@ -281,6 +369,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     iptu_nacional = models.FloatField()
     itbi_nacional = models.FloatField()
     iss_nacional = models.FloatField()
+    renda_nacional = models.FloatField()
     outros_impostos_nacional = models.FloatField()
     taxa_policia_nacional = models.FloatField()
     taxa_prestacao_servico_nacional = models.FloatField()
@@ -293,6 +382,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_exploracao_nacional = models.FloatField()
     transferencia_uniao_sus_nacional = models.FloatField()
     transferencia_uniao_fnde_nacional = models.FloatField()
+    transferencia_uniao_fundeb_nacional = models.FloatField()
     transferencia_uniao_fnas_nacional = models.FloatField()
     outras_transferencias_uniao_nacional = models.FloatField()
     transferencia_estado_icms_nacional = models.FloatField()
@@ -305,6 +395,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     iptu_regional = models.FloatField()
     itbi_regional = models.FloatField()
     iss_regional = models.FloatField()
+    renda_regional = models.FloatField()
     outros_impostos_regional = models.FloatField()
     taxa_policia_regional = models.FloatField()
     taxa_prestacao_servico_regional = models.FloatField()
@@ -317,6 +408,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_exploracao_regional = models.FloatField()
     transferencia_uniao_sus_regional = models.FloatField()
     transferencia_uniao_fnde_regional = models.FloatField()
+    transferencia_uniao_fundeb_regional = models.FloatField()
     transferencia_uniao_fnas_regional = models.FloatField()
     outras_transferencias_uniao_regional = models.FloatField()
     transferencia_estado_icms_regional = models.FloatField()
@@ -329,6 +421,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     iptu_estadual = models.FloatField()
     itbi_estadual = models.FloatField()
     iss_estadual = models.FloatField()
+    renda_estadual = models.FloatField()
     outros_impostos_estadual = models.FloatField()
     taxa_policia_estadual = models.FloatField()
     taxa_prestacao_servico_estadual = models.FloatField()
@@ -341,6 +434,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_exploracao_estadual = models.FloatField()
     transferencia_uniao_sus_estadual = models.FloatField()
     transferencia_uniao_fnde_estadual = models.FloatField()
+    transferencia_uniao_fundeb_estadual = models.FloatField()
     transferencia_uniao_fnas_estadual = models.FloatField()
     outras_transferencias_uniao_estadual = models.FloatField()
     transferencia_estado_icms_estadual = models.FloatField()
