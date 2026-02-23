@@ -169,15 +169,15 @@ class MunicipioPercentilSerializer(serializers.ModelSerializer):
     total_faixa = serializers.IntegerField(source='total_faixa', default=0)
 
     # RC per capita e quintil do município (diretamente do modelo Municipio)
-    rc_23_pc = serializers.FloatField()
-    quintil23 = serializers.CharField()
+    rc_24_pc = serializers.FloatField()
+    quintil24 = serializers.CharField()
     
     class Meta:
         model = Municipio
         # Lista todos os campos brutos e aninhados que você quer no JSON final
         fields = [
-            'id', 'nome', 'populacao23',
-            'rc_23_pc', 'quintil23',
+            'id', 'nome', 'populacao24',
+            'rc_24_pc', 'quintil24',
             'rank_nacional', 'total_nacional',
             'rank_estadual', 'total_estadual',
             'rank_faixa', 'total_faixa',

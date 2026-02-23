@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada # Assuming you have your models set up
-from django.db.models import Sum, Avg, F
+from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
 
 # Helper function to format a single revenue item (no changes needed here)
 def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
@@ -57,6 +57,7 @@ def municipio_detalhe_view(request, municipio_id):
                 _prepare_revenue_item("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", cme, cmep),
                 _prepare_revenue_item("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", cme, cmep),
                 _prepare_revenue_item("Imposto sobre Serviços", "iss", cme, cmep),
+                _prepare_revenue_item("Imposto de Renda", "imposto_renda", cme, cmep),
                 _prepare_revenue_item("Outros Impostos", "outros_impostos", cme, cmep),
             ]))
             itc_item['children'].append(imposto_item)
@@ -102,6 +103,7 @@ def municipio_detalhe_view(request, municipio_id):
                 _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", cme, cmep),
                 _prepare_revenue_item("Recursos do SUS", "transferencia_uniao_sus", cme, cmep),
                 _prepare_revenue_item("Recursos do FNDE", "transferencia_uniao_fnde", cme, cmep),
+                _prepare_revenue_item("Recursos do FUNDEB", "transferencia_uniao_fundeb", cme, cmep),
                 _prepare_revenue_item("Recursos do FNAS", "transferencia_uniao_fnas", cme, cmep),
                 _prepare_revenue_item("Outras Transferências da União", "outras_transferencias_uniao", cme, cmep),
             ]))
@@ -155,8 +157,8 @@ def municipio_detalhe_view(request, municipio_id):
             [cs.imposto_pc, cs.taxas_pc, cs.contribuicoes_melhoria_pc]
         ),
         "imposto": get_chart_series(
-            ["IPTU", "ITBI", "ISS", "Outros"],
-            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.outros_impostos_pc]
+            ["IPTU", "ITBI", "ISS", "Imposto de Renda", "Outros"],
+            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.imposto_renda_pc, cme.outros_impostos_pc]
         ),
         "taxas": get_chart_series(
             ["Poder de Polícia", "Prestação de Serviços", "Outras"],
@@ -175,8 +177,8 @@ def municipio_detalhe_view(request, municipio_id):
             [cs.tranferencias_uniao_pc, cs.tranferencias_estados_pc, cs.outras_tranferencias_pc]
         ),
         "transferencias_uniao": get_chart_series(
-            ["FPM", "Rec. Naturais", "SUS", "FNDE", "FNAS", "Outras"],
-            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
+            ["FPM", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
+            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fundeb_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
         ),
         "transferencias_estado": get_chart_series(
             ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
@@ -204,56 +206,58 @@ def municipio_detalhe_view(request, municipio_id):
         Municipio.objects
         .annotate(
             # Categorias Principais
-            main_categories=F('rc_23_pc'),
+            main_categories=F('rc_24_pc'),
 
             # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
-            imposto = F('conta_especifica__imposto')/F('populacao23'),  
-            iptu = F('conta_mais_especifica__iptu')/F('populacao23'),
-            itbi = F('conta_mais_especifica__itbi')/F('populacao23'),
-            iss = F('conta_mais_especifica__iss')/F('populacao23'),
-            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao23'),
-            taxas = F('conta_especifica__taxas')/F('populacao23'),
-            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao23'),
-            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao23'),
-            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('populacao23'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao24'),
+            imposto = F('conta_especifica__imposto')/F('populacao24'),  
+            iptu = F('conta_mais_especifica__iptu')/F('populacao24'),
+            itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
+            iss = F('conta_mais_especifica__iss')/F('populacao24'),
+            imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
+            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
+            taxas = F('conta_especifica__taxas')/F('populacao24'),
+            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
+            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao24'),
+            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('populacao24'),
 
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
-            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('populacao23'),
-            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('populacao23'),
-            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('populacao23'),
-            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('populacao23'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao24'),
+            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('populacao24'),
+            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('populacao24'),
+            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('populacao24'),
+            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('populacao24'),
 
             # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
-            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('populacao23'),
-            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('populacao23'),
-            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('populacao23'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao24'),
+            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('populacao24'),
+            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('populacao24'),
+            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('populacao24'),
 
             # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
-            transferencias_uniao_fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao23'),
-            transferencias_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao23'),
-            transferencias_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao23'),
-            transferencias_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao23'),
-            transferencias_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao23'),
-            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao23'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
-            transferencias_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao23'),
-            transferencias_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao23'),
-            transferencias_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao23'),
-            transferencias_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao23'),
-            transferencias_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao23'),
-            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('populacao23'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
+            transferencias_uniao_fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao24'),
+            transferencias_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao24'),
+            transferencias_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao24'),
+            transferencias_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao24'),
+            transferencia_uniao_fundeb = F('conta_mais_especifica__transferencia_uniao_fundeb')/F('populacao24'),
+            transferencias_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao24'),
+            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao24'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
+            transferencias_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao24'),
+            transferencias_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao24'),
+            transferencias_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao24'),
+            transferencias_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao24'),
+            transferencias_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao24'),
+            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('populacao24'),
 
             # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
-            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('populacao23'),
-            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('populacao23'),
-            receita_industrial = F('conta_especifica__receita_industrial')/F('populacao23'),
-            receita_servicos = F('conta_especifica__receita_servicos')/F('populacao23'),
-            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('populacao23')
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao24'),
+            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('populacao24'),
+            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('populacao24'),
+            receita_industrial = F('conta_especifica__receita_industrial')/F('populacao24'),
+            receita_servicos = F('conta_especifica__receita_servicos')/F('populacao24'),
+            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('populacao24')
                   )
         .values(                  # já vem “flat” pro template
             "cod_ibge", "main_categories",
@@ -263,6 +267,7 @@ def municipio_detalhe_view(request, municipio_id):
             "iptu",
             "itbi",
             "iss",
+            "imposto_renda",
             "outros_impostos",
             "taxas",
             "taxa_policia",
@@ -285,6 +290,7 @@ def municipio_detalhe_view(request, municipio_id):
             "transferencias_uniao_exploracao",
             "transferencias_uniao_sus",
             "transferencias_uniao_fnde",
+            "transferencia_uniao_fundeb",
             "transferencias_uniao_fnas",
             "outras_transferencias_uniao",
             "transferencias_estado",
@@ -350,29 +356,29 @@ def municipio_details_api(request):
     # Aplica filtro de porte populacional
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
     
-    national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_23_pc'))['avg_rc'] or 0
+    national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_24_pc'))['avg_rc'] or 0
 
     # Aggregate data from the filtered queryset
     aggregated_data = queryset.aggregate(
-        total_populacao=Sum('populacao23'),
-        total_receita_corrente=Sum('rc_2023'),
-        avg_receita_per_capita=Avg('rc_23_pc'),
+        total_populacao=Sum('populacao24'),
+        total_receita_corrente=Sum('rc_2024'),
+        avg_receita_per_capita=Avg('rc_24_pc'),
     )
 
     # Get the count of municipalities in the filtered queryset
@@ -417,6 +423,7 @@ def municipio_details_api(request):
         total_iptu=Sum('conta_mais_especifica__iptu'),
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
+        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -429,6 +436,7 @@ def municipio_details_api(request):
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
+        total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
         total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
@@ -447,39 +455,136 @@ def municipio_details_api(request):
 
 
 
-def _prepare_revenue_item_aggregated(name, field_base, aggregated_data,population,value_pc_nac, is_collapsible=False):
-    value_abs = aggregated_data.get(f'total_{field_base}', 0)
-    
-    if population == 0:
-        value_pc = 0
-    else:
-        value_pc = (value_abs / population)
+def _prepare_revenue_item_aggregated(
+    name: str,
+    field_base: str,      # ex: "imposto_taxas_contribuicoes" (pra casar com total_* no aggregated_data)
+    field_path: str,      # ex: "conta_detalhada__imposto_taxas_contribuicoes" (pra usar no queryset/F())
+    aggregated_data: dict,
+    queryset,
+    value_pc_nac: float,
+    is_collapsible: bool = False,
+):
+    value_abs = aggregated_data.get(f"total_{field_base}", 0) or 0
+
+    qs_pc = (
+        queryset
+        .filter(populacao24__gt=0)
+        .filter(Q(**{f"{field_path}__gt": 0}))
+        .annotate(
+            pc=ExpressionWrapper(
+                F(field_path) / F("populacao24"),
+                output_field=FloatField(),
+            )
+        )
+    )
+
+    value_pc = qs_pc.aggregate(avg=Avg("pc"))["avg"] or 0
 
     if value_abs == 0 and value_pc == 0:
         return None
-    
+
     diff = {
-    'pc': round(((value_pc - value_pc_nac) / value_pc_nac * 100), 2) if value_pc_nac != 0 else 0,
+        "pc": round(((value_pc - value_pc_nac) / value_pc_nac * 100), 2) if value_pc_nac else 0
     }
 
-
-
     item = {
-        'name': name,
-        'field_base': field_base,
-        'value_abs': value_abs,
-        'value_pc': value_pc,
-        'diff': diff,
-        'children': [],
+        "name": name,
+        "field_base": field_base,
+        "value_abs": value_abs,
+        "value_pc": value_pc,
+        "diff": diff,
+        "children": [],
     }
 
     if is_collapsible:
-        item['target_id'] = f'detalhe-{field_base.replace("_", "-")}'
-
+        item["target_id"] = f"detalhe-{field_base.replace('_', '-')}"
     return item
+
+def nacional_pc_media(field_path):
+    qs = (
+        Municipio.objects
+        .filter(
+            Q(populacao24__gt=0),
+            Q(**{f"{field_path}__gt": 0})
+        )
+        .annotate(
+            pc=ExpressionWrapper(
+                F(field_path) / F('populacao24'),
+                output_field=FloatField()
+            )
+        )
+    )
+    return qs.aggregate(avg=Avg('pc'))['avg'] or 0
 
 def conjunto_detalhe_view(request):
     queryset = Municipio.objects.all()
+
+    # Calcular a média nacional de receita per capita para comparação
+    # ITC
+    nacional_med_itc_pc = nacional_pc_media('conta_detalhada__imposto_taxas_contribuicoes')
+
+    # ITC_IMP
+    nacional_med_imp_pc = nacional_pc_media('conta_especifica__imposto')
+
+    # impostos (mais específico)
+    nacional_med_iss = nacional_pc_media('conta_mais_especifica__iss')
+    nacional_med_iptu = nacional_pc_media('conta_mais_especifica__iptu')
+    nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
+    nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
+
+    nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
+
+    # ITC_TAX
+    nacional_med_taxas_pc = nacional_pc_media('conta_especifica__taxas')
+    nacional_med_taxa_policia_pc = nacional_pc_media('conta_mais_especifica__taxa_policia')
+    nacional_med_taxa_prestacao_servico_pc = nacional_pc_media('conta_mais_especifica__taxa_prestacao_servico')
+    nacional_med_outras_taxas_pc = nacional_pc_media('conta_mais_especifica__outras_taxas')
+
+    # ITC_CON
+    nacional_med_contribuicoes_melhoria_pc = nacional_pc_media('conta_especifica__contribuicoes_melhoria')
+    nacional_med_contribuicao_melhoria_pavimento_obras_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')
+    nacional_med_contribuicao_melhoria_agua_potavel_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_agua_potavel')
+    nacional_med_contribuicao_melhoria_iluminacao_publica_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')
+    nacional_med_outras_contribuicoes_melhoria_pc = nacional_pc_media('conta_mais_especifica__outras_contribuicoes_melhoria')
+
+    # CON
+    nacional_med_contribuicoes_pc = nacional_pc_media('conta_detalhada__contribuicoes')
+    nacional_med_contribuicoes_sociais_pc = nacional_pc_media('conta_especifica__contribuicoes_sociais')
+    nacional_med_contribuicoes_iluminacao_publica_pc = nacional_pc_media('conta_especifica__contribuicoes_iluminacao_publica')
+    nacional_med_outras_contribuicoes_pc = nacional_pc_media('conta_especifica__outras_contribuicoes')
+
+    # TRF
+    nacional_med_trasnsferencias_correntes_pc = nacional_pc_media('conta_detalhada__transferencias_correntes')
+
+    # TRF_UNI
+    nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
+    nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
+    nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
+    nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
+    nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
+    nacional_med_tranferencias_uniao_fundeb_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fundeb')
+    nacional_med_tranferencias_uniao_fnas_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnas')
+    nacional_med_outras_tranferencias_uniao_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_uniao')
+
+    # TRF_EST
+    nacional_med_tranferencias_estados_pc = nacional_pc_media('conta_especifica__tranferencias_estados')
+    nacional_med_transferencias_estado_icms_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_icms')
+    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_ipva')
+    nacional_med_transferencias_estado_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_exploracao')
+    nacional_med_transferencias_estado_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_sus')
+    nacional_med_transferencias_estado_assistencia_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_assistencia')
+    nacional_med_outras_transferencias_estado_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_estado')
+
+    # TRF_OUR
+    nacional_med_outras_tranferencias_pc = nacional_pc_media('conta_especifica__outras_tranferencias')
+
+    # OUR
+    nacional_med_outras_receitas_pc = nacional_pc_media('conta_detalhada__outras_receita')
+    nacional_med_receita_patrimonial_pc = nacional_pc_media('conta_especifica__receita_patrimonial')
+    nacional_med_receita_agropecuaria_pc = nacional_pc_media('conta_especifica__receita_agropecuaria')
+    nacional_med_receita_industrial_pc = nacional_pc_media('conta_especifica__receita_industrial')
+    nacional_med_receita_servicos_pc = nacional_pc_media('conta_especifica__receita_servicos')
+    nacional_med_outras_receitas_outras_pc = nacional_pc_media('conta_especifica__outras_receitas')
 
     # --- filtros ---
     uf_filtro = request.GET.get('uf')
@@ -502,31 +607,31 @@ def conjunto_detalhe_view(request):
     # --- faixas de porte ---
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(quintil23=subgroup_filter)
+            queryset = queryset.filter(quintil24=subgroup_filter)
         elif classification_filter == 'decil':
-            queryset = queryset.filter(decil23=subgroup_filter)
+            queryset = queryset.filter(decil24=subgroup_filter)
 
     # --- agregações ---
     aggregated_data = queryset.aggregate(
-        total_receita_corrente=Sum('rc_2023'),
+        total_receita_corrente=Sum('rc_2024'),
 
         total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
         total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
@@ -554,6 +659,7 @@ def conjunto_detalhe_view(request):
         total_iptu=Sum('conta_mais_especifica__iptu'),
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
+        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
 
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
@@ -569,6 +675,7 @@ def conjunto_detalhe_view(request):
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
+        total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
 
@@ -586,93 +693,476 @@ def conjunto_detalhe_view(request):
 
     # ------- revenue_tree (mantive sua lógica original) -------
     revenue_tree = []
-    population = queryset.aggregate(total_populacao=Sum('populacao23'))['total_populacao'] or 0
+    population = queryset.aggregate(total_populacao=Sum('populacao24'))['total_populacao'] or 0
 
+    # ---------------------------
+    # ITC (Impostos, Taxas e Contribuições de Melhoria)
+    # ---------------------------
     itc_item = _prepare_revenue_item_aggregated(
-        "Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes",
-        aggregated_data, population, 1298.32, is_collapsible=True
+        "Impostos, Taxas e Contribuições de Melhoria",
+        "imposto_taxas_contribuicoes",
+        "conta_detalhada__imposto_taxas_contribuicoes",
+        aggregated_data,
+        queryset,
+        nacional_med_itc_pc,
+        is_collapsible=True,
     )
+
     if itc_item:
-        imposto_item = _prepare_revenue_item_aggregated("Impostos", "imposto", aggregated_data, population, 1210.52, is_collapsible=True)
+        # ---------------------------
+        # ITC_IMP (Impostos)
+        # ---------------------------
+        imposto_item = _prepare_revenue_item_aggregated(
+            "Impostos",
+            "imposto",
+            "conta_especifica__imposto",
+            aggregated_data,
+            queryset,
+            nacional_med_imp_pc,
+            is_collapsible=True,
+        )
+
         if imposto_item:
-            imposto_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", aggregated_data, population, 340.51),
-                _prepare_revenue_item_aggregated("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", aggregated_data, population, 100.19),
-                _prepare_revenue_item_aggregated("Imposto sobre Serviços", "iss", aggregated_data, population, 572.00),
-                _prepare_revenue_item_aggregated("Outros Impostos", "outros_impostos", aggregated_data, population, 197.82),
-            ]))
-            itc_item['children'].append(imposto_item)
+            imposto_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre a Propriedade Predial e Territorial Urbana",
+                            "iptu",
+                            "conta_mais_especifica__iptu",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_iptu,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre a Transmissão 'Inter Vivos'",
+                            "itbi",
+                            "conta_mais_especifica__itbi",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_itbi,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre Serviços",
+                            "iss",
+                            "conta_mais_especifica__iss",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_iss,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto de Renda",
+                            "imposto_renda",
+                            "conta_mais_especifica__imposto_renda",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_renda,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outros Impostos",
+                            "outros_impostos",
+                            "conta_mais_especifica__outros_impostos",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outros_impostos,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(imposto_item)
 
-        taxas_item = _prepare_revenue_item_aggregated("Taxas", "taxas", aggregated_data, population, 85.67, is_collapsible=True)
+        # ---------------------------
+        # ITC_TAX (Taxas)
+        # ---------------------------
+        taxas_item = _prepare_revenue_item_aggregated(
+            "Taxas",
+            "taxas",
+            "conta_especifica__taxas",
+            aggregated_data,
+            queryset,
+            nacional_med_taxas_pc,
+            is_collapsible=True,
+        )
+
         if taxas_item:
-            taxas_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", aggregated_data, population, 33.58),
-                _prepare_revenue_item_aggregated("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", aggregated_data, population, 52.09),
-                _prepare_revenue_item_aggregated("Outras Taxas", "outras_taxas", aggregated_data, population, 0.000001),
-            ]))
-            itc_item['children'].append(taxas_item)
+            taxas_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Taxas pelo Exercício do Poder de Polícia",
+                            "taxa_policia",
+                            "conta_mais_especifica__taxa_policia",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_taxa_policia_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Taxas pela Prestação de Serviços",
+                            "taxa_prestacao_servico",
+                            "conta_mais_especifica__taxa_prestacao_servico",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_taxa_prestacao_servico_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Taxas",
+                            "outras_taxas",
+                            "conta_mais_especifica__outras_taxas",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_taxas_pc,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(taxas_item)
 
-        cm_item = _prepare_revenue_item_aggregated("Contribuições de Melhoria", "contribuicoes_melhoria", aggregated_data, population, 2.13, is_collapsible=True)
+        # ---------------------------
+        # ITC_CON (Contribuições de Melhoria)
+        # ---------------------------
+        cm_item = _prepare_revenue_item_aggregated(
+            "Contribuições de Melhoria",
+            "contribuicoes_melhoria",
+            "conta_especifica__contribuicoes_melhoria",
+            aggregated_data,
+            queryset,
+            nacional_med_contribuicoes_melhoria_pc,
+            is_collapsible=True,
+        )
+
         if cm_item:
-            cm_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", aggregated_data, population, 0.45),
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", aggregated_data, population, 0.13),
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", aggregated_data, population, 1.31),
-                _prepare_revenue_item_aggregated("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", aggregated_data, population, 0.24),
-            ]))
-            itc_item['children'].append(cm_item)
+            cm_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Pavimentação e Obras",
+                            "contribuicao_melhoria_pavimento_obras",
+                            "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_pavimento_obras_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Rede de Água e Esgoto",
+                            "contribuicao_melhoria_agua_potavel",
+                            "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_agua_potavel_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Iluminação Pública",
+                            "contribuicao_melhoria_iluminacao_publica",
+                            "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_iluminacao_publica_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Contribuições de Melhoria",
+                            "outras_contribuicoes_melhoria",
+                            "conta_mais_especifica__outras_contribuicoes_melhoria",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_contribuicoes_melhoria_pc,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(cm_item)
+
         revenue_tree.append(itc_item)
 
-    contribuicoes_item = _prepare_revenue_item_aggregated("Contribuições", "contribuicoes", aggregated_data, population, 197.42,  is_collapsible=True)
+    # ---------------------------
+    # CON (Contribuições)
+    # ---------------------------
+    contribuicoes_item = _prepare_revenue_item_aggregated(
+        "Contribuições",
+        "contribuicoes",
+        "conta_detalhada__contribuicoes",
+        aggregated_data,
+        queryset,
+        nacional_med_contribuicoes_pc,
+        is_collapsible=True,
+    )
+
     if contribuicoes_item:
-        contribuicoes_item['children'].extend(filter(None, [
-            _prepare_revenue_item_aggregated("Contribuições Sociais", "contribuicoes_sociais", aggregated_data, population, 128.34),
-            _prepare_revenue_item_aggregated("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", aggregated_data, population, 68.48),
-            _prepare_revenue_item_aggregated("Outras Contribuições", "outras_contribuicoes", aggregated_data, population, 0.43),
-        ]))
+        contribuicoes_item["children"].extend(
+            filter(
+                None,
+                [
+                    _prepare_revenue_item_aggregated(
+                        "Contribuições Sociais",
+                        "contribuicoes_sociais",
+                        "conta_especifica__contribuicoes_sociais",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_contribuicoes_sociais_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Custeio do Serviço de Iluminação Pública",
+                        "contribuicoes_iluminacao_publica",
+                        "conta_especifica__contribuicoes_iluminacao_publica",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_contribuicoes_iluminacao_publica_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Outras Contribuições",
+                        "outras_contribuicoes",
+                        "conta_especifica__outras_contribuicoes",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_outras_contribuicoes_pc,
+                    ),
+                ],
+            )
+        )
         revenue_tree.append(contribuicoes_item)
 
-    transferencias_item = _prepare_revenue_item_aggregated("Transferências Correntes", "transferencias_correntes", aggregated_data, population, 3607.45, is_collapsible=True)
+    # ---------------------------
+    # TRF (Transferências Correntes)
+    # ---------------------------
+    transferencias_item = _prepare_revenue_item_aggregated(
+        "Transferências Correntes",
+        "transferencias_correntes",
+        "conta_detalhada__transferencias_correntes",
+        aggregated_data,
+        queryset,
+        nacional_med_trasnsferencias_correntes_pc,
+        is_collapsible=True,
+    )
+
     if transferencias_item:
-        uniao = _prepare_revenue_item_aggregated("Transferências da União", "tranferencias_uniao", aggregated_data, population, 1776.02, is_collapsible=True)
-        if uniao:
-            uniao['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Cota-Parte do FPM", "transferencia_uniao_fpm", aggregated_data, population, 876.52),
-                _prepare_revenue_item_aggregated("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", aggregated_data, population, 149.14),
-                _prepare_revenue_item_aggregated("Recursos do SUS", "transferencia_uniao_sus", aggregated_data, population, 422.75),
-                _prepare_revenue_item_aggregated("Recursos do FNDE", "transferencia_uniao_fnde", aggregated_data, population, 75.33),
-                _prepare_revenue_item_aggregated("Recursos do FNAS", "transferencia_uniao_fnas", aggregated_data, population, 20.25),
-                _prepare_revenue_item_aggregated("Outras Transferências da União", "outras_transferencias_uniao", aggregated_data, population, 231.81),
-            ]))
-            transferencias_item['children'].append(uniao)
-
-        estados = _prepare_revenue_item_aggregated("Transferências dos Estados", "tranferencias_estados", aggregated_data, population, 1167.63, is_collapsible=True)
-        if estados:
-            estados['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Cota-Parte do ICMS", "transferencia_estado_icms", aggregated_data, population, 823.67),
-                _prepare_revenue_item_aggregated("Cota-Parte do IPVA", "transferencia_estado_ipva", aggregated_data, population, 192.21),
-                _prepare_revenue_item_aggregated("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", aggregated_data, population,11.68),
-                _prepare_revenue_item_aggregated("Recursos do SUS", "transferencia_estado_sus", aggregated_data, population, 61.46),
-                _prepare_revenue_item_aggregated("Assistência Social", "transferencia_estado_assistencia", aggregated_data, population, 4.09),
-                _prepare_revenue_item_aggregated("Outras Transferências dos Estados", "outras_transferencias_estado", aggregated_data, population, 74.49),
-            ]))
-            transferencias_item['children'].append(estados)
-
-        transferencias_item['children'].append(
-            _prepare_revenue_item_aggregated("Outras Transferências", "outras_tranferencias", aggregated_data, population, 663.77)
+        # ---------------------------
+        # TRF_UNI (União)
+        # ---------------------------
+        uniao = _prepare_revenue_item_aggregated(
+            "Transferências da União",
+            "tranferencias_uniao",
+            "conta_especifica__tranferencias_uniao",
+            aggregated_data,
+            queryset,
+            nacional_med_tranferencias_uniao_pc,
+            is_collapsible=True,
         )
+
+        if uniao:
+            uniao["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do FPM",
+                            "transferencia_uniao_fpm",
+                            "conta_mais_especifica__transferencia_uniao_fpm",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fpm_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Compensação Financeira (Recursos Naturais)",
+                            "transferencia_uniao_exploracao",
+                            "conta_mais_especifica__transferencia_uniao_exploracao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_exploracao_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do SUS",
+                            "transferencia_uniao_sus",
+                            "conta_mais_especifica__transferencia_uniao_sus",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_sus_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FNDE",
+                            "transferencia_uniao_fnde",
+                            "conta_mais_especifica__transferencia_uniao_fnde",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fnde_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FUNDEB",
+                            "transferencia_uniao_fundeb",
+                            "conta_mais_especifica__transferencia_uniao_fundeb",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fundeb_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FNAS",
+                            "transferencia_uniao_fnas",
+                            "conta_mais_especifica__transferencia_uniao_fnas",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fnas_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Transferências da União",
+                            "outras_transferencias_uniao",
+                            "conta_mais_especifica__outras_transferencias_uniao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_tranferencias_uniao_pc,
+                        ),
+                    ],
+                )
+            )
+            transferencias_item["children"].append(uniao)
+
+        # ---------------------------
+        # TRF_EST (Estados)
+        # ---------------------------
+        estados = _prepare_revenue_item_aggregated(
+            "Transferências dos Estados",
+            "tranferencias_estados",
+            "conta_especifica__tranferencias_estados",
+            aggregated_data,
+            queryset,
+            nacional_med_tranferencias_estados_pc,
+            is_collapsible=True,
+        )
+
+        if estados:
+            estados["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do ICMS",
+                            "transferencia_estado_icms",
+                            "conta_mais_especifica__transferencia_estado_icms",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_icms_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do IPVA",
+                            "transferencia_estado_ipva",
+                            "conta_mais_especifica__transferencia_estado_ipva",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_ipva_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Compensação Financeira (Recursos Naturais)",
+                            "transferencia_estado_exploracao",
+                            "conta_mais_especifica__transferencia_estado_exploracao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_exploracao_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do SUS",
+                            "transferencia_estado_sus",
+                            "conta_mais_especifica__transferencia_estado_sus",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_sus_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Assistência Social",
+                            "transferencia_estado_assistencia",
+                            "conta_mais_especifica__transferencia_estado_assistencia",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_assistencia_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Transferências dos Estados",
+                            "outras_transferencias_estado",
+                            "conta_mais_especifica__outras_transferencias_estado",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_transferencias_estado_pc,
+                        ),
+                    ],
+                )
+            )
+            transferencias_item["children"].append(estados)
+
+        outras_trf = _prepare_revenue_item_aggregated(
+            "Outras Transferências",
+            "outras_tranferencias",
+            "conta_especifica__outras_tranferencias",
+            aggregated_data,
+            queryset,
+            nacional_med_outras_tranferencias_pc,
+        )
+        if outras_trf:
+            transferencias_item["children"].append(outras_trf)
+
         revenue_tree.append(transferencias_item)
 
-    outras_receitas_item = _prepare_revenue_item_aggregated("Outras Receitas Correntes", "outras_receita", aggregated_data, population, 437.74, is_collapsible=True)
+    # ---------------------------
+    # OUR (Outras Receitas Correntes)
+    # ---------------------------
+    outras_receitas_item = _prepare_revenue_item_aggregated(
+        "Outras Receitas Correntes",
+        "outras_receita",
+        "conta_detalhada__outras_receita",
+        aggregated_data,
+        queryset,
+        nacional_med_outras_receitas_pc,
+        is_collapsible=True,
+    )
+
     if outras_receitas_item:
-        outras_receitas_item['children'].extend(filter(None, [
-            _prepare_revenue_item_aggregated("Receita Patrimonial", "receita_patrimonial", aggregated_data, population, 249.68),
-            _prepare_revenue_item_aggregated("Receita Agropecuária", "receita_agropecuaria", aggregated_data, population, 0.07),
-            _prepare_revenue_item_aggregated("Receita Industrial", "receita_industrial", aggregated_data, population, 0.06),
-            _prepare_revenue_item_aggregated("Receita de Serviços", "receita_servicos", aggregated_data, population, 79.29),
-            _prepare_revenue_item_aggregated("Outras Receitas", "outras_receitas", aggregated_data, population, 108.52),
-        ]))
+        outras_receitas_item["children"].extend(
+            filter(
+                None,
+                [
+                    _prepare_revenue_item_aggregated(
+                        "Receita Patrimonial",
+                        "receita_patrimonial",
+                        "conta_especifica__receita_patrimonial",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_patrimonial_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita Agropecuária",
+                        "receita_agropecuaria",
+                        "conta_especifica__receita_agropecuaria",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_agropecuaria_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita Industrial",
+                        "receita_industrial",
+                        "conta_especifica__receita_industrial",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_industrial_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita de Serviços",
+                        "receita_servicos",
+                        "conta_especifica__receita_servicos",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_servicos_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Outras Receitas",
+                        "outras_receitas",
+                        "conta_especifica__outras_receitas",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_outras_receitas_outras_pc,
+                    ),
+                ],
+            )
+        )
         revenue_tree.append(outras_receitas_item)
+
 
     # ------- CHART DATA EXACTO (valores absolutos) -------
     chart_data = {
@@ -694,11 +1184,12 @@ def conjunto_detalhe_view(request):
             ],
         },
         "imposto": {
-            "labels": ["IPTU", "ITBI", "ISS", "Outros"],
+            "labels": ["IPTU", "ITBI", "ISS", "Imposto de Renda", "Outros"],
             "values": [
                 v('total_iptu'),
                 v('total_itbi'),
                 v('total_iss'),
+                v('total_imposto_renda'),
                 v('total_outros_impostos'),
             ],
         },
@@ -733,12 +1224,14 @@ def conjunto_detalhe_view(request):
             ],
         },
         "transferencias_uniao": {
-            "labels": ["FPM", "Rec. Naturais", "SUS", "FNDE", "FNAS", "Outras"],
+            "labels": ["FPM", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
             "values": [
                 v('total_transferencia_uniao_fpm'),
                 v('total_transferencia_uniao_exploracao'),
                 v('total_transferencia_uniao_sus'),
                 v('total_transferencia_uniao_fnde'),
+                v('total_transferencia_uniao_fundeb'),
+                v('total_transferencia_uniao_fundeb'),
                 v('total_transferencia_uniao_fnas'),
                 v('total_outras_transferencias_uniao'),
             ],
@@ -768,24 +1261,24 @@ def conjunto_detalhe_view(request):
         Municipio.objects
         .annotate(
             # Categorias Principais
-            main_categories=F('rc_23_pc'),
+            main_categories=F('rc_24_pc'),
 
             # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
-            imposto = F('conta_especifica__imposto')/F('populacao23'),  
-            taxas = F('conta_especifica__taxas')/F('populacao23'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao24'),
+            imposto = F('conta_especifica__imposto')/F('populacao24'),  
+            taxas = F('conta_especifica__taxas')/F('populacao24'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao24'),
 
             # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao24'),
 
             # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
 
             # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao24'),
                   )
         .values(                  # já vem “flat” pro template
             "cod_ibge", "main_categories",
@@ -814,24 +1307,24 @@ def conjunto_detalhe_view(request):
         Municipio.objects
         .annotate(
             # Categorias Principais
-            main_categories=F('rc_23_pc'),
+            main_categories=F('rc_24_pc'),
 
             # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
-            imposto = F('conta_especifica__imposto')/F('populacao23'),  
-            taxas = F('conta_especifica__taxas')/F('populacao23'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao24'),
+            imposto = F('conta_especifica__imposto')/F('populacao24'),  
+            taxas = F('conta_especifica__taxas')/F('populacao24'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao24'),
 
             # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao24'),
 
             # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
 
             # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao24'),
                   )
         .values(                  # já vem “flat” pro template
             "cod_ibge", "main_categories",
@@ -874,6 +1367,74 @@ def conjunto_detalhe_view(request):
 def conjunto_fiscal_api(request):
     queryset = Municipio.objects.all()
 
+
+    # Calcular a média nacional de receita per capita para comparação
+    # ITC
+    nacional_med_itc_pc = nacional_pc_media('conta_detalhada__imposto_taxas_contribuicoes')
+
+    # ITC_IMP
+    nacional_med_imp_pc = nacional_pc_media('conta_especifica__imposto')
+
+    # impostos (mais específico)
+    nacional_med_iss = nacional_pc_media('conta_mais_especifica__iss')
+    nacional_med_iptu = nacional_pc_media('conta_mais_especifica__iptu')
+    nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
+    nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
+
+    nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
+
+    # ITC_TAX
+    nacional_med_taxas_pc = nacional_pc_media('conta_especifica__taxas')
+    nacional_med_taxa_policia_pc = nacional_pc_media('conta_mais_especifica__taxa_policia')
+    nacional_med_taxa_prestacao_servico_pc = nacional_pc_media('conta_mais_especifica__taxa_prestacao_servico')
+    nacional_med_outras_taxas_pc = nacional_pc_media('conta_mais_especifica__outras_taxas')
+
+    # ITC_CON
+    nacional_med_contribuicoes_melhoria_pc = nacional_pc_media('conta_especifica__contribuicoes_melhoria')
+    nacional_med_contribuicao_melhoria_pavimento_obras_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')
+    nacional_med_contribuicao_melhoria_agua_potavel_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_agua_potavel')
+    nacional_med_contribuicao_melhoria_iluminacao_publica_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')
+    nacional_med_outras_contribuicoes_melhoria_pc = nacional_pc_media('conta_mais_especifica__outras_contribuicoes_melhoria')
+
+    # CON
+    nacional_med_contribuicoes_pc = nacional_pc_media('conta_detalhada__contribuicoes')
+    nacional_med_contribuicoes_sociais_pc = nacional_pc_media('conta_especifica__contribuicoes_sociais')
+    nacional_med_contribuicoes_iluminacao_publica_pc = nacional_pc_media('conta_especifica__contribuicoes_iluminacao_publica')
+    nacional_med_outras_contribuicoes_pc = nacional_pc_media('conta_especifica__outras_contribuicoes')
+
+    # TRF
+    nacional_med_trasnsferencias_correntes_pc = nacional_pc_media('conta_detalhada__transferencias_correntes')
+
+    # TRF_UNI
+    nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
+    nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
+    nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
+    nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
+    nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
+    nacional_med_tranferencias_uniao_fundeb_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fundeb')
+    nacional_med_tranferencias_uniao_fnas_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnas')
+    nacional_med_outras_tranferencias_uniao_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_uniao')
+
+    # TRF_EST
+    nacional_med_tranferencias_estados_pc = nacional_pc_media('conta_especifica__tranferencias_estados')
+    nacional_med_transferencias_estado_icms_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_icms')
+    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_ipva')
+    nacional_med_transferencias_estado_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_exploracao')
+    nacional_med_transferencias_estado_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_sus')
+    nacional_med_transferencias_estado_assistencia_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_assistencia')
+    nacional_med_outras_transferencias_estado_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_estado')
+
+    # TRF_OUR
+    nacional_med_outras_tranferencias_pc = nacional_pc_media('conta_especifica__outras_tranferencias')
+
+    # OUR
+    nacional_med_outras_receitas_pc = nacional_pc_media('conta_detalhada__outras_receita')
+    nacional_med_receita_patrimonial_pc = nacional_pc_media('conta_especifica__receita_patrimonial')
+    nacional_med_receita_agropecuaria_pc = nacional_pc_media('conta_especifica__receita_agropecuaria')
+    nacional_med_receita_industrial_pc = nacional_pc_media('conta_especifica__receita_industrial')
+    nacional_med_receita_servicos_pc = nacional_pc_media('conta_especifica__receita_servicos')
+    nacional_med_outras_receitas_outras_pc = nacional_pc_media('conta_especifica__outras_receitas')
+
     uf_filtro = request.GET.get('uf')
     regiao_filtro = request.GET.get('regiao')
     municipio_filtro = request.GET.get('municipio')
@@ -891,25 +1452,25 @@ def conjunto_fiscal_api(request):
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
 
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
-        total_receita_corrente=Sum('rc_2023'),
+        total_receita_corrente=Sum('rc_2024'),
         total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
         total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
         total_transferencias_correntes=Sum('conta_detalhada__transferencias_correntes'),
@@ -931,6 +1492,7 @@ def conjunto_fiscal_api(request):
         total_iptu=Sum('conta_mais_especifica__iptu'),
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
+        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -943,6 +1505,7 @@ def conjunto_fiscal_api(request):
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
+        total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
         total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
@@ -953,95 +1516,477 @@ def conjunto_fiscal_api(request):
         total_outras_transferencias_estado=Sum('conta_mais_especifica__outras_transferencias_estado'),
     )
 
-    population = queryset.aggregate(total_populacao=Sum('populacao23'))['total_populacao'] or 0
+    population = queryset.aggregate(total_populacao=Sum('populacao24'))['total_populacao'] or 0
 
 
     revenue_tree = []
     # 1. Impostos, Taxas e Contribuições (ITC)
+    # ---------------------------
+    # ITC (Impostos, Taxas e Contribuições de Melhoria)
+    # ---------------------------
     itc_item = _prepare_revenue_item_aggregated(
-        "Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes",
-        aggregated_data, population, 1298.32, is_collapsible=True
+        "Impostos, Taxas e Contribuições de Melhoria",
+        "imposto_taxas_contribuicoes",
+        "conta_detalhada__imposto_taxas_contribuicoes",
+        aggregated_data,
+        queryset,
+        nacional_med_itc_pc,
+        is_collapsible=True,
     )
+
     if itc_item:
-        imposto_item = _prepare_revenue_item_aggregated("Impostos", "imposto", aggregated_data, population, 1210.52, is_collapsible=True)
+        # ---------------------------
+        # ITC_IMP (Impostos)
+        # ---------------------------
+        imposto_item = _prepare_revenue_item_aggregated(
+            "Impostos",
+            "imposto",
+            "conta_especifica__imposto",
+            aggregated_data,
+            queryset,
+            nacional_med_imp_pc,
+            is_collapsible=True,
+        )
+
         if imposto_item:
-            imposto_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", aggregated_data, population, 340.51),
-                _prepare_revenue_item_aggregated("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", aggregated_data, population, 100.19),
-                _prepare_revenue_item_aggregated("Imposto sobre Serviços", "iss", aggregated_data, population, 572.00),
-                _prepare_revenue_item_aggregated("Outros Impostos", "outros_impostos", aggregated_data, population, 197.82),
-            ]))
-            itc_item['children'].append(imposto_item)
+            imposto_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre a Propriedade Predial e Territorial Urbana",
+                            "iptu",
+                            "conta_mais_especifica__iptu",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_iptu,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre a Transmissão 'Inter Vivos'",
+                            "itbi",
+                            "conta_mais_especifica__itbi",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_itbi,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto sobre Serviços",
+                            "iss",
+                            "conta_mais_especifica__iss",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_iss,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Imposto de Renda",
+                            "imposto_renda",
+                            "conta_mais_especifica__imposto_renda",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_renda,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outros Impostos",
+                            "outros_impostos",
+                            "conta_mais_especifica__outros_impostos",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outros_impostos,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(imposto_item)
 
-        taxas_item = _prepare_revenue_item_aggregated("Taxas", "taxas", aggregated_data, population, 85.67, is_collapsible=True)
+        # ---------------------------
+        # ITC_TAX (Taxas)
+        # ---------------------------
+        taxas_item = _prepare_revenue_item_aggregated(
+            "Taxas",
+            "taxas",
+            "conta_especifica__taxas",
+            aggregated_data,
+            queryset,
+            nacional_med_taxas_pc,
+            is_collapsible=True,
+        )
+
         if taxas_item:
-            taxas_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", aggregated_data, population, 33.58),
-                _prepare_revenue_item_aggregated("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", aggregated_data, population, 52.09),
-                _prepare_revenue_item_aggregated("Outras Taxas", "outras_taxas", aggregated_data, population, 0.000001),
-            ]))
-            itc_item['children'].append(taxas_item)
+            taxas_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Taxas pelo Exercício do Poder de Polícia",
+                            "taxa_policia",
+                            "conta_mais_especifica__taxa_policia",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_taxa_policia_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Taxas pela Prestação de Serviços",
+                            "taxa_prestacao_servico",
+                            "conta_mais_especifica__taxa_prestacao_servico",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_taxa_prestacao_servico_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Taxas",
+                            "outras_taxas",
+                            "conta_mais_especifica__outras_taxas",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_taxas_pc,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(taxas_item)
 
-        cm_item = _prepare_revenue_item_aggregated("Contribuições de Melhoria", "contribuicoes_melhoria", aggregated_data, population, 2.13, is_collapsible=True)
+        # ---------------------------
+        # ITC_CON (Contribuições de Melhoria)
+        # ---------------------------
+        cm_item = _prepare_revenue_item_aggregated(
+            "Contribuições de Melhoria",
+            "contribuicoes_melhoria",
+            "conta_especifica__contribuicoes_melhoria",
+            aggregated_data,
+            queryset,
+            nacional_med_contribuicoes_melhoria_pc,
+            is_collapsible=True,
+        )
+
         if cm_item:
-            cm_item['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", aggregated_data, population, 0.45),
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", aggregated_data, population, 0.13),
-                _prepare_revenue_item_aggregated("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", aggregated_data, population, 1.31),
-                _prepare_revenue_item_aggregated("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", aggregated_data, population, 0.24),
-            ]))
-            itc_item['children'].append(cm_item)
+            cm_item["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Pavimentação e Obras",
+                            "contribuicao_melhoria_pavimento_obras",
+                            "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_pavimento_obras_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Rede de Água e Esgoto",
+                            "contribuicao_melhoria_agua_potavel",
+                            "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_agua_potavel_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Contribuição de Melhoria para Iluminação Pública",
+                            "contribuicao_melhoria_iluminacao_publica",
+                            "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_contribuicao_melhoria_iluminacao_publica_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Contribuições de Melhoria",
+                            "outras_contribuicoes_melhoria",
+                            "conta_mais_especifica__outras_contribuicoes_melhoria",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_contribuicoes_melhoria_pc,
+                        ),
+                    ],
+                )
+            )
+            itc_item["children"].append(cm_item)
+
         revenue_tree.append(itc_item)
 
-    contribuicoes_item = _prepare_revenue_item_aggregated("Contribuições", "contribuicoes", aggregated_data, population, 197.42,  is_collapsible=True)
+    # ---------------------------
+    # CON (Contribuições)
+    # ---------------------------
+    contribuicoes_item = _prepare_revenue_item_aggregated(
+        "Contribuições",
+        "contribuicoes",
+        "conta_detalhada__contribuicoes",
+        aggregated_data,
+        queryset,
+        nacional_med_contribuicoes_pc,
+        is_collapsible=True,
+    )
+
     if contribuicoes_item:
-        contribuicoes_item['children'].extend(filter(None, [
-            _prepare_revenue_item_aggregated("Contribuições Sociais", "contribuicoes_sociais", aggregated_data, population, 128.34),
-            _prepare_revenue_item_aggregated("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", aggregated_data, population, 68.48),
-            _prepare_revenue_item_aggregated("Outras Contribuições", "outras_contribuicoes", aggregated_data, population, 0.43),
-        ]))
+        contribuicoes_item["children"].extend(
+            filter(
+                None,
+                [
+                    _prepare_revenue_item_aggregated(
+                        "Contribuições Sociais",
+                        "contribuicoes_sociais",
+                        "conta_especifica__contribuicoes_sociais",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_contribuicoes_sociais_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Custeio do Serviço de Iluminação Pública",
+                        "contribuicoes_iluminacao_publica",
+                        "conta_especifica__contribuicoes_iluminacao_publica",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_contribuicoes_iluminacao_publica_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Outras Contribuições",
+                        "outras_contribuicoes",
+                        "conta_especifica__outras_contribuicoes",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_outras_contribuicoes_pc,
+                    ),
+                ],
+            )
+        )
         revenue_tree.append(contribuicoes_item)
 
-    transferencias_item = _prepare_revenue_item_aggregated("Transferências Correntes", "transferencias_correntes", aggregated_data, population, 3607.45, is_collapsible=True)
+    # ---------------------------
+    # TRF (Transferências Correntes)
+    # ---------------------------
+    transferencias_item = _prepare_revenue_item_aggregated(
+        "Transferências Correntes",
+        "transferencias_correntes",
+        "conta_detalhada__transferencias_correntes",
+        aggregated_data,
+        queryset,
+        nacional_med_trasnsferencias_correntes_pc,
+        is_collapsible=True,
+    )
+
     if transferencias_item:
-        uniao = _prepare_revenue_item_aggregated("Transferências da União", "tranferencias_uniao", aggregated_data, population, 1776.02, is_collapsible=True)
-        if uniao:
-            uniao['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Cota-Parte do FPM", "transferencia_uniao_fpm", aggregated_data, population, 876.52),
-                _prepare_revenue_item_aggregated("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", aggregated_data, population, 149.14),
-                _prepare_revenue_item_aggregated("Recursos do SUS", "transferencia_uniao_sus", aggregated_data, population, 422.75),
-                _prepare_revenue_item_aggregated("Recursos do FNDE", "transferencia_uniao_fnde", aggregated_data, population, 75.33),
-                _prepare_revenue_item_aggregated("Recursos do FNAS", "transferencia_uniao_fnas", aggregated_data, population, 20.25),
-                _prepare_revenue_item_aggregated("Outras Transferências da União", "outras_transferencias_uniao", aggregated_data, population, 231.81),
-            ]))
-            transferencias_item['children'].append(uniao)
-
-        estados = _prepare_revenue_item_aggregated("Transferências dos Estados", "tranferencias_estados", aggregated_data, population, 1167.63, is_collapsible=True)
-        if estados:
-            estados['children'].extend(filter(None, [
-                _prepare_revenue_item_aggregated("Cota-Parte do ICMS", "transferencia_estado_icms", aggregated_data, population, 823.67),
-                _prepare_revenue_item_aggregated("Cota-Parte do IPVA", "transferencia_estado_ipva", aggregated_data, population, 192.21),
-                _prepare_revenue_item_aggregated("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", aggregated_data, population,11.68),
-                _prepare_revenue_item_aggregated("Recursos do SUS", "transferencia_estado_sus", aggregated_data, population, 61.46),
-                _prepare_revenue_item_aggregated("Assistência Social", "transferencia_estado_assistencia", aggregated_data, population, 4.09),
-                _prepare_revenue_item_aggregated("Outras Transferências dos Estados", "outras_transferencias_estado", aggregated_data, population, 74.49),
-            ]))
-            transferencias_item['children'].append(estados)
-
-        transferencias_item['children'].append(
-            _prepare_revenue_item_aggregated("Outras Transferências", "outras_tranferencias", aggregated_data, population, 663.77)
+        # ---------------------------
+        # TRF_UNI (União)
+        # ---------------------------
+        uniao = _prepare_revenue_item_aggregated(
+            "Transferências da União",
+            "tranferencias_uniao",
+            "conta_especifica__tranferencias_uniao",
+            aggregated_data,
+            queryset,
+            nacional_med_tranferencias_uniao_pc,
+            is_collapsible=True,
         )
+
+        if uniao:
+            uniao["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do FPM",
+                            "transferencia_uniao_fpm",
+                            "conta_mais_especifica__transferencia_uniao_fpm",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fpm_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Compensação Financeira (Recursos Naturais)",
+                            "transferencia_uniao_exploracao",
+                            "conta_mais_especifica__transferencia_uniao_exploracao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_exploracao_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do SUS",
+                            "transferencia_uniao_sus",
+                            "conta_mais_especifica__transferencia_uniao_sus",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_sus_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FNDE",
+                            "transferencia_uniao_fnde",
+                            "conta_mais_especifica__transferencia_uniao_fnde",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fnde_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FUNDEB",
+                            "transferencia_uniao_fundeb",
+                            "conta_mais_especifica__transferencia_uniao_fundeb",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fundeb_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do FNAS",
+                            "transferencia_uniao_fnas",
+                            "conta_mais_especifica__transferencia_uniao_fnas",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_tranferencias_uniao_fnas_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Transferências da União",
+                            "outras_transferencias_uniao",
+                            "conta_mais_especifica__outras_transferencias_uniao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_tranferencias_uniao_pc,
+                        ),
+                    ],
+                )
+            )
+            transferencias_item["children"].append(uniao)
+
+        # ---------------------------
+        # TRF_EST (Estados)
+        # ---------------------------
+        estados = _prepare_revenue_item_aggregated(
+            "Transferências dos Estados",
+            "tranferencias_estados",
+            "conta_especifica__tranferencias_estados",
+            aggregated_data,
+            queryset,
+            nacional_med_tranferencias_estados_pc,
+            is_collapsible=True,
+        )
+
+        if estados:
+            estados["children"].extend(
+                filter(
+                    None,
+                    [
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do ICMS",
+                            "transferencia_estado_icms",
+                            "conta_mais_especifica__transferencia_estado_icms",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_icms_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Cota-Parte do IPVA",
+                            "transferencia_estado_ipva",
+                            "conta_mais_especifica__transferencia_estado_ipva",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_ipva_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Compensação Financeira (Recursos Naturais)",
+                            "transferencia_estado_exploracao",
+                            "conta_mais_especifica__transferencia_estado_exploracao",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_exploracao_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Recursos do SUS",
+                            "transferencia_estado_sus",
+                            "conta_mais_especifica__transferencia_estado_sus",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_sus_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Assistência Social",
+                            "transferencia_estado_assistencia",
+                            "conta_mais_especifica__transferencia_estado_assistencia",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_transferencias_estado_assistencia_pc,
+                        ),
+                        _prepare_revenue_item_aggregated(
+                            "Outras Transferências dos Estados",
+                            "outras_transferencias_estado",
+                            "conta_mais_especifica__outras_transferencias_estado",
+                            aggregated_data,
+                            queryset,
+                            nacional_med_outras_transferencias_estado_pc,
+                        ),
+                    ],
+                )
+            )
+            transferencias_item["children"].append(estados)
+
+        outras_trf = _prepare_revenue_item_aggregated(
+            "Outras Transferências",
+            "outras_tranferencias",
+            "conta_especifica__outras_tranferencias",
+            aggregated_data,
+            queryset,
+            nacional_med_outras_tranferencias_pc,
+        )
+        if outras_trf:
+            transferencias_item["children"].append(outras_trf)
+
         revenue_tree.append(transferencias_item)
 
-    outras_receitas_item = _prepare_revenue_item_aggregated("Outras Receitas Correntes", "outras_receita", aggregated_data, population, 437.74, is_collapsible=True)
+    # ---------------------------
+    # OUR (Outras Receitas Correntes)
+    # ---------------------------
+    outras_receitas_item = _prepare_revenue_item_aggregated(
+        "Outras Receitas Correntes",
+        "outras_receita",
+        "conta_detalhada__outras_receita",
+        aggregated_data,
+        queryset,
+        nacional_med_outras_receitas_pc,
+        is_collapsible=True,
+    )
+
     if outras_receitas_item:
-        outras_receitas_item['children'].extend(filter(None, [
-            _prepare_revenue_item_aggregated("Receita Patrimonial", "receita_patrimonial", aggregated_data, population, 249.68),
-            _prepare_revenue_item_aggregated("Receita Agropecuária", "receita_agropecuaria", aggregated_data, population, 0.07),
-            _prepare_revenue_item_aggregated("Receita Industrial", "receita_industrial", aggregated_data, population, 0.06),
-            _prepare_revenue_item_aggregated("Receita de Serviços", "receita_servicos", aggregated_data, population, 79.29),
-            _prepare_revenue_item_aggregated("Outras Receitas", "outras_receitas", aggregated_data, population, 108.52),
-        ]))
+        outras_receitas_item["children"].extend(
+            filter(
+                None,
+                [
+                    _prepare_revenue_item_aggregated(
+                        "Receita Patrimonial",
+                        "receita_patrimonial",
+                        "conta_especifica__receita_patrimonial",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_patrimonial_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita Agropecuária",
+                        "receita_agropecuaria",
+                        "conta_especifica__receita_agropecuaria",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_agropecuaria_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita Industrial",
+                        "receita_industrial",
+                        "conta_especifica__receita_industrial",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_industrial_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Receita de Serviços",
+                        "receita_servicos",
+                        "conta_especifica__receita_servicos",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_receita_servicos_pc,
+                    ),
+                    _prepare_revenue_item_aggregated(
+                        "Outras Receitas",
+                        "outras_receitas",
+                        "conta_especifica__outras_receitas",
+                        aggregated_data,
+                        queryset,
+                        nacional_med_outras_receitas_outras_pc,
+                    ),
+                ],
+            )
+        )
         revenue_tree.append(outras_receitas_item)
 
     # Renderiza o template parcial e retorna como JSON
@@ -1072,21 +2017,21 @@ def conjunto_chart_api(request):
     # --- faixas de porte (copiado da sua view existente) ---
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
@@ -1116,6 +2061,7 @@ def conjunto_chart_api(request):
         total_iptu=Sum('conta_mais_especifica__iptu'),
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
+        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -1128,6 +2074,7 @@ def conjunto_chart_api(request):
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
+        total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
         total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
@@ -1160,11 +2107,12 @@ def conjunto_chart_api(request):
             ],
         },
         "imposto": {
-            "labels": ["IPTU", "ITBI", "ISS", "Outros"],
+            "labels": ["IPTU", "ITBI", "ISS", "Imposto de Renda", "Outros"],
             "values": [
                 v('total_iptu'),
                 v('total_itbi'),
                 v('total_iss'),
+                v('total_imposto_renda'),
                 v('total_outros_impostos'),
             ],
         },
@@ -1199,12 +2147,13 @@ def conjunto_chart_api(request):
             ],
         },
         "transferencias_uniao": {
-            "labels": ["FPM", "Rec. Naturais", "SUS", "FNDE", "FNAS", "Outras"],
+            "labels": ["FPM", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
             "values": [
                 v('total_transferencia_uniao_fpm'),
                 v('total_transferencia_uniao_exploracao'),
                 v('total_transferencia_uniao_sus'),
                 v('total_transferencia_uniao_fnde'),
+                v('total_transferencia_uniao_fundeb'),
                 v('total_transferencia_uniao_fnas'),
                 v('total_outras_transferencias_uniao'),
             ],
@@ -1251,74 +2200,76 @@ def conjunto_data_api(request):
         queryset = queryset.filter(rm__nome=rm_filtro)
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao23__lt=5000)
+            queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao23__gte=5000, populacao23__lt=10000)
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
         # ... (adicione os outros `elif` para as faixas de porte como na view `conjunto_detalhe_view`)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao23__gte=10000, populacao23__lt=20000)
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao23__gte=20000, populacao23__lt=50000)
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao23__gte=50000, populacao23__lt=100000)
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao23__gte=100000, populacao23__lt=200000)
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao23__gte=200000, populacao23__lt=500000)
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao23__gte=500000)
+            queryset = queryset.filter(populacao24__gte=500000)
 
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(quintil23=subgroup_filter)
+            queryset = queryset.filter(quintil24=subgroup_filter)
         elif classification_filter == 'decil':
-            queryset = queryset.filter(decil23=subgroup_filter)
+            queryset = queryset.filter(decil24=subgroup_filter)
 
     # --- Anotação e seleção de valores (a mesma da view `conjunto_detalhe_view`) ---
     qs = (
         queryset.annotate(
-            main_categories=F('rc_23_pc'),
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao23'),
-            imposto = F('conta_especifica__imposto')/F('populacao23'),
-            iptu = F('conta_mais_especifica__iptu')/F('populacao23'),
-            itbi = F('conta_mais_especifica__itbi')/F('populacao23'),
-            iss = F('conta_mais_especifica__iss')/F('populacao23'),
-            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao23'),
-            taxas = F('conta_especifica__taxas')/F('populacao23'),
-            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao23'),
-            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao23'),
-            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('populacao23'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao23'),   
-            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('populacao23'),
-            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('populacao23'),
-            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('populacao23'),
-            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('populacao23'),
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao23'),
-            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('populacao23'),
-            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('populacao23'),
-            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('populacao23'),
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao23'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao23'),
-            fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao23'),
-            transferencia_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao23'),
-            transferencia_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao23'),
-            transferencia_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao23'),
-            transferencia_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao23'),
-            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao23'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao23'),
-            transferencia_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao23'),
-            transferencia_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao23'),
-            transferencia_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao23'),
-            transferencia_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao23'),
-            transferencia_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao23'),
-            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('populacao23'),
-            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao23'),
-            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('populacao23'),
-            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('populacao23'),
-            receita_industrial = F('conta_especifica__receita_industrial')/F('populacao23'),
-            receita_servicos = F('conta_especifica__receita_servicos')/F('populacao23'),
-            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('populacao23'),
+            main_categories=F('rc_24_pc'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao24'),
+            imposto = F('conta_especifica__imposto')/F('populacao24'),
+            iptu = F('conta_mais_especifica__iptu')/F('populacao24'),
+            itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
+            iss = F('conta_mais_especifica__iss')/F('populacao24'),
+            imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
+            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
+            taxas = F('conta_especifica__taxas')/F('populacao24'),
+            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
+            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao24'),
+            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('populacao24'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao24'),   
+            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('populacao24'),
+            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('populacao24'),
+            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('populacao24'),
+            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('populacao24'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao24'),
+            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('populacao24'),
+            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('populacao24'),
+            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('populacao24'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
+            fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao24'),
+            transferencia_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao24'),
+            transferencia_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao24'),
+            transferencia_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao24'),
+            transferencia_uniao_fundeb = F('conta_mais_especifica__transferencia_uniao_fundeb')/F('populacao24'),
+            transferencia_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao24'),
+            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao24'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
+            transferencia_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao24'),
+            transferencia_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao24'),
+            transferencia_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao24'),
+            transferencia_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao24'),
+            transferencia_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao24'),
+            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('populacao24'),
+            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao24'),
+            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('populacao24'),
+            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('populacao24'),
+            receita_industrial = F('conta_especifica__receita_industrial')/F('populacao24'),
+            receita_servicos = F('conta_especifica__receita_servicos')/F('populacao24'),
+            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('populacao24'),
         )
         .values(
             "cod_ibge",
@@ -1328,6 +2279,7 @@ def conjunto_data_api(request):
             "iptu",
             "itbi",
             "iss",
+            "imposto_renda",
             "outros_impostos",
             "taxas",
             "taxa_policia",
@@ -1348,6 +2300,7 @@ def conjunto_data_api(request):
             "transferencia_uniao_exploracao",
             "transferencia_uniao_sus",
             "transferencia_uniao_fnde",
+            "transferencia_uniao_fundeb",
             "transferencia_uniao_fnas",
             "outras_transferencias_uniao",
             "transferencias_estado",

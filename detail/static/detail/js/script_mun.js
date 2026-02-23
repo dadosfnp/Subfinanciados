@@ -379,6 +379,7 @@ const DENSITY_CHILD_KEYS = {
     [normalize('Imposto sobre Serviços'), 'iss'],
     [normalize("Imposto sobre a Transmissão 'Inter Vivos'"), 'itbi'],
     [normalize('Imposto sobre a Propriedade Predial e Territorial Urbana'), 'iptu'],
+    [normalize('Imposto de Renda'), 'imposto_renda'],
     [normalize('Outros Impostos'), 'outros_impostos'],
     [normalize('Outros'), 'outros_impostos'],
   ]),
@@ -409,6 +410,7 @@ const DENSITY_CHILD_KEYS = {
     [normalize('Compensação Financeira (Recursos Naturais)'),          'transferencias_uniao_exploracao'],
     [normalize('Recursos do SUS'),                                     'transferencias_uniao_sus'],
     [normalize('Recursos do FNDE'),                                    'transferencias_uniao_fnde'],
+    [normalize('Recursos do FUNDEB'),                                    'transferencias_uniao_fundeb'],
     [normalize('Recursos do FNAS'),                                    'transferencias_uniao_fnas'],
     [normalize('Recursos do Fundo Especial'),                           'transferencias_uniao_fundo'],   // <== novo
     [normalize('Outras Transferências da União'),                       'outras_transferencias_uniao'],

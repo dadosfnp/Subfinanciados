@@ -16,16 +16,16 @@ let formatPorcentagemRadio;
 let calcModeTotalRadio;
 let calcModeFilteredRadio;
 
-let toggle2023;
-let toggle2000e2023;
+let toggle2024;
+let toggle2000e2024;
 
 let populacaoQuintilCtx;
 let populacaoQuintilChart;
 
 // Variáveis das tabelas
-let tableCard2023;
-let table2023Head;
-let table2023Body;
+let tableCard2024;
+let table2024Head;
+let table2024Body;
 
 let tableCard2000;
 let table2000Head;
@@ -146,8 +146,8 @@ async function atualizarFiltros() {
     const calculationMode = calcModeFilteredRadio.checked ? 'por_filtro' : 'total';
 
     const selectedYearOptionElement = document.querySelector('.toggle-option.active');
-    const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2023';
-    const include2000Data = (selectedYearOption === '2000 e 2023');
+    const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2024';
+    const include2000Data = (selectedYearOption === '2000 e 2024');
 
     const apiUrl =
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
@@ -205,7 +205,7 @@ async function atualizarFiltros() {
         // NOVA PALETA (QUINTIS): Vermelho -> Verde
         // =====================================================
         const QUINTIL_PALETTE = [
-            '#A33232', // 1º Quintil (Vermelho)
+            '#A33242', // 1º Quintil (Vermelho)
             '#D97636', // 2º Quintil (Laranja)
             '#E8C83E', // 3º Quintil (Amarelo)
             '#72BA6A', // 4º Quintil (Verde Claro)
@@ -258,14 +258,14 @@ async function atualizarFiltros() {
                 // Pega as cores sólidas do Quintil
                 const barColors = getColors(dataset.data.length);
                 
-                // Identifica se é 2023
-                const is2023 = dataset.label.toString().includes('2023');
+                // Identifica se é 2024
+                const is2024 = dataset.label.toString().includes('2024');
 
                 // Lógica de Fundo (INVERTIDA):
-                // Se for 2023: Usa a Cor Sólida normal (color)
+                // Se for 2024: Usa a Cor Sólida normal (color)
                 // Se for 2000 (else): Usa a Hachura (createDiagonalPattern)
                 const backgroundColors = barColors.map(color => 
-                    is2023 ? color : createDiagonalPattern(color) 
+                    is2024 ? color : createDiagonalPattern(color) 
             );
 
                 // Lógica de Borda:
@@ -305,8 +305,8 @@ async function atualizarFiltros() {
         populacaoQuintilChart.update();
 
         // ==== Tabelas ====
-        renderTable(table2023Head, table2023Body, data.tableHeaders23, data.tableData23);
-        tableCard2023.classList.remove('d-none');
+        renderTable(table2024Head, table2024Body, data.tableHeaders24, data.tableData24);
+        tableCard2024.classList.remove('d-none');
 
         if (include2000Data && data.tableData00 && data.tableHeaders00) {
             renderTable(table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
@@ -316,7 +316,7 @@ async function atualizarFiltros() {
         }
 
         // Hover sincronizado
-        enableSynchronizedHover('#table-2023', '#table-2000');
+        enableSynchronizedHover('#table-2024', '#table-2000');
 
     } catch (error) {
         console.error('Erro ao carregar dados do dashboard:', error);
@@ -341,12 +341,12 @@ document.addEventListener('DOMContentLoaded', () => {
     calcModeTotalRadio = document.getElementById('calcModeTotal');
     calcModeFilteredRadio = document.getElementById('calcModeFiltered');
 
-    toggle2023 = document.querySelector('.toggle-option[data-option="2023"]');
-    toggle2000e2023 = document.querySelector('.toggle-option[data-option="2000 e 2023"]');
+    toggle2024 = document.querySelector('.toggle-option[data-option="2024"]');
+    toggle2000e2024 = document.querySelector('.toggle-option[data-option="2000 e 2024"]');
 
-    tableCard2023 = document.getElementById('table-card-2023');
-    table2023Head = document.querySelector('#table-2023 thead');
-    table2023Body = document.querySelector('#table-2023 tbody');
+    tableCard2024 = document.getElementById('table-card-2024');
+    table2024Head = document.querySelector('#table-2024 thead');
+    table2024Body = document.querySelector('#table-2024 tbody');
 
     tableCard2000 = document.getElementById('table-card-2000');
     table2000Head = document.querySelector('#table-2000 thead');
@@ -405,7 +405,7 @@ options: {
                     label.fillStyle = pattern;
                     
                 } else {
-                    // === ANO 2023: PRETO SÓLIDO ===
+                    // === ANO 2024: PRETO SÓLIDO ===
                     label.fillStyle = '#000000'; // <--- Força preto sólido aqui
                 }
             });
@@ -480,17 +480,17 @@ options: {
     calcModeTotalRadio.addEventListener('change', atualizarFiltros);
     calcModeFilteredRadio.addEventListener('change', atualizarFiltros);
 
-    toggle2023.addEventListener('click', () => {
+    toggle2024.addEventListener('click', () => {
         document.querySelectorAll('.toggle-option')
             .forEach(opt => opt.classList.remove('active'));
-        toggle2023.classList.add('active');
+        toggle2024.classList.add('active');
         atualizarFiltros();
     });
 
-    toggle2000e2023.addEventListener('click', () => {
+    toggle2000e2024.addEventListener('click', () => {
         document.querySelectorAll('.toggle-option')
             .forEach(opt => opt.classList.remove('active'));
-        toggle2000e2023.classList.add('active');
+        toggle2000e2024.classList.add('active');
         atualizarFiltros();
     });
 
@@ -506,16 +506,16 @@ options: {
 
         document.querySelectorAll('.toggle-option')
             .forEach(opt => opt.classList.remove('active'));
-        toggle2023.classList.add('active');
+        toggle2024.classList.add('active');
 
         // Repovoa com listas completas e atualiza a tela
         updateDependentFilters(true).then(atualizarFiltros);
     });
 });
 
-// Hover sincronizado entre tabelas 2023 e 2000
+// Hover sincronizado entre tabelas 2024 e 2000
 function enableSynchronizedHover(tableId1, tableId2) {
-    const table1 = document.querySelector(tableId1); // 2023
+    const table1 = document.querySelector(tableId1); // 2024
     const table2 = document.querySelector(tableId2); // 2000
     if (!table1 || !table2) return;
 

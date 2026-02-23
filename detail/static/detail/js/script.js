@@ -292,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'IPTU': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','IPTU'],
       'ITBI': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ITBI'],
       'ISS':  ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ISS'],
+      'Imposto de Renda': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','Imposto de Renda'],
       'Outros': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','Outros Impostos'],
     },
     taxas: {
@@ -320,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'Rec. Naturais': ['Transferências Correntes','Transferências da União','Compensação Financeira (Recursos Naturais)'],
       'SUS': ['Transferências Correntes','Transferências da União','Recursos do SUS'],
       'FNDE': ['Transferências Correntes','Transferências da União','Recursos do FNDE'],
+      'FUNDEB': ['Transferências Correntes','Transferências da União','Recursos do FUNDEB'],
       'FNAS': ['Transferências Correntes','Transferências da União','Recursos do FNAS'],
       'Outras': ['Transferências Correntes','Transferências da União','Outras Transferências da União'],
     },
