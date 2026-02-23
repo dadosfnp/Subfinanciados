@@ -32,7 +32,7 @@ for _, row in contas.iterrows():
         print(f"Município com código {row['cod_ibge']} não encontrado 😵")
 
 
-df = pd.read_excel("base_datas/dados/percentil_detatalhamento_0.xlsx")
+df = pd.read_excel("base_datas/dados/percentil_detalhamento_0.xlsx")
 df['cod_ibge'] = df['cod_ibge'].astype(str)  # Garante que o código IBGE seja tratado como string
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 colunas_receita = [

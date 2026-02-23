@@ -45,7 +45,7 @@ for _, row in df.iterrows():
             iptu = row['itc_imp_ptu'],
             itbi = row['itc_imp_tbi'],
             iss = row['itc_imp_ser'],
-            renda = row['itc_imp_rnd'],
+            imposto_renda = row['itc_imp_rnd'],
             outros_impostos = row['itc_imp_our'],
             taxa_policia = row['itc_tax_pol'],
             taxa_prestacao_servico = row['itc_tax_ser'],

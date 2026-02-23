@@ -167,7 +167,6 @@ def municipios_geojson_api(request):
                 'Populacao24': municipio.populacao24,
                 'uf': municipio.uf,
                 'rc_24_pc': municipio.rc_24_pc,
-                'pib_pc': municipio.pib,
                 'perc_pop_cadunico': (municipio.cadunico / municipio.populacao24 * 100) if (municipio.cadunico / municipio.populacao24 * 100) < 100 else 100,
                 'quintil24_pre_calculado': municipio.quintil24, # Manter para referência
                 'decil24_pre_calculado': municipio.decil24,   # Manter para referência

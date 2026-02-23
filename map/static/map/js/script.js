@@ -298,7 +298,6 @@ map.on("click", "populacao-circulos", (e) => {
       <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
       <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
       <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>PIB p/c:</strong> ${(+properties.pib_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
       <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
     </div>
@@ -410,7 +409,6 @@ function abrirPopupDoMunicipioSelecionado(feature) {
       <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
       <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
       <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>PIB p/c:</strong> ${(+properties.pib_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
       <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
     </div>

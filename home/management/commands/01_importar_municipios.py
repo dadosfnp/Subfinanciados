@@ -66,7 +66,6 @@ class Command(BaseCommand):
             Municipio.objects.create(
                 cod_ibge=row['cod_ibge'],
                 name_muni=row['nome_muni'],
-                pib = row['pib'],
                 cadunico = row['pop_cadunico_24'],
                 uf=row['uf'],
                 coordx=row['coordx'],
@@ -92,7 +91,19 @@ class Command(BaseCommand):
                 rank_estadual = row['rank_estadual'] ,
                 total_estadual = row['total_estadual'],
                 rank_faixa = row['rank_faixa'],
-                total_faixa = row['total_faixa']
+                total_faixa = row['total_faixa'],
+                cadunico_rank_nacional = row['rank_cadunico_nac'],
+                cadunico_total_nacional = row['total_nac_cad'],
+                cadunico_rank_estadual = row['rank_cadunico_uf'],
+                cadunico_total_estadual = row['total_uf_cad'],
+                cadunico_rank_faixa = row['rank_cadunico_faixas'],
+                cadunico_total_faixa = row['total_fax_cad'],
+                populacao24_rank_nacional = row['rank_pop_nac'],
+                populacao24_total_nacional = row['total_nac_pop'],  
+                populacao24_rank_estadual = row['rank_pop_uf'],
+                populacao24_total_estadual = row['total_uf_pop'],
+                populacao24_rank_faixa = row['rank_pop_faixas'],
+                populacao24_total_faixa = row['total_fax_pop']
 
             )
         
