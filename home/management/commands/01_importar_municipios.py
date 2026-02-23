@@ -8,9 +8,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         # 1. Carrega os dados do Excel usando pandas
-        pop = pd.read_excel('base_datas/dados/populacao.xlsx')
-        rec24 = pd.read_excel('base_datas/dados/receitas_correntes_2024.xlsx')
-        rec00 = pd.read_excel('base_datas/dados/receitas_correntes_2000.xlsx')
+        pop = pd.read_excel('base_datas/populacao.xlsx')
+        rec24 = pd.read_excel('base_datas/receitas_correntes_2024.xlsx')
+        rec00 = pd.read_excel('base_datas/receitas_correntes_2000.xlsx')
         
         # 2. Converte todos os nomes de colunas para minúsculo
         pop.columns = pop.columns.str.lower()
