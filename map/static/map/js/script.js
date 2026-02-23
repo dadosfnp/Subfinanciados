@@ -202,58 +202,95 @@ map.on("load", async () => {
   await updateDependentFilters();
   atualizarClassificacao(); // seta cores + legenda e chama o debounce internamente
 
-  // ------------ Badge Xambioá (opcional, preservado) ------------
-  const MUNICIPIO_NOME = 'Xambioá - TO';
-  const XAMBIOA_COORD  = [-48.536, -6.415];
-  const IMG_URL        = '/static/map/images/xambioa.png';
-
-  map.loadImage(IMG_URL, (err, img) => {
-    if (err) { console.error('Erro ao carregar imagem de Xambioá:', err); return; }
-    if (!map.hasImage('xambioa-badge')) map.addImage('xambioa-badge', img);
-
-    if (!map.getSource('municipio-highlight')) {
-      map.addSource('municipio-highlight', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+// =========================================================
+  // LOGICA UNIFICADA: Xambioá e Varginha
+  // =========================================================
+  const MUNI_ESPECIAIS = {
+    'Xambioá - TO': { 
+      coord: [-48.536, -6.415], 
+      imgId: 'xambioa-badge', 
+      url: '/static/map/images/xambioa.png' 
+    },
+    'Varginha - MG': { 
+      coord: [-45.441, -21.551], 
+      imgId: 'varginha-badge', 
+      url: '/static/map/images/varginha.png' 
     }
-    if (!map.getLayer('municipio-badge')) {
+  };
+
+  // Carrega as imagens no Mapbox
+  Object.entries(MUNI_ESPECIAIS).forEach(([nome, data]) => {
+    map.loadImage(data.url, (err, img) => {
+      if (err) return;
+      if (!map.hasImage(data.imgId)) map.addImage(data.imgId, img);
+    });
+  });
+
+  // Source único para o destaque
+  if (!map.getSource('municipio-highlight')) {
+    map.addSource('municipio-highlight', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  }
+
+  // Camadas de ícones no mapa
+  ['xambioa-badge', 'varginha-badge'].forEach(id => {
+    const layerId = `${id}-layer`;
+    if (!map.getLayer(layerId)) {
+      
+      // Define tamanhos diferentes: Varginha começa muito menor para o efeito surpresa
+      const iconSizeConfig = id === 'varginha-badge' 
+        ? ['interpolate', ['linear'], ['zoom'], 5, 0.01, 8, 0.03, 10, 0.08, 12, 0.25, 14, 0.50]
+        : ['interpolate', ['linear'], ['zoom'], 5, 0.08, 8, 0.12, 10, 0.16, 12, 0.22];
+
       map.addLayer({
-        id: 'municipio-badge',
+        id: layerId,
         type: 'symbol',
         source: 'municipio-highlight',
-        layout: { 'icon-image': 'xambioa-badge', 'icon-size': 0.75, 'icon-allow-overlap': true, 'visibility': 'none' }
+        layout: { 
+          'icon-image': id, 
+          'icon-size': iconSizeConfig,
+          'icon-allow-overlap': true, 
+          'visibility': 'none',
+          'icon-anchor': 'bottom' 
+        },
+        paint: { 'icon-translate': [0, -18] }
       });
     }
-
-    const municipioSelect = document.getElementById('filtro-municipio');
-    function atualizarBadgeMunicipio() {
-      const src = map.getSource('municipio-highlight');
-      if (!src || !map.getLayer('municipio-badge')) return;
-      const val = municipioSelect?.value || '';
-      const label = municipioSelect?.selectedOptions?.[0]?.text?.trim() || '';
-      const on = (val === MUNICIPIO_NOME) || (label === MUNICIPIO_NOME);
-
-      if (on) {
-        src.setData({ type: 'FeatureCollection', features: [{ type:'Feature', geometry:{ type:'Point', coordinates:XAMBIOA_COORD }, properties:{ name:MUNICIPIO_NOME } }] });
-        map.setLayoutProperty('municipio-badge','visibility','visible');
-      } else {
-        src.setData({ type:'FeatureCollection', features:[] });
-        map.setLayoutProperty('municipio-badge','visibility','none');
-      }
-    }
-
-    map.setLayoutProperty('municipio-badge','icon-size',
-      ['interpolate',['linear'],['zoom'],5,0.08,8,0.12,10,0.16,12,0.22]);
-    map.setLayoutProperty('municipio-badge','icon-anchor','bottom');
-    map.setPaintProperty('municipio-badge','icon-translate',[0,-18]);
-    map.setPaintProperty('municipio-badge','icon-translate-anchor','viewport');
-
-    municipioSelect?.addEventListener('change', atualizarBadgeMunicipio);
-    if (municipioSelect) {
-      const mo = new MutationObserver(() => atualizarBadgeMunicipio());
-      mo.observe(municipioSelect, { childList:true, subtree:true });
-    }
-    atualizarBadgeMunicipio();
   });
-});
+
+  function gerenciarBadges() {
+    const val = filtroMunicipio.value || '';
+    const label = filtroMunicipio.selectedOptions?.[0]?.text?.trim() || '';
+    const selecionado = Object.keys(MUNI_ESPECIAIS).find(k => val === k || label === k);
+
+    const src = map.getSource('municipio-highlight');
+
+    if (selecionado) {
+      const data = MUNI_ESPECIAIS[selecionado];
+      
+      // Atualiza o ponto no mapa
+      src.setData({ type: 'FeatureCollection', features: [{ 
+        type:'Feature', geometry:{ type:'Point', coordinates: data.coord } 
+      }] });
+
+      // Alterna visibilidade das camadas
+      map.setLayoutProperty('xambioa-badge-layer', 'visibility', selecionado === 'Xambioá - TO' ? 'visible' : 'none');
+      map.setLayoutProperty('varginha-badge-layer', 'visibility', selecionado === 'Varginha - MG' ? 'visible' : 'none');
+
+      // IMPORTANTE: A lógica de atualizar o Card Lateral (htmlCont) foi removida 
+      // para manter o badge em segredo até o usuário dar zoom no mapa.
+    } else {
+      // Esconde tudo no mapa se nenhum município especial estiver selecionado
+      src.setData({ type:'FeatureCollection', features:[] });
+      map.setLayoutProperty('xambioa-badge-layer', 'visibility', 'none');
+      map.setLayoutProperty('varginha-badge-layer', 'visibility', 'none');
+    }
+  }
+
+  // Listeners para ativação
+  filtroMunicipio.addEventListener('change', gerenciarBadges);
+  document.getElementById('btn-limpar-filtros').addEventListener('click', () => setTimeout(gerenciarBadges, 100));
+
+}); // ← CLOSES map.on("load", ...)
 
 // ===================== Popup =====================
 map.on("click", "populacao-circulos", (e) => {
@@ -873,8 +910,6 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         20,
         FINAL_HEIGHT - 30
     );
-
-
 
     // ===============================
     // 7) DOWNLOAD

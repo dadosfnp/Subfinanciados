@@ -273,7 +273,7 @@ class ContaMaisEspecifica(models.Model):
             return valor / self.municipio.populacao24
         return 0
     
-    # Propriedades per capita (abreviadas para economizar espaço, mantenha suas lógicas se tiverem mais detalhes)
+    # --- Propriedades Impostos ---
     @property
     def iptu_pc(self): return self._calcular_pc(self.iptu)
 

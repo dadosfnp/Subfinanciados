@@ -275,20 +275,18 @@ async function atualizarFiltros() {
                 const borderColors = barColors; 
 
                 populacaoQuintilChart.data.datasets.push({
-                    label: dataset.label,
-                    data: dataset.data,
-                    
-                    // Aplica as cores definidas acima
-                    backgroundColor: backgroundColors,
-                    
-                    borderColor: borderColors, 
-                    borderWidth: 2, // Espessura da borda
-                    
-                    fill: true,
-                    barPercentage: 0.9,
-                    categoryPercentage: 0.9,
-                    grouped: true
-                });
+                label: dataset.label,
+                data: dataset.data,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors, 
+                borderWidth: 2,
+                fill: true,
+                // --- VALORES AJUSTADOS PARA REDUZIR EM 1/3 ---
+                barPercentage: 0.6,      
+                categoryPercentage: 0.6, 
+                // --------------------------------------------
+                grouped: true
+            });
             });
 
         } else {
@@ -449,6 +447,9 @@ options: {
                         display: false, // <--- Isso garante que o título "Quintil" não apareça solto
                         text: '' 
                     },
+
+                    categoryPercentage: 0.6, // Reduz a largura do grupo de barras
+                    barPercentage: 0.8,      // Reduz a largura da barra individual dentro do grupo
                     // --- 3. NEGRITO NOS RÓTULOS DE BAIXO (1º Quintil, etc) ---
                     ticks: {
                         color: '#333', // Cor do texto

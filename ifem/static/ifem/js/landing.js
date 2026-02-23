@@ -23,12 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleNav();
     }
 
-    // 3. Highlight dos Itens do Menu
-    /* Mapeamento explícito para corrigir divergência entre ID da Seção e ID do Nav */
+    // 3. Highlight dos Itens do Menu + Clique Preciso
     const sectionMap = [
         { id: 'problema', navId: 'nav-problema' },
-        { id: 'metodologia', navId: 'nav-intro' },        /* HTML id="metodologia" vs Nav id="nav-intro" */
-        { id: 'funcionalidades', navId: 'nav-plataforma' }, /* HTML id="funcionalidades" vs Nav id="nav-plataforma" */
+        { id: 'metodologia', navId: 'nav-intro' },
+        { id: 'funcionalidades', navId: 'nav-plataforma' },
         { id: 'noticias', navId: 'nav-noticias' }
     ];
     
@@ -37,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const navItem = document.getElementById(item.navId);
         
         if (section && navItem) {
+            // Gatilho visual (Highlight)
             ScrollTrigger.create({
                 trigger: section,
                 start: "top 60%", 
@@ -45,12 +45,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (self.isActive) {
                         document.querySelectorAll('.story-item').forEach(el => el.classList.remove('active'));
                         navItem.classList.add('active');
-                        
-                        /* Calcula o progresso baseado no índice atual do array mapeado */
                         const progress = ((index + 1) / sectionMap.length) * 100;
                         gsap.to('#reading-progress', { width: `${progress}%`, duration: 0.3 });
                     }
                 }
+            });
+
+            // Clique no item do menu: Garante que recalcula antes de ir
+            navItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollToId(item.id);
             });
         }
     });
@@ -154,16 +158,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// --- Scroll Suave (Instantâneo) ---
+// --- Scroll Suave (Recalculado para evitar pulos) ---
 window.scrollToId = function(id) {
     const navHeight = 80; 
+    const target = document.getElementById(id);
     
+    if (!target) return;
+
     // Mata tweens anteriores para evitar conflito
     gsap.killTweensOf(window);
 
+    // Refresh antes de scrollar garante que o destino seja exato
+    ScrollTrigger.refresh();
+
     gsap.to(window, {
         duration: 0.8, 
-        scrollTo: { y: `#${id}`, offsetY: navHeight },
+        scrollTo: { y: target, offsetY: navHeight }, // Passar o elemento direto é mais preciso que a string ID
         ease: "expo.out",
         overwrite: "auto"
     });
@@ -225,37 +235,41 @@ window.moveSlide = function(direction) {
 };
 
 // ======================================================================
-// Lógica do Botão "Saiba Mais" (Expansível + Scroll Automático)
+// Lógica do Botão "Saiba Mais" (RESTAURADA + FIX GSAP)
 // ======================================================================
 const expandButtons = document.querySelectorAll('.btn-read-more');
 
 expandButtons.forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault(); // Evita qualquer comportamento estranho do navegador
+        
         const content = this.nextElementSibling;
-        const isExpanded = this.classList.contains('active');
         const spanText = this.querySelector('.btn-text');
+        
+        // Se por algum motivo o nextElementSibling falhar, tentamos buscar pelo ID ou classe próxima
+        if (!content) return;
+
+        const isExpanded = this.classList.contains('active');
 
         if (isExpanded) {
             // Fechar
             this.classList.remove('active');
             this.setAttribute('aria-expanded', 'false');
             content.style.maxHeight = null;
-            spanText.textContent = "Saiba mais";
+            if (spanText) spanText.textContent = "Saiba mais";
         } else {
             // Abrir
             this.classList.add('active');
             this.setAttribute('aria-expanded', 'true');
             content.style.maxHeight = content.scrollHeight + "px";
-            spanText.textContent = "Mostrar menos";
-
-            // Scroll suave para centralizar o texto
-            setTimeout(() => {
-                content.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-            }, 30); 
+            if (spanText) spanText.textContent = "Mostrar menos";
         }
+
+        // --- PULO DO GATO ---
+        // Força o GSAP a ler as novas alturas APÓS a animação de abertura
+        setTimeout(() => {
+            ScrollTrigger.refresh();
+        }, 500); 
     });
 });
 
@@ -311,20 +325,18 @@ if (newsContainer && prevBtn && nextBtn) {
 // ======================================================================
 // Lógica do Modal de Vídeo Tutorial
 // ======================================================================
+// Localize e substitua a função toggleTutorial no final do seu landing.js
 window.toggleTutorial = function() {
     const modal = document.getElementById('tutorialModal');
-    const video = document.getElementById('tutorialVideo');
     
-    if (!modal || !video) return;
+    if (!modal) return;
 
-    modal.classList.toggle('active');
+    const isActive = modal.classList.toggle('active');
     
-    // Se fechou o modal, pausa o vídeo e reseta
-    if (!modal.classList.contains('active')) {
-        video.pause();
-        video.currentTime = 0;
+    // Trava o scroll do corpo da página quando o modal está aberto
+    if (isActive) {
+        document.body.style.overflow = 'hidden';
     } else {
-        // Tenta iniciar o vídeo automaticamente ao abrir
-        video.play().catch(e => console.log("Autoplay bloqueado pelo navegador", e));
+        document.body.style.overflow = '';
     }
 };
