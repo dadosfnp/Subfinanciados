@@ -2,7 +2,7 @@
 import pandas as pd
 from home.models import Municipio, ContaEspecifica, ContaEspecificaPercentil
 
-df = pd.read_excel("base_datas/dados/receitas_correntes_detalhamento_n1.xlsx")
+df = pd.read_excel("base_datas/receitas_correntes_detalhamento_n1.xlsx")
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 
 colunas_receita = [
@@ -42,7 +42,7 @@ for _, row in df.iterrows():
 
 
 
-df = pd.read_excel("base_datas/dados/percentil_detalhamento_1.xlsx")
+df = pd.read_excel("base_datas/percentil_detalhamento_1.xlsx")
 df['cod_ibge'] = df['cod_ibge'].astype(str)  # Garante que o código IBGE seja tratado como string
 
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.

@@ -6,7 +6,7 @@ ContaDetalhada.objects.all().delete()  # Limpa os dados antigos
 ContaDetalhadaPercentil.objects.all().delete()  # Limpa os dados antigos
 
 contas = pd.read_excel(
-    "base_datas/dados/receitas_correntes_2024.xlsx",
+    "base_datas/receitas_correntes_2024.xlsx",
     usecols=["cod_ibge", "itc", "con", "trf", "our"]
     )
 
@@ -32,7 +32,7 @@ for _, row in contas.iterrows():
         print(f"Município com código {row['cod_ibge']} não encontrado 😵")
 
 
-df = pd.read_excel("base_datas/dados/percentil_detalhamento_0.xlsx")
+df = pd.read_excel("base_datas/percentil_detalhamento_0.xlsx")
 df['cod_ibge'] = df['cod_ibge'].astype(str)  # Garante que o código IBGE seja tratado como string
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 colunas_receita = [

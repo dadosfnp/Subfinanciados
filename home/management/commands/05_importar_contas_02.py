@@ -6,7 +6,7 @@ ContaMaisEspecifica.objects.all().delete()  # Limpa os dados antigos
 ContaMaisEspecificaPercentil.objects.all().delete()  # Limpa os dados antigos
 
 
-df = pd.read_excel("base_datas/dados/receitas_correntes_detalhamento_n2.xlsx")
+df = pd.read_excel("base_datas/receitas_correntes_detalhamento_n2.xlsx")
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 colunas_receita = [
         'itc_imp_ptu',
@@ -76,7 +76,7 @@ for _, row in df.iterrows():
 
 
 
-df = pd.read_excel("base_datas/dados/percentil_detalhamento_2.xlsx")
+df = pd.read_excel("base_datas/percentil_detalhamento_2.xlsx")
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 colunas_receita = [
     # Nacional
