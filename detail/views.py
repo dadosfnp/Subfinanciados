@@ -2,10 +2,9 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada # Assuming you have your models set up
+from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
 
-# Helper function to format a single revenue item (no changes needed here)
 def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
     if not model_instance:
         return None

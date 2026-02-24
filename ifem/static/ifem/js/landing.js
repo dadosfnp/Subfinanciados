@@ -419,3 +419,150 @@ window.toggleTutorial = function() {
         document.body.style.overflow = '';
     }
 };
+
+/**
+ * widget_busca_municipio.js
+ * Gerencia a busca assíncrona e exibição de indicadores municipais.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("muni-search-input");
+    const autocompleteList = document.getElementById("muni-autocomplete-list");
+    let debounceTimer;
+
+    if (!searchInput) return;
+
+    // 1. Gerenciador de Input com Debounce
+    searchInput.addEventListener("input", function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length < 3) {
+            autocompleteList.innerHTML = "";
+            autocompleteList.classList.add("hidden");
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch(`/api/busca-municipio/?q=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Erro na requisição');
+                    return response.json();
+                })
+                .then(data => {
+                    renderAutocomplete(data.results, data.national_avg);
+                })
+                .catch(err => console.error("Busca falhou:", err));
+        }, 300);
+    });
+
+    // 2. Renderizador da lista de sugestões (Dropdown)
+    function renderAutocomplete(results, nationalAvg) {
+        autocompleteList.innerHTML = "";
+        
+        if (!results || results.length === 0) {
+            autocompleteList.innerHTML = `<div style="padding:12px; color:#94a3b8;">Nenhum município encontrado.</div>`;
+        } else {
+            results.forEach(muni => {
+                const item = document.createElement("div");
+                item.className = "autocomplete-suggestion";
+                item.innerHTML = `<strong>${muni.nome}</strong>`;
+                item.addEventListener("click", () => {
+                    searchInput.value = muni.nome;
+                    autocompleteList.classList.add("hidden");
+                    renderResultCard(muni, nationalAvg);
+                });
+                autocompleteList.appendChild(item);
+            });
+        }
+        autocompleteList.classList.remove("hidden");
+    }
+
+    /**
+     * Atualiza o DOM com os dados do município selecionado, aplicando
+     * formatação de moeda, cálculo de variação e colorização de badges
+     * baseada na distribuição em quintis/decis.
+     * * @param {Object} muni - Dados do município retornados pela API.
+     * @param {number} nationalAvg - Média nacional de receita per capita.
+     */
+    function renderResultCard(muni, nationalAvg) {
+        const container = document.getElementById("muni-result-container");
+        if (!container) return;
+
+        const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { 
+            style: 'currency', currency: 'BRL' 
+        }).format(v || 0);
+
+        const diffPercent = ((muni.rc_pc - nationalAvg) / nationalAvg) * 100;
+        const isAbove = muni.rc_pc >= nationalAvg;
+
+        document.getElementById("res-muni-nome").innerText = muni.nome;
+        document.getElementById("res-muni-pc").innerText = formatBRL(muni.rc_pc);
+
+        const percentBadge = document.getElementById("res-muni-percent-badge");
+        if (percentBadge) {
+            const arrow = isAbove ? '▲' : '▼';
+            const signalClass = isAbove ? 'badge-positive' : 'badge-negative';
+            percentBadge.innerText = `${arrow} ${Math.abs(diffPercent).toFixed(1)}%`;
+            percentBadge.className = `muni-percent-tag ${signalClass}`;
+        }
+
+        /**
+         * Mapeamento de paletas institucionais.
+         */
+        const quintilColors = {
+            1: { bg: '#A81C21', text: '#ffffff' },
+            2: { bg: '#E47326', text: '#ffffff' },
+            3: { bg: '#F4D01D', text: '#1e293b' },
+            4: { bg: '#6AC074', text: '#1e293b' },
+            5: { bg: '#1C9148', text: '#ffffff' }
+        };
+
+        const decilColors = {
+            1: { bg: '#960E16', text: '#ffffff' },
+            2: { bg: '#CF3026', text: '#ffffff' },
+            3: { bg: '#EB6630', text: '#ffffff' },
+            4: { bg: '#F8A555', text: '#ffffff' },
+            5: { bg: '#FCE182', text: '#1e293b' },
+            6: { bg: '#DDEC88', text: '#1e293b' },
+            7: { bg: '#9DD57D', text: '#1e293b' },
+            8: { bg: '#60BA69', text: '#1e293b' },
+            9: { bg: '#2D964D', text: '#ffffff' },
+            10: { bg: '#076931', text: '#ffffff' }
+        };
+
+        const quintilNum = parseInt(muni.quintil) || 0;
+        const badgeQuintil = document.getElementById("badge-quintil");
+        
+        if (quintilNum > 0) {
+            badgeQuintil.innerText = `${quintilNum}º Quintil`;
+            badgeQuintil.style.backgroundColor = quintilColors[quintilNum].bg;
+            badgeQuintil.style.color = quintilColors[quintilNum].text;
+            badgeQuintil.style.border = "none";
+        } else {
+            badgeQuintil.innerText = "-";
+            badgeQuintil.style.backgroundColor = "#f1f5f9";
+            badgeQuintil.style.color = "#475569";
+        }
+
+        const decilNum = parseInt(muni.decil) || 0;
+        const badgeDecil = document.getElementById("badge-decil");
+        
+        if (decilNum > 0) {
+            badgeDecil.innerText = `${decilNum}º Decil`;
+            badgeDecil.style.backgroundColor = decilColors[decilNum].bg;
+            badgeDecil.style.color = decilColors[decilNum].text;
+            badgeDecil.style.border = "none";
+        } else {
+            badgeDecil.innerText = "-";
+            badgeDecil.style.backgroundColor = "#f1f5f9";
+            badgeDecil.style.color = "#475569";
+        }
+
+        container.classList.remove("hidden");
+    }
+
+    // Fechar ao clicar fora
+    document.addEventListener("click", (e) => {
+        if (e.target !== searchInput) autocompleteList.classList.add("hidden");
+    });
+});
