@@ -69,15 +69,33 @@ p {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--fnp-blue, #1D437A);
     padding: 0 20px;
     overflow: hidden;
+}
+
+.hero-video-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.hero-video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 30, 60, 0.65); 
     z-index: 1;
 }
 
 .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 2; 
     width: 100%;
     max-width: 1000px;
     text-align: center;
@@ -85,6 +103,38 @@ p {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+@keyframes fadeInUpHero {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Aplicação da animação no título principal com delay inicial leve */
+.hero-content .big-title {
+    opacity: 0; 
+    animation: fadeInUpHero 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    animation-delay: 0.2s; 
+}
+
+/* Aplicação no subtítulo, entrando na sequência */
+.hero-content .hero-subtitle {
+    opacity: 0;
+    animation: fadeInUpHero 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    animation-delay: 0.5s; 
+}
+
+/* Aplicação no botão de ação, finalizando a cascata */
+.hero-content .scroll-indicator {
+    opacity: 0;
+    animation: fadeInUpHero 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    animation-delay: 0.8s; 
 }
 
 .big-title {
@@ -152,7 +202,7 @@ p {
     left: 0; 
     width: 100%;
     height: var(--nav-height);
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(0,0,0,0.08);
@@ -160,8 +210,6 @@ p {
     
     display: flex; 
     flex-direction: column;
-    
-    /* Garante que o container pai não mova */
     transform: none !important;
 }
 
@@ -426,7 +474,7 @@ p {
     align-items: center; 
     gap: 30px;
     margin-top: 30px; 
-    background: #f8f9fa;
+    background: #ffffff;
     padding: 25px; 
     border-radius: 16px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -494,7 +542,6 @@ p {
     stroke: var(--accent-red); 
     stroke-dasharray: 502;
     stroke-dashoffset: 502;
-    transition: stroke-dashoffset 2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Texto centralizado no gráfico de Donut */
@@ -604,7 +651,6 @@ p {
     height: 100%; 
     width: 0; 
     border-radius: 6px; 
-    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
 }
 
 /* Variações de cores para as barras */
@@ -688,280 +734,492 @@ p {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+/* ==========================================================================
+   5.1 CARROSSEL IN-PLACE: O PROBLEMA (PAINEL DESLIZANTE)
+   ========================================================================== */
+
+/*
+ * Container de Visualização (Máscara)
+ * Restringe a exibição ao painel ativo e previne alteração de layout (reflow).
+ * Oculta o conteúdo excedente no eixo horizontal.
+ */
+.slider-viewport-prob {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+/*
+ * Trilho de Navegação Horizontal
+ * Comporta os painéis e executa a transição física bidirecional.
+ * Largura de 200% para acomodar dois painéis de 100% da viewport cada.
+ */
+.slider-track-prob {
+    display: flex;
+    width: 200%; 
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateX(0);
+    align-items: flex-start;
+}
+
+/*
+ * Painel Individual
+ * Ocupa 50% do trilho (equivalente a 100% da viewport visível).
+ */
+.slider-panel-prob {
+    width: 50%;
+    flex-shrink: 0;
+    padding-right: 20px; 
+    box-sizing: border-box;
+}
+
+/*
+ * Container de Scroll Interno (Texto Longo)
+ * Congela a altura máxima e ativa o scrollbar vertical interno.
+ */
+.scrollable-text {
+    max-height: 480px; 
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-top: 25px;
+}
+
+/* Customização do Scrollbar Interno (Webkit) */
+.scrollable-text::-webkit-scrollbar { 
+    width: 4px; 
+}
+.scrollable-text::-webkit-scrollbar-track { 
+    background: #f0f0f0; 
+    border-radius: 4px; 
+}
+.scrollable-text::-webkit-scrollbar-thumb { 
+    background: #cccccc; 
+    border-radius: 4px; 
+}
+.scrollable-text::-webkit-scrollbar-thumb:hover { 
+    background: var(--fnp-dark-blue, #103758); 
+}
+
+/*
+ * Controles de Ação (Botões do Slider)
+ */
+.slider-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 35px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-slide-next, 
+.btn-scroll-down, 
+.btn-slide-prev {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Botão de Avanço (Primário) */
+.btn-slide-next {
+    background: var(--fnp-dark-blue, #103758);
+    color: #ffffff;
+    border: 1px solid var(--fnp-dark-blue, #103758);
+}
+
+.btn-slide-next:hover { 
+    background: #0d2d4a; 
+    transform: translateY(-2px); 
+}
+
+/* Botões Secundários (Voltar e Continuar Scroll) */
+.btn-scroll-down, 
+.btn-slide-prev {
+    border: 1px solid #dddddd;
+    color: #555555;
+}
+
+.btn-slide-prev { 
+    margin-bottom: 5px; 
+}
+
+.btn-scroll-down:hover, 
+.btn-slide-prev:hover {
+    background: #f8f9fa;
+    color: var(--fnp-dark-blue, #103758);
+    border-color: var(--fnp-dark-blue, #103758);
+    transform: translateY(-2px);
+}
 
 /* ==========================================================================
    6. SEÇÃO: METODOLOGIA
    ========================================================================== */
 
-/* Container flexível para o infográfico vertical */
+/* * Estrutura Base e Cards
+ * Define o alinhamento principal e a estrutura visual dos cards da metodologia.
+ */
 .metodologia-infographic {
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px;
-    align-items: center; 
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
     width: 100%;
-}
-.metodologia-infographic .step-card,
-.step-header,
-.q-box, 
-.d-box,
-.q-label,
-.step-title, 
-.step-subtitle {
-    font-family: 'Inter', sans-serif !important;
-}
-/* Card individual de cada passo da metodologia */
-.step-card {
-    background: white; 
-    border: 1px solid #eee; 
-    border-radius: 12px;
-    padding: 20px; 
-    width: 100%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    position: relative; 
-    overflow: hidden;
+    font-family: 'Inter', sans-serif;
 }
 
+.metodologia-infographic .step-card,
+.card-metodologia-pro {
+    background: #ffffff;
+    border: 1px solid #eeeeee;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: visible !important;
+    height: auto !important;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* * Cabeçalhos e Tipografia
+ * Padronização de fontes, tamanhos e alinhamentos para títulos e subtítulos.
+ */
 .step-header {
-    display: flex; 
-    flex-direction: column; 
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 20px; 
+    margin-bottom: 24px;
     text-align: center;
 }
 
-.step-subtitle {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 600;
-    color: #555;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    font-size: 1rem;
-    display: block; /* Garante que o padding e border funcionem */
-    width: 100%;
-}
-
-/* Indicador numérico do passo (Badge) */
 .step-number {
-    background: var(--fnp-dark-blue); 
-    color: white;
-    width: 24px; 
-    height: 24px; 
+    background: var(--fnp-dark-blue, #003366);
+    color: #ffffff;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    font-size: 0.8rem; 
+    font-size: 0.875rem;
     font-weight: 700;
-    display: flex; 
-    align-items: center; 
+    display: flex;
+    align-items: center;
     justify-content: center;
     margin-bottom: 8px;
 }
 
-/* Container para gráfico de barras de ordenação */
-.bars-container {
-    display: flex; 
-    align-items: flex-end; 
-    justify-content: center;
-    gap: 6px; 
-    height: 80px; 
-    padding-bottom: 5px;
-    border-bottom: 2px solid #eee;
+.step-title {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #333333;
+    margin-bottom: 4px;
 }
 
-/* Barra individual com animação de crescimento vertical */
-.bar {
-    width: 8%; 
-    background: #ddd; 
-    border-radius: 4px 4px 0 0;
-    animation: growBar 1.5s ease-out forwards;
-}
-
-/* Definição de alturas e atrasos de animação para efeito cascata */
-.b1 { height: 10%; animation-delay: 0.1s; } .b2 { height: 20%; animation-delay: 0.2s; }
-.b3 { height: 30%; animation-delay: 0.3s; } .b4 { height: 40%; animation-delay: 0.4s; }
-.b5 { height: 50%; animation-delay: 0.5s; } .b6 { height: 60%; animation-delay: 0.6s; }
-.b7 { height: 70%; animation-delay: 0.7s; } .b8 { height: 85%; animation-delay: 0.8s; }
-.b9 { height: 100%; animation-delay: 0.9s; background: var(--fnp-dark-blue); }
-
-@keyframes growBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-
-/* Seta direcional entre os passos */
-.flow-arrow {
-    color: #ccc; 
-    width: 24px; 
-    height: 24px; 
-    margin: 0 auto;
+.step-subtitle {
+    font-weight: 600;
+    color: #555555;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 12px;
+    font-size: 1rem;
     display: block;
-    animation: bounce 2s infinite; 
+    width: 100%;
 }
 
-/* Containers flex para grupos de Quintis e Decis */
-.quintis-row, .decis-row { 
-    display: flex; 
-    justify-content: space-between; 
-    width: 100%; 
+.group-title-pro {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #555555;
+    margin-bottom: 12px;
+    text-align: left;
+    width: 100%;
 }
-.quintis-row { gap: 6px; } 
-.decis-row { gap: 4px; }
 
-/* * Caixas visuais para Quintis e Decis.
- * Inclui transição para efeitos de hover.
+/* * Card 1: Gráfico de Barras
+ * Container e animação das barras de ordenação de municípios.
  */
-.q-box, .d-box {
-    flex: 1; 
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
+.bars-container {
+    display: flex;
+    align-items: flex-end;
     justify-content: center;
-    color: white; 
-    font-weight: 700; 
-    border-radius: 4px;
-    transition: transform 0.2s ease;
+    gap: 8px;
+    height: 80px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #eeeeee;
 }
 
-.q-box { height: 70px; border-radius: 6px; }
-.d-box { height: 40px; cursor: default; }
+.bar {
+    width: 8%;
+    background: #dddddd;
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+}
 
-/* Efeitos de escala no hover */
-.q-box:hover { transform: translateY(-3px); }
-.d-box:hover { transform: scale(1.1); }
+.b1 { height: 10%; } 
+.b2 { height: 20%; } 
+.b3 { height: 30%; } 
+.b4 { height: 40%; } 
+.b5 { height: 50%; } 
+.b6 { height: 60%; } 
+.b7 { height: 70%; } 
+.b8 { height: 85%; } 
+.b9 { height: 100%; background: var(--fnp-dark-blue, #003366); }
 
-/* ==========================================================================
-   PALETA DE CORES OFICIAL (EXTRAÍDA DA PLATAFORMA)
-   ========================================================================== */
+.flow-arrow {
+    color: #cccccc;
+    width: 28px;
+    height: 28px;
+    margin: 8px auto;
+    display: block;
+    animation: bounce 2s infinite ease-in-out;
+}
 
-/* Quintis (5 Grupos) */
-.q-red         { background: #A81C21; } /* 1º Quintil - Vermelho Escuro */
-.q-orange      { background: #E47326; } /* 2º Quintil - Laranja */
-.q-yellow      { background: #F4D01D; } /* 3º Quintil - Amarelo */
-.q-green-light { background: #6AC074; } /* 4º Quintil - Verde Claro */
-.q-green       { background: #1C9148; } /* 5º Quintil - Verde FNP */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+}
 
-/* Decis (10 Grupos - Gradiente exato da legenda) */
-.d-1  { background: #960E16; } /* 1º Decil - Vinho */
-.d-2  { background: #CF3026; } /* 2º Decil - Vermelho */
-.d-3  { background: #EB6630; } /* 3º Decil - Laranja Escuro */
-.d-4  { background: #F8A555; } /* 4º Decil - Laranja Claro */
-.d-5  { background: #FCE182; } /* 5º Decil - Amarelo Pálido */
-.d-6  { background: #DDEC88; } /* 6º Decil - Lima Pálido */
-.d-7  { background: #9DD57D; } /* 7º Decil - Verde Pastel */
-.d-8  { background: #60BA69; } /* 8º Decil - Verde Médio */
-.d-9  { background: #2D964D; } /* 9º Decil - Verde Forte */
-.d-10 { background: #076931; } /* 10º Decil - Verde Escuro */
+/* * Card 2: Quintis e Decis (Isolamento)
+ * Estrutura flexível forçada para evitar colapso de layout.
+ */
+.row-quintis-pro {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px;
+    margin-bottom: 24px;
+}
 
-/* Tipografia interna das caixas */
-.q-perc { font-size: 0.9rem; font-weight: 800; }
-.q-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
+.row-decis-pro {
+    display: flex !important;
+    width: 100% !important;
+    gap: 4px;
+    margin-top: 10px;
+}
 
-/* Divisor visual com texto centralizado */
-.chart-divider {
-    display: flex; 
-    align-items: center; 
+.box-q-pro {
+    flex: 1;
+    height: 70px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    margin: 20px 0; 
+    color: #ffffff;
+    border-radius: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.box-d-pro {
+    flex: 1;
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
 }
 
-.chart-divider::before { 
-    content: ""; 
-    height: 1px; 
-    background: #eee; 
-    width: 100%; 
-    position: absolute; 
+.box-q-pro .q-val { 
+    font-size: 1.1rem; 
+    font-weight: 800; 
+    line-height: 1; 
 }
 
-.chart-divider span { 
-    background: white; 
-    padding: 0 10px; 
-    font-size: 0.75rem; 
-    color: #999; 
-    z-index: 2; 
-    position: relative; 
+.box-q-pro .q-label { 
+    font-size: 0.55rem; 
+    text-transform: uppercase; 
+    margin-top: 4px; 
+    opacity: 0.95; 
+    text-align: center; 
+    line-height: 1.2; 
 }
 
-/* * Tooltip CSS puro para os Decis.
- * Exibe atributo 'title' ao passar o mouse.
+/* * Interações e Animação CSS Nativa
+ * Aplicado nos elementos Quintis e Decis com delay progressivo.
  */
-.d-box { position: relative; }
-
-.d-box:hover::after {
-    content: attr(title); 
-    position: absolute; 
-    bottom: 100%; 
-    left: 50%;
-    transform: translateX(-50%); 
-    background: #333; 
-    color: white;
-    padding: 4px 8px; 
-    border-radius: 4px; 
-    font-size: 0.7rem;
-    white-space: nowrap; 
-    margin-bottom: 6px; 
-    pointer-events: none;
-    animation: fadeIn 0.2s forwards; 
-    z-index: 10;
+.box-q-pro:hover { 
+    transform: translateY(-4px); 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15); 
 }
 
-/* Seta indicadora do Tooltip */
-.d-box:hover::before {
+.box-d-pro:hover { 
+    transform: scale(1.15); 
+    z-index: 10; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+}
+
+.box-q-pro, .box-d-pro {
+    animation: fadeInUPBox 0.5s ease forwards;
+    opacity: 0;
+}
+
+.box-q-pro:nth-child(1) { animation-delay: 0.1s; } 
+.box-q-pro:nth-child(2) { animation-delay: 0.2s; }
+.box-q-pro:nth-child(3) { animation-delay: 0.3s; } 
+.box-q-pro:nth-child(4) { animation-delay: 0.4s; }
+.box-q-pro:nth-child(5) { animation-delay: 0.5s; }
+
+.box-d-pro:nth-child(1) { animation-delay: 0.6s; } 
+.box-d-pro:nth-child(2) { animation-delay: 0.65s; }
+.box-d-pro:nth-child(3) { animation-delay: 0.7s; } 
+.box-d-pro:nth-child(4) { animation-delay: 0.75s; }
+.box-d-pro:nth-child(5) { animation-delay: 0.8s; } 
+.box-d-pro:nth-child(6) { animation-delay: 0.85s; }
+.box-d-pro:nth-child(7) { animation-delay: 0.9s; } 
+.box-d-pro:nth-child(8) { animation-delay: 0.95s; }
+.box-d-pro:nth-child(9) { animation-delay: 1.0s; } 
+.box-d-pro:nth-child(10) { animation-delay: 1.05s; }
+
+@keyframes fadeInUPBox {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* * Divisor Fino (Aprofundamento)
+ * Linha visual horizontal com texto sobreposto.
+ */
+.divider-pro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 15px 0 20px 0;
+    position: relative;
+    width: 100%;
+}
+
+.divider-pro::before { 
     content: ""; 
     position: absolute; 
-    bottom: 100%; 
+    top: 50%; 
+    left: 0; 
+    width: 100%; 
+    height: 1px; 
+    background: #f0f0f0; 
+    z-index: 1; 
+}
+
+.divider-pro span { 
+    background: #ffffff; 
+    padding: 0 12px; 
+    font-size: 0.7rem; 
+    color: #999999; 
+    position: relative; 
+    z-index: 2; 
+}
+
+/* * Tooltip Nativo
+ * Exibição do atributo title em formato de tooltip estático.
+ */
+.box-d-pro:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px);
     left: 50%;
-    transform: translateX(-50%); 
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 20;
+}
+
+.box-d-pro:hover::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 3px);
+    left: 50%;
+    transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: #333; 
-    margin-bottom: -4px; 
-    animation: fadeIn 0.2s forwards;
+    border-top-color: #222;
+    z-index: 20;
 }
 
-@keyframes fadeIn { to { opacity: 1; } }
+/* * Paleta de Cores FNP
+ * Associação direta das cores aos grupos.
+ */
+.q-red { background: #A81C21; } 
+.q-orange { background: #E47326; } 
+.q-yellow { background: #F4D01D; } 
+.q-green-light { background: #6AC074; } 
+.q-green { background: #1C9148; }
 
-/* Ajuste responsivo para Decis em telas muito pequenas */
-@media (max-width: 480px) { 
-    .decis-row { flex-wrap: wrap; } 
-    .d-box { flex: 1 1 18%; margin-bottom: 4px; } 
-}
-/* ==========================================================================
-   METODOLOGIA - TÓPICOS (Dentro do Saiba Mais)
-   ========================================================================== */
+.d-1 { background: #960E16; } 
+.d-2 { background: #CF3026; } 
+.d-3 { background: #EB6630; } 
+.d-4 { background: #F8A555; } 
+.d-5 { background: #FCE182; } 
+.d-6 { background: #DDEC88; } 
+.d-7 { background: #9DD57D; } 
+.d-8 { background: #60BA69; } 
+.d-9 { background: #2D964D; } 
+.d-10 { background: #076931; }
 
+/* * Tópicos da Metodologia (Saiba Mais)
+ * Estilização dos itens de expansão de conteúdo.
+ */
 .methodology-topics {
     display: flex;
     flex-direction: column;
     gap: 25px;
     padding-top: 10px;
-    text-align: left; /* Garante alinhamento à esquerda */
+    text-align: left;
 }
 
 .topic-item {
-    border-left: 3px solid #e0e0e0; /* Linha lateral para guiar a leitura */
+    border-left: 3px solid #e0e0e0;
     padding-left: 20px;
     transition: border-color 0.3s ease;
 }
 
-.topic-item:hover {
-    border-left-color: var(--fnp-blue); /* Destaque azul ao passar o mouse */
+.topic-item:hover { 
+    border-left-color: var(--fnp-blue); 
 }
 
-.topic-item h4 {
-    margin: 0 0 8px 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--fnp-dark-blue);
-    font-family: 'Inter', sans-serif;
+.topic-item h4 { 
+    margin: 0 0 8px 0; 
+    font-size: 1rem; 
+    font-weight: 700; 
+    color: var(--fnp-dark-blue); 
+    font-family: 'Inter', sans-serif; 
 }
 
-.topic-item p {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #555;
-    font-family: 'Inter', sans-serif;
+.topic-item p { 
+    margin: 0; 
+    font-size: 0.95rem; 
+    line-height: 1.6; 
+    color: #555; 
+    font-family: 'Inter', sans-serif; 
 }
 
-.topic-item strong {
-    color: var(--fnp-dark-blue);
-    font-weight: 600;
+.topic-item strong { 
+    color: var(--fnp-dark-blue); 
+    font-weight: 600; 
+}
+
+/* * Responsividade
+ * Adaptação para dispositivos móveis.
+ */
+@media (max-width: 480px) {
+    .row-quintis-pro { flex-wrap: wrap; }
+    .box-q-pro { flex: 1 1 45%; }
+    .row-decis-pro { flex-wrap: wrap; }
+    .box-d-pro { flex: 1 1 18%; margin-bottom: 4px; }
+    
+    .box-d-pro:hover::after, 
+    .box-d-pro:hover::before { display: none; }
 }
 
 /* ==========================================================================
@@ -1963,3 +2221,394 @@ p {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(106, 192, 116, 0.6);
 }
+
+/* ==========================================================================
+   SEÇÃO EVOLUÇÃO: TIMELINE WIDGET
+   ========================================================================== */
+
+.time-comparison-widget {
+    display: flex;
+    flex-direction: column;
+    margin: 30px 0 40px 0;
+    position: relative;
+}
+
+.time-comparison-widget::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    bottom: 40px; 
+    left: 6px; 
+    width: 2px;
+    background: linear-gradient(to bottom, #94a3b8 0%, #ef4444 100%);
+    z-index: 1;
+}
+
+.time-connector {
+    display: none;
+}
+
+.time-node {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    position: relative;
+    z-index: 2;
+}
+
+.time-node.present {
+    margin-top: 40px; 
+}
+
+.node-marker {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #cbd5e1;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 2px #94a3b8;
+    margin-top: 5px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.time-node.present .node-marker.highlight-red {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 2px #dc2626;
+}
+
+.node-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.node-era {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+}
+
+.time-node.present .node-era {
+    color: #ef4444;
+}
+
+.node-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.node-content p {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ==========================================================================
+   SEÇÃO EVOLUÇÃO: GRÁFICOS DE DADOS
+   ========================================================================== */
+
+.chart-spacing-top {
+    margin-top: 40px;
+}
+
+.chart-header-clean {
+    border-bottom: none;
+    margin-bottom: 15px;
+}
+
+.chart-data-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.chart-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: right;
+    color: #475569; 
+}
+
+.chart-divider {
+    border-right: 2px solid #e2e8f0;
+    height: 100%;
+}
+
+.chart-track {
+    display: flex;
+    align-items: center;
+}
+
+.chart-track.negative-track {
+    justify-content: flex-end;
+    border-right: 2px solid #e2e8f0;
+}
+
+.chart-bar {
+    height: 24px;
+    width: var(--bar-width, 0%);
+    /*transition: width 0.5s ease-out;*/
+}
+
+.chart-bar.positive {
+    border-radius: 0 4px 4px 0;
+}
+
+.chart-bar.negative {
+    border-radius: 4px 0 0 4px;
+}
+
+/*Definição de Cores das Barras e Segmentos (Seção Evolução)*/
+
+.bar-yellow { background-color: #FACC15; --bar-color: #FACC15; }
+.val-yellow-dark { color: #ca8a04; }
+
+.bar-orange { background-color: #F97316; --bar-color: #F97316; }
+.val-orange-dark { color: #c2410c; }
+
+.bar-red { background-color: #DC2626; --bar-color: #DC2626; }
+.val-red-dark { color: #b91c1c; }
+
+.bar-purple { background-color: #7E22CE; --bar-color: #7E22CE; }
+.val-purple-dark { color: #6b21a8; }
+
+.bar-dark-blue { background-color: #4338CA; --bar-color: #4338CA; }
+.val-dark-blue { color: #4338CA; }
+
+.bar-black { background-color: #000000; --bar-color: #000000; }
+.val-black { color: #000000; }
+
+.segment-dark { background-color: var(--fnp-dark-blue, #103758); --bar-color: var(--fnp-dark-blue, #103758); } 
+.segment-gold { background-color: var(--fnp-yellow, #EEAF19); color: #000000; --bar-color: var(--fnp-yellow, #EEAF19); }
+
+.chart-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.chart-value.positive-val { margin-left: 8px; }
+.chart-value.negative-val { margin-right: 8px; }
+
+/* ==========================================================================
+   SEÇÃO EVOLUÇÃO: GRÁFICO CONDENSADO (PARTICIPAÇÃO 100%)
+   ========================================================================== */
+
+.stacked-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.stacked-row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+    gap: 16px;
+}
+
+.stacked-year {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1rem;
+    text-align: right;
+}
+
+.stacked-bar-wrapper {
+    display: flex;
+    height: 32px;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stacked-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    width: var(--segment-width, 50%);
+    /*transition: width 0.5s ease-out;*/
+}
+
+.segment-dark { background-color: var(--fnp-dark-blue, #103758); } 
+.segment-gold { background-color: var(--fnp-yellow, #EEAF19); color: #000000; } 
+
+.stacked-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* 1. Base estrutural garantida para TODAS as colunas do site */
+.text-col, .visual-col {
+    flex: 1; 
+    min-width: 320px;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+}
+
+/* 2. Efeito Sticky isolado EXCLUSIVAMENTE para a seção Evolução */
+#evolucao .text-col {
+    align-self: flex-start;
+    justify-content: flex-start;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 120px; 
+    padding-bottom: 20px; 
+}
+
+.chart-spacing-top {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Linha divisória suave para separar blocos de gráficos */
+.graph-separator {
+    width: 100%;
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 40px 0;
+}
+
+/* Modificador para forçar o Tooltip a abrir para baixo */
+.info-tooltip.tooltip-down .tooltip-content {
+    bottom: auto;
+    top: 140%; 
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* Estado Hover para o modificador */
+.info-tooltip.tooltip-down:hover .tooltip-content {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Inverte a setinha para apontar para cima */
+.info-tooltip.tooltip-down .tooltip-content::after {
+    top: auto;
+    bottom: 100%; 
+    border-color: transparent transparent var(--fnp-dark-blue) transparent;
+}
+
+/*==========================================================================
+    Efeitos extras
+========================================================================== */
+
+/* O fundo da linha ganha um destaque mais evidente */
+.chart-row {
+    transition: background-color 0.3s ease;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+/* Aplica o efeito tanto no hover direto quanto via classe do JS */
+.chart-row:hover, .chart-row.highlight-active {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* A barra ganha um efeito de luz e profundidade */
+.chart-row:hover .chart-bar, .chart-row.highlight-active .chart-bar {
+    box-shadow: 
+        0 0 15px var(--bar-color, currentColor), 
+        0 0 5px var(--bar-color, currentColor) inset;
+    transform: scaleY(1.1) scaleX(1.02);
+    z-index: 10;
+}
+
+/* O número ganha um brilho intenso */
+.chart-row:hover .chart-value, .chart-row.highlight-active .chart-value {
+    font-weight: 800;
+    text-shadow: 0 0 10px currentColor;
+}
+
+.stacked-segment {
+    transition: all 0.3s ease;
+}
+
+.stacked-segment.highlight-active {
+    box-shadow: 
+        0 0 15px var(--bar-color, currentColor), 
+        0 0 5px var(--bar-color, currentColor) inset;
+    transform: scaleY(1.1) scaleX(1.01);
+    z-index: 10;
+    text-shadow: 0 0 8px #ffffff; 
+    font-weight: 800;
+}
+
+/* ======================================================================
+ Destaque Cruzado: Texto -> Gráfico
+====================================================================== */ 
+.text-highlight {
+    color: #FACC15; /* O amarelo FNP garante o destaque no fundo escuro */
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none; 
+    box-shadow: none; 
+    border: none;
+    transition: opacity 0.2s ease;
+}
+
+.text-highlight:hover {
+    opacity: 0.8; 
+}
+/* Destaque para o Gráfico Evolução (ID na .chart-row) */
+.chart-row.highlight-active {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+.chart-row.highlight-active .chart-bar {
+    box-shadow: 0 0 15px var(--bar-color), 0 0 5px var(--bar-color) inset;
+    transform: scaleY(1.1) scaleX(1.02);
+    z-index: 10;
+}
+.chart-row.highlight-active .chart-value {
+    font-weight: 800;
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* Destaque para o Gráfico Stacked (ID direto no .stacked-segment) */
+.stacked-segment.highlight-active {
+    box-shadow: 0 0 15px var(--bar-color), 0 0 5px var(--bar-color) inset;
+    transform: scaleY(1.15) scaleX(1.01); 
+    z-index: 10;
+    font-weight: 800;
+    text-shadow: 0 0 8px #ffffff;
+}
+
+
