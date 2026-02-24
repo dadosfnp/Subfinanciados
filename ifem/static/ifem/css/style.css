@@ -2612,3 +2612,311 @@ p {
 }
 
 
+
+/* ==========================================================================
+   RESPONSIVIDADE MOBILE: SEÇÃO RAIZ DA DISTORÇÃO / EVOLUÇÃO
+   ========================================================================== */
+
+@media (max-width: 992px) {
+    /* * Força o empilhamento vertical das colunas.
+     * Aplica-se aos IDs mapeados para a seção de evolução/distorção.
+     */
+    #evolucao .section-content,
+    #raiz-distorcao .section-content {
+        flex-direction: column !important;
+        gap: 40px;
+    }
+
+    /* * Desativa o comportamento sticky no mobile para evitar sobreposição.
+     * Retorna o elemento ao fluxo normal do documento.
+     */
+    #evolucao .text-col,
+    #raiz-distorcao .text-col {
+        position: relative !important;
+        top: 0 !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        padding-bottom: 0;
+    }
+
+    /* * Expande o container do gráfico para ocupar a tela inteira,
+     * prevenindo compressão dos elementos internos.
+     */
+    #evolucao .visual-col,
+    #raiz-distorcao .visual-col {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   WIDGET: BUSCA DE MUNICÍPIO (METODOLOGIA)
+   ========================================================================== */
+
+.municipio-search-widget {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 30px 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.widget-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--fnp-dark-blue, #103758);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.search-input-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#muni-search-input {
+    width: 100%;
+    padding: 14px 20px 14px 45px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#muni-search-input:focus {
+    border-color: var(--fnp-dark-blue, #103758);
+    box-shadow: 0 0 0 3px rgba(16, 55, 88, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #94a3b8;
+}
+
+/* Dropdown Autocomplete */
+.autocomplete-items {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 99;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.autocomplete-items div {
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #333;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.autocomplete-items div:hover {
+    background-color: #f8fafc;
+    color: var(--fnp-dark-blue, #103758);
+    font-weight: 600;
+}
+
+/* Card de Resultado */
+.muni-result-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    animation: fadeInUPBox 0.4s ease forwards;
+}
+
+.muni-result-header {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+}
+
+.muni-result-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--fnp-dark-blue, #103758);
+}
+
+.muni-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.muni-metric-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.muni-metric-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.muni-metric-val {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.metric-highlight { color: var(--fnp-dark-blue, #103758); }
+
+.hidden { display: none !important; }
+
+/*
+ * Estrutura do card compacto de resultados
+ */
+.muni-compact-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.muni-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.muni-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--fnp-dark-blue, #103758);
+    margin: 0;
+}
+
+/*
+ * Sistema de tooltip para indicadores de variação
+ */
+.muni-tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.muni-tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    background-color: #1e293b;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.muni-tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+}
+
+.muni-tooltip-wrapper:hover .muni-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
+/*
+ * Tipografia e layout de valores principais
+ */
+.muni-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.muni-main-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.muni-card-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+/*
+ * Estilização das etiquetas (badges) de agrupamento
+ */
+.muni-badge {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background-color: #f1f5f9; 
+    color: #475569;
+}
+
+/*
+ * Componente de variação percentual
+ */
+.muni-percent-tag {
+    font-size: 0.875rem;
+    font-weight: 700;
+    display: inline-flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+}
+
+.badge-positive {
+    background-color: transparent;
+    color: #1C9148; 
+}
+
+.badge-negative {
+    background-color: transparent;
+    color: #A81C21; 
+}

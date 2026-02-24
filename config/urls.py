@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from home import views as home_views
 from detail import views as detail_views
 from map import views as map_views
+from ifem import views as ifem_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,5 +30,8 @@ urlpatterns = [
 
     # --- APIS: MAPA ---
     path('api/dados-municipios/', map_views.municipios_geojson_api, name='municipios_geojson_api'),
+
+    # --- APIS: LANDING PAGE ---
+    path('api/busca-municipio/', ifem_views.busca_municipio_simples_api, name='busca_municipio_api'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
