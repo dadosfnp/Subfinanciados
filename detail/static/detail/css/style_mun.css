@@ -121,21 +121,43 @@
   .kpi-card, .metric-card { border-radius:10px; }
 }
 
-/* Toggle segmentado — mesmo look do conjunto */
-.segmented{
-  display:inline-flex; align-items:center; gap:4px;
-  background:#e9eef6; border-radius:999px; padding:4px;
+/* Toggle segmentado — padrão */
+.segmented {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0;                   /* Remove o espaço entre os botões para ficarem colados */
+  background: #fff;         /* Fundo branco para a parte inativa */
+  border-radius: 6px;       /* Borda com arredondamento suave (quadrado arredondado) */
+  padding: 0;               /* Remove o preenchimento interno */
+  border: 1px solid var(--fnp-blue, #194685); /* Borda azul em volta de tudo */
+  overflow: hidden;         /* Garante que o fundo do botão ativo não vaze pelas bordas redondas */
 }
-.segmented .segmented-option{
-  border:0; background:transparent; cursor:pointer;
-  padding:.35rem .8rem; border-radius:999px;
-  font-weight:600; color:#194685; transition:all .15s ease;
+
+.segmented .segmented-option {
+  border: 0; 
+  background: transparent; 
+  cursor: pointer;
+  padding: 0.35rem 1rem; 
+  border-radius: 0;         /* Zera o border-radius individual (o contêiner já cuida disso) */
+  font-weight: 600; 
+  color: var(--fnp-blue, #194685); 
+  transition: all 0.15s ease;
 }
-.segmented .segmented-option.active{
-  background:#194685; color:#fff;
-  box-shadow:0 2px 8px rgba(25,70,133,.25);
+
+.segmented .segmented-option.active {
+  background: var(--fnp-blue, #194685); 
+  color: #fff;
+  box-shadow: none;         /* Retirada a sombra antiga para ficar fiel à nova imagem */
 }
-.segmented .segmented-option:focus{ outline:2px solid rgba(25,70,133,.35); outline-offset:2px; }
+
+/* Opcional: Efeito de foco para acessibilidade */
+.segmented .segmented-option:focus { 
+  outline: none; 
+  background: rgba(25, 70, 133, 0.1); /* Leve feedback visual ao focar sem quebrar o layout */
+}
+.segmented .segmented-option.active:focus {
+  background: var(--fnp-blue, #194685); 
+}
 
 /* ===== Scroll fix (página de detalhe) ===== */
 :root{
