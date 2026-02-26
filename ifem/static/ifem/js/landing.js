@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { id: 'evolucao', navId: 'nav-evolucao' },
         { id: 'metodologia', navId: 'nav-intro' },
         { id: 'funcionalidades', navId: 'nav-plataforma' },
+        { id: 'faq', navId: 'nav-faq' },
         { id: 'noticias', navId: 'nav-noticias' }
     ];
     
@@ -498,12 +499,21 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("res-muni-nome").innerText = muni.nome;
         document.getElementById("res-muni-pc").innerText = formatBRL(muni.rc_pc);
 
+        const percentWrapper = document.getElementById("res-muni-percent-wrapper");
         const percentBadge = document.getElementById("res-muni-percent-badge");
-        if (percentBadge) {
+        
+        if (percentBadge && percentWrapper) {
             const arrow = isAbove ? '▲' : '▼';
             const signalClass = isAbove ? 'badge-positive' : 'badge-negative';
+            
             percentBadge.innerText = `${arrow} ${Math.abs(diffPercent).toFixed(1)}%`;
             percentBadge.className = `muni-percent-tag ${signalClass}`;
+            
+            const tooltipDetalhe = isAbove 
+                ? 'Indica que o município tem receita per capita maior que a média nacional.' 
+                : 'Indica que o município tem receita per capita menor que a média nacional.';
+                
+            percentWrapper.setAttribute('data-tooltip', tooltipDetalhe);
         }
 
         /**
@@ -564,5 +574,31 @@ document.addEventListener("DOMContentLoaded", () => {
     // Fechar ao clicar fora
     document.addEventListener("click", (e) => {
         if (e.target !== searchInput) autocompleteList.classList.add("hidden");
+    });
+});
+
+/* Lógica do Accordion da FAQ */
+document.addEventListener('DOMContentLoaded', () => {
+    const accordionItems = document.querySelectorAll('.accordion-item');
+
+    accordionItems.forEach(item => {
+        const header = item.querySelector('.accordion-header');
+        
+        header.addEventListener('click', () => {
+            // Verifica se o item atual já está ativo
+            const isActive = item.classList.contains('active');
+            
+            // Fecha todos os itens
+            accordionItems.forEach(otherItem => {
+                otherItem.classList.remove('active');
+                otherItem.querySelector('.accordion-header').setAttribute('aria-expanded', 'false');
+            });
+            
+            // Se o item clicado NÃO estava ativo, abre ele
+            if (!isActive) {
+                item.classList.add('active');
+                header.setAttribute('aria-expanded', 'true');
+            }
+        });
     });
 });

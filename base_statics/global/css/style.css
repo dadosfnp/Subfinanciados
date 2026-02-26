@@ -21,8 +21,6 @@ body {
   background-color: var(--bs-body-bg);
   color: #111827;
   
-  /* Configuração Híbrida: Permite que sites normais (Landing) rolem,
-     mas prepara o terreno para o Dashboard. */
   min-height: 100%;
   margin: 0;
   display: flex;
@@ -49,20 +47,40 @@ body {
   align-items: center; 
   justify-content: space-between; 
   padding: 8px 0;
+  gap: 20px; 
 }
 
 /* Logos */
-.page-header .logo-fnp { height: auto; width: auto; max-height: 60px; margin-right: 12px; }
+.page-header .logo-fnp { 
+    height: auto; 
+    width: auto; 
+    max-height: 60px; 
+    margin-right: 12px; 
+    flex-shrink: 0; /* Impede que a logo da FNP seja esmagada */
+}
+
 .page-header .logo-ifem { 
     height: 92px; 
     width: auto; 
-    margin-right: 10px; 
+    margin-left: -40px; 
+    margin-right: 80px; 
     object-fit: contain;
     transform: scale(1.5); 
     transform-origin: left center; 
+    flex-shrink: 0; 
 }
+
 /* Menu */
-.page-header .nav { display: flex; justify-content: center; gap: 2rem; flex: 1; list-style: none; margin: 0; padding: 0; }
+.page-header .nav { 
+    display: flex; 
+    justify-content: center; 
+    gap: 2rem; 
+    flex: 1; 
+    list-style: none; 
+    margin: 0; 
+    padding: 0; 
+    white-space: nowrap; /* Impede que o texto dos botões quebre em duas linhas */
+}
 
 .page-header .nav-link {
   color: #333; 
@@ -75,12 +93,41 @@ body {
 
 .page-header .nav-link:hover { 
   background-color: rgba(25,70,133,.12); 
-  color: var(--fnp-blue); 
+  color: var(--fnp-blue, #003366); 
 }
 
 .page-header .nav-link.active { 
-  background-color: var(--fnp-blue); 
+  background-color: var(--fnp-blue, #003366); 
   color: #fff; 
+}
+
+@media (max-width: 1200px) {
+    .page-header .logo-ifem {
+        transform: scale(1.3); 
+        margin-right: 40px; 
+        margin-left: -20px;
+    }
+    .page-header .nav {
+        gap: 1rem; /
+    }
+    .page-header .nav-link {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .page-header .logo-ifem {
+        transform: scale(1); /* Remove o scale em telas apertadas */
+        margin-right: 10px;
+        margin-left: -10px;
+    }
+    .page-header .nav {
+        gap: 0.5rem;
+    }
+    .page-header .nav-link {
+        font-size: 0.85rem;
+        padding: 6px 8px;
+    }
 }
 
 /* ============== 4. ESTRUTURA DO DASHBOARD (Opcional) ============== */
@@ -113,7 +160,6 @@ body {
 }
 
 /* ============== 5. COMPONENTES UI ============== */
-/* Aumentamos a especificidade para não precisar de !important */
 .btn-fnp, 
 body .btn-primary { 
   background-color: var(--fnp-blue); 

@@ -43,6 +43,13 @@
             </div>
             <span class="story-label">Plataforma</span>
         </a>
+
+        <a onclick="scrollToId('faq')" class="story-item" id="nav-faq">
+            <div class="story-icon-wrapper">
+                <img src="{% static 'ifem/images/icones_faq.svg' %}" alt="">
+            </div>
+            <span class="story-label">FAQ</span>
+        </a>
         
         <a onclick="scrollToId('noticias')" class="story-item" id="nav-noticias">
             <div class="story-icon-wrapper">
@@ -61,7 +68,7 @@
 
     <section class="hero-section">
         <video class="hero-video-bg" autoplay loop muted playsinline>
-            <source src="/static/ifem/images/videohero.mp4" type="video/mp4">
+            <source src="/static/ifem/videos/videohero.mp4" type="video/mp4">
         </video>
                 
         <div class="hero-video-overlay"></div>
@@ -82,7 +89,7 @@
                 <div class="slider-track-prob" id="problema-slider">
 
                     <div class="slider-panel-prob">
-                        <h3 style="margin-bottom: 25px;">Dinheiro na contramão</h3>
+                        <h3 style="margin-bottom: 25px;"> O dinheiro na contramão</h3>
                         
                         <div class="editorial-text">
                             <p>O sistema de transferência apoia-se em regras da <strong>década de 60</strong>. <br>O Brasil mudou, a realidade das cidades mudou, mas as regras de financiamento não acompanharam essas mudanças.</p>
@@ -127,7 +134,7 @@
                                 <div class="chart-context">
                                     <ul class="legend-details">
                                         <li><strong>Transferências:</strong> Vindas da União e Estados.</li>
-                                        <li><strong>Arrecadação Própria:</strong> Recursos que o município arrecada diretamente.</li>
+                                        <li><strong>Arrecadação Própria:</strong> Recursos que o município arrecada.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -180,7 +187,7 @@
                 <div class="pop-chart-group">
                     <div class="chart-header-row">
                         <div class="header-title-wrapper">
-                            <h4>População vivendo em Municípios de menor renda</h4>
+                            <h4>População vivendo em municípios de menor renda</h4>
                             
                             <div class="info-tooltip">
                                 <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -213,7 +220,7 @@
                 <div class="pop-chart-group">
                     <div class="chart-header-row">
                         <div class="header-title-wrapper">
-                            <h4>População vivendo em Municípios de maior renda</h4>
+                            <h4>População vivendo em municípios de maior renda</h4>
                             
                             <div class="info-tooltip">
                                 <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -252,7 +259,7 @@
         </div>
     </section>
 
-<section id="evolucao" class="book-section">
+    <section id="evolucao" class="book-section">
         <div class="section-header-mobile"><h2>2. A Evolução da Receita</h2></div>
 
         <div class="section-content">
@@ -281,7 +288,7 @@
                         <div class="node-content">
                             <span class="node-era">Cenário Atual</span>
                             <h4 class="node-title">A conta do crescimento</h4>
-                            <p>Hoje, quanto maior o crescimento populacional, maior a queda real na receita disponível por habitante.</p>
+                            <p>Hoje, o sistema de financiamento das cidades, especialmente as transferências, não levam em conta as necessidades dos municípios e da população, frequentemente aumentando a desigualdade entre cidades.</p>
                         </div>
                     </div>
                 </div>
@@ -296,19 +303,30 @@
                     
                     <div class="expandable-content">
                         <div class="content-inner editorial-text">
-                            <p>Enquanto municípios com até 30 mil habitantes viram sua receita crescer mais de 20%, as grandes cidades sofreram perdas reais severas. Nas metrópoles com mais de 500 mil habitantes, o encolhimento per capita chegou a <strong>-26,4%</strong>.</p>
-                            <p>Isso consolida o fato de que a regra atual não acompanha a urbanização, estrangulando a capacidade de investimento exatamente nos locais onde vive a maior parte dos brasileiros.</p>
+                            <p>Ao analisarmos os gráficos lado a lado, a distorção do sistema se torna quantificável. Os municípios com mais de 500 mil habitantes absorveram grande parte do crescimento demográfico das últimas décadas, mas sua receita por habitante despencou 25,2% em relação ao crescimento médio nacional. Em contrapartida, cidades na faixa de 10 a 30 mil habitantes viram seus recursos por cidadão dispararem 54%, mesmo com uma dinâmica populacional muito inferior.</p>
+                            <p>Esse descompasso cria um gargalo na oferta de serviços essenciais. Hoje, quase 62% da população brasileira reside em municípios com mais de 80 mil habitantes — exatamente o segmento mais punido pela defasagem das transferências. </p>
                         </div>
                     </div>
                 </div>
 
                 <div class="insight-box" style="margin-top: 40px;">
                     <h4>O Paradoxo do Crescimento</h4>
-                        <p>
-                            Os dados revelam uma contradição insustentável: o modelo atual aumenta a receita per capita onde a população estagna e pune onde ela cresce.<br><br>
-                            Enquanto cidades com <span class="text-highlight" data-target="rec-ate-5,rec-5-10,rec-10-30">até 30 mil habitantes</span> tiveram ganhos reais acima de 20%, os polos que absorveram o salto demográfico pagaram a conta.<br><br>
-                            Hoje, <span class="text-highlight" data-target="part-2024-acima">quase 62% dos brasileiros vivem em municípios acima de 80 mil habitantes</span>, mas são justamente as <span class="text-highlight" data-target="rec-acima-500,pop-acima-500">maiores metrópoles</span>  (acima de 500 mil) que sofrem o estrangulamento, perdendo 26,4% da sua capacidade orçamentária.
-                        </p>
+                    <p class="text-gray-300 leading-relaxed text-lg">
+                        Os dados revelam uma contradição insustentável: o modelo atual aumenta a receita per capita onde a população estagna e pune onde ela cresce.<br><br>
+                        
+                        <span class="text-highlight text-white font-semibold cursor-pointer underline decoration-dashed decoration-2 underline-offset-4" data-target="rec-ate-5, rec-5-10, rec-10-30">
+                            Enquanto cidades com até 30 mil habitantes</span> tiveram ganhos reais de receita acima de 30%, 
+                        <span class="text-highlight text-white font-semibold cursor-pointer underline decoration-dashed decoration-2 underline-offset-4" data-target="rec-100-500, rec-acima-500">
+                            as demais cidades que absorveram a população e as demandas por serviços públicos viram seus recursos disponíveis diminuírem
+                        </span><br><br>
+                        
+                        <span class="text-highlight text-white font-semibold cursor-pointer underline decoration-dashed decoration-2 underline-offset-4" data-target="part-2000-acima, part-2024-acima">
+                            Cada vez mais pessoas vivem em municípios com mais de 80 mil habitantes
+                        </span> 
+                        <span class="text-highlight text-white font-semibold cursor-pointer underline decoration-dashed decoration-2 underline-offset-4" data-target="part-2000-abaixo, part-2024-abaixo">
+                            ao passo em que há menos gente vivendo nos municípios menores
+                        </span>, no entanto, os recursos públicos estão indo no lado oposto desse movimento populacional.
+                    </p>
                 </div>
             </div>
 
@@ -317,7 +335,7 @@
                 <div class="chart-spacing-top" style="margin-top: 0; padding-top: 0; border-top: none;">
                     <div class="chart-header-row chart-header-clean">
                         <div class="header-title-wrapper">
-                            <h4>Taxa de crescimento da população</h4>
+                            <h4>Taxa de crescimento da população por porte populacional (2000-2024)</h4>
                             <div class="info-tooltip">
                                 <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -409,7 +427,7 @@
                 <div class="pop-chart-group" style="margin-top: 40px;">
                     <div class="chart-header-row" style="border-bottom: none; margin-bottom: 15px;">
                         <div class="header-title-wrapper">
-                            <h4>Crescimento acumulado da Receita per capita</h4>
+                            <h4>Crescimento acumulado da Receita per capita (2000-2024)</h4>
                             <div class="info-tooltip">
                                 <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -428,8 +446,8 @@
                             <span class="chart-label">até 5 mil</span>
                             <div class="chart-divider"></div>
                             <div class="chart-track">
-                                <div class="chart-bar positive bar-yellow" style="--bar-width: 53%;"></div>
-                                <span class="chart-value positive-val val-yellow-dark">+24,3%</span>
+                                <div class="chart-bar positive bar-yellow" style="--bar-width: 57%;"></div>
+                                <span class="chart-value positive-val val-yellow-dark">+34,2%</span>
                             </div>
                         </div>
 
@@ -437,8 +455,8 @@
                             <span class="chart-label">5 a 10 mil</span>
                             <div class="chart-divider"></div>
                             <div class="chart-track">
-                                <div class="chart-bar positive bar-orange" style="--bar-width: 51%;"></div>
-                                <span class="chart-value positive-val val-orange-dark">+23,2%</span>
+                                <div class="chart-bar positive bar-orange" style="--bar-width: 74%;"></div>
+                                <span class="chart-value positive-val val-orange-dark">+44,1%</span>
                             </div>
                         </div>
 
@@ -446,25 +464,25 @@
                             <span class="chart-label">10 a 30 mil</span>
                             <div class="chart-divider"></div>
                             <div class="chart-track">
-                                <div class="chart-bar positive bar-red" style="--bar-width: 58%;"></div>
-                                <span class="chart-value positive-val val-red-dark">+26,6%</span>
+                                <div class="chart-bar positive bar-red" style="--bar-width: 90%;"></div>
+                                <span class="chart-value positive-val val-red-dark">+54,0%</span>
                             </div>
                         </div>
 
-                        <div class="chart-row">
+                        <div class="chart-row" id="rec-30-100">
                             <span class="chart-label">30 a 100 mil</span>
                             <div class="chart-divider"></div>
                             <div class="chart-track">
-                                <div class="chart-bar positive bar-purple" style="--bar-width: 44%;"></div>
-                                <span class="chart-value positive-val val-purple-dark">+20,2%</span>
+                                <div class="chart-bar positive bar-purple" style="--bar-width: 17%;"></div>
+                                <span class="chart-value positive-val val-purple-dark">+10,1%</span>
                             </div>
                         </div>
 
-                        <div class="chart-row">
+                        <div class="chart-row" id="rec-100-500">
                             <span class="chart-label">100 a 500 mil</span>
                             <div class="chart-track negative-track">
-                                <span class="chart-value negative-val val-dark-blue">-7,3%</span>
-                                <div class="chart-bar negative bar-dark-blue" style="--bar-width: 16%;"></div>
+                                <span class="chart-value negative-val val-dark-blue">-3,8%</span>
+                                <div class="chart-bar negative bar-dark-blue" style="--bar-width: 6%;"></div>
                             </div>
                             <div></div>
                         </div>
@@ -472,11 +490,12 @@
                         <div class="chart-row" id="rec-acima-500">
                             <span class="chart-label">acima de 500 mil</span>
                             <div class="chart-track negative-track">
-                                <span class="chart-value negative-val val-black">-26,4%</span>
-                                <div class="chart-bar negative bar-black" style="--bar-width: 58%;"></div>
+                                <span class="chart-value negative-val val-black">-25,2%</span>
+                                <div class="chart-bar negative bar-black" style="--bar-width: 42%;"></div>
                             </div>
                             <div></div>
                         </div>
+                    
                     </div>
                 </div>
 
@@ -500,8 +519,8 @@
                     <div class="stacked-row">
                         <span class="stacked-year">2000</span>
                         <div class="stacked-bar-wrapper">
-                            <div class="stacked-segment segment-dark" style="--segment-width: 55.2%;">55,2%</div>
-                            <div class="stacked-segment segment-gold" style="--segment-width: 44.8%;">44.8%</div>
+                            <div class="stacked-segment segment-dark" id="part-2000-acima" style="--segment-width: 55.2%;">55,2%</div>
+                            <div class="stacked-segment segment-gold" id="part-2000-abaixo" style="--segment-width: 44.8%;">44.8%</div>
                         </div>
                     </div>
 
@@ -509,7 +528,7 @@
                         <span class="stacked-year">2024</span>
                         <div class="stacked-bar-wrapper">
                             <div class="stacked-segment segment-dark" id="part-2024-acima" style="--segment-width: 61.7%;">61,7%</div>
-                            <div class="stacked-segment segment-gold" style="--segment-width: 38.3%;">38.3%</div>
+                            <div class="stacked-segment segment-gold" id="part-2024-abaixo" style="--segment-width: 38.3%;">38.3%</div>
                         </div>
                     </div>
 
@@ -546,7 +565,7 @@
                     <h4 class="widget-title">Onde seu município se encaixa?</h4>
                     
                     <div class="search-input-container">
-                        <input type="text" id="muni-search-input" placeholder="Digite o nome da sua cidade (ex: Brasília)..." autocomplete="off">
+                        <input type="text" id="muni-search-input" placeholder="Digite o nome da sua cidade (ex: Coromandel)..." autocomplete="off">
                         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -558,9 +577,9 @@
                         <div class="muni-compact-card">
                             <div class="muni-card-header">
                                 <h5 id="res-muni-nome" class="muni-card-title"></h5>
-                                <div class="muni-tooltip-wrapper">
-                                    <svg id="res-muni-trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"></svg>
+                                <div class="muni-percent-wrapper" id="res-muni-percent-wrapper">
                                     <div id="res-muni-percent-badge"></div>
+                                    <span class="muni-percent-text">em relação à média</span>
                                 </div>
                             </div>
                             
@@ -614,14 +633,14 @@
             <div class="visual-col">
                 <div class="metodologia-infographic">
                     
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-number">1</span>
-                            <span class="step-title">Ordenamos todos os municípios</span>
-                            <span class="step-subtitle">(Menor Receita → Maior Receita)</span>
-                        </div>
-                        <div class="bars-container">
-                            <div class="bar b1"></div>
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <span class="step-title">Ordenamos todos os municípios</span>
+                        <span class="step-subtitle">(Menor Receita → Maior Receita)</span>
+                    </div>
+                    <div class="bars-container">
+                            <div class="bar b1" data-tooltip="Menor Receita"></div>
                             <div class="bar b2"></div>
                             <div class="bar b3"></div>
                             <div class="bar b4"></div>
@@ -630,7 +649,7 @@
                             <div class="bar b7"></div>
                             <div class="bar b8"></div>
                             <div class="bar b9"></div>
-                        </div>
+                            <div class="bar b10" data-tooltip="Maior Receita"></div>
                     </div>
 
                     <div class="flow-arrow">
@@ -643,26 +662,26 @@
                     <div class="card-metodologia-pro">
                         <div class="step-header" style="margin-bottom: 10px;">
                             <div class="step-number">2</div>
-                            <span class="step-subtitle" style="border: none; padding: 0;">Dividimos em grupos iguais</span>
+                            <span class="step-subtitle" style="border: none; padding: 0;">Distribuímos o mesmo número de municípios em cada grupo</span>
                         </div>
 
                         <span class="group-title-pro">Quintis (20% cada)</span>
                         
                         <div class="row-quintis-pro">
-                            <div class="box-q-pro q-red">
+                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% das cidades">
                                 <span class="q-val">1º</span>
                                 <span class="q-label">MENOR<br>RECEITA</span>
                             </div>
-                            <div class="box-q-pro q-orange">
+                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% das cidades">
                                 <span class="q-val">2º</span>
                             </div>
-                            <div class="box-q-pro q-yellow">
+                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% das cidades">
                                 <span class="q-val">3º</span>
                             </div>
-                            <div class="box-q-pro q-green-light">
+                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 60% a 80% das cidades">
                                 <span class="q-val">4º</span>
                             </div>
-                            <div class="box-q-pro q-green">
+                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 80% a 100% das cidades">
                                 <span class="q-val">5º</span>
                                 <span class="q-label">MAIOR<br>RECEITA</span>
                             </div>
@@ -673,16 +692,16 @@
                         <span class="group-title-pro">Decis (10% cada)</span>
                         
                         <div class="row-decis-pro">
-                            <div class="box-d-pro d-1" title="1º Decil">1º</div>
-                            <div class="box-d-pro d-2" title="2º Decil">2º</div>
-                            <div class="box-d-pro d-3" title="3º Decil">3º</div>
-                            <div class="box-d-pro d-4" title="4º Decil">4º</div>
-                            <div class="box-d-pro d-5" title="5º Decil">5º</div>
-                            <div class="box-d-pro d-6" title="6º Decil">6º</div>
-                            <div class="box-d-pro d-7" title="7º Decil">7º</div>
-                            <div class="box-d-pro d-8" title="8º Decil">8º</div>
-                            <div class="box-d-pro d-9" title="9º Decil">9º</div>
-                            <div class="box-d-pro d-10" title="10º Decil">10º</div>
+                            <div class="box-d-pro d-1" data-tooltip="1º Decil">1º</div>
+                            <div class="box-d-pro d-2" data-tooltip="2º Decil">2º</div>
+                            <div class="box-d-pro d-3" data-tooltip="3º Decil">3º</div>
+                            <div class="box-d-pro d-4" data-tooltip="4º Decil">4º</div>
+                            <div class="box-d-pro d-5" data-tooltip="5º Decil">5º</div>
+                            <div class="box-d-pro d-6" data-tooltip="6º Decil">6º</div>
+                            <div class="box-d-pro d-7" data-tooltip="7º Decil">7º</div>
+                            <div class="box-d-pro d-8" data-tooltip="8º Decil">8º</div>
+                            <div class="box-d-pro d-9" data-tooltip="9º Decil">9º</div>
+                            <div class="box-d-pro d-10" data-tooltip="10º Decil">10º</div>
                         </div>
                     </div>
 
@@ -818,6 +837,115 @@
         </div>
     </section>
 
+    <section id="faq" class="book-section">
+        <div class="section-content split-layout-faq">
+            
+            <div class="faq-sticky-col">
+                <div class="section-header-mobile"><h2>FAQ</h2></div>
+                <h3 class="faq-title">Perguntas Frequentes</h3>
+                <p class="faq-subtitle">Tire suas dúvidas sobre o IFEM, seus objetivos e a metodologia utilizada na plataforma.</p>
+                <div class="faq-icon-decoration">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="faq-accordion-col">
+                <div class="accordion-list">
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">O que é o IFEM?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>O IFEM é uma plataforma desenvolvida pela Gerência de Dados da FNP que analisa como os municípios brasileiros se financiam e como os recursos públicos estão distribuídos no território nacional.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">Qual o objetivo do IFEM?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>Ampliar o debate público e legislativo sobre o federalismo fiscal.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">O IFEM propõe mudanças no modelo de financiamento?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>Não. O IFEM disponibiliza dados que revelam evidências para embasar decisões do poder público.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">Os dados do IFEM são oficiais?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>Sim. A plataforma utiliza exclusivamente bases públicas e oficiais do Estado brasileiro, organizadas e analisadas pela Gerência de Dados da Frente Nacional de Prefeitas e Prefeitos (FNP).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">Qual é o principal insight da plataforma?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>O descompasso entre população e recursos: cada vez mais brasileiros vivem em municípios com menor capacidade de financiamento per capita, enquanto parte significativa dos recursos permanece concentrada onde a população cresce menos ou diminui.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">Por que esse debate é importante agora?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>Porque o subfinanciamento municipal impacta diretamente a qualidade dos serviços públicos. Onde o recurso falta, o serviço falha — e quem paga a conta é a população.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false">
+                            <span class="accordion-title">Quem pode usar a plataforma?</span>
+                            <span class="accordion-icon"></span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-inner">
+                                <p>Gestores públicos, parlamentares, imprensa, pesquisadores e qualquer cidadão interessado em entender o financiamento municipal de forma clara e comparável.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
     <section id="noticias" class="book-section">
         <div class="section-header-mobile"><h2>9. Notícias</h2></div>
         
@@ -893,6 +1021,7 @@
                     <a onclick="scrollToId('problema')">O Problema</a>
                     <a onclick="scrollToId('metodologia')">Metodologia</a>
                     <a onclick="scrollToId('funcionalidades')">Plataforma</a>
+                    <a onclick="scrollToId('faq')">FAQ</a>
                     <a onclick="scrollToId('noticias')">Notícias</a>
                 </div>
             </div>

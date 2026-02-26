@@ -771,6 +771,10 @@ p {
     flex-shrink: 0;
     padding-right: 20px; 
     box-sizing: border-box;
+    position: relative; 
+    min-height: 720px;  
+    display: flex;
+    flex-direction: column;
 }
 
 /*
@@ -778,10 +782,11 @@ p {
  * Congela a altura máxima e ativa o scrollbar vertical interno.
  */
 .scrollable-text {
-    max-height: 480px; 
+    max-height: 520px;
     overflow-y: auto;
     padding-right: 15px;
-    margin-top: 25px;
+    margin-top: 10px;
+    margin-bottom: 80px; /* Espaço reservado para o botão não sobrepor o texto */
 }
 
 /* Customização do Scrollbar Interno (Webkit) */
@@ -804,11 +809,14 @@ p {
  * Controles de Ação (Botões do Slider)
  */
 .slider-actions {
+    position: absolute;
+    bottom: 20px; /* Distância fixa do fundo do card */
+    left: 0;
     display: flex;
     gap: 15px;
-    margin-top: 35px;
     align-items: center;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 .btn-slide-next, 
@@ -862,8 +870,8 @@ p {
    6. SEÇÃO: METODOLOGIA
    ========================================================================== */
 
-/* * Estrutura Base e Cards
- * Define o alinhamento principal e a estrutura visual dos cards da metodologia.
+/*
+ * Estrutura Base e Cards
  */
 .metodologia-infographic {
     display: flex;
@@ -890,8 +898,8 @@ p {
     flex-direction: column;
 }
 
-/* * Cabeçalhos e Tipografia
- * Padronização de fontes, tamanhos e alinhamentos para títulos e subtítulos.
+/*
+ * Cabeçalhos e Tipografia
  */
 .step-header {
     display: flex;
@@ -943,35 +951,93 @@ p {
     width: 100%;
 }
 
-/* * Card 1: Gráfico de Barras
- * Container e animação das barras de ordenação de municípios.
+/*
+ * Card 1: Gráfico de Barras
  */
 .bars-container {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     height: 80px;
     padding-bottom: 8px;
     border-bottom: 2px solid #eeeeee;
 }
 
 .bar {
-    width: 8%;
+    width: 7.5%;
     background: #dddddd;
     border-radius: 4px 4px 0 0;
     transform-origin: bottom;
+    position: relative;
 }
 
 .b1 { height: 10%; } 
-.b2 { height: 20%; } 
-.b3 { height: 30%; } 
-.b4 { height: 40%; } 
-.b5 { height: 50%; } 
-.b6 { height: 60%; } 
-.b7 { height: 70%; } 
-.b8 { height: 85%; } 
-.b9 { height: 100%; background: var(--fnp-dark-blue, #003366); }
+.b2 { height: 18%; } 
+.b3 { height: 26%; } 
+.b4 { height: 35%; } 
+.b5 { height: 45%; } 
+.b6 { height: 55%; } 
+.b7 { height: 65%; } 
+.b8 { height: 75%; } 
+.b9 { height: 86%; }
+.b10 { height: 100%; background: var(--fnp-dark-blue, #003366); }
+.b10:hover {
+    background-color: var(--fnp-dark-blue, #002244);
+}
+
+.bar:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+.bar[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--fnp-dark-blue, #103758);
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 20;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.bar[data-tooltip]::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--fnp-dark-blue, #103758);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.bar:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+.bar:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
 
 .flow-arrow {
     color: #cccccc;
@@ -987,8 +1053,8 @@ p {
     50% { transform: translateY(8px); }
 }
 
-/* * Card 2: Quintis e Decis (Isolamento)
- * Estrutura flexível forçada para evitar colapso de layout.
+/*
+ * Card 2: Quintis e Decis
  */
 .row-quintis-pro {
     display: flex !important;
@@ -1014,6 +1080,7 @@ p {
     color: #ffffff;
     border-radius: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
 }
 
 .box-d-pro {
@@ -1045,8 +1112,8 @@ p {
     line-height: 1.2; 
 }
 
-/* * Interações e Animação CSS Nativa
- * Aplicado nos elementos Quintis e Decis com delay progressivo.
+/*
+ * Interações e Animação CSS Nativa
  */
 .box-q-pro:hover { 
     transform: translateY(-4px); 
@@ -1086,8 +1153,63 @@ p {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* * Divisor Fino (Aprofundamento)
- * Linha visual horizontal com texto sobreposto.
+/*
+ * Sistema Unificado de Tooltip (Quintis e Decis)
+ * Utiliza o atributo data-tooltip para gerar baloes informativos.
+ */
+.box-q-pro::after,
+.box-d-pro::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--fnp-dark-blue, #103758);
+    color: #ffffff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 20;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.box-q-pro::before,
+.box-d-pro::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--fnp-dark-blue, #103758);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.box-q-pro:hover::after,
+.box-d-pro:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+.box-q-pro:hover::before,
+.box-d-pro:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/*
+ * Divisor Fino (Aprofundamento)
  */
 .divider-pro {
     display: flex;
@@ -1118,37 +1240,8 @@ p {
     z-index: 2; 
 }
 
-/* * Tooltip Nativo
- * Exibição do atributo title em formato de tooltip estático.
- */
-.box-d-pro:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #222;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    z-index: 20;
-}
-
-.box-d-pro:hover::before {
-    content: "";
-    position: absolute;
-    bottom: calc(100% + 3px);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: #222;
-    z-index: 20;
-}
-
-/* * Paleta de Cores FNP
- * Associação direta das cores aos grupos.
+/*
+ * Paleta de Cores FNP
  */
 .q-red { background: #A81C21; } 
 .q-orange { background: #E47326; } 
@@ -1167,8 +1260,8 @@ p {
 .d-9 { background: #2D964D; } 
 .d-10 { background: #076931; }
 
-/* * Tópicos da Metodologia (Saiba Mais)
- * Estilização dos itens de expansão de conteúdo.
+/*
+ * Tópicos da Metodologia (Saiba Mais)
  */
 .methodology-topics {
     display: flex;
@@ -1185,14 +1278,14 @@ p {
 }
 
 .topic-item:hover { 
-    border-left-color: var(--fnp-blue); 
+    border-left-color: var(--fnp-blue, #003366); 
 }
 
 .topic-item h4 { 
     margin: 0 0 8px 0; 
     font-size: 1rem; 
     font-weight: 700; 
-    color: var(--fnp-dark-blue); 
+    color: var(--fnp-dark-blue, #003366); 
     font-family: 'Inter', sans-serif; 
 }
 
@@ -1205,12 +1298,12 @@ p {
 }
 
 .topic-item strong { 
-    color: var(--fnp-dark-blue); 
+    color: var(--fnp-dark-blue, #003366); 
     font-weight: 600; 
 }
 
-/* * Responsividade
- * Adaptação para dispositivos móveis.
+/*
+ * Responsividade
  */
 @media (max-width: 480px) {
     .row-quintis-pro { flex-wrap: wrap; }
@@ -1218,6 +1311,8 @@ p {
     .row-decis-pro { flex-wrap: wrap; }
     .box-d-pro { flex: 1 1 18%; margin-bottom: 4px; }
     
+    .box-q-pro:hover::after, 
+    .box-q-pro:hover::before,
     .box-d-pro:hover::after, 
     .box-d-pro:hover::before { display: none; }
 }
@@ -2448,7 +2543,7 @@ p {
     font-weight: 700;
     color: #ffffff;
     width: var(--segment-width, 50%);
-    /*transition: width 0.5s ease-out;*/
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, box-shadow 0.3s ease;
 }
 
 .segment-dark { background-color: var(--fnp-dark-blue, #103758); } 
@@ -2559,17 +2654,17 @@ p {
 }
 
 .stacked-segment {
-    transition: all 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .stacked-segment.highlight-active {
-    box-shadow: 
-        0 0 15px var(--bar-color, currentColor), 
-        0 0 5px var(--bar-color, currentColor) inset;
-    transform: scaleY(1.1) scaleX(1.01);
+    transform: translateY(-4px) scale(1.02);
+    filter: brightness(1.15) contrast(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     z-index: 10;
-    text-shadow: 0 0 8px #ffffff; 
-    font-weight: 800;
+    border-radius: 4px;
 }
 
 /* ======================================================================
@@ -2919,4 +3014,265 @@ p {
 .badge-negative {
     background-color: transparent;
     color: #A81C21; 
+}
+
+/*
+ * Tooltip nativo via CSS para o indicador de variacao percentual
+ */
+/*
+ * Container do indicador percentual e texto explicativo.
+ */
+.muni-percent-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    position: relative;
+    cursor: help;
+}
+
+/*
+ * Tipografia do texto explicativo explicito.
+ */
+.muni-percent-text {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/*
+ * Sistema de Tooltip alinhado a direita.
+ * Previne overflow de tela limitando a largura e reajustando a origem.
+ */
+.muni-percent-wrapper::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--fnp-dark-blue, #103758);
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: normal;
+    width: 220px;
+    text-align: right;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 20;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.muni-percent-wrapper::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 3px);
+    right: 20px;
+    border: 5px solid transparent;
+    border-top-color: var(--fnp-dark-blue, #103758);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.muni-percent-wrapper:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-4px);
+}
+
+.muni-percent-wrapper:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==========================================================================
+   SEÇÃO FAQ: SPLIT LAYOUT ACCORDION
+   ========================================================================== */
+
+.split-layout-faq {
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+    padding-top: 80px;
+}
+
+/* Coluna Esquerda (Sticky) */
+.faq-sticky-col {
+    flex: 0 0 35%; /* Ocupa 35% da largura */
+    position: sticky;
+    top: 120px; /* Gruda logo abaixo da navbar */
+    display: flex;
+    flex-direction: column;
+}
+
+.faq-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue);
+    margin-bottom: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.faq-subtitle {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.faq-icon-decoration {
+    width: 64px;
+    height: 64px;
+    color: var(--fnp-blue);
+    opacity: 0.15;
+}
+
+/* Coluna Direita (Accordion) */
+.faq-accordion-col {
+    flex: 1; /* Ocupa o espaço restante */
+}
+
+.accordion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.accordion-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.accordion-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.accordion-item.active {
+    border-color: var(--fnp-dark-blue);
+    box-shadow: 0 8px 20px rgba(16, 55, 88, 0.08);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: #1e293b;
+    transition: color 0.3s ease;
+}
+
+.accordion-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding-right: 20px;
+}
+
+.accordion-item.active .accordion-title {
+    color: var(--fnp-dark-blue);
+}
+
+/* Ícone de Mais/Menos Animado */
+.accordion-icon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.accordion-icon::before,
+.accordion-icon::after {
+    content: '';
+    position: absolute;
+    background-color: #64748b;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease;
+}
+
+/* Barra Horizontal */
+.accordion-icon::before {
+    top: 9px;
+    left: 0;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+}
+
+/* Barra Vertical */
+.accordion-icon::after {
+    top: 0;
+    left: 9px;
+    width: 2px;
+    height: 20px;
+    border-radius: 2px;
+}
+
+/* Animação para virar um X e fechar (Ativo) */
+.accordion-item.active .accordion-icon::before {
+    transform: rotate(180deg);
+    background-color: var(--fnp-dark-blue);
+}
+
+.accordion-item.active .accordion-icon::after {
+    transform: rotate(90deg);
+    background-color: var(--fnp-dark-blue);
+}
+
+/* Corpo do Accordion (Oculto via Grid CSS moderno) */
+.accordion-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.accordion-item.active .accordion-body {
+    grid-template-rows: 1fr;
+}
+
+.accordion-inner {
+    overflow: hidden;
+}
+
+.accordion-inner p {
+    padding: 0 24px 24px 24px;
+    margin: 0;
+    font-size: 1.05rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+/* Responsividade FAQ */
+@media (max-width: 992px) {
+    .split-layout-faq {
+        flex-direction: column;
+        gap: 30px;
+        padding-top: 40px;
+    }
+    
+    .faq-sticky-col {
+        flex: none;
+        width: 100%;
+        position: relative;
+        top: 0;
+    }
+
+    .faq-title { font-size: 2rem; }
+    .faq-icon-decoration { display: none; } /* Oculta ícone no mobile para focar no texto */
 }
