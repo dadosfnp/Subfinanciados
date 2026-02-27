@@ -3,83 +3,109 @@
 <html lang="pt-br" style="height: 100%;">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=1366">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard de Receitas Municipais</title>
 
-<!-- Bootstrap: todos usam -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Fonte Inter: todos usam -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<!-- CSS global compartilhado -->
-<link rel="stylesheet" href="{% static 'global/css/style.css' %}">
-<script defer src="{% static 'global/js/tooltips-init.js' %}"></script>
-
+    <link rel="stylesheet" href="{% static 'global/css/style.css' %}">
+    <script defer src="{% static 'global/js/tooltips-init.js' %}"></script>
 
     {% block extra_head %}{% endblock extra_head %}
 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ABC123XYZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-ABC123XYZ');
+    </script>
 
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ABC123XYZ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ABC123XYZ');
-</script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var btnMobile = document.getElementById("btnMenuMobile");
+        var menuMobile = document.getElementById("caixaMenuMobile");
 
+        if (btnMobile && menuMobile) {
+          // Abre e fecha ao clicar no botão
+          btnMobile.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            menuMobile.classList.toggle("show");
+          });
+
+          // Fecha o menu se o usuário clicar fora dele
+          document.addEventListener("click", function(event) {
+            if (!menuMobile.contains(event.target) && !btnMobile.contains(event.target)) {
+              menuMobile.classList.remove("show");
+            }
+          });
+        }
+      });
+    </script>
 </head>
 <body>
 
-<div class="page-header">
+<div class="page-header border-bottom bg-white" style="position: relative; z-index: 1050;">
   <div class="container">
-    <header class="d-flex align-items-center justify-content-between">
-
-      <!--  Marca à ESQUERDA -->
+    
+    <header class="d-none d-lg-flex align-items-center justify-content-between py-2">
       <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
         <img src="{% static 'global/images/ifem-marca-03.svg' %}" alt="Marca IFEM" class="logo-ifem">
       </a>
 
-      <!-- Menu CENTRALIZADO -->
       {% with p=request.path %}
       <nav class="flex-grow-1 d-flex justify-content-center">
         <ul class="nav">
-          
-          <li>
-            <a href="{% url 'home' %}" class="nav-link {% if '/analise/' in p %}active{% endif %}">
-              Análise Gráfica
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'mapa' %}" class="nav-link {% if '/mapa/' in p or '/municipio/' in p %}active{% endif %}">
-              Análise Municipal
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'analise_municipal' %}" class="nav-link {% if '/analise-municipal/' in p %}active{% endif %}">
-              Análise Agregada
-            </a>
-          </li>
-
+          <li><a href="{% url 'home' %}" class="nav-link {% if '/analise/' in p %}active{% endif %}">Análise Gráfica</a></li>
+          <li><a href="{% url 'mapa' %}" class="nav-link {% if '/mapa/' in p or '/municipio/' in p %}active{% endif %}">Análise Municipal</a></li>
+          <li><a href="{% url 'analise_municipal' %}" class="nav-link {% if '/analise-municipal/' in p %}active{% endif %}">Análise Agregada</a></li>
         </ul>
       </nav>
       {% endwith %}
 
-      <!-- Logo FNP à DIREITA (abre site oficial) -->
       <a href="https://fnp.org.br/" target="_blank" rel="noopener" class="d-flex align-items-center text-dark text-decoration-none">
         <img src="{% static 'global/images/logo-FNP.png' %}" alt="Logo FNP" class="logo-fnp">
       </a>
+    </header>
+
+    <header class="d-grid d-lg-none w-100 py-3 position-relative" style="grid-template-columns: 1fr auto 1fr; align-items: center;">
+      
+      <a href="/" class="text-decoration-none" style="justify-self: start;">
+        <img src="{% static 'global/images/ifem-marca-03.svg' %}" alt="Marca IFEM" style="height: 52px !important; width: auto !important; display: block !important;">
+      </a>
+
+      {% with p=request.path %}
+      <div class="dropdown" style="justify-self: center;">
+        
+        <button id="btnMenuMobile" class="btn border-0 shadow-none p-0 m-0 text-dark dropdown-toggle d-flex align-items-center gap-1" type="button" style="caret-color: transparent;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+        </button>
+        
+        <ul id="caixaMenuMobile" class="dropdown-menu shadow border-0 mt-3 rounded-3 text-center" style="min-width: 240px; left: 50%; transform: translateX(-50%); z-index: 10000;">
+          <li><a href="{% url 'home' %}" class="dropdown-item py-2 fs-6 {% if '/analise/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Gráfica</a></li>
+          <li><a href="{% url 'mapa' %}" class="dropdown-item py-2 fs-6 {% if '/mapa/' in p or '/municipio/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Municipal</a></li>
+          <li><a href="{% url 'analise_municipal' %}" class="dropdown-item py-2 fs-6 {% if '/analise-municipal/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Agregada</a></li>
+        </ul>
+
+      </div>
+      {% endwith %}
+
+      <a href="https://fnp.org.br/" target="_blank" rel="noopener" style="justify-self: end;">
+        <img src="{% static 'global/images/logo-FNP.png' %}" alt="Logo FNP" style="height: 40px !important; width: auto !important; display: block !important;">
+      </a>
 
     </header>
+
   </div>
 </div>
-
 
 {% block content %}{% endblock content %}
 

@@ -17,193 +17,206 @@
 
 {% block content %}
 <main class="content-wrapper map-page">
-  <!-- SIDEBAR PADRONIZADA -->
-  <aside class="sidebar">
-      <div class="d-flex align-items-center mb-1">
+
+  <style>
+    /* ========== Ajustes Mobile ========== */
+    @media (max-width: 991.98px) {
+      /* Mantém a gaveta subindo 80% da tela */
+      #filtrosOffcanvas {
+        position: fixed !important;
+        bottom: 0 !important;
+        top: auto !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 80vh !important; 
+        max-height: 80vh !important;
+        background-color: #ffffff !important;
+        z-index: 10000 !important;
+        visibility: visible !important;
+      }
+      
+      .map-page { display: block !important; }
+      .map-page .main-content {
+        height: calc(100vh - 65px) !important;
+        min-height: calc(100vh - 65px) !important;
+        width: 100% !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      .map-page #map { height: 100% !important; width: 100% !important; }
+
+      /* Mantém os componentes do mapa compactos */
+      .map-overlay-container {
+        transform: scale(0.8) !important;
+        transform-origin: bottom right !important;
+        margin-bottom: 25px !important;
+      }
+
+      /* Ajuste do Card de Município */
+      .mapboxgl-popup { max-width: 65vw !important; min-width: 180px !important; z-index: 3000 !important; }
+      .mapboxgl-popup-content { padding: 6px 8px !important; font-size: 0.65rem !important; }
+    }
+
+    /* ========== Ajustes Desktop ========== */
+    @media (min-width: 992px) {
+      #filtrosOffcanvas { height: 100% !important; }
+      #filtrosOffcanvas .offcanvas-body { padding-bottom: 2rem !important; }
+    }
+
+    /* Garante que o modal de busca fique à frente da sidebar de filtros */
+    .modal { z-index: 11000 !important; }
+    .modal-backdrop { z-index: 10500 !important; }
+  </style>
+
+  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel">
+    <div class="offcanvas-header d-lg-none border-bottom bg-white p-0" style="position: relative; height: 70px; z-index: 1055;">
+      <div class="w-100 d-flex justify-content-center align-items-center h-100">
+        <i class="fa-solid fa-sliders fs-5 me-2" style="color: #103758;"></i>
+        <h5 class="offcanvas-title fw-bold mb-0 text-nowrap" id="filtrosOffcanvasLabel" style="color: #103758; font-size: 1.15rem;">
+          Filtros do Mapa
+        </h5>
+      </div>
+      <button type="button" data-bs-dismiss="offcanvas" data-bs-target="#filtrosOffcanvas" aria-label="Fechar" 
+              style="position: absolute !important; top: -12px !important; right: -12px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; border: none !important; background-color: #e2e8f0 !important; color: #103758 !important; padding: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important; cursor: pointer !important; z-index: 9999 !important; box-shadow: none !important;">
+        <i class="fa-solid fa-xmark" style="font-size: 16px; pointer-events: none !important; margin: 0 !important; padding: 0 !important;"></i>
+      </button>
+    </div>
+
+    <div class="offcanvas-body d-flex flex-column px-4 py-4 p-lg-0" style="background-color: #ffffff;">
+      
+      <div class="d-none d-lg-flex align-items-center mb-1">
         <h4 class="mb-0 me-1">Distribuição Geográfica</h4>
-        <button type="button"
-              class="btn-info-tooltip"
-              data-bs-toggle="tooltip"
-              data-bs-placement="right"
-              data-bs-html="true"
-              title="Este mapa mostra a distribuição geográfica dos municípios selecionados. <br>Cada ponto é clicável e o tamanho da sua circunferência demonstra o tamanho populacional do município.">
+        <button type="button" class="btn-info-tooltip shadow-none border-0 bg-transparent p-0" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="Este mapa mostra a distribuição geográfica dos municípios selecionados. <br>Cada ponto é clicável e o tamanho da sua circunferência demonstra o tamanho populacional do município.">
           <i class="fa-solid fa-circle-info text-secondary"></i>
         </button>
       </div>
-    <hr>
+      <hr class="d-none d-lg-block">
 
-    <div id="filters">
-      <!-- Faixa Populacional -->
-      <div class="filter-group">
-        <label for="filtro-porte" class="form-label">Faixa Populacional:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-porte" class="form-select form-select-sm">
-            <option value="todos">Todos</option>
-            <option value="Até 5 mil">Até 5 mil</option>
-            <option value="5 mil a 10 mil">5 mil a 10 mil</option>
-            <option value="10 mil a 20 mil">10 mil a 20 mil</option>
-            <option value="20 mil a 50 mil">20 mil a 50 mil</option>
-            <option value="50 mil a 100 mil">50 mil a 100 mil</option>
-            <option value="100 mil a 200 mil">100 mil a 200 mil</option>
-            <option value="200 mil a 500 mil">200 mil a 500 mil</option>
-            <option value="Acima de 500 mil">Acima de 500 mil</option>
+      <div id="filters">
+        
+        <div class="filter-group">
+          <label for="filtro-porte" class="form-label">Faixa Populacional:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-porte" class="form-select form-select-sm">
+              <option value="todos">Todos</option>
+              <option value="Até 5 mil">Até 5 mil</option>
+              <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+              <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+              <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+              <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+              <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+              <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+              <option value="Acima de 500 mil">Acima de 500 mil</option>
+            </select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-porte" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-rm" class="form-label">Região Metropolitana:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-rm" class="form-select form-select-sm"><option value="todos">Todas</option></select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-rm" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-regiao" class="form-label">Região:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-regiao" class="form-select form-select-sm"><option value="todos">Todas</option></select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-regiao" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-uf" class="form-label">UF:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-uf" class="form-select form-select-sm"><option value="todos">Todas</option></select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-uf" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-municipio" class="form-label">Município:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-municipio" class="form-select form-select-sm"><option value="todos">Todos</option></select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-municipio" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-classificacao" class="form-label">Colorir por:</label>
+          <select id="filtro-classificacao" class="form-select form-select-sm">
+            <option value="quintil" selected>Quintis de Receita p/c</option>
+            <option value="decil">Decis de Receita p/c</option>
+            <option value="natural">Quebras Naturais (Receita)</option>
           </select>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-porte" title="Buscar na lista">
-            <!-- ícone lupa -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                 viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 
-                       1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 
-                       0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-subgrupo" class="form-label">Quintil:</label>
+          <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
+          <select id="filtro-modo-calculo" class="form-select form-select-sm">
+            <option value="total">País (Total)</option>
+            <option value="por_filtro">Filtro Atual</option>
+          </select>
         </div>
       </div>
 
-      <!-- Região Metropolitana -->
-      <div class="filter-group">
-        <label for="filtro-rm" class="form-label">Região Metropolitana:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-rm" class="form-select form-select-sm">
-            <option value="todos">Todas</option>
-          </select>
-          <button type="button"
-                  class="btn btn-outline-secondary btn-sm"
-                  data-search-for="#filtro-rm"
-                  title="Buscar na lista">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
-        </div>
+      <div class="d-grid gap-2 mt-3">
+        <button id="btn-limpar-filtros" class="btn btn-secondary w-100">
+          <i class="bi bi-eraser-fill"></i> Limpar Filtros
+        </button>
+        <button id="btn-screenshot" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 7h-2.586l-1.707-1.707A2 2 0 0 0 15 4H9a2 2 0 0 0-1.707.293L5.586 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-9 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/>
+          </svg>
+          <span>Print Mapa</span>
+        </button>
       </div>
 
+      <div class="sidebar-spacer"></div>
 
-      <!-- Região -->
-      <div class="filter-group">
-        <label for="filtro-regiao" class="form-label">Região:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-regiao" class="form-select form-select-sm">
-            <option value="todos">Todas</option>
-          </select>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-regiao" title="Buscar na lista">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                 viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 
-                       1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 
-                       0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- UF -->
-      <div class="filter-group">
-        <label for="filtro-uf" class="form-label">UF:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-uf" class="form-select form-select-sm">
-            <option value="todos">Todas</option>
-          </select>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-uf" title="Buscar na lista">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                 viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 
-                       1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 
-                       0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Município -->
-      <div class="filter-group">
-        <label for="filtro-municipio" class="form-label">Município:</label>
-        <div class="input-group input-group-sm">
-          <select id="filtro-municipio" class="form-select form-select-sm">
-            <option value="todos">Todos</option>
-          </select>
-          <button type="button"
-                  class="btn btn-outline-secondary btn-sm"
-                  data-search-for="#filtro-municipio"
-                  title="Buscar na lista">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-
-      <!-- Colorir por -->
-      <div class="filter-group">
-        <label for="filtro-classificacao" class="form-label">Colorir por:</label>
-        <select id="filtro-classificacao" class="form-select form-select-sm">
-          <option value="quintil" selected>Quintis de Receita p/c</option>
-          <option value="decil">Decis de Receita p/c</option>
-          <option value="natural">Quebras Naturais (Receita)</option>
-        </select>
-      </div>
-
-      <!-- Subgrupo (Quintil/Decil) -->
-      <div class="filter-group">
-        <label for="filtro-subgrupo" class="form-label">Quintil:</label>
-        <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
-      </div>
-
-      <!-- Modo de cálculo -->
-      <div class="filter-group">
-        <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
-        <select id="filtro-modo-calculo" class="form-select form-select-sm">
-          <option value="total">País (Total)</option>
-          <option value="por_filtro">Filtro Atual</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="d-grid gap-2 mt-3">
-
-      <button id="btn-limpar-filtros" class="btn btn-secondary w-100">
-        <i class="bi bi-eraser-fill"></i> Limpar Filtros
+      <button id="download-table-btn" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2 btn-download mb-5 mb-lg-5" style="margin-bottom: 3rem !important;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V3.5a.5.5 0 0 0-1 0v6.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+          <path d="M.5 12.9v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1a.5.5 0 0 0-1 0v1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1v-1a.5.5 0 0 0-1 0z"/>
+        </svg>
+        <span>Baixar Dados</span>
       </button>
 
-    <button id="btn-screenshot"
-            type="button"
-            class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2">
-      
-      <!-- Ícone recomendado (Opção 3) -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-          viewBox="0 0 24 24" fill="currentColor">
-        <path d="M21 7h-2.586l-1.707-1.707A2 2 0 0 0 15 4H9a2 2 0 0 0-1.707.293L5.586 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-9 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/>
-      </svg>
-
-      <span>Print Mapa</span>
-    </button>
-
     </div>
-
-    <!-- Espaço que empurra o botão final para o rodapé da sidebar -->
-    <div class="sidebar-spacer"></div>
-
-    <!-- Botão fixado no rodapé -->
-    <button id="download-table-btn"
-            type="button"
-            class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2 btn-download">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-          viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V3.5a.5.5 0 0 0-1 0v6.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-        <path d="M.5 12.9v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1a.5.5 0 0 0-1 0v1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1v-1a.5.5 0 0 0-1 0z"/>
-      </svg>
-      <span>Baixar Dados</span>
-    </button>
-
-
   </aside>
 
   <!-- CONTEÚDO DO MAPA -->
-  <div class="main-content">
-    <div id="map"></div>
+  <div class="main-content position-relative w-100">
+    
+    <button class="btn d-flex d-lg-none justify-content-center align-items-center rounded-circle shadow-lg position-fixed p-0" 
+            type="button" 
+            data-bs-toggle="offcanvas" 
+            data-bs-target="#filtrosOffcanvas" 
+            aria-controls="filtrosOffcanvas"
+            data-bs-backdrop="false" 
+            data-bs-scroll="true"
+            style="width: 50px; height: 50px; bottom: 30px; left: 20px; z-index: 2000; background-color: #103758 !important; opacity: 1 !important; border: none !important;">
+      <i class="fa-solid fa-magnifying-glass fs-5 text-white"></i>
+    </button>
+
+    <div id="map" class="w-100"></div>
 
     <div class="map-overlay-container">
       <div id="summary-card">
@@ -243,4 +256,25 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchModal = document.getElementById('search-modal');
+    const filtrosOffcanvas = document.getElementById('filtrosOffcanvas');
+    
+    // Pega as instâncias do Bootstrap
+    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvas);
+
+    // Quando a busca abrir, esconde os filtros
+    searchModal.addEventListener('show.bs.modal', function () {
+      offcanvasInstance.hide();
+    });
+
+    // Quando a busca fechar, mostra os filtros novamente
+    searchModal.addEventListener('hidden.bs.modal', function () {
+      offcanvasInstance.show();
+    });
+  });
+</script>
+
 {% endblock content %}
