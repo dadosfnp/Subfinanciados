@@ -15,35 +15,80 @@
 {% block content %}
   {% load currency_filters %}
 
-  <div class="container mx-auto p-4 md:p-8">
+  <style>
+    /* ========== Padronização do Fundo Branco e Responsividade ========== */
+    html, body {
+      background-color: #ffffff !important;
+    }
+
+    /* Gráficos: SEMPRE empilhados (Mobile e Desktop) para ocupar 100% da largura */
+    .chart-section {
+      display: flex;
+      flex-direction: column; /* Força um gráfico em cima do outro */
+      gap: 2.5rem; /* Dá um espaço bem elegante entre os dois gráficos */
+      width: 100% !important; 
+    }
+
+    .chart-slot {
+      width: 100% !important; /* Garante que os gráficos possam se esticar livremente */
+      position: relative;
+      min-height: 350px; 
+    }
+
+    @media (min-width: 992px) {
+      .chart-slot {
+        min-height: 400px; /* Dá mais altura para os gráficos respirarem no PC */
+      }
+    }
+
+    /* Ajuste para botões segmented e selects não vazarem da tela no mobile */
+    @media (max-width: 767.98px) {
+      .segmented {
+        display: flex;
+        width: 100%;
+      }
+      .segmented-option {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 0.85rem;
+      }
+      select#chart-category-select {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  </style>
+
+  <div class="container mx-auto p-4 md:p-8 bg-white">
     <header class="flex flex-col md:flex-row justify-between items-start mb-8">
       <div>
-        <h1 class="text-3xl md:text-5xl font-bold flex items-center">
+        <h1 class="text-3xl md:text-5xl font-bold flex items-center flex-wrap gap-2">
           {{ municipio.name_muni_uf }}
-          <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-4">
+          <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-0 md:ml-4 mt-2 md:mt-0">
             <div class="ranking-indicator"></div>
             <div class="ranking-tooltip"></div>
           </div>
         </h1>
-        <p class="text-lg md:text-2xl text-gray-500">Detalhamento da Receita Corrente</p>
+        <p class="text-lg md:text-2xl text-gray-500 mt-2">Detalhamento da Receita Corrente</p>
       </div>
     </header>
 
     <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="kpi-card p-6 rounded-xl">
+      <div class="kpi-card p-6 rounded-xl border border-gray-100 shadow-sm">
         <p class="text-xl font-medium text-gray-500">População</p>
         <p class="text-3xl font-bold mt-2">{{ municipio.populacao24|br_integer }}</p>
       </div>
-      <div class="kpi-card p-6 rounded-xl">
+      <div class="kpi-card p-6 rounded-xl border border-gray-100 shadow-sm">
         <p class="text-xl font-medium text-gray-500">Receita Corrente</p>
         <p class="text-3xl font-bold mt-2">{{ municipio.rc_2024|br_float }}</p>
       </div>
-      <div class="kpi-card p-6 rounded-xl">
+      <div class="kpi-card p-6 rounded-xl border border-gray-100 shadow-sm">
         <p class="text-xl font-medium text-gray-500">Receita per capita</p>
         <p class="text-3xl font-bold mt-2">{{ municipio.rc_24_pc|br_float }}</p>
       </div>
-      <div class="kpi-card p-6 rounded-xl">
-        <select id="ranking-select" class="w-full text-xl font-medium text-gray-500 border-0 focus:ring-0 p-0 mb-2 bg-transparent">
+      <div class="kpi-card p-6 rounded-xl border border-gray-100 shadow-sm">
+        <select id="ranking-select" class="w-full text-xl font-medium text-gray-500 border-0 focus:ring-0 p-0 mb-2 bg-transparent cursor-pointer">
           <option value="nacional">Ranking Nacional</option>
           <option value="estadual">Ranking Estadual</option>
           <option value="faixa">Ranking por Faixa Pop.</option>
@@ -53,10 +98,10 @@
     </section>
 
     <main class="grid grid-cols-1 gap-8">
-      <section class="metric-card p-6 rounded-xl">
-        <div class="flex justify-between items-center mb-4">
+      <section class="metric-card p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
           <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
-          <div id="valor-toggle" class="segmented">
+          <div id="valor-toggle" class="segmented w-full md:w-auto">
             <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
             <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
           </div>
@@ -73,16 +118,15 @@
         {% endif %}
       </section>
 
-      <section class="metric-card p-6 rounded-xl mt-8">
-        <div class="flex justify-between items-center mb-4">
+      <section class="metric-card p-6 rounded-xl border border-gray-100 shadow-sm mt-2 md:mt-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h2 class="text-xl font-bold">Composição da Receita Per Capita</h2>
-          <div class="flex gap-2 items-center">
-            <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
+          <div class="flex w-full md:w-auto items-center">
+            <select id="chart-category-select" class="px-3 py-2 text-sm border rounded-lg w-full bg-white">
               <option value="main_categories">Categorias Principais</option>
               <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
               <option value="imposto">Impostos</option>
               <option value="taxas">Taxas</option>
-              <option value="imposto">Impostos</option>
               <option value="contribuicoes_melhoria">Contribuições de Melhoria</option>
               <option value="contribuicoes">Contribuições</option>
               <option value="transferencias_correntes">Transferências Correntes</option>
@@ -92,20 +136,16 @@
             </select>
           </div>
         </div>
-          <div class="chart-section">
-            <div class="chart-slot">
-              <canvas id="myChart"></canvas>
-            </div>
-            <div class="chart-slot">
-              <canvas id="densidadeReceita"></canvas>
-            </div>
+        
+        <div class="chart-section">
+          <div class="chart-slot">
+            <canvas id="myChart"></canvas>
           </div>
-
+          <div class="chart-slot">
+            <canvas id="densidadeReceita"></canvas>
+          </div>
+        </div>
       </section>
-
-
-
-
     </main>
   </div>
 
