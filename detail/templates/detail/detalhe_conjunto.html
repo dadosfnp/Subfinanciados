@@ -24,6 +24,11 @@
 {% block content %}
 
 <style>
+  /* Força o fundo branco na página inteira */
+  html, body, .content-wrapper, .dashboard-content {
+    background-color: #ffffff !important;
+  }
+
   /* ========== Ajustes Mobile (Gaveta 80%) ========== */
   @media (max-width: 991.98px) {
     #filtrosOffcanvas {
@@ -39,9 +44,12 @@
       visibility: visible !important;
     }
     .content-wrapper { display: block !important; }
+    
+    /* Remove a película escura do Bootstrap */
+    .offcanvas-backdrop { display: none !important; }
   }
 
-  /* ========== Ajustes Desktop (Alinhamento com as outras telas) ========== */
+  /* ========== Ajustes Desktop (Alinhamento) ========== */
   @media (min-width: 992px) {
     .content-wrapper {
       display: flex !important;
@@ -59,13 +67,34 @@
       padding-bottom: 4rem !important; 
     }
   }
+
+  /* ========== Padronização Modal de Busca (Fundo Branco) ========== */
+  #search-modal .modal-content,
+  #search-modal .modal-header,
+  #search-modal .modal-body {
+    background-color: #ffffff !important;
+  }
+  #search-modal .list-group-item {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+  #search-modal .list-group-item:hover {
+    background-color: #f0f4f8 !important; 
+    color: #103758 !important;
+  }
+  #search-input {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border: 1px solid #ced4da !important;
+  }
 </style>
 
 {% load currency_filters %}
 
 <div class="content-wrapper">
   <!-- SIDEBAR padronizada -->
-  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel">
+  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
     
     <div class="offcanvas-header d-lg-none border-bottom bg-white p-0" style="position: relative; height: 70px; z-index: 1055;">
       <div class="w-100 d-flex justify-content-center align-items-center h-100">
@@ -247,6 +276,54 @@
 {{ data_f_json|json_script:"mun-data-f" }}
 <script src="{% static 'detail/js/script.js' %}"></script>
 <script src="{% static 'detail/js/script_density.js' %}"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchModalEl = document.getElementById('search-modal');
+    const filtrosOffcanvasEl = document.getElementById('filtrosOffcanvas');
+    const filterGroups = document.getElementById('filters');
+    const btnLimpar = document.getElementById('btn-limpar-filtros');
+    
+    if (!filtrosOffcanvasEl) return;
+    
+    // Instância do Offcanvas do Bootstrap
+    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvasEl);
+
+    // 1. MINIMIZAR AO SELECIONAR UM FILTRO (Apenas no Mobile)
+    if (filterGroups) {
+      const inputs = filterGroups.querySelectorAll('select, input[type="radio"]');
+      inputs.forEach(input => {
+        input.addEventListener('change', function() {
+          if (window.innerWidth < 992) {
+            setTimeout(() => {
+              offcanvasInstance.hide();
+            }, 300); 
+          }
+        });
+      });
+    }
+
+    // 2. MINIMIZAR AO CLICAR EM LIMPAR FILTROS
+    if (btnLimpar) {
+      btnLimpar.addEventListener('click', function() {
+        if (window.innerWidth < 992) {
+          setTimeout(() => {
+            offcanvasInstance.hide();
+          }, 300);
+        }
+      });
+    }
+
+    // 3. EVITAR SOBREPOSIÇÃO: ESCONDER GAVETA QUANDO A LUPA ABRIR
+    if (searchModalEl) {
+      searchModalEl.addEventListener('show.bs.modal', function () {
+        if (window.innerWidth < 992) {
+          offcanvasInstance.hide(); // Recolhe a gaveta e deixa a lupa livre
+        }
+      });
+    }
+  });
+</script>
 
 
 {% endblock content %}

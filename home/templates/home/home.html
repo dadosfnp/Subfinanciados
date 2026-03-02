@@ -29,9 +29,6 @@
   <script defer src="{% static 'global/js/search-modal.js' %}"></script>
 
   
-
-
-
 {% endblock extra_head %}
 
 {% block content %}
@@ -39,40 +36,100 @@
 <div class="content-wrapper">
   
   <style>
+    /* Fundo branco na página inteira (Mobile e Desktop) */
+    html, body, .content-wrapper, .dashboard-content {
+      background-color: #ffffff !important;
+    }
+
     /* ========== Ajustes Mobile ========== */
     @media (max-width: 991.98px) {
       #filtrosOffcanvas { 
         height: 80vh !important; 
-        background-color: #ffffff !important; 
+        background-color: #ffffff !important;   
+      }
+      /* Remove qualquer tentativa do Bootstrap de colocar a película escura */
+      .offcanvas-backdrop { 
+        display: none !important; 
       }
     }
     
     /* ========== Ajustes Desktop (Análise Gráfica) ========== */
     @media (min-width: 992px) {
-      /* Obriga a barra e o conteúdo dos gráficos a terem exatamente a mesma altura */
       .content-wrapper {
         display: flex !important;
         align-items: stretch !important; 
       }
       
-      /* Anula as travas do Bootstrap e força a barra a esticar até o fim da página */
       #filtrosOffcanvas { 
         height: auto !important; 
         min-height: 100% !important; 
-        overflow: visible !important; /* Mata a barra de rolagem da estrutura */
-        background-color: #ffffff !important; /* Pinta de branco até o rodapé */
+        overflow: visible !important; 
+        background-color: #ffffff !important; 
         border-right: 1px solid #dee2e6;
       }
 
-      /* Mata a barra de rolagem interna específica do corpo dos filtros */
       #filtrosOffcanvas .offcanvas-body { 
         overflow: visible !important; 
         padding-bottom: 2rem !important; 
       }
     }
+
+    /* ========== Padronização Modal de Busca (Fundo Branco) ========== */
+    #search-modal .modal-content,
+    #search-modal .modal-header,
+    #search-modal .modal-body {
+      background-color: #ffffff !important;
+    }
+    #search-modal .list-group-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+      border-bottom: 1px solid #e9ecef !important;
+    }
+    #search-modal .list-group-item:hover,
+    #search-modal .list-group-item.active {
+      background-color: #f0f4f8 !important; 
+      color: #103758 !important;
+    }
+    #search-input {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+      border: 1px solid #ced4da !important;
+    }
+
+    /* RESPONSIVIDADE DOS BOTÕES E TÍTULOS DO GRÁFICO (MOBILE) */
+      .responsive-chart-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+        margin-bottom: 1.2rem !important;
+      }
+      .responsive-chart-header .chart-controls, 
+      .responsive-chart-header .toggle-container {
+        width: 100%;
+        display: flex;
+      }
+      .responsive-chart-header .toggle-option {
+        flex: 1; /* Faz os botões dividirem o espaço igualmente */
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 0.9rem;
+      }
+
+      /* Evita que os títulos longos das tabelas esmaguem o ícone (i) */
+      .table-card .d-flex {
+        align-items: flex-start !important;
+        gap: 8px;
+      }
+      .table-card h5 {
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+      .table-card .btn-info-tooltip {
+        margin-top: 2px;
+      }
   </style>
 
-  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel">
+  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
     
     <div class="offcanvas-header d-lg-none border-bottom bg-white p-0" style="position: relative; height: 70px; z-index: 1055;">
       
@@ -238,7 +295,7 @@
     </div>
 
     <div class="chart-card">
-      <div class="d-flex align-items-center justify-content-between mb-1">
+      <div class="d-flex align-items-center justify-content-between mb-1 responsive-chart-header">
         
         <!-- Lado esquerdo: título + tooltip -->
         <div class="d-flex align-items-center">
@@ -324,6 +381,53 @@
   </div>
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const filtrosOffcanvasEl = document.getElementById('filtrosOffcanvas');
+    const filterGroups = document.getElementById('filter-groups');
+    const btnLimpar = document.getElementById('btn-limpar-filtros');
+    const searchModalEl = document.getElementById('search-modal');
+    
+    if (!filtrosOffcanvasEl) return;
+    
+    // Instância do Offcanvas do Bootstrap
+    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvasEl);
+
+    // 1. MINIMIZAR AO SELECIONAR UM FILTRO (Selects e Radios)
+    if (filterGroups) {
+      const inputs = filterGroups.querySelectorAll('select, input[type="radio"]');
+      inputs.forEach(input => {
+        input.addEventListener('change', function() {
+          if (window.innerWidth < 992) {
+            setTimeout(() => {
+              offcanvasInstance.hide();
+            }, 300); // 300ms para um fechamento rápido e responsivo
+          }
+        });
+      });
+    }
+
+    // 2. MINIMIZAR AO CLICAR EM LIMPAR FILTROS
+    if (btnLimpar) {
+      btnLimpar.addEventListener('click', function() {
+        if (window.innerWidth < 992) {
+          setTimeout(() => {
+            offcanvasInstance.hide();
+          }, 300);
+        }
+      });
+    }
+
+    // 3. MINIMIZAR SE A BUSCA (LUPA INTERNA) FOR ABERTA
+    if (searchModalEl) {
+      searchModalEl.addEventListener('show.bs.modal', function () {
+        if (window.innerWidth < 992) {
+          offcanvasInstance.hide();
+        }
+      });
+    }
+  });
+</script>
 
 {% now "U" as ts %}
 <script src="{% static 'home/js/script.js' %}?v={{ ts }}"></script>

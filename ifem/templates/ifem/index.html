@@ -10,6 +10,54 @@
 
 {% block content %}
 
+    <style>
+        /* ========== Correções Mobile (Landing Page) ========== */
+        @media (max-width: 991.98px) {
+            /* 1. Trava o corpo da página para não ter barra de rolagem horizontal */
+            html, body {
+                overflow-x: hidden !important;
+                width: 100vw !important;
+            }
+
+            /* 2. Garante que as colunas e painéis respeitem a margem da tela */
+            .section-content, .text-col, .slider-panel-prob {
+                max-width: 100vw !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 3. O SEGREDO: Empilha o gráfico de rosca e a legenda na vertical */
+            .pie-chart-container {
+                display: flex !important;
+                flex-direction: column !important; /* Coloca um em cima do outro */
+                align-items: center !important;
+                width: 100% !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 4. Centraliza o gráfico e dá um respiro para a legenda */
+            .svg-wrapper {
+                margin-bottom: 25px !important;
+                max-width: 220px !important;
+                width: 100% !important;
+            }
+
+            /* 5. Ajusta a legenda para ocupar 100% da largura e tira quebras */
+            .pie-legend {
+                width: 100% !important;
+                padding-left: 0 !important;
+                margin-left: 0 !important;
+                border-left: none !important; /* Remove linha divisória do desktop, se houver */
+            }
+
+            /* 6. Impede que o texto longo estoure a tela */
+            .editorial-text, .insight-box p, .chart-context ul {
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+        }
+    </style>
+
     <nav class="story-nav" id="story-nav">
     <div class="story-track">
         
