@@ -506,7 +506,24 @@ function renderChart(key){
     data:{ labels, datasets: [dataset] },
     options:{
       responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      scales:{ x:{ min:0, max:100, ticks:{ callback:v=>v+'%'} }, y:{ ticks:{ autoSkip:false } } },
+      scales:{ 
+        x: { min:0, max:100, ticks:{ callback:v=>v+'%'} }, 
+        y: { 
+          ticks: { 
+            autoSkip:false,
+            // O truque da quebra de linha no Mobile
+            callback: function(value, index, ticks) {
+              let label = this.getLabelForValue(value) || '';
+              if (window.innerWidth < 768) {
+                if (label.includes('Impostos, Taxas e Contribuições')) {
+                  return ['Impostos, Taxas e', 'Contribuições de Melhoria'];
+                }
+              }
+              return label;
+            }
+          } 
+        } 
+      },
       plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
         label:(ct)=>{
           const i = ct.dataIndex;

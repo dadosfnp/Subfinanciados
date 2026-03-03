@@ -88,6 +88,53 @@
     color: #333333 !important;
     border: 1px solid #ced4da !important;
   }
+
+  /* ========== ORGANIZAÇÃO DOS GRÁFICOS (Ajustado à Tela / Sem Rolagem) ========== */
+  .chart-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2.5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important; /* Mata qualquer barra de rolagem horizontal */
+  }
+
+  .chart-slot {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 350px; 
+  }
+
+  /* Trava o Canvas para não estourar a div pai */
+  .chart-slot canvas {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  @media (min-width: 992px) {
+    .chart-slot {
+      height: 450px; 
+    }
+  }
+
+  /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+    .dropdown-menu {
+      background-color: #ffffff !important;
+      border: 1px solid #e9ecef !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+    
+    .dropdown-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+    }
+    
+    .dropdown-item:hover, 
+    .dropdown-item:focus {
+      background-color: #f0f4f8 !important; 
+      color: #103758 !important;
+    }
 </style>
 
 {% load currency_filters %}
