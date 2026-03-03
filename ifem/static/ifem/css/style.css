@@ -474,10 +474,10 @@ p {
     flex-wrap: wrap;
     align-items: flex-start; 
     justify-content: center;
-    gap: 30px;
-    margin-top: 30px; 
+    gap: 20px;
+    margin-top: 20px; 
     background: #ffffff;
-    padding: 25px; 
+    padding: 20px; 
     border-radius: 16px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
@@ -606,7 +606,7 @@ p {
 .circle-base { stroke: var(--fnp-dark-blue); }
 
 .circle-progress {
-    stroke: var(--accent-red); 
+    stroke: var(--fnp-yellow); 
     stroke-dasharray: 502;
     stroke-dashoffset: 502;
 }
@@ -842,6 +842,7 @@ p {
     min-height: 720px;  
     display: flex;
     flex-direction: column;
+    padding-bottom: 80px;
 }
 
 /*

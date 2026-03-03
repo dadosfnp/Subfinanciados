@@ -207,7 +207,7 @@
                                     <span class="legend-label">Transferências</span>
                                 </div>
                                 
-                                <div class="legend-item red-theme active-highlight">
+                                <div class="legend-item yellow-theme active-highlight">
                                     <div class="legend-header">
                                         <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M3 21H21"></path>
@@ -423,97 +423,78 @@
 
             <div class="visual-col">
                 
-                <div class="chart-spacing-top" style="margin-top: 0; padding-top: 0; border-top: none;">
-                    <div class="chart-header-row chart-header-clean">
-                        <div class="header-title-wrapper">
-                            <h4>Taxa de crescimento da população por porte populacional (2000-2024)</h4>
-                            <div class="info-tooltip">
-                                <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                <div class="tooltip-content">
-                                    Indica a variação percentual do número de habitantes em cada faixa populacional, comparando o ano de 2000 com 2024.
+        <div class="chart-spacing-top" style="margin-top: 0; padding-top: 0; border-top: none;">
+            <div class="chart-header-row chart-header-clean">
+                <div class="header-title-wrapper">
+                    <h4>Taxa de crescimento da população por porte populacional (2000-2024)</h4>
+                    <div class="info-tooltip">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <div class="tooltip-content">
+                            Indica a variação percentual do número de habitantes em cada faixa populacional, comparando o ano de 2000 com 2024.
+                        </div>
+                    </div>
+                </div>
+            </div>                            
+
+            <div class="chart-data-container">
+                <div class="chart-row" id="pop-ate-5">
+                    <span class="chart-label">Até 5 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-yellow">-22,7%</span>
+                        <div class="chart-bar negative bar-yellow" style="--bar-width: 100%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-5-10">
+                    <span class="chart-label">5 a 10 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-orange">-17,4%</span>
+                        <div class="chart-bar negative bar-orange" style="--bar-width: 77%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-10-30">
+                    <span class="chart-label">10 a 30 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-red">-9,3%</span>
+                        <div class="chart-bar negative bar-red" style="--bar-width: 41%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-30-100">
+                    <span class="chart-label">30 a 100 mil</span>
+                    <div class="chart-divider"></div>
+                    <div class="chart-track">
+                        <div class="chart-bar positive bar-purple" style="--bar-width: 21%;"></div>
+                        <span class="chart-value positive-val val-purple">4,7%</span>
+                    </div>
+                </div>
+
+                <div class="chart-row" id="pop-100-500">
+                    <span class="chart-label">100 a 500 mil</span>
+                    <div class="chart-divider"></div>
+                    <div class="chart-track">
+                        <div class="chart-bar positive bar-dark-blue" style="--bar-width: 63%;"></div>
+                        <span class="chart-value positive-val val-dark-blue">14,4%</span>
+                    </div>
+                </div>
+
+                <div class="chart-row" id="pop-acima-500">
+                    <span class="chart-label">Acima de 500 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-black">-4,6%</span>
+                        <div class="chart-bar negative bar-black" style="--bar-width: 20%;"></div>
                                 </div>
                             </div>
-                        </div>
-                    </div>                            
-
-                    <div class="chart-data-container">
-                        <div class="chart-row" id="pop-ate-5">
-                            <span class="chart-label">Até 5 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar negative bar-yellow" style="--bar-width: 5%;"></div>
-                                <span class="chart-value negative-val val-yellow">-1,0%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-5-10">
-                            <span class="chart-label">5 mil a 10 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-orange" style="--bar-width: 11%;"></div>
-                                <span class="chart-value positive-val val-orange">4,3%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-10-20">
-                            <span class="chart-label">10 mil a 20 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-red" style="--bar-width: 25%;"></div>
-                                <span class="chart-value positive-val val-red">9,5%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-20-50">
-                            <span class="chart-label">20 mil a 50 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-purple" style="--bar-width: 54%;"></div>
-                                <span class="chart-value positive-val val-purple">20,2%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-50-100">
-                            <span class="chart-label">50 mil a 100 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-purple" style="--bar-width: 80%;"></div>
-                                <span class="chart-value positive-val val-purple">29,5%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-100-200">
-                            <span class="chart-label">100 mil a 200 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-dark-blue" style="--bar-width: 95%;"></div>
-                                <span class="chart-value positive-val val-dark-blue">35,1%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-200-500">
-                            <span class="chart-label">200 mil a 500 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-dark-blue" style="--bar-width: 100%;"></div>
-                                <span class="chart-value positive-val val-dark-blue">36,8%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-acima-500">
-                            <span class="chart-label">acima de 500 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-black" style="--bar-width: 46%;"></div>
-                                <span class="chart-value positive-val val-black">17,0%</span>
-                            </div>
-                        </div>
-                    </div>            
-                </div>
+                        </div>            
+                    </div>
 
                 <div class="pop-chart-group" style="margin-top: 40px;">
                     <div class="chart-header-row" style="border-bottom: none; margin-bottom: 15px;">
@@ -754,46 +735,46 @@
                     <div class="card-metodologia-pro">
                         <div class="step-header" style="margin-bottom: 10px;">
                             <div class="step-number">2</div>
-                            <span class="step-subtitle" style="border: none; padding: 0;">Distribuímos o mesmo número de municípios em cada grupo</span>
+                            <span class="step-subtitle" style="border: none; padding: 0;">Distribuímos o mesmo número de municípios em cada grupo (aproxidamente 1.100 municípios)</span>
                         </div>
 
                         <span class="group-title-pro">Quintis (20% cada)</span>
                         
                         <div class="row-quintis-pro">
-                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% das cidades">
+                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% dos municípios de menor receita">
                                 <span class="q-val">1º</span>
                                 <span class="q-label">MENOR<br>RECEITA</span>
                             </div>
-                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% das cidades">
+                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% dos municípios de menor receita">
                                 <span class="q-val">2º</span>
                             </div>
-                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% das cidades">
+                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% dos municípios de menor receita">
                                 <span class="q-val">3º</span>
                             </div>
-                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 60% a 80% das cidades">
+                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 20% a 40% dos municípios de maior receita">
                                 <span class="q-val">4º</span>
                             </div>
-                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 80% a 100% das cidades">
+                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 20% dos municípios de maior receita">
                                 <span class="q-val">5º</span>
                                 <span class="q-label">MAIOR<br>RECEITA</span>
                             </div>
                         </div>
 
-                        <div class="divider-pro"><span>ou em maior detalhe</span></div>
+                        <div class="divider-pro"><span>ou em maior detalhe(com 550 municípios em cada grupo)</span></div>
                         
                         <span class="group-title-pro">Decis (10% cada)</span>
                         
                         <div class="row-decis-pro">
-                            <div class="box-d-pro d-1" data-tooltip="1º Decil">1º</div>
-                            <div class="box-d-pro d-2" data-tooltip="2º Decil">2º</div>
-                            <div class="box-d-pro d-3" data-tooltip="3º Decil">3º</div>
-                            <div class="box-d-pro d-4" data-tooltip="4º Decil">4º</div>
-                            <div class="box-d-pro d-5" data-tooltip="5º Decil">5º</div>
-                            <div class="box-d-pro d-6" data-tooltip="6º Decil">6º</div>
-                            <div class="box-d-pro d-7" data-tooltip="7º Decil">7º</div>
-                            <div class="box-d-pro d-8" data-tooltip="8º Decil">8º</div>
-                            <div class="box-d-pro d-9" data-tooltip="9º Decil">9º</div>
-                            <div class="box-d-pro d-10" data-tooltip="10º Decil">10º</div>
+                            <div class="box-d-pro d-1" data-tooltip="1º Decil : 0% a 10% dos municípios de menor receita">1º</div>
+                            <div class="box-d-pro d-2" data-tooltip="2º Decil : 10% a 20% dos municípios de menor receita">2º</div>
+                            <div class="box-d-pro d-3" data-tooltip="3º Decil : 20% a 30% dos municípios de menor receita">3º</div>
+                            <div class="box-d-pro d-4" data-tooltip="4º Decil : 30% a 40% dos municípios de menor receita">4º</div>
+                            <div class="box-d-pro d-5" data-tooltip="5º Decil : 40% a 50% dos municípios de menor receita">5º</div>
+                            <div class="box-d-pro d-6" data-tooltip="6º Decil : 40% a 50% dos municípios de maior receita">6º</div>
+                            <div class="box-d-pro d-7" data-tooltip="7º Decil : 30% a 40% dos municípios de maior receita">7º</div>
+                            <div class="box-d-pro d-8" data-tooltip="8º Decil : 20% a 30% dos municípios de maior receita">8º</div>
+                            <div class="box-d-pro d-9" data-tooltip="9º Decil : 10% a 20% dos municípios de maior receita">9º</div>
+                            <div class="box-d-pro d-10" data-tooltip="10º Decil : 10% dos municípios de maior receita">10º</div>
                         </div>
                     </div>
 
