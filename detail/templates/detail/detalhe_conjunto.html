@@ -372,5 +372,17 @@
   });
 </script>
 
+<script>
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.maintainAspectRatio = false;
+      Chart.defaults.responsive = true;
+      
+      // Se for celular (tela menor que 768px), ajusta a fonte e o layout para caber tudo na tela
+      if (window.innerWidth < 768) {
+        Chart.defaults.font.size = 9; // Reduz a fonte levemente para caber o texto longo
+        Chart.defaults.layout.padding = { left: 0, right: 10, top: 0, bottom: 0 }; // Evita o corte na esquerda
+      }
+    }
+  </script>
 
 {% endblock content %}

@@ -11,6 +11,26 @@
 {% block content %}
 
     <style>
+
+        /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+        .dropdown-menu {
+            background-color: #ffffff !important;
+            border: 1px solid #e9ecef !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* Sombra um pouco mais forte aqui para destacar bem do fundo escuro */
+        }
+        
+        .dropdown-item {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+            font-weight: 500 !important;
+        }
+        
+        .dropdown-item:hover, 
+        .dropdown-item:focus {
+            background-color: #f0f4f8 !important; 
+            color: #103758 !important;
+        }
+
         /* ========== Correções Mobile (Landing Page) ========== */
         @media (max-width: 991.98px) {
             /* 1. Trava o corpo da página para não ter barra de rolagem horizontal */
@@ -54,6 +74,29 @@
             .editorial-text, .insight-box p, .chart-context ul {
                 word-wrap: break-word !important;
                 overflow-wrap: break-word !important;
+            }
+
+            /* 7. Ajuste para evitar que os botões fiquem por cima do texto na seção "O Problema" */
+            .slider-panel-prob {
+                height: auto !important;
+                padding-bottom: 2rem !important;
+            }
+
+            .slider-actions {
+                position: relative !important;
+                bottom: auto !important;
+                left: auto !important;
+                margin-top: 2rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 15px !important;
+                width: 100% !important;
+            }
+
+            .slider-actions button {
+                width: 100% !important;
+                justify-content: center !important;
+                margin-bottom: 0 !important;
             }
         }
     </style>
