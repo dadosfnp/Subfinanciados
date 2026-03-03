@@ -135,6 +135,16 @@
       background-color: #f0f4f8 !important; 
       color: #103758 !important;
     }
+
+/* ========== Destaque Exclusivo: Análise Agregada (3º Item do Menu) ========== */
+    .dropdown-menu li:nth-child(3) .dropdown-item,
+    .dropdown-menu > .dropdown-item:nth-child(3),
+    .dropdown-item[href*="/conjunto"],
+    .dropdown-item[href*="/analise-agregada"] {
+      color: #103758 !important;
+      font-weight: 700 !important;
+    }
+
 </style>
 
 {% load currency_filters %}

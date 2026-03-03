@@ -107,6 +107,34 @@
     /* Camadas do modal de busca */
     .modal { z-index: 11000 !important; }
     .modal-backdrop { z-index: 10500 !important; }
+
+/* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+    .dropdown-menu {
+      background-color: #ffffff !important;
+      border: 1px solid #e9ecef !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+    
+    .dropdown-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+    }
+    
+    .dropdown-item:hover, 
+    .dropdown-item:focus {
+      background-color: #f0f4f8 !important; 
+      color: #103758 !important;
+    }
+
+    /* ========== Destaque Exclusivo: Análise Municipal (2º Item do Menu) ========== */
+    .dropdown-menu li:nth-child(2) .dropdown-item,
+    .dropdown-menu > .dropdown-item:nth-child(2),
+    .dropdown-item[href*="/mapa"],
+    .dropdown-item[href*="/municipio"] {
+      color: #103758 !important;
+      font-weight: 700 !important;
+    }
+
   </style>
 
   <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
