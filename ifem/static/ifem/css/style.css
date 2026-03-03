@@ -471,7 +471,9 @@ p {
 /* Container flex para o gráfico de pizza e suas legendas */
 .pie-chart-container {
     display: flex; 
-    align-items: center; 
+    flex-wrap: wrap;
+    align-items: flex-start; 
+    justify-content: center;
     gap: 30px;
     margin-top: 30px; 
     background: #ffffff;
@@ -483,6 +485,7 @@ p {
 /* Container da coluna de legendas */
 .pie-legend { 
     flex: 1; 
+    min-width: 250px;
     display: flex; 
     flex-direction: column; 
     gap: 20px; 
@@ -492,11 +495,20 @@ p {
 .legend-item { 
     padding-left: 15px; 
     border-left: 4px solid #ddd; 
+    display: flex;
+    flex-direction: column;
 }
 
 /* Variações de tema para a borda da legenda */
 .blue-theme { border-color: var(--fnp-dark-blue); }
-.red-theme { border-color: var(--accent-red); }
+.yellow-theme { border-color: var(--fnp-yellow); }
+
+.legend-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 4px;
+}
 
 /* Tipografia dos rótulos e valores da legenda */
 .legend-label { 
@@ -507,13 +519,68 @@ p {
     color: #666; 
 }
 
+.legend-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
 .legend-value { 
     font-size: 1.8rem; 
     font-weight: 800; 
+    line-height: 1;
     color: var(--fnp-dark-blue); 
 }
 
-.red-theme .legend-value { color: var(--accent-red); }
+.yellow-theme .legend-value { color: var(--fnp-yellow); }
+
+.legend-label { 
+    display: block; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    font-weight: 600; 
+    color: #666;
+    letter-spacing: 0.5px;
+}
+
+/* Ajustes de contexto (lista inferior) */
+.chart-context {
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.legend-details {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.legend-details li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 480px) {
+    .pie-chart-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+    
+    .pie-legend {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .svg-wrapper {
+        width: 140px;
+        height: 140px;
+    }
+}
 
 /* Wrapper para posicionamento relativo do SVG */
 .svg-wrapper { 
