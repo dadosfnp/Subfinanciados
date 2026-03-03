@@ -88,6 +88,63 @@
     color: #333333 !important;
     border: 1px solid #ced4da !important;
   }
+
+  /* ========== ORGANIZAÇÃO DOS GRÁFICOS (Ajustado à Tela / Sem Rolagem) ========== */
+  .chart-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2.5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important; /* Mata qualquer barra de rolagem horizontal */
+  }
+
+  .chart-slot {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 350px; 
+  }
+
+  /* Trava o Canvas para não estourar a div pai */
+  .chart-slot canvas {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  @media (min-width: 992px) {
+    .chart-slot {
+      height: 450px; 
+    }
+  }
+
+  /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+    .dropdown-menu {
+      background-color: #ffffff !important;
+      border: 1px solid #e9ecef !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+    
+    .dropdown-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+    }
+    
+    .dropdown-item:hover, 
+    .dropdown-item:focus {
+      background-color: #f0f4f8 !important; 
+      color: #103758 !important;
+    }
+
+/* ========== Destaque Exclusivo: Análise Agregada (3º Item do Menu) ========== */
+    .dropdown-menu li:nth-child(3) .dropdown-item,
+    .dropdown-menu > .dropdown-item:nth-child(3),
+    .dropdown-item[href*="/conjunto"],
+    .dropdown-item[href*="/analise-agregada"] {
+      color: #103758 !important;
+      font-weight: 700 !important;
+    }
+
 </style>
 
 {% load currency_filters %}
@@ -325,5 +382,17 @@
   });
 </script>
 
+<script>
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.maintainAspectRatio = false;
+      Chart.defaults.responsive = true;
+      
+      // Se for celular (tela menor que 768px), ajusta a fonte e o layout para caber tudo na tela
+      if (window.innerWidth < 768) {
+        Chart.defaults.font.size = 9; // Reduz a fonte levemente para caber o texto longo
+        Chart.defaults.layout.padding = { left: 0, right: 10, top: 0, bottom: 0 }; // Evita o corte na esquerda
+      }
+    }
+  </script>
 
 {% endblock content %}
