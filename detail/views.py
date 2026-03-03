@@ -621,6 +621,10 @@ def conjunto_detalhe_view(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
@@ -1466,6 +1470,11 @@ def conjunto_fiscal_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
@@ -2031,6 +2040,11 @@ def conjunto_chart_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
@@ -2191,18 +2205,11 @@ def conjunto_data_api(request):
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
-    if regiao_filtro and regiao_filtro != 'todos':
-        queryset = queryset.filter(regiao=regiao_filtro)
-    if uf_filtro and uf_filtro != 'todos':
-        queryset = queryset.filter(uf=uf_filtro)
-    if rm_filtro and rm_filtro != 'todos':
-        queryset = queryset.filter(rm__nome=rm_filtro)
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
             queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
             queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        # ... (adicione os outros `elif` para as faixas de porte como na view `conjunto_detalhe_view`)
         elif porte_filtro == '10 mil a 20 mil':
             queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
@@ -2215,6 +2222,11 @@ def conjunto_data_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
 
     if subgroup_filter and subgroup_filter != "todos":

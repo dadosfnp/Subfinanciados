@@ -54,6 +54,7 @@ def api_get_dashboard_data(request):
     regiao_filtro = request.GET.get('regiao')
     uf_filtro = request.GET.get('uf')
     rm_filtro = request.GET.get('rm')
+    porte_filtro = request.GET.get('porte')
     classification_filter = request.GET.get('classification', 'quintil')
     display_format = request.GET.get('display_format', 'numero')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
@@ -66,6 +67,29 @@ def api_get_dashboard_data(request):
         queryset = queryset.filter(uf=uf_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+
+    # --- NOVO: Filtragem de Porte Populacional ---
+    if porte_filtro and porte_filtro != 'todos':
+        if porte_filtro == 'Até 5 mil':
+            queryset = queryset.filter(populacao24__lt=5000)
+        elif porte_filtro == '5 mil a 10 mil':
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+        elif porte_filtro == '10 mil a 20 mil':
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+        elif porte_filtro == '20 mil a 50 mil':
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+        elif porte_filtro == '50 mil a 100 mil':
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+        elif porte_filtro == '100 mil a 200 mil':
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+        elif porte_filtro == '200 mil a 500 mil':
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+        elif porte_filtro == 'Acima de 500 mil':
+            queryset = queryset.filter(populacao24__gte=500000)
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     if classification_filter == 'quintil':
         num_quantiles = 5
