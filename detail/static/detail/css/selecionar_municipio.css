@@ -1,0 +1,98 @@
+/**
+ * Layout e estilos para a página de seleção de município
+ */
+
+.selection-page-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px); /* Desconto da altura da header */
+    background-color: #ffffff;
+}
+
+.search-container-center {
+    width: 100%;
+    max-width: 550px;
+    padding: 0 20px;
+}
+
+.municipio-search-widget {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.widget-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #103758;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* Estrutura do Input */
+.search-input-container {
+    position: relative;
+    width: 100%;
+}
+
+#muni-search-input {
+    width: 100%;
+    padding: 16px 20px 16px 48px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#muni-search-input:focus {
+    border-color: #103758;
+    box-shadow: 0 0 0 4px rgba(16, 55, 88, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    color: #94a3b8;
+}
+
+/* Autocomplete Dropdown */
+.autocomplete-items {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+}
+
+.autocomplete-suggestion {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    font-family: 'Inter', sans-serif;
+    color: #334155;
+    transition: background 0.2s;
+}
+
+.autocomplete-suggestion:hover {
+    background-color: #f1f5f9;
+}
+
+.hidden {
+    display: none;
+}

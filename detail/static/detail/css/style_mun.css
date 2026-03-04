@@ -1,72 +1,166 @@
 /* =========================================================
-   DETAIL (Município) 
+   DETAIL (Município) - Estilos Principais e Layout
    ========================================================= */
 
-/* largura confortável do conteúdo principal */
+/* Padronização do Fundo Branco e Responsividade */
+html, body {
+  background-color: #ffffff !important;
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* Largura confortável do conteúdo principal */
 .container { max-width: 1200px; }
 
-/* Cartões no padrão do tema */
+/* Contêiner com rolagem própria (fallback para layout) */
+:root {
+  --header-height: 64px;
+}
+.detail-scroll {
+  position: relative;
+  height: calc(100vh - var(--header-height));
+  max-height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1.5rem;
+}
+@supports (height: 100dvh) {
+  .detail-scroll {
+    height: calc(100dvh - var(--header-height));
+    max-height: calc(100dvh - var(--header-height));
+  }
+}
+
+/* =========================================================
+   CARTÕES (Cards) E SEÇÕES DE MÉTRICAS
+   ========================================================= */
 .kpi-card,
-.metric-card{
-  background:#fff;
+.metric-card {
+  background: #fff;
   border-radius: var(--card-radius, 8px);
-  box-shadow:0 4px 8px rgba(0,0,0,.08);
-  border:1px solid transparent;
+  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+  border: 1px solid transparent;
+  overflow: visible;
+  position: relative;
+}
+@media (max-width: 767.98px) {
+  .kpi-card, .metric-card { border-radius: 10px; }
 }
 
-/* Títulos das seções */
-.metric-card h2{ color:var(--fnp-blue, #194685); }
-
-/* KPIs — rótulo discreto e valor em destaque */
-.kpi-card p:first-child{ color:#6b7280; margin:0; }
+.metric-card h2 { color: var(--fnp-blue, #194685); }
+.kpi-card p:first-child { color: #6b7280; margin: 0; }
 .kpi-card .text-3xl,
-.kpi-card .text-4xl{ color:var(--fnp-blue, #194685); line-height:1.15; }
+.kpi-card .text-4xl { color: var(--fnp-blue, #194685); line-height: 1.15; }
 
-/* Botão do valor (per capita / reais) apenas com polimento */
-#valor-toggle-btn{ box-shadow:0 1px 2px rgba(0,0,0,.06); }
+/* =========================================================
+   TOGGLES E CONTROLES SEGMENTADOS
+   ========================================================= */
+#valor-toggle-btn { box-shadow: 0 1px 2px rgba(0,0,0,.06); }
 
-/* ----------- Detalhamento (árvore) ----------- */
-.metric-detail-row{
-  display:flex;
-  align-items:center;
-  padding:.5rem 0;
-  border-bottom:1px solid #f3f4f6;
+.segmented {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0;
+  border: 1px solid var(--fnp-blue, #194685);
+  overflow: hidden;
 }
-.metric-detail-row:last-child{ border-bottom:none; }
+.segmented .segmented-option {
+  border: 0; 
+  background: transparent; 
+  cursor: pointer;
+  padding: 0.35rem 1rem; 
+  border-radius: 0;
+  font-weight: 600; 
+  color: var(--fnp-blue, #194685); 
+  transition: all 0.15s ease;
+}
+.segmented .segmented-option.active {
+  background: var(--fnp-blue, #194685); 
+  color: #fff;
+  box-shadow: none;
+}
+.segmented .segmented-option:focus { 
+  outline: none; 
+  background: rgba(25, 70, 133, 0.1);
+}
+.segmented .segmented-option.active:focus {
+  background: var(--fnp-blue, #194685); 
+}
+@media (max-width: 767.98px) {
+  .segmented { display: flex; width: 100%; }
+  .segmented-option { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.85rem; }
+  select#chart-category-select { width: 100%; max-width: 100%; }
+}
+
+/* =========================================================
+   MENU SUPERIOR / DROPDOWNS
+   ========================================================= */
+.dropdown-menu {
+  background-color: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
+.dropdown-item {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+.dropdown-item:hover, 
+.dropdown-item:focus {
+  background-color: #f0f4f8 !important; 
+  color: #103758 !important;
+}
+
+/* =========================================================
+   ÁRVORE DE RECEITAS (Detalhamento)
+   ========================================================= */
+.metric-detail-row {
+  display: flex;
+  align-items: center;
+  padding: .5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  overflow: visible;
+}
+.metric-detail-row:last-child { border-bottom: none; }
 
 .toggle-heading,
-.toggle-subheading{
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+.toggle-subheading {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .toggle-heading .arrow,
-.toggle-subheading .arrow{ transition:transform .2s ease-in-out; }
+.toggle-subheading .arrow { transition: transform .2s ease-in-out; }
 .toggle-heading.open .arrow,
-.toggle-subheading.open .arrow{ transform:rotate(90deg); }
+.toggle-subheading.open .arrow { transform: rotate(90deg); }
 
-/* Indicadores/tooltip de ranking (mesmo padrão global) */
-.ranking-indicator-container{
-  position:relative;
-  display:inline-flex;
-  align-items:center;
-  vertical-align:middle;
+/* =========================================================
+   TOOLTIPS E INDICADORES DE RANKING
+   ========================================================= */
+.ranking-indicator-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }
-.ranking-indicator{ width:14px; height:14px; border-radius:3px; }
-.ranking-indicator-estadual{ width:14px; height:14px; border-radius:3px; }
+.ranking-indicator,
+.ranking-indicator-estadual { width: 14px; height: 14px; border-radius: 3px; }
 
-.quintil-1{ background:#d73027; }
-.quintil-2{ background:#fc8d59; }
-.quintil-3{ background:#fee08b; }
-.quintil-4{ background:#91cf60; }
-.quintil-5{ background:#1a9850; }
+.quintil-1 { background: #d73027; }
+.quintil-2 { background: #fc8d59; }
+.quintil-3 { background: #fee08b; }
+.quintil-4 { background: #91cf60; }
+.quintil-5 { background: #1a9850; }
 
-.ranking-tooltip{
+.ranking-tooltip {
   position: absolute;
-  z-index: 1000;                 /* fica por cima do cabeçalho/itens */
+  z-index: 1000;
   left: 50%;
-  bottom: calc(100% + 8px); top: auto;         /* aparece ACIMA do quadradinho */
+  bottom: calc(100% + 8px); 
+  top: auto;
   transform: translateX(-50%);
   padding: 6px 10px;
   background: rgba(51,51,51,.95);
@@ -74,34 +168,23 @@
   border-radius: 6px;
   font-size: .75rem;
   line-height: 1.2;
-  white-space: normal;           /* permite quebra de linha se precisar */
-  max-width: 260px;              /* não estoura em telas menores */
+  white-space: normal;
+  max-width: 260px;
   box-shadow: 0 4px 12px rgba(0,0,0,.18);
   opacity: 0;
   visibility: hidden;
   transition: opacity .18s ease, transform .18s ease, visibility .18s;
-  pointer-events: none;          /* não intercepta o hover */
+  pointer-events: none;
 }
-
-/* mostra o tooltip no hover */
-.ranking-indicator-container:hover .ranking-tooltip{
+.ranking-indicator-container:hover .ranking-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
-
-/* setinha decorativa opcional */
-.ranking-indicator-container{
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-}
-
-.ranking-indicator-container:hover .ranking-tooltip::before{
+.ranking-indicator-container:hover .ranking-tooltip::before {
   content: "";
   position: absolute;
-  top: -6px;                     /* setinha encostando no quadradinho */
+  top: -6px;
   left: 50%;
   transform: translateX(-50%);
   border-width: 6px;
@@ -109,116 +192,43 @@
   border-color: transparent transparent rgba(51,51,51,.95) transparent;
 }
 
-
-/* ----------- Gráfico ----------- */
-.metric-card canvas{
-  display:block;           /* evita “gaps” inline */
-  max-width:100%;
+/* =========================================================
+   GRÁFICOS E COMPOSIÇÃO DE RECEITA
+   ========================================================= */
+.chart-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2.5rem;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
 }
 
-/* Responsivo leve */
-@media (max-width: 767.98px){
-  .kpi-card, .metric-card { border-radius:10px; }
-}
-
-/* Toggle segmentado — padrão */
-.segmented {
-  display: inline-flex; 
-  align-items: center; 
-  gap: 0;                   /* Remove o espaço entre os botões para ficarem colados */
-  background: #fff;         /* Fundo branco para a parte inativa */
-  border-radius: 6px;       /* Borda com arredondamento suave (quadrado arredondado) */
-  padding: 0;               /* Remove o preenchimento interno */
-  border: 1px solid var(--fnp-blue, #194685); /* Borda azul em volta de tudo */
-  overflow: hidden;         /* Garante que o fundo do botão ativo não vaze pelas bordas redondas */
-}
-
-.segmented .segmented-option {
-  border: 0; 
-  background: transparent; 
-  cursor: pointer;
-  padding: 0.35rem 1rem; 
-  border-radius: 0;         /* Zera o border-radius individual (o contêiner já cuida disso) */
-  font-weight: 600; 
-  color: var(--fnp-blue, #194685); 
-  transition: all 0.15s ease;
-}
-
-.segmented .segmented-option.active {
-  background: var(--fnp-blue, #194685); 
-  color: #fff;
-  box-shadow: none;         /* Retirada a sombra antiga para ficar fiel à nova imagem */
-}
-
-/* Opcional: Efeito de foco para acessibilidade */
-.segmented .segmented-option:focus { 
-  outline: none; 
-  background: rgba(25, 70, 133, 0.1); /* Leve feedback visual ao focar sem quebrar o layout */
-}
-.segmented .segmented-option.active:focus {
-  background: var(--fnp-blue, #194685); 
-}
-
-/* ===== Scroll fix (página de detalhe) ===== */
-:root{
-  /* ajuste se o seu header for fixo e tiver outra altura */
-  --header-height: 64px;
-}
-
-/* fallback: garante que o documento pode rolar se nada mais pegar */
-html, body {
-  min-height: 100%;
-  overflow-y: auto;
-}
-
-/* contêiner com rolagem própria (substitui o wrapper padrão das páginas com sidebar) */
-.detail-scroll{
+.chart-slot {
   position: relative;
-  /* ocupa a janela menos a barra do cabeçalho fixo */
-  height: calc(100vh - var(--header-height));
-  max-height: calc(100vh - var(--header-height));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* rolagem suave em iOS */
-  padding-bottom: 1.5rem;            /* respiro pra última linha não colar na borda */
-}
-
-/* quando o navegador suportar 100dvh (corrige barras de endereço móveis) */
-@supports (height: 100dvh) {
-  .detail-scroll{
-    height: calc(100dvh - var(--header-height));
-    max-height: calc(100dvh - var(--header-height));
-  }
-}
-
-/* garante que tooltips possam “sair” do cartão sem serem cortados */
-.metric-card { overflow: visible; position: relative; }
-.metric-detail-row { overflow: visible; }
-
-/* ============================GRÁFICOS (Composição + Densidade)============================ */
-
-.metric-card .chart-section{
-  width: 100%;
-  margin-top: 1rem;
-  padding-top: .75rem;
-  border-top: 1px solid #e5e7eb;   /* linha entre título e gráficos */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;                        /* espaço entre os dois gráficos */
-}
-
-/* cada gráfico tem seu PRÓPRIO PAI com altura fixa */
-.metric-card .chart-slot{
-  height: 260px;                    /* ajuste fino aqui */
-  position: relative;               /* Chart.js mede este pai */
-  overflow: hidden;                 /* impede vazar do cartão */
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 350px; 
+  overflow: hidden;
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
 }
 
-/* canvases ocupam o slot por completo */
-.metric-card .chart-slot > canvas{
-  display: block;
-  width: 100%;
+.chart-slot canvas {
+  max-width: 100% !important;
+  width: 100% !important;
   height: 100%;
-  max-width: 100%;
+  display: block;
+}
+
+@media (min-width: 992px) {
+  .chart-slot { height: 450px; }
+}
+
+.metric-card .chart-section {
+  width: 100%;
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid #e5e7eb;
+  gap: 16px;
 }
