@@ -5,6 +5,13 @@ from django.template.loader import render_to_string
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
 
+def selecionar_municipio_view(request):
+    """
+    Renderiza a página isolada para o usuário buscar e selecionar
+    o município antes de ir para a Análise Detalhada.
+    """
+    return render(request, 'detail/selecionar_municipio.html')
+
 def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
     if not model_instance:
         return None
@@ -311,8 +318,22 @@ def municipio_detalhe_view(request, municipio_id):
         )
         .order_by("cod_ibge")
     )
-    data = list(qs)  # ~5.570 linhas é tranquilo
+    data = list(qs) 
 
+    # Calcula a variacao percentual da populacao e da receita corrente per capita
+    delta_populacao = 0.0
+    if municipio.populacao00 and municipio.populacao24 and municipio.populacao00 > 0:
+        delta_populacao = ((municipio.populacao24 - municipio.populacao00) / municipio.populacao00) * 100
+
+    delta_rc_pc = 0.0
+    if municipio.rc_00_pc and municipio.rc_24_pc and municipio.rc_00_pc > 0:
+        delta_rc_pc = ((municipio.rc_24_pc - municipio.rc_00_pc) / municipio.rc_00_pc) * 100
+
+    evolucao_historica = {
+        'delta_populacao': round(delta_populacao, 2),
+        'delta_rc_pc': round(delta_rc_pc, 2),
+        'has_2000_data': bool(municipio.populacao00 or municipio.rc_00_pc)
+    }
 
     context = {
         'municipio': municipio,
@@ -320,10 +341,11 @@ def municipio_detalhe_view(request, municipio_id):
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
         'data': data,
+        'evolucao_historica': evolucao_historica, 
     }
 
-    
     return render(request, 'detail/detalhe_municipio.html', context)
+
 
 
 

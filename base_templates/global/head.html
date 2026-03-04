@@ -65,7 +65,8 @@
       <nav class="flex-grow-1 d-flex justify-content-center">
         <ul class="nav">
           <li><a href="{% url 'home' %}" class="nav-link {% if '/analise/' in p %}active{% endif %}">Análise Gráfica</a></li>
-          <li><a href="{% url 'mapa' %}" class="nav-link {% if '/mapa/' in p or '/municipio/' in p %}active{% endif %}">Análise Municipal</a></li>
+          <li><a href="{% url 'mapa' %}" class="nav-link {% if '/mapa/' in p %}active{% endif %}">Análise no Mapa</a></li>
+          <li><a href="{% url 'selecionar_municipio' %}" class="nav-link {% if '/selecionar-municipio/' in p or '/municipio/' in p %}active{% endif %}">Análise Município</a></li>
           <li><a href="{% url 'analise_municipal' %}" class="nav-link {% if '/analise-municipal/' in p %}active{% endif %}">Análise Agregada</a></li>
         </ul>
       </nav>
@@ -93,7 +94,8 @@
         
         <ul id="caixaMenuMobile" class="dropdown-menu shadow border-0 mt-3 rounded-3 text-center" style="min-width: 240px; left: 50%; transform: translateX(-50%); z-index: 10000;">
           <li><a href="{% url 'home' %}" class="dropdown-item py-2 fs-6 {% if '/analise/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Gráfica</a></li>
-          <li><a href="{% url 'mapa' %}" class="dropdown-item py-2 fs-6 {% if '/mapa/' in p or '/municipio/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Municipal</a></li>
+          <li><a href="{% url 'mapa' %}" class="dropdown-item py-2 fs-6 {% if '/mapa/' in p %}fw-bold text-primary bg-light{% endif %}">Análise no Mapa</a></li>
+          <li><a href="{% url 'selecionar_municipio' %}" class="dropdown-item py-2 fs-6 {% if '/selecionar-municipio/' in p or '/municipio/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Município</a></li>
           <li><a href="{% url 'analise_municipal' %}" class="dropdown-item py-2 fs-6 {% if '/analise-municipal/' in p %}fw-bold text-primary bg-light{% endif %}">Análise Agregada</a></li>
         </ul>
 

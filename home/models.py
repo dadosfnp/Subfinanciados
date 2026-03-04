@@ -458,7 +458,6 @@ class ContaMaisEspecificaPercentil(models.Model):
     def __str__(self):
         return f"Receita Mais Específica Percentil de {self.municipio.name_muni_uf}"
 
-# --- AQUI ESTÁ A CORREÇÃO PRINCIPAL: CLASSE NOTÍCIA FORA DA OUTRA ---
 class Noticia(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título da Matéria")
     data = models.DateField(verbose_name="Data de Publicação")

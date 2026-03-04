@@ -600,7 +600,38 @@ function renderChart(key){
   };
 }
 
+// ========== DEFAULTS DO CHART.JS ==========
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+    
+    // Configurações especificas para telas menores (celular)
+    if (window.innerWidth < 768) {
+      Chart.defaults.font.size = 9;
+      Chart.defaults.layout.padding = { left: 0, right: 10, top: 0, bottom: 0 };
+    }
+  }
 
+  // ========== LINHA DO TEMPO (QUINTIL/DECIL) ==========
+  const timelineBtns = document.querySelectorAll('#timeline-toggle .segmented-option');
+  const timelineValues = document.querySelectorAll('.timeline-value');
+  
+  timelineBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Gerencia o visual do toggle
+      timelineBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      const mode = this.getAttribute('data-mode'); // 'quintil' ou 'decil'
+      
+      // Atualiza os valores visuais na bolinha da linha do tempo
+      timelineValues.forEach(el => {
+        const newValue = el.getAttribute('data-' + mode);
+        el.textContent = newValue ? newValue : '-';
+      });
+    });
+  });
+  
   // -------- Inicializações --------
   buildHeadingIndex();
   showMode('pc');
