@@ -11,6 +11,13 @@ class RegiaoMetropolitana(models.Model):
         verbose_name = "Região Metropolitana"
         verbose_name_plural = "Regiões Metropolitanas"
 
+class Percentis(models.Model):
+    percentil = models.IntegerField(unique=True, help_text="Valor do percentil (0-100)")
+    valor = models.FloatField()
+
+    def __str__(self):
+        return f"{self.percentil}º Percentil"
+
 class Municipio(models.Model):
     cod_ibge = models.CharField(max_length=7, unique=True)
     name_muni = models.CharField(max_length=255)
@@ -45,6 +52,7 @@ class Municipio(models.Model):
     total_estadual = models.IntegerField(null=True, blank=True)
     rank_faixa = models.IntegerField(null=True, blank=True)
     total_faixa = models.IntegerField(null=True, blank=True)
+    sus_dependente = models.FloatField(null=True, blank=True)
     cadunico = models.IntegerField(null=True, blank=True)
     cadunico_rank_nacional = models.IntegerField(null=True, blank=True)
     cadunico_total_nacional = models.IntegerField(null=True, blank=True)
@@ -246,6 +254,8 @@ class ContaMaisEspecifica(models.Model):
     itbi = models.FloatField()
     iss = models.FloatField()
     imposto_renda = models.FloatField()
+    imposto_icms = models.FloatField()
+    imposto_ipva = models.FloatField()
     outros_impostos = models.FloatField()
     taxa_policia = models.FloatField()
     taxa_prestacao_servico = models.FloatField()
@@ -260,6 +270,7 @@ class ContaMaisEspecifica(models.Model):
     transferencia_uniao_fnde = models.FloatField()
     transferencia_uniao_fundeb = models.FloatField()
     transferencia_uniao_fnas = models.FloatField()
+    transferencia_uniao_fpe = models.FloatField()
     outras_transferencias_uniao = models.FloatField()
     transferencia_estado_icms = models.FloatField()
     transferencia_estado_ipva = models.FloatField()
@@ -285,6 +296,12 @@ class ContaMaisEspecifica(models.Model):
 
     @property
     def imposto_renda_pc(self): return self._calcular_pc(self.imposto_renda)
+
+    @property
+    def imposto_icms_pc(self): return self._calcular_pc(self.imposto_icms)
+
+    @property
+    def imposto_ipva_pc(self): return self._calcular_pc(self.imposto_ipva)
 
     @property
     def outros_impostos_pc(self): return self._calcular_pc(self.outros_impostos)
@@ -337,6 +354,10 @@ class ContaMaisEspecifica(models.Model):
     @property
     def transferencia_uniao_fnas_pc(self):
         return self._calcular_pc(self.transferencia_uniao_fnas)
+    
+    @property
+    def transferencia_uniao_fpe_pc(self):
+        return self._calcular_pc(self.transferencia_uniao_fpe)
 
     @property
     def outras_transferencias_uniao_pc(self):
@@ -381,6 +402,8 @@ class ContaMaisEspecificaPercentil(models.Model):
     itbi_nacional = models.FloatField()
     iss_nacional = models.FloatField()
     renda_nacional = models.FloatField()
+    icms_nacional = models.FloatField()
+    ipva_nacional = models.FloatField()
     outros_impostos_nacional = models.FloatField()
     taxa_policia_nacional = models.FloatField()
     taxa_prestacao_servico_nacional = models.FloatField()
@@ -395,6 +418,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_fnde_nacional = models.FloatField()
     transferencia_uniao_fundeb_nacional = models.FloatField()
     transferencia_uniao_fnas_nacional = models.FloatField()
+    transferencia_uniao_fpe_nacional = models.FloatField()
     outras_transferencias_uniao_nacional = models.FloatField()
     transferencia_estado_icms_nacional = models.FloatField()
     transferencia_estado_ipva_nacional = models.FloatField()
@@ -407,6 +431,8 @@ class ContaMaisEspecificaPercentil(models.Model):
     itbi_regional = models.FloatField()
     iss_regional = models.FloatField()
     renda_regional = models.FloatField()
+    icms_regional = models.FloatField()
+    ipva_regional = models.FloatField()
     outros_impostos_regional = models.FloatField()
     taxa_policia_regional = models.FloatField()
     taxa_prestacao_servico_regional = models.FloatField()
@@ -421,6 +447,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_fnde_regional = models.FloatField()
     transferencia_uniao_fundeb_regional = models.FloatField()
     transferencia_uniao_fnas_regional = models.FloatField()
+    transferencia_uniao_fpe_regional = models.FloatField()
     outras_transferencias_uniao_regional = models.FloatField()
     transferencia_estado_icms_regional = models.FloatField()
     transferencia_estado_ipva_regional = models.FloatField()
@@ -433,6 +460,8 @@ class ContaMaisEspecificaPercentil(models.Model):
     itbi_estadual = models.FloatField()
     iss_estadual = models.FloatField()
     renda_estadual = models.FloatField()
+    icms_estadual = models.FloatField()
+    ipva_estadual = models.FloatField()
     outros_impostos_estadual = models.FloatField()
     taxa_policia_estadual = models.FloatField()
     taxa_prestacao_servico_estadual = models.FloatField()
@@ -447,6 +476,7 @@ class ContaMaisEspecificaPercentil(models.Model):
     transferencia_uniao_fnde_estadual = models.FloatField()
     transferencia_uniao_fundeb_estadual = models.FloatField()
     transferencia_uniao_fnas_estadual = models.FloatField()
+    transferencia_uniao_fpe_estadual = models.FloatField()
     outras_transferencias_uniao_estadual = models.FloatField()
     transferencia_estado_icms_estadual = models.FloatField()
     transferencia_estado_ipva_estadual = models.FloatField()

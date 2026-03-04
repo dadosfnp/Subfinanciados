@@ -318,6 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     transferencias_uniao: {
       'FPM': ['Transferências Correntes','Transferências da União','Cota-Parte do FPM'],
+      'FPE': ['Transferências Correntes','Transferências da União','Cota-Parte do FPE'],
       'Rec. Naturais': ['Transferências Correntes','Transferências da União','Compensação Financeira (Recursos Naturais)'],
       'SUS': ['Transferências Correntes','Transferências da União','Recursos do SUS'],
       'FNDE': ['Transferências Correntes','Transferências da União','Recursos do FNDE'],

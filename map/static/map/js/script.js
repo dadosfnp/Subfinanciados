@@ -334,6 +334,7 @@ map.on("click", "populacao-circulos", (e) => {
     <div class="popup-details">
       <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
       <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
+      <p><i class="fa-solid fa-users"></i> <strong>% População SUS dependente:</strong> ${(+properties.perc_dependencia_sus).toFixed(2)}%</p>
       <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
       <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
@@ -445,6 +446,7 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     <div class="popup-details">
       <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
       <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
+      <p><i class="fa-solid fa-users"></i> <strong>% População SUS dependente:</strong> ${(+properties.perc_dependencia_sus).toFixed(2)}%</p>
       <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
       <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
       <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
