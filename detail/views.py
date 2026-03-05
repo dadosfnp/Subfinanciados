@@ -57,6 +57,34 @@ def municipio_detalhe_view(request, municipio_id):
         'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil'
     ), cod_ibge=municipio_id)
 
+    pop = municipio.populacao24 or 0
+    if pop < 5000: filtro_faixa = {'populacao24__lt': 5000}
+    elif pop < 10000: filtro_faixa = {'populacao24__gte': 5000, 'populacao24__lt': 10000}
+    elif pop < 20000: filtro_faixa = {'populacao24__gte': 10000, 'populacao24__lt': 20000}
+    elif pop < 50000: filtro_faixa = {'populacao24__gte': 20000, 'populacao24__lt': 50000}
+    elif pop < 100000: filtro_faixa = {'populacao24__gte': 50000, 'populacao24__lt': 100000}
+    elif pop < 200000: filtro_faixa = {'populacao24__gte': 100000, 'populacao24__lt': 200000}
+    elif pop < 500000: filtro_faixa = {'populacao24__gte': 200000, 'populacao24__lt': 500000}
+    else: filtro_faixa = {'populacao24__gte': 500000}
+
+    # 2. FUNÇÃO PARA CALCULAR A MÉDIA PER CAPITA NO BANCO
+    def avg_pc(campo):
+        return Avg(ExpressionWrapper(F(campo) / F('populacao24'), output_field=FloatField()))
+
+    # 3. FAZENDO A CONSULTA (Apenas municípios com população válida para não dar erro de divisão por zero)
+    base_query = Municipio.objects.exclude(populacao24__isnull=True).exclude(populacao24=0)
+    
+    # Agregações para o 1º Nível (Conta Detalhada)
+    agregacoes = {
+        'transf_correntes': avg_pc('conta_detalhada__transferencias_correntes'),
+        'impostos_taxas': avg_pc('conta_detalhada__imposto_taxas_contribuicoes'),
+        'outras_rec': avg_pc('conta_detalhada__outras_receita'),
+        'contrib': avg_pc('conta_detalhada__contribuicoes'),
+    }
+
+    medias_estadual = base_query.filter(uf=municipio.uf).aggregate(**agregacoes)
+    medias_faixa = base_query.filter(**filtro_faixa).aggregate(**agregacoes)
+
     # RECUPERACAO DA INSTANCIA DE MEDIAS NACIONAIS (TABELA NOVA)
     media_nac = MediaNacionalReceita.objects.filter(ano_referencia=2024).first()
 

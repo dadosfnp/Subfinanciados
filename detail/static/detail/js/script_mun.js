@@ -196,6 +196,11 @@ document.addEventListener('DOMContentLoaded', function () {
       segmented?.querySelector('[data-mode="vr"]')?.classList.toggle('active', !pc);
       $$('.valor-per-capita').forEach(el=>el.classList.toggle('hidden', !pc));
       $$('.valor-absoluto').forEach(el=>el.classList.toggle('hidden', pc));
+      
+      $$('.lbl-tipo-valor').forEach(el => {
+          el.textContent = pc ? 'Valor por Habitante' : 'Valor Real';
+      });
+
       sortAll(pc);
     }
     segmented?.querySelector('[data-mode="pc"]')?.addEventListener('click', ()=>showMode('pc'));
@@ -231,60 +236,93 @@ document.addEventListener('DOMContentLoaded', function () {
       return false;
     }
   
-    // ==========================================
-    // CONTROLE DO DROPDOWN CUSTOMIZADO DE RANKING
-    // ==========================================
-    const rankingSelect = document.getElementById('ranking-select');
-    const triggerBtn = document.getElementById('custom-ranking-trigger');
-    const menuDropdown = document.getElementById('custom-ranking-menu');
-    const arrowIcon = document.getElementById('custom-ranking-arrow');
-    const selectedText = document.getElementById('custom-ranking-text');
-    const options = document.querySelectorAll('.ranking-option');
-  
-    if (triggerBtn && menuDropdown) {
-        triggerBtn.addEventListener('click', (e) => {
+    
+// ==========================================================================
+    // CONTROLE DOS RANKINGS INDEPENDENTES (POPULAÇÃO E RECEITA)
+    // ==========================================================================
+    const kpiRankingTriggers = document.querySelectorAll('.kpi-ranking-trigger');
+    const kpiRankOptions = document.querySelectorAll('.rank-opt');
+
+    // 1. Função para abrir/fechar menu
+    kpiRankingTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            const isClosed = menuDropdown.classList.contains('opacity-0');
-            if (isClosed) {
-                menuDropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                menuDropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                arrowIcon.style.transform = 'rotate(180deg)';
-            } else {
-                closeMenu();
-            }
-        });
-  
-        function closeMenu() {
-            menuDropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-            menuDropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-            arrowIcon.style.transform = 'rotate(0deg)';
-        }
-  
-        options.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.preventDefault();
-                const value = option.getAttribute('data-value');
-                const text = option.textContent;
-                
-                selectedText.textContent = text;
-                
-                if (rankingSelect) {
-                    rankingSelect.value = value;
-                    updateRankingUI(value); // Roda a função direto aqui!
-                }
-                closeMenu();
+            const menu = this.nextElementSibling;
+            const arrow = this.querySelector('svg');
+            const isOpen = !menu.classList.contains('opacity-0');
+
+            // Fecha outros menus antes de abrir o atual
+            document.querySelectorAll('.kpi-ranking-menu').forEach(m => {
+                m.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                m.previousElementSibling.querySelector('svg').style.transform = 'rotate(0deg)';
             });
-        });
-  
-        document.addEventListener('click', (e) => {
-            if (!triggerBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-                closeMenu();
+
+            if (!isOpen) {
+                menu.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                menu.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                arrow.style.transform = 'rotate(180deg)';
             }
         });
-    }
-  
+    });
+
+    // 2. Lógica de Troca de Valores
+    kpiRankOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const type = this.getAttribute('data-type');
+            const value = this.getAttribute('data-value');
+            const card = this.closest('article');
+            const textSelected = this.textContent;
+
+            const label = card.querySelector('.ranking-label');
+            if (label) label.textContent = textSelected;
+
+            const displayEl = card.querySelector('.rank-display-value');
+            const dataKey = `data-${type}-${value}`;
+            const rawVal = displayEl.getAttribute(dataKey);
+
+            if (rawVal) {
+                const parts = rawVal.split('/');
+                if (parts.length === 2) {
+                    displayEl.innerHTML = `${parts[0].trim()}<span class="text-xs font-bold opacity-30 ml-1">/ ${parts[1].trim()}</span>`;
+                } else {
+                    displayEl.textContent = rawVal;
+                }
+            }
+
+            if (type === 'rev' && typeof updateRankingUI === 'function') {
+                updateRankingUI(value);
+            }
+
+            const menu = this.closest('.kpi-ranking-menu');
+            if (menu) {
+                menu.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                menu.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            }
+            
+            const triggerSvg = card.querySelector('.kpi-ranking-trigger svg');
+            if (triggerSvg) triggerSvg.style.transform = 'rotate(0deg)';
+        });
+    });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.kpi-ranking-menu').forEach(menu => {
+            menu.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            menu.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            
+            const trigger = menu.previousElementSibling;
+            if (trigger && trigger.querySelector('svg')) {
+                trigger.querySelector('svg').style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+
+
     // ========== GRÁFICO (COMPOSIÇÃO) + SELECT DINÂMICO ==========
     const canvas = $('#myChart');
     let chart = null;
@@ -553,45 +591,36 @@ document.addEventListener('DOMContentLoaded', function () {
       '6': '3', '7': '4', '8': '4', '9': '5', '10': '5'
   };
 
-  function updateTimelineColors(mode) {
-      timelineCircles.forEach(circle => {
-          const rawValue = circle.getAttribute('data-' + mode) || '-';
-          const spanText = circle.querySelector('span');
-          
-          // MANIPULACAO EXCLUSIVA DO NO DE TEXTO INTERNO
-          if (spanText) {
-              spanText.textContent = rawValue;
-          }
+function updateTimelineColors(mode) {
+    const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
+    
+    timelineCircles.forEach(circle => {
+        const rawValue = circle.getAttribute('data-' + mode) || '-';
+        
+        // Mapeamento exato da classe para evitar conflito com outros spans filhos
+        const dynamicSpan = circle.querySelector('.dynamic-text');
+        
+        if (dynamicSpan) {
+            dynamicSpan.textContent = rawValue;
+        }
 
-          // EXTRACAO DE CARACTERES NUMERICOS DO ATRIBUTO DATA
-          const numMatch = rawValue.match(/\d+/);
-          const num = numMatch ? numMatch[0] : null;
-          
-          // RESOLUCAO DA PALETA DE CORES CONFORME MODO ATIVO
-          const activePalette = mode === 'decil' ? FNP_DECIL_COLORS : FNP_RANK_COLORS;
-          const hex = num ? activePalette[num] : null;
+        const numMatch = rawValue.match(/\d+/);
+        const num = numMatch ? numMatch[0] : null;
+        const activePalette = mode === 'decil' ? FNP_DECIL_COLORS : FNP_RANK_COLORS;
+        const hex = num ? activePalette[num] : null;
 
-          // INJECAO DE ESTILOS CSS NOS ELEMENTOS DO DOM
-          if (hex) {
-              circle.style.backgroundColor = hex;
-              circle.style.borderColor = hex;
-              
-              // CONTROLE DE CONTRASTE DA TIPOGRAFIA BASEADO NA LUMINOSIDADE DA COR
-              if (spanText) {
-                  const isLightBackground = (mode === 'quintil' && num === '3') || (mode === 'decil' && (num === '5' || num === '6'));
-                  spanText.style.color = isLightBackground ? '#103758' : '#ffffff';
-              }
-          } else {
-              // ESTADO DE FALLBACK PARA DADOS AUSENTES OU INVALIDOS
-              circle.style.backgroundColor = '#ffffff';
-              circle.style.borderColor = '#e2e8f0';
-              
-              if (spanText) {
-                  spanText.style.color = '#94a3b8';
-              }
-          }
-      });
-  }
+        if (hex) {
+            // Aplica background e define cor de contraste da fonte
+            circle.style.backgroundColor = hex;
+            const isLightBackground = (mode === 'quintil' && num === '3') || (mode === 'decil' && (num === '5' || num === '6'));
+            circle.style.color = isLightBackground ? '#103758' : '#ffffff';
+        } else {
+            // Estado neutro caso dados não sejam encontrados
+            circle.style.backgroundColor = '#f1f5f9';
+            circle.style.color = '#94a3b8';
+        }
+    });
+}
 
   timelineBtns.forEach(btn => {
     btn.addEventListener('click', function() {
@@ -601,107 +630,238 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
       
+    // ==========================================
+    // CONTROLE GLOBAL DE BASE E GRÁFICOS DE EVOLUÇÃO
+    // ==========================================
+    const globalBaseBtns = document.querySelectorAll('#global-base-toggle .segmented-option');
+    const lblMediaBase = document.querySelectorAll('.lbl-media-base');
+    const lblMediaBaseChart = document.querySelector('.lbl-media-base-chart');
+    const valMediaRc = document.getElementById('val-media-rc');
+    const valMediaPop = document.getElementById('val-media-pop');
+
+    const canvasRec = document.getElementById('chartReceita');
+    const canvasPop = document.getElementById('chartPop');
+    const evoDataScript = document.getElementById('evolution-compare-data');
+
+    let chartReceitaInstance = null;
+    let chartPopInstance = null;
+    let evolutionData = null;
+
+    if (evoDataScript) {
+        try { evolutionData = JSON.parse(evoDataScript.textContent); } 
+        catch (e) { console.error(e); }
+    }
+
+    const parseSafe = (val) => {
+        if (!val) return 0;
+        let str = String(val).trim();
+        if (str.includes('.') && str.includes(',')) str = str.replace(/\./g, '').replace(',', '.');
+        else if (str.includes(',')) str = str.replace(',', '.');
+        return parseFloat(str) || 0;
+    };
+
+    const commonEvoOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        let val = ctx.raw || 0;
+                        let prefix = val > 0 ? '+' : '';
+                        return ` ${prefix}${val.toFixed(1).replace('.', ',')}%`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { weight: 'bold' }, color: '#475569' } },
+            y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', callback: (val) => val + '%' } }
+        }
+    };
+
+    function updateGlobalBase(base) {
+        globalBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === base));
+
+        const baseNomes = { 'nacional': 'média nacional', 'estadual': 'média estadual', 'faixa': 'média da faixa' };
+        const labelNome = baseNomes[base] || 'média';
+        
+        lblMediaBase.forEach(el => el.textContent = labelNome);
+        if (lblMediaBaseChart) lblMediaBaseChart.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
+
+        if (evolutionData && valMediaRc && valMediaPop) {
+            valMediaRc.textContent = `${evolutionData.receita[base] || 0}%`;
+            valMediaPop.textContent = `${evolutionData.populacao[base] || 0}%`;
+        }
+
+        if (evolutionData && canvasRec && canvasPop) {
+            const labelChart = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
+            const dataRec = [parseSafe(evolutionData.receita.mun), parseSafe(evolutionData.receita[base])];
+            const dataPop = [parseSafe(evolutionData.populacao.mun), parseSafe(evolutionData.populacao[base])];
+
+            if (chartReceitaInstance) chartReceitaInstance.destroy();
+            chartReceitaInstance = new Chart(canvasRec.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [evolutionData.nome_muni || 'Município', labelChart],
+                    datasets: [{
+                        data: dataRec,
+                        backgroundColor: ['#103758', '#cbd5e1'],
+                        borderRadius: 6,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: commonEvoOptions
+            });
+
+            if (chartPopInstance) chartPopInstance.destroy();
+            chartPopInstance = new Chart(canvasPop.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [evolutionData.nome_muni || 'Município', labelChart],
+                    datasets: [{
+                        data: dataPop,
+                        backgroundColor: ['#EEAF19', '#cbd5e1'],
+                        borderRadius: 6,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: commonEvoOptions
+            });
+        }
+
+        if (typeof updateRankingUI === 'function') updateRankingUI(base);
+
+        // ATUALIZAÇÃO DAS CORES DA ESTRUTURA DE RECEITAS
+        const colorIndicators = document.querySelectorAll('.revenue-color-indicator');
+
+        const REVENUE_COLORS = {
+            '1': '#A81C21',
+            '2': '#E47326',
+            '3': '#F4D01D',
+            '4': '#6AC074',
+            '5': '#1C9148'
+        };
+
+        colorIndicators.forEach(indicator => {
+            const quintil = indicator.getAttribute(`data-q-${base}`);
+            indicator.classList.remove('bg-slate-200');
+            
+            if (quintil && REVENUE_COLORS[quintil]) {
+                indicator.style.backgroundColor = REVENUE_COLORS[quintil];
+            } else {
+                indicator.style.backgroundColor = ''; 
+                indicator.classList.add('bg-slate-200');
+            }
+        });
+
+        // DICIONÁRIO DE RÓTULOS E SUFIXOS PARA AS FRASES DINÂMICAS
+        const baseLabels = {
+            'nacional': { media: 'Média Nacional', sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
+            'estadual': { media: 'Média Estadual', sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
+            'faixa': { media: 'Média da Faixa', sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
+        };
+
+        const config = baseLabels[base];
+
+        // 1. ATUALIZA OS RÓTULOS DA MÉDIA (Ex: Média Nacional -> Média Estadual)
+        document.querySelectorAll('.revenue-dynamic-media-label').forEach(el => {
+            el.textContent = config.media;
+        });
+
+        // 2. ATUALIZA OS VALORES DA MÉDIA (Ex: R$ 6.000 -> R$ 5.000)
+        document.querySelectorAll('.revenue-dynamic-media-value').forEach(el => {
+            const val = el.getAttribute(`data-val-${base}`);
+            el.textContent = (val && val.trim() !== '') ? val : 'R$ --,--';
+        });
+
+        // 3. CONSTRÓI A FRASE DE IMPACTO DO PERCENTIL
+        document.querySelectorAll('.revenue-dynamic-phrase').forEach(el => {
+            const pct = el.getAttribute(`data-pct-${base}`);
+            const muniName = el.getAttribute('data-muni-name');
+
+            if (pct && pct.trim() !== '' && pct !== 'None') {
+                const numPct = parseFloat(pct.replace(',', '.'));
+                const adv = numPct > 50 ? '' : 'apenas ';
+                el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> supera ${adv}${pct}% ${config.sufixo}`;
+            } else {
+                el.innerHTML = 'Sem dados comparativos';
+            }
+        });
+
+        // ====================================================================
+        // NOVO: ATUALIZAÇÃO DOS CARDS PRINCIPAIS (POPULAÇÃO E RECEITA)
+        // ====================================================================
+        
+        // Atualiza os labels "Ranking Nacional", "Ranking Estadual", etc.
+        document.querySelectorAll('.global-ranking-label').forEach(el => {
+            el.textContent = config.kpi;
+        });
+
+        // Função auxiliar para atualizar o número no card 
+        const updateKpiRank = (selector, dataPrefix) => {
+            const kpiEl = document.querySelector(selector);
+            if (kpiEl) {
+                // Garante o alinhamento baseline caso o JS monte a div do zero
+                kpiEl.classList.add('flex', 'items-baseline');
+                
+                const dataStr = kpiEl.getAttribute(`data-${dataPrefix}-${base}`);
+                if (dataStr && dataStr.includes('/')) {
+                    const parts = dataStr.split('/');
+                    kpiEl.innerHTML = `<span class="kpi-hero-value">${parts[0].trim()}º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de ${parts[1].trim()}</span>`;
+                } else {
+                    kpiEl.innerHTML = `<span class="kpi-hero-value">--º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de --</span>`;
+                }
+            }
+        };
+
+        // Aplica a atualização nos dois cards
+        updateKpiRank('.kpi-pop-rank', 'pop');
+        updateKpiRank('.kpi-rev-rank', 'rev');
+
+        // ------------ Toggle Interno do Card de Receita (Per Capita / Absoluta) ------------
+        const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
+        const kpiRcLabel = document.getElementById('kpi-rc-label');
+        const kpiRcValue = document.getElementById('kpi-rc-value');
+
+        if (kpiRcToggles.length > 0) {
+            kpiRcToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Alterna o estilo visual dos botões
+                    kpiRcToggles.forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
+                    btn.classList.remove('text-slate-400');
+
+                    // Alterna os textos e valores
+                    const mode = btn.dataset.mode;
+                    if (mode === 'pc') {
+                        kpiRcLabel.textContent = 'Valor por Habitante';
+                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-pc');
+                    } else {
+                        kpiRcLabel.textContent = 'Total Absoluto';
+                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-tot');
+                    }
+                });
+            });
+        }
+        }
+
+    globalBaseBtns.forEach(btn => btn.addEventListener('click', function() { updateGlobalBase(this.dataset.base); }));
+
     // -------- INICIALIZAÇÕES FINAIS --------
     buildHeadingIndex();
     showMode('pc');
     if (typeof buildSelectFor === 'function') buildSelectFor(currentKey);
     if (typeof renderChart === 'function') renderChart(currentKey);
     initializeToggleListeners();
-    updateRankingUI(rankingSelect?.value || 'nacional');
-    
-    // Dispara a cor inicial da linha do tempo
     updateTimelineColors('quintil');
-
     
-    // -------- INICIALIZAÇÃO FINAL DA PÁGINA --------
-    buildHeadingIndex();
-    showMode('pc');
-    if (typeof buildSelectFor === 'function') buildSelectFor(currentKey);
-    if (typeof renderChart === 'function') renderChart(currentKey);
-    initializeToggleListeners();
-    updateRankingUI(rankingSelect?.value || 'nacional');
-
-    // ==========================================
-    // GRÁFICOS SEPARADOS DE EVOLUÇÃO (Receita e População)
-    // ==========================================
-    const canvasRec = document.getElementById('chartReceita');
-    const canvasPop = document.getElementById('chartPop');
-    const evoDataScript = document.getElementById('evolution-compare-data');
-
-    if (canvasRec && canvasPop && evoDataScript) {
-        try {
-            const rawData = JSON.parse(evoDataScript.textContent);
-            
-            // Conversor à prova de balas (Entende 2.025,09 e transforma em 2025.09 pro JS)
-            const parseSafe = (val) => {
-                if (!val) return 0;
-                let str = String(val).trim();
-                if (str.includes('.') && str.includes(',')) {
-                    str = str.replace(/\./g, '').replace(',', '.');
-                } else if (str.includes(',')) {
-                    str = str.replace(',', '.');
-                }
-                return parseFloat(str) || 0;
-            };
-
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(ctx) {
-                                let val = ctx.raw || 0;
-                                let prefix = val > 0 ? '+' : '';
-                                return ` ${prefix}${val.toFixed(1).replace('.', ',')}%`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { weight: 'bold' }, color: '#475569' } },
-                    y: { 
-                        grid: { color: '#f1f5f9' }, 
-                        ticks: { color: '#94a3b8', callback: (val) => val + '%' } 
-                    }
-                }
-            };
-
-            // Gráfico 1: Receita (Azul)
-            new Chart(canvasRec.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: [rawData.nome_muni || 'Município', 'Média do Estado', 'Média Nacional'],
-                    datasets: [{
-                        data: [parseSafe(rawData.receita.mun), parseSafe(rawData.receita.est), parseSafe(rawData.receita.nac)],
-                        backgroundColor: ['#103758', '#cbd5e1', '#94a3b8'],
-                        borderRadius: 6,
-                        barPercentage: 0.5
-                    }]
-                },
-                options: commonOptions
-            });
-
-            // Gráfico 2: População (Amarelo)
-            new Chart(canvasPop.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: [rawData.nome_muni || 'Município', 'Média do Estado', 'Média Nacional'],
-                    datasets: [{
-                        data: [parseSafe(rawData.populacao.mun), parseSafe(rawData.populacao.est), parseSafe(rawData.populacao.nac)],
-                        backgroundColor: ['#EEAF19', '#cbd5e1', '#94a3b8'],
-                        borderRadius: 6,
-                        barPercentage: 0.5
-                    }]
-                },
-                options: commonOptions
-            });
-
-        } catch (e) {
-            console.error("Erro ao gerar gráficos de evolução:", e);
-        }
-    }
+    // Dispara a visualização global padrão
+    updateGlobalBase('nacional');
 
 
 }); //fechamento DOM

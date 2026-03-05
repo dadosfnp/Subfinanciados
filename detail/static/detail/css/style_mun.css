@@ -148,6 +148,43 @@ html, body {
 
 .kpi-card.highlight .kpi-value { color: #ffffff; }
 
+/* --- Modificadores para os Cards Hero Principais --- */
+.kpi-hero-value {
+    font-size: clamp(2rem, 4vw, 3rem); /* Equivalente ao text-5xl/6xl responsivo */
+    font-weight: 900;
+    color: var(--fnp-dark-blue, #103758);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+}
+
+.kpi-hero-trend {
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kpi-hero-trend.positive { color: #059669; }
+.kpi-hero-trend.negative { color: #e11d48; }
+.kpi-hero-trend-muted { color: #94a3b8; font-weight: 500; }
+
+.kpi-ranking-highlight {
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-weight: 900;
+    color: var(--fnp-dark-blue, #103758);
+    line-height: 1;
+}
+
+.kpi-ranking-base {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    margin-left: 0.5rem;
+}
+
 /* --- 5. TIMELINE STORYTELLING (Banner de Evolução) --- */
 .story-banner {
     background: #ffffff;
@@ -446,9 +483,10 @@ html, body {
 .segmented {
     display: inline-flex;
     background: var(--slate-100);
-    padding: 4px;
-    border-radius: 10px;
+    padding: 6px;
+    border-radius: 14px;
     width: 100%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
 }
 
 @media (min-width: 768px) {
@@ -459,18 +497,131 @@ html, body {
     flex: 1;
     border: none;
     background: transparent;
-    padding: 6px 16px;
-    font-size: 0.85rem;
-    font-weight: 700;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 800;
     color: var(--slate-500);
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
 }
 
+.segmented-option:hover:not(.active) {
+    color: var(--fnp-blue);
+    background: rgba(255, 255, 255, 0.5);
+}
+
 .segmented-option.active {
-    background: #ffffff;
+    background: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(25, 70, 133, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --- AJUSTES DE POSICIONAMENTO DO RANKING --- */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-top-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    text-align: right;
+}
+
+.rank-display-bold {
+    font-size: 1.25rem;
+    font-weight: 900;
     color: var(--fnp-dark-blue);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    line-height: 1;
+    margin-top: 0.25rem;
+}
+
+.rank-display-total {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    font-weight: 700;
+}
+
+.rank-card-1 { border-bottom-color: #A81C21; }
+.rank-card-1 .rank-bg-icon { background-color: #A81C2120; }
+.rank-card-1 .rank-text-icon { color: #A81C21; }
+
+.rank-card-2 { border-bottom-color: #E47326; }
+.rank-card-2 .rank-bg-icon { background-color: #E4732620; }
+.rank-card-2 .rank-text-icon { color: #E47326; }
+
+.rank-card-3 { border-bottom-color: #F4D01D; }
+.rank-card-3 .rank-bg-icon { background-color: #F4D01D20; }
+.rank-card-3 .rank-text-icon { color: #F4D01D; }
+
+.rank-card-4 { border-bottom-color: #6AC074; }
+.rank-card-4 .rank-bg-icon { background-color: #6AC07420; }
+.rank-card-4 .rank-text-icon { color: #6AC074; }
+
+.rank-card-5 { border-bottom-color: #1C9148; }
+.rank-card-5 .rank-bg-icon { background-color: #1C914820; }
+.rank-card-5 .rank-text-icon { color: #1C9148; }
+
+
+/* --- TOOLTIP CUSTOMIZADO IFEM (EVOLUÇÃO) --- */
+.ifem-tooltip-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    cursor: help;
+}
+
+.ifem-tooltip-box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Posição inicial para a animação */
+    margin-bottom: 12px;
+    width: 220px;
+    background-color: var(--fnp-dark-blue);
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(16, 55, 88, 0.3);
+    
+    /* Escondido por padrão, à prova de bugs */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* Animação suave */
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+/* Setinha do balão */
+.ifem-tooltip-box::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--fnp-dark-blue) transparent transparent transparent;
+}
+
+/* O gatilho do hover */
+.ifem-tooltip-container:hover .ifem-tooltip-box {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -8px); /* Sobe suavemente */
+}
+
+.ifem-tooltip-box strong {
+    font-weight: 900;
+    font-size: 13px;
 }
