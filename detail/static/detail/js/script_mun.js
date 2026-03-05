@@ -236,6 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return false;
     }
   
+    
 // ==========================================================================
     // CONTROLE DOS RANKINGS INDEPENDENTES (POPULAÇÃO E RECEITA)
     // ==========================================================================
@@ -745,15 +746,11 @@ function updateTimelineColors(mode) {
 
         colorIndicators.forEach(indicator => {
             const quintil = indicator.getAttribute(`data-q-${base}`);
-            
-            // Remove a classe de fallback do Tailwind (caso exista)
             indicator.classList.remove('bg-slate-200');
             
-            // Aplica a cor diretamente no style (ganha de qualquer classe)
             if (quintil && REVENUE_COLORS[quintil]) {
                 indicator.style.backgroundColor = REVENUE_COLORS[quintil];
             } else {
-                // Se não tem dado, limpa o style e bota a classe cinza
                 indicator.style.backgroundColor = ''; 
                 indicator.classList.add('bg-slate-200');
             }
@@ -761,9 +758,9 @@ function updateTimelineColors(mode) {
 
         // DICIONÁRIO DE RÓTULOS E SUFIXOS PARA AS FRASES DINÂMICAS
         const baseLabels = {
-            'nacional': { media: 'Média Nacional', sufixo: 'dos municípios do país' },
-            'estadual': { media: 'Média Estadual', sufixo: 'dos municípios do estado' },
-            'faixa': { media: 'Média da Faixa', sufixo: 'dos municípios da mesma faixa populacional' }
+            'nacional': { media: 'Média Nacional', sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
+            'estadual': { media: 'Média Estadual', sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
+            'faixa': { media: 'Média da Faixa', sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
         };
 
         const config = baseLabels[base];
@@ -792,7 +789,66 @@ function updateTimelineColors(mode) {
                 el.innerHTML = 'Sem dados comparativos';
             }
         });
-    }
+
+        // ====================================================================
+        // NOVO: ATUALIZAÇÃO DOS CARDS PRINCIPAIS (POPULAÇÃO E RECEITA)
+        // ====================================================================
+        
+        // Atualiza os labels "Ranking Nacional", "Ranking Estadual", etc.
+        document.querySelectorAll('.global-ranking-label').forEach(el => {
+            el.textContent = config.kpi;
+        });
+
+        // Função auxiliar para atualizar o número no card 
+        const updateKpiRank = (selector, dataPrefix) => {
+            const kpiEl = document.querySelector(selector);
+            if (kpiEl) {
+                // Garante o alinhamento baseline caso o JS monte a div do zero
+                kpiEl.classList.add('flex', 'items-baseline');
+                
+                const dataStr = kpiEl.getAttribute(`data-${dataPrefix}-${base}`);
+                if (dataStr && dataStr.includes('/')) {
+                    const parts = dataStr.split('/');
+                    kpiEl.innerHTML = `<span class="kpi-hero-value">${parts[0].trim()}º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de ${parts[1].trim()}</span>`;
+                } else {
+                    kpiEl.innerHTML = `<span class="kpi-hero-value">--º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de --</span>`;
+                }
+            }
+        };
+
+        // Aplica a atualização nos dois cards
+        updateKpiRank('.kpi-pop-rank', 'pop');
+        updateKpiRank('.kpi-rev-rank', 'rev');
+
+        // ------------ Toggle Interno do Card de Receita (Per Capita / Absoluta) ------------
+        const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
+        const kpiRcLabel = document.getElementById('kpi-rc-label');
+        const kpiRcValue = document.getElementById('kpi-rc-value');
+
+        if (kpiRcToggles.length > 0) {
+            kpiRcToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Alterna o estilo visual dos botões
+                    kpiRcToggles.forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
+                    btn.classList.remove('text-slate-400');
+
+                    // Alterna os textos e valores
+                    const mode = btn.dataset.mode;
+                    if (mode === 'pc') {
+                        kpiRcLabel.textContent = 'Valor por Habitante';
+                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-pc');
+                    } else {
+                        kpiRcLabel.textContent = 'Total Absoluto';
+                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-tot');
+                    }
+                });
+            });
+        }
+        }
 
     globalBaseBtns.forEach(btn => btn.addEventListener('click', function() { updateGlobalBase(this.dataset.base); }));
 
