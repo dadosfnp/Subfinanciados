@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 
+
 class RegiaoMetropolitana(models.Model):
     nome = models.CharField(max_length=255, unique=True, help_text="Nome único da Região Metropolitana")
 
@@ -488,7 +489,6 @@ class ContaMaisEspecificaPercentil(models.Model):
     def __str__(self):
         return f"Receita Mais Específica Percentil de {self.municipio.name_muni_uf}"
 
-# --- AQUI ESTÁ A CORREÇÃO PRINCIPAL: CLASSE NOTÍCIA FORA DA OUTRA ---
 class Noticia(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título da Matéria")
     data = models.DateField(verbose_name="Data de Publicação")
@@ -503,3 +503,68 @@ class Noticia(models.Model):
 
     def __str__(self):
         return self.titulo
+
+
+class MediaNacionalReceita(models.Model):
+    """
+    Entidade de registro unico para armazenamento das medias nacionais pre-calculadas.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=True)
+    
+    # Metricas de Nivel 1 - Conta Detalhada
+    imposto_taxas_contribuicoes = models.FloatField(null=True, blank=True)
+    contribuicoes = models.FloatField(null=True, blank=True)
+    transferencias_correntes = models.FloatField(null=True, blank=True)
+    outras_receita = models.FloatField(null=True, blank=True)
+
+    # Metricas de Nivel 2 - Conta Especifica
+    imposto = models.FloatField(null=True, blank=True)
+    taxas = models.FloatField(null=True, blank=True)
+    contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    contribuicoes_sociais = models.FloatField(null=True, blank=True)
+    contribuicoes_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes = models.FloatField(null=True, blank=True)
+    tranferencias_uniao = models.FloatField(null=True, blank=True)
+    tranferencias_estados = models.FloatField(null=True, blank=True)
+    outras_tranferencias = models.FloatField(null=True, blank=True)
+    receita_patrimonial = models.FloatField(null=True, blank=True)
+    receita_agropecuaria = models.FloatField(null=True, blank=True)
+    receita_industrial = models.FloatField(null=True, blank=True)
+    receita_servicos = models.FloatField(null=True, blank=True)
+    outras_receitas = models.FloatField(null=True, blank=True)
+    
+    # Metricas de Nivel 3 - Conta Mais Especifica
+    iptu = models.FloatField(null=True, blank=True)
+    itbi = models.FloatField(null=True, blank=True)
+    iss = models.FloatField(null=True, blank=True)
+    imposto_renda = models.FloatField(null=True, blank=True)
+    outros_impostos = models.FloatField(null=True, blank=True)
+    taxa_policia = models.FloatField(null=True, blank=True)
+    taxa_prestacao_servico = models.FloatField(null=True, blank=True)
+    outras_taxas = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_pavimento_obras = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_agua_potavel = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fpm = models.FloatField(null=True, blank=True)
+    transferencia_uniao_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_uniao_sus = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnde = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fundeb = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnas = models.FloatField(null=True, blank=True)
+    outras_transferencias_uniao = models.FloatField(null=True, blank=True)
+    transferencia_estado_icms = models.FloatField(null=True, blank=True)
+    transferencia_estado_ipva = models.FloatField(null=True, blank=True)
+    transferencia_estado_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_estado_sus = models.FloatField(null=True, blank=True)
+    transferencia_estado_assistencia = models.FloatField(null=True, blank=True)
+    outras_transferencias_estado = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Média Nacional de Receita"
+        verbose_name_plural = "Médias Nacionais de Receitas"
+
+    def __str__(self):
+        return f"Médias Nacionais - Ano {self.ano_referencia}"
+    

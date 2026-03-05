@@ -23,20 +23,28 @@
   flex-direction:column;
 }
 
-/* Conteúdo do mapa ocupa 100% e sem folgas */
+/* Conteúdo do mapa ocupa 100% do que sobra do flex */
 .map-page > .main-content{
   position:relative;
   flex:1;
   padding:0;
   margin:0;
+  display: flex; /* NOVO: Transforma o container em flex */
+  flex-direction: column; /* NOVO */
+  height: 100%; /* NOVO */
 }
 
-/* Mapa sempre por trás da sidebar */
+/* O mapa deve preencher o flex pai, sem absolute no desktop */
 .map-page #map{
-  position:absolute;
-  inset:0;
+  flex: 1; /* NOVO: Ocupa todo o espaço disponível */
   width:100%;
+  position: relative; /* NOVO: Substitui o absolute */
   z-index:0;
+}
+
+/* Garante que o html e body não tenham scroll lateral */
+html, body {
+  overflow-x: hidden;
 }
 
 /* ---------- Filtros (layout geral) ---------- */

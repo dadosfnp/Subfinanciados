@@ -68,6 +68,11 @@ def municipios_geojson_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     # Lógica de cálculo de quantil dinâmico
     num_quantiles = 5 if classification_filter == 'quintil' else 10

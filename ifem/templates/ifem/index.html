@@ -10,6 +10,97 @@
 
 {% block content %}
 
+    <style>
+
+        /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+        .dropdown-menu {
+            background-color: #ffffff !important;
+            border: 1px solid #e9ecef !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* Sombra um pouco mais forte aqui para destacar bem do fundo escuro */
+        }
+        
+        .dropdown-item {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+            font-weight: 500 !important;
+        }
+        
+        .dropdown-item:hover, 
+        .dropdown-item:focus {
+            background-color: #f0f4f8 !important; 
+            color: #103758 !important;
+        }
+
+        /* ========== Correções Mobile (Landing Page) ========== */
+        @media (max-width: 991.98px) {
+            /* 1. Trava o corpo da página para não ter barra de rolagem horizontal */
+            html, body {
+                overflow-x: hidden !important;
+                width: 100vw !important;
+            }
+
+            /* 2. Garante que as colunas e painéis respeitem a margem da tela */
+            .section-content, .text-col, .slider-panel-prob {
+                max-width: 100vw !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 3. O SEGREDO: Empilha o gráfico de rosca e a legenda na vertical */
+            .pie-chart-container {
+                display: flex !important;
+                flex-direction: column !important; /* Coloca um em cima do outro */
+                align-items: center !important;
+                width: 100% !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 4. Centraliza o gráfico e dá um respiro para a legenda */
+            .svg-wrapper {
+                margin-bottom: 25px !important;
+                max-width: 220px !important;
+                width: 100% !important;
+            }
+
+            /* 5. Ajusta a legenda para ocupar 100% da largura e tira quebras */
+            .pie-legend {
+                width: 100% !important;
+                padding-left: 0 !important;
+                margin-left: 0 !important;
+                border-left: none !important; /* Remove linha divisória do desktop, se houver */
+            }
+
+            /* 6. Impede que o texto longo estoure a tela */
+            .editorial-text, .insight-box p, .chart-context ul {
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+
+            /* 7. Ajuste para evitar que os botões fiquem por cima do texto na seção "O Problema" */
+            .slider-panel-prob {
+                height: auto !important;
+                padding-bottom: 2rem !important;
+            }
+
+            .slider-actions {
+                position: relative !important;
+                bottom: auto !important;
+                left: auto !important;
+                margin-top: 2rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 15px !important;
+                width: 100% !important;
+            }
+
+            .slider-actions button {
+                width: 100% !important;
+                justify-content: center !important;
+                margin-bottom: 0 !important;
+            }
+        }
+    </style>
+
     <nav class="story-nav" id="story-nav">
     <div class="story-track">
         
@@ -92,7 +183,7 @@
                         <h3 style="margin-bottom: 25px;"> O dinheiro na contramão</h3>
                         
                         <div class="editorial-text">
-                            <p>O sistema de transferência apoia-se em regras da <strong>década de 60</strong>. <br>O Brasil mudou, a realidade das cidades mudou, mas as regras de financiamento não acompanharam essas mudanças.</p>
+                            <p>O sistema de transferência para municípios brasileiros apoia-se em regras da <strong>década de 60</strong>. <br>O Brasil mudou, o contexto das cidades mudou, mas as regras de financiamento não acompanharam essas mudanças.</p>
                         </div>
 
                         <div class="pie-chart-container">
@@ -111,12 +202,12 @@
                                             <path d="M4 10V21H8V14H16V21H20V10L12 3L4 10Z"></path>
                                             <path d="M2 21H22"></path>
                                         </svg>
-                                        <span class="legend-label">Transferências</span>
+                                        <span class="legend-value"><span class="pie-counter" data-target="67">0</span>%</span>
                                     </div>
-                                    <span class="legend-value"><span class="pie-counter" data-target="67">0</span>%</span>
+                                    <span class="legend-label">Transferências</span>
                                 </div>
                                 
-                                <div class="legend-item red-theme active-highlight">
+                                <div class="legend-item yellow-theme active-highlight">
                                     <div class="legend-header">
                                         <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M3 21H21"></path>
@@ -126,14 +217,14 @@
                                             <path d="M9 13V13.01"></path>
                                             <path d="M9 17V17.01"></path>
                                         </svg>
-                                        <span class="legend-label">Arrecadação Própria</span>
+                                        <span class="legend-value"><span class="pie-counter" data-target="33">0</span>%</span>
                                     </div>
-                                    <span class="legend-value"><span class="pie-counter" data-target="33">0</span>%</span>
+                                    <span class="legend-label">Arrecadação Própria</span>
                                 </div>
                                 
                                 <div class="chart-context">
                                     <ul class="legend-details">
-                                        <li><strong>Transferências:</strong> Vindas da União e Estados.</li>
+                                        <li><strong>Transferências:</strong> Oriundas da União e Estados.</li>
                                         <li><strong>Arrecadação Própria:</strong> Recursos que o município arrecada.</li>
                                     </ul>
                                 </div>
@@ -160,7 +251,7 @@
                     <div class="slider-panel-prob">
                         <div class="scrollable-text" style="margin-top: 0;">
                             <div class="editorial-text">
-                                <p>Parte dessa distorção está ligada ao desenho do sistema de transferências, baseado em regras criadas na <strong>década de 1960</strong>, quando a realidade urbana, econômica e demográfica do Brasil era completamente diferente.</p>
+                                <p>Parte dessa distorção está ligada ao desenho do sistema de transferências, baseado em regras criadas na <strong>década de 1960</strong>, quando o contexto urbana, econômica e demográfica do Brasil era completamente diferente.</p>
                                 <p>Desde então, o país passou por um intenso processo de urbanização, com crescimento acelerado de cidades médias e grandes. Os dados indicam que, entre 2000 e 2023, esses municípios cresceram acima da média nacional, mas passaram a receber <strong>menos receita por habitante</strong>.</p>
                                 <p>Enquanto isso, uma parcela relevante dos recursos — especialmente das transferências — continua concentrada em localidades com pouca população ou até em declínio demográfico. Na prática, o dinheiro passou a seguir na direção oposta à população.</p>
                                 <p>Os indicadores mostram que, entre 2000 e 2023, os municípios médios e grandes apresentaram taxas de crescimento populacional superiores à média nacional. Em contraste, os municípios com <strong>menos de 20 mil habitantes</strong> cresceram abaixo da média do país, sendo que aqueles com até cinco mil habitantes registraram, em média, decréscimo populacional ao longo dos últimos 25 anos.</p>
@@ -252,7 +343,7 @@
 
                 <div class="insight-box">
                     <h4>O Descompasso</h4>
-                    <p>As regras de transferências, praticamente estáticas há décadas, já não refletem a realidade urbana do país. Cidades mais populosas passaram a receber <strong>menos recursos por habitante</strong>, enquanto parte relevante das transferências segue concentrada em municípios menores. O dinheiro passou a caminhar na direção oposta à população, ampliando desigualdades fiscais e comprometendo a oferta de serviços públicos onde vive a maioria dos brasileiros.</p>
+                    <p>As regras de transferências, praticamente estáticas há décadas, já não refletem a situação do país. Cidades mais populosas passaram a receber <strong>menos recursos por habitante</strong>, enquanto parte relevante das transferências segue concentrada em municípios menores. O dinheiro passou a caminhar na direção oposta à população, ampliando desigualdades fiscais e comprometendo a oferta de serviços públicos onde vive a maioria dos brasileiros.</p>
                 </div>
             </div>
 
@@ -268,7 +359,7 @@
                 <h3 style="margin-bottom: 25px;">A raiz da distorção</h3>
                 
                 <div class="editorial-text">
-                    <p>O subfinanciamento das grandes cidades não ocorreu da noite para o dia, é o resultado de um modelo de distribuição que parou no tempo.</p>
+                    <p>A crescente escassez de recursos nas cidades com maior expansão populacional, somada ao aumento das desigualdades entre municípios, não é algo recente. Trata-se da consequência de um modelo de distribuição que não acompanhou as mudanças do país.</p>
                 </div>
 
                 <div class="time-comparison-widget">
@@ -276,8 +367,8 @@
                         <div class="node-marker"></div>
                         <div class="node-content">
                             <span class="node-era">Década de 1960</span>
-                            <h4 class="node-title">O auge das metrópoles</h4>
-                            <p>Cidades grandes eram o polo de recursos. O sistema de repasses foi desenhado para aquela realidade.</p>
+                            <h4 class="node-title">Cidades ricas versus pobres</h4>
+                            <p>Na década de 1960 era verdade que cidades pequenas tinham menos recursos e cidades populosas mais recursos por habitantes. O sistema de repasses foi desenhado para aquele tempo.</p>
                         </div>
                     </div>
                     
@@ -287,8 +378,8 @@
                         <div class="node-marker highlight-red"></div>
                         <div class="node-content">
                             <span class="node-era">Cenário Atual</span>
-                            <h4 class="node-title">A conta do crescimento</h4>
-                            <p>Hoje, o sistema de financiamento das cidades, especialmente as transferências, não levam em conta as necessidades dos municípios e da população, frequentemente aumentando a desigualdade entre cidades.</p>
+                            <h4 class="node-title">Regras antigas, contexto novo</h4>
+                            <p>As regras que orientam o financiamento das cidades, praticamente as mesmas desde a década de 1960, já não correspondem à situação demográfica e social do país. Ao desconsiderar as novas demandas dos municípios e da população, o sistema acaba reforçando as desigualdades entre as cidades.</p>
                         </div>
                     </div>
                 </div>
@@ -332,102 +423,84 @@
 
             <div class="visual-col">
                 
-                <div class="chart-spacing-top" style="margin-top: 0; padding-top: 0; border-top: none;">
-                    <div class="chart-header-row chart-header-clean">
-                        <div class="header-title-wrapper">
-                            <h4>Taxa de crescimento da população por porte populacional (2000-2024)</h4>
-                            <div class="info-tooltip">
-                                <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                <div class="tooltip-content">
-                                    Indica a variação percentual do número de habitantes em cada faixa populacional, comparando o ano de 2000 com 2024.
+        <div class="chart-spacing-top" style="margin-top: 0; padding-top: 0; border-top: none;">
+            <div class="chart-header-row chart-header-clean">
+                <div class="header-title-wrapper">
+                    <h4>Taxa de crescimento da população por porte populacional (2000-2024)</h4>
+                    <div class="info-tooltip">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <div class="tooltip-content">
+                            Indica a variação percentual do número de habitantes em cada faixa populacional, comparando o ano de 2000 com 2024.
+                        </div>
+                    </div>
+                </div>
+            </div>                            
+
+            <div class="chart-data-container">
+                <div class="chart-row" id="pop-ate-5">
+                    <span class="chart-label">Até 5 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-yellow">-22,7%</span>
+                        <div class="chart-bar negative bar-yellow" style="--bar-width: 100%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-5-10">
+                    <span class="chart-label">5 a 10 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-orange">-17,4%</span>
+                        <div class="chart-bar negative bar-orange" style="--bar-width: 77%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-10-30">
+                    <span class="chart-label">10 a 30 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-red">-9,3%</span>
+                        <div class="chart-bar negative bar-red" style="--bar-width: 41%;"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="chart-row" id="pop-30-100">
+                    <span class="chart-label">30 a 100 mil</span>
+                    <div class="chart-divider"></div>
+                    <div class="chart-track">
+                        <div class="chart-bar positive bar-purple" style="--bar-width: 21%;"></div>
+                        <span class="chart-value positive-val val-purple">4,7%</span>
+                    </div>
+                </div>
+
+                <div class="chart-row" id="pop-100-500">
+                    <span class="chart-label">100 a 500 mil</span>
+                    <div class="chart-divider"></div>
+                    <div class="chart-track">
+                        <div class="chart-bar positive bar-dark-blue" style="--bar-width: 63%;"></div>
+                        <span class="chart-value positive-val val-dark-blue">14,4%</span>
+                    </div>
+                </div>
+
+                <div class="chart-row" id="pop-acima-500">
+                    <span class="chart-label">Acima de 500 mil</span>
+                    <div class="chart-track negative-track">
+                        <span class="chart-value negative-val val-black">-4,6%</span>
+                        <div class="chart-bar negative bar-black" style="--bar-width: 20%;"></div>
                                 </div>
                             </div>
-                        </div>
-                    </div>                            
-
-                    <div class="chart-data-container">
-                        <div class="chart-row" id="pop-ate-5">
-                            <span class="chart-label">Até 5 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar negative bar-yellow" style="--bar-width: 5%;"></div>
-                                <span class="chart-value negative-val val-yellow">-1,0%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-5-10">
-                            <span class="chart-label">5 mil a 10 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-orange" style="--bar-width: 11%;"></div>
-                                <span class="chart-value positive-val val-orange">4,3%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-10-20">
-                            <span class="chart-label">10 mil a 20 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-red" style="--bar-width: 25%;"></div>
-                                <span class="chart-value positive-val val-red">9,5%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-20-50">
-                            <span class="chart-label">20 mil a 50 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-purple" style="--bar-width: 54%;"></div>
-                                <span class="chart-value positive-val val-purple">20,2%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-50-100">
-                            <span class="chart-label">50 mil a 100 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-purple" style="--bar-width: 80%;"></div>
-                                <span class="chart-value positive-val val-purple">29,5%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-100-200">
-                            <span class="chart-label">100 mil a 200 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-dark-blue" style="--bar-width: 95%;"></div>
-                                <span class="chart-value positive-val val-dark-blue">35,1%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-200-500">
-                            <span class="chart-label">200 mil a 500 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-dark-blue" style="--bar-width: 100%;"></div>
-                                <span class="chart-value positive-val val-dark-blue">36,8%</span>
-                            </div>
-                        </div>
-
-                        <div class="chart-row" id="pop-acima-500">
-                            <span class="chart-label">acima de 500 mil</span>
-                            <div class="chart-divider"></div>
-                            <div class="chart-track">
-                                <div class="chart-bar positive bar-black" style="--bar-width: 46%;"></div>
-                                <span class="chart-value positive-val val-black">17,0%</span>
-                            </div>
-                        </div>
-                    </div>            
-                </div>
+                        </div>            
+                    </div>
 
                 <div class="pop-chart-group" style="margin-top: 40px;">
                     <div class="chart-header-row" style="border-bottom: none; margin-bottom: 15px;">
                         <div class="header-title-wrapper">
-                            <h4>Crescimento acumulado da Receita per capita (2000-2024)</h4>
+                            <h4>Crescimento acumulado da receita per capita em relação à média nacional
+                                (2000-2024)</h4>
                             <div class="info-tooltip">
                                 <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -557,7 +630,7 @@
                 <h3 style="margin-bottom: 20px;">Indicadores de Financiamento e Equidade Municipal.</h3>
                 
                 <div class="editorial-text">
-                    <p>Para comparar realidades tão distintas, o IFEM utiliza um método simples e justo: <strong>ordenar para entender</strong>.</p>
+                    <p>Para comparar contextos tão distintas, o IFEM utiliza um método simples e justo: <strong>ordenar para entender</strong>.</p>
                     <p>Calculamos quanto cada município tem de receita para cada morador, dividindo a receita corrente pela população. Depois, organizamos todos os municípios do menor para o maior valor por habitante e os dividimos em grupos iguais para comparar situações semelhantes.</p>
                 </div>
 
@@ -662,46 +735,46 @@
                     <div class="card-metodologia-pro">
                         <div class="step-header" style="margin-bottom: 10px;">
                             <div class="step-number">2</div>
-                            <span class="step-subtitle" style="border: none; padding: 0;">Distribuímos o mesmo número de municípios em cada grupo</span>
+                            <span class="step-subtitle" style="border: none; padding: 0;">Distribuímos o mesmo número de municípios em cada grupo (aproxidamente 1.100 municípios)</span>
                         </div>
 
                         <span class="group-title-pro">Quintis (20% cada)</span>
                         
                         <div class="row-quintis-pro">
-                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% das cidades">
+                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% dos municípios de menor receita">
                                 <span class="q-val">1º</span>
                                 <span class="q-label">MENOR<br>RECEITA</span>
                             </div>
-                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% das cidades">
+                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% dos municípios de menor receita">
                                 <span class="q-val">2º</span>
                             </div>
-                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% das cidades">
+                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% dos municípios de menor receita">
                                 <span class="q-val">3º</span>
                             </div>
-                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 60% a 80% das cidades">
+                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 20% a 40% dos municípios de maior receita">
                                 <span class="q-val">4º</span>
                             </div>
-                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 80% a 100% das cidades">
+                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 20% dos municípios de maior receita">
                                 <span class="q-val">5º</span>
                                 <span class="q-label">MAIOR<br>RECEITA</span>
                             </div>
                         </div>
 
-                        <div class="divider-pro"><span>ou em maior detalhe</span></div>
+                        <div class="divider-pro"><span>ou em maior detalhe(com 550 municípios em cada grupo)</span></div>
                         
                         <span class="group-title-pro">Decis (10% cada)</span>
                         
                         <div class="row-decis-pro">
-                            <div class="box-d-pro d-1" data-tooltip="1º Decil">1º</div>
-                            <div class="box-d-pro d-2" data-tooltip="2º Decil">2º</div>
-                            <div class="box-d-pro d-3" data-tooltip="3º Decil">3º</div>
-                            <div class="box-d-pro d-4" data-tooltip="4º Decil">4º</div>
-                            <div class="box-d-pro d-5" data-tooltip="5º Decil">5º</div>
-                            <div class="box-d-pro d-6" data-tooltip="6º Decil">6º</div>
-                            <div class="box-d-pro d-7" data-tooltip="7º Decil">7º</div>
-                            <div class="box-d-pro d-8" data-tooltip="8º Decil">8º</div>
-                            <div class="box-d-pro d-9" data-tooltip="9º Decil">9º</div>
-                            <div class="box-d-pro d-10" data-tooltip="10º Decil">10º</div>
+                            <div class="box-d-pro d-1" data-tooltip="1º Decil : 0% a 10% dos municípios de menor receita">1º</div>
+                            <div class="box-d-pro d-2" data-tooltip="2º Decil : 10% a 20% dos municípios de menor receita">2º</div>
+                            <div class="box-d-pro d-3" data-tooltip="3º Decil : 20% a 30% dos municípios de menor receita">3º</div>
+                            <div class="box-d-pro d-4" data-tooltip="4º Decil : 30% a 40% dos municípios de menor receita">4º</div>
+                            <div class="box-d-pro d-5" data-tooltip="5º Decil : 40% a 50% dos municípios de menor receita">5º</div>
+                            <div class="box-d-pro d-6" data-tooltip="6º Decil : 40% a 50% dos municípios de maior receita">6º</div>
+                            <div class="box-d-pro d-7" data-tooltip="7º Decil : 30% a 40% dos municípios de maior receita">7º</div>
+                            <div class="box-d-pro d-8" data-tooltip="8º Decil : 20% a 30% dos municípios de maior receita">8º</div>
+                            <div class="box-d-pro d-9" data-tooltip="9º Decil : 10% a 20% dos municípios de maior receita">9º</div>
+                            <div class="box-d-pro d-10" data-tooltip="10º Decil : 10% dos municípios de maior receita">10º</div>
                         </div>
                     </div>
 

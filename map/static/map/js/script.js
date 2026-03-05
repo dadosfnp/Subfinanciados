@@ -100,7 +100,7 @@ async function atualizarMapa() {
   const paramsResumo = {
     regiao: filtroRegiao.value,
     uf: filtroUf.value,
-    municipio: filtroMunicipio.value, // ✅ aqui continua usando
+    municipio: filtroMunicipio.value,
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
@@ -110,7 +110,7 @@ async function atualizarMapa() {
 
   const paramsMapa = {
     ...paramsResumo,
-    municipio: 'todos' // ✅ AQUI É A CORREÇÃO PRINCIPAL (NUNCA FILTRA O MAPA)
+    municipio: 'todos' 
   };
 
   const desiredKey = paramsKeyFromSelects();
@@ -146,7 +146,7 @@ async function atualizarMapa() {
     // ===== MAPA (SEMPRE TODOS OS MUNICÍPIOS) =====
     if (map.getSource('municipios')) {
       map.getSource('municipios').setData(geojsonMapa);
-      applyZoom(geojsonMapa); // ✅ zoom só destaca
+      applyZoom(geojsonMapa); 
     }
 
   } catch (err) {
@@ -758,8 +758,6 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, FINAL_WIDTH, FINAL_HEIGHT);
 
-
-
     // ===============================
     // 2) LOGOS
     // ===============================
@@ -841,8 +839,6 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         FINAL_WIDTH,
         FINAL_MAP_H
     );
-
-
 
     // ===============================
     // 5) LEGENDA AUTOMÁTICA 

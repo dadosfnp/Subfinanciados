@@ -2,13 +2,24 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada
+from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
 from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
 
-def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
+def selecionar_municipio_view(request):
+    """
+    Renderiza a página isolada para o usuário buscar e selecionar
+    o município antes de ir para a Análise Detalhada.
+    """
+    return render(request, 'detail/selecionar_municipio.html')
+
+def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, media_nacional_obj=None, is_collapsible=False):
+    """
+    Estrutura os dados de uma rubrica especifica para renderizacao recursiva.
+    Extrai valores absolutos, per capita, percentis e a media nacional correspondente.
+    """
     if not model_instance:
         return None
     
@@ -24,9 +35,17 @@ def _prepare_revenue_item(name, field_base, model_instance, model_instance_perce
         'faixa': getattr(model_instance_percentile, f"{field_base}_regional", 0),
     }
 
+    # EXTRACAO DINAMICA DA MEDIA NACIONAL VIA ATRIBUTO DO OBJETO
+    media_nac_val = getattr(media_nacional_obj, field_base, None) if media_nacional_obj else None
+
     item = {
-        'name': name, 'field_base': field_base, 'value_abs': value_abs,
-        'value_pc': value_pc, 'percentiles': percentiles, 'children': [],
+        'name': name, 
+        'field_base': field_base, 
+        'value_abs': value_abs,
+        'value_pc': value_pc, 
+        'percentiles': percentiles, 
+        'media_nacional': media_nac_val,
+        'children': [],
     }
 
     if is_collapsible:
@@ -40,20 +59,51 @@ def municipio_detalhe_view(request, municipio_id):
         'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil'
     ), cod_ibge=municipio_id)
 
+    pop = municipio.populacao24 or 0
+    if pop < 5000: filtro_faixa = {'populacao24__lt': 5000}
+    elif pop < 10000: filtro_faixa = {'populacao24__gte': 5000, 'populacao24__lt': 10000}
+    elif pop < 20000: filtro_faixa = {'populacao24__gte': 10000, 'populacao24__lt': 20000}
+    elif pop < 50000: filtro_faixa = {'populacao24__gte': 20000, 'populacao24__lt': 50000}
+    elif pop < 100000: filtro_faixa = {'populacao24__gte': 50000, 'populacao24__lt': 100000}
+    elif pop < 200000: filtro_faixa = {'populacao24__gte': 100000, 'populacao24__lt': 200000}
+    elif pop < 500000: filtro_faixa = {'populacao24__gte': 200000, 'populacao24__lt': 500000}
+    else: filtro_faixa = {'populacao24__gte': 500000}
+
+    # 2. FUNÇÃO PARA CALCULAR A MÉDIA PER CAPITA NO BANCO
+    def avg_pc(campo):
+        return Avg(ExpressionWrapper(F(campo) / F('populacao24'), output_field=FloatField()))
+
+    # 3. FAZENDO A CONSULTA (Apenas municípios com população válida para não dar erro de divisão por zero)
+    base_query = Municipio.objects.exclude(populacao24__isnull=True).exclude(populacao24=0)
+    
+    # Agregações para o 1º Nível (Conta Detalhada)
+    agregacoes = {
+        'transf_correntes': avg_pc('conta_detalhada__transferencias_correntes'),
+        'impostos_taxas': avg_pc('conta_detalhada__imposto_taxas_contribuicoes'),
+        'outras_rec': avg_pc('conta_detalhada__outras_receita'),
+        'contrib': avg_pc('conta_detalhada__contribuicoes'),
+    }
+
+    medias_estadual = base_query.filter(uf=municipio.uf).aggregate(**agregacoes)
+    medias_faixa = base_query.filter(**filtro_faixa).aggregate(**agregacoes)
+
+    # RECUPERACAO DA INSTANCIA DE MEDIAS NACIONAIS (TABELA NOVA)
+    media_nac = MediaNacionalReceita.objects.filter(ano_referencia=2024).first()
+
     cd = municipio.conta_detalhada
     cs = municipio.conta_especifica
     cme = municipio.conta_mais_especifica
 
-    cdp= municipio.conta_detalhada_percentil
-    csp= municipio.conta_especifica_percentil
-    cmep= municipio.conta_mais_especifica_percentil
+    cdp = municipio.conta_detalhada_percentil
+    csp = municipio.conta_especifica_percentil
+    cmep = municipio.conta_mais_especifica_percentil
     
     revenue_tree = []
 
     # 1. Impostos, Taxas e Contribuições (ITC)
-    itc_item = _prepare_revenue_item("Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes", cd, cdp, is_collapsible=True)
+    itc_item = _prepare_revenue_item("Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes", cd, cdp, media_nac, is_collapsible=True)
     if itc_item:
-        imposto_item = _prepare_revenue_item("Impostos", "imposto", cs, csp, is_collapsible=True)
+        imposto_item = _prepare_revenue_item("Impostos", "imposto", cs, csp, media_nac, is_collapsible=True)
         if imposto_item:
             imposto_item['children'].extend(filter(None, [
                 _prepare_revenue_item("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", cme, cmep),
@@ -66,41 +116,41 @@ def municipio_detalhe_view(request, municipio_id):
             ]))
             itc_item['children'].append(imposto_item)
 
-        taxas_item = _prepare_revenue_item("Taxas", "taxas", cs, csp, is_collapsible=True)
+        taxas_item = _prepare_revenue_item("Taxas", "taxas", cs, csp, media_nac, is_collapsible=True)
         if taxas_item:
             taxas_item['children'].extend(filter(None, [
-                _prepare_revenue_item("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", cme, cmep),
-                _prepare_revenue_item("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", cme, cmep),
-                _prepare_revenue_item("Outras Taxas", "outras_taxas", cme, cmep),
+                _prepare_revenue_item("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", cme, cmep, media_nac),
+                _prepare_revenue_item("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", cme, cmep, media_nac),
+                _prepare_revenue_item("Outras Taxas", "outras_taxas", cme, cmep, media_nac),
             ]))
             itc_item['children'].append(taxas_item)
 
-        cm_item = _prepare_revenue_item("Contribuições de Melhoria", "contribuicoes_melhoria", cs, csp, is_collapsible=True)
+        cm_item = _prepare_revenue_item("Contribuições de Melhoria", "contribuicoes_melhoria", cs, csp, media_nac, is_collapsible=True)
         if cm_item:
             cm_item['children'].extend(filter(None, [
-                _prepare_revenue_item("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", cme, cmep),
-                _prepare_revenue_item("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", cme, cmep),
-                _prepare_revenue_item("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", cme, cmep),
-                _prepare_revenue_item("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", cme, cmep),
+                _prepare_revenue_item("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", cme, cmep, media_nac),
+                _prepare_revenue_item("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", cme, cmep, media_nac),
+                _prepare_revenue_item("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", cme, cmep, media_nac),
+                _prepare_revenue_item("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", cme, cmep, media_nac),
             ]))
             itc_item['children'].append(cm_item)
 
         revenue_tree.append(itc_item)
 
     # 2. Contribuições
-    contribuicoes_item = _prepare_revenue_item("Contribuições", "contribuicoes", cd, cdp, is_collapsible=True)
+    contribuicoes_item = _prepare_revenue_item("Contribuições", "contribuicoes", cd, cdp, media_nac, is_collapsible=True)
     if contribuicoes_item:
         contribuicoes_item['children'].extend(filter(None, [
-            _prepare_revenue_item("Contribuições Sociais", "contribuicoes_sociais", cs, csp),
-            _prepare_revenue_item("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", cs, csp),
-            _prepare_revenue_item("Outras Contribuições", "outras_contribuicoes", cs, csp),
+            _prepare_revenue_item("Contribuições Sociais", "contribuicoes_sociais", cs, csp, media_nac),
+            _prepare_revenue_item("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", cs, csp, media_nac),
+            _prepare_revenue_item("Outras Contribuições", "outras_contribuicoes", cs, csp, media_nac),
         ]))
         revenue_tree.append(contribuicoes_item)
 
     # 3. Transferências Correntes
-    transferencias_item = _prepare_revenue_item("Transferências Correntes", "transferencias_correntes", cd, cdp, is_collapsible=True)
+    transferencias_item = _prepare_revenue_item("Transferências Correntes", "transferencias_correntes", cd, cdp, media_nac, is_collapsible=True)
     if transferencias_item:
-        uniao = _prepare_revenue_item("Transferências da União", "tranferencias_uniao", cs, csp, is_collapsible=True)
+        uniao = _prepare_revenue_item("Transferências da União", "tranferencias_uniao", cs, csp, media_nac, is_collapsible=True)
         if uniao:
             uniao['children'].extend(filter(None, [
                 _prepare_revenue_item("Cota-Parte do FPM", "transferencia_uniao_fpm", cme, cmep),
@@ -114,30 +164,30 @@ def municipio_detalhe_view(request, municipio_id):
             ]))
             transferencias_item['children'].append(uniao)
 
-        estados = _prepare_revenue_item("Transferências dos Estados", "tranferencias_estados", cs, csp, is_collapsible=True)
+        estados = _prepare_revenue_item("Transferências dos Estados", "tranferencias_estados", cs, csp, media_nac, is_collapsible=True)
         if estados:
             estados['children'].extend(filter(None, [
-                _prepare_revenue_item("Cota-Parte do ICMS", "transferencia_estado_icms", cme, cmep),
-                _prepare_revenue_item("Cota-Parte do IPVA", "transferencia_estado_ipva", cme, cmep),
-                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", cme, cmep),
-                _prepare_revenue_item("Recursos do SUS", "transferencia_estado_sus", cme, cmep),
-                _prepare_revenue_item("Assistência Social", "transferencia_estado_assistencia", cme, cmep),
-                _prepare_revenue_item("Outras Transferências dos Estados", "outras_transferencias_estado", cme, cmep),
+                _prepare_revenue_item("Cota-Parte do ICMS", "transferencia_estado_icms", cme, cmep, media_nac),
+                _prepare_revenue_item("Cota-Parte do IPVA", "transferencia_estado_ipva", cme, cmep, media_nac),
+                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", cme, cmep, media_nac),
+                _prepare_revenue_item("Recursos do SUS", "transferencia_estado_sus", cme, cmep, media_nac),
+                _prepare_revenue_item("Assistência Social", "transferencia_estado_assistencia", cme, cmep, media_nac),
+                _prepare_revenue_item("Outras Transferências dos Estados", "outras_transferencias_estado", cme, cmep, media_nac),
             ]))
             transferencias_item['children'].append(estados)
 
-        transferencias_item['children'].append(_prepare_revenue_item("Outras Transferências", "outras_tranferencias", cs, csp))
+        transferencias_item['children'].append(_prepare_revenue_item("Outras Transferências", "outras_tranferencias", cs, csp, media_nac))
         revenue_tree.append(transferencias_item)
     
     # 4. Outras Receitas Correntes
-    outras_receitas_item = _prepare_revenue_item("Outras Receitas Correntes", "outras_receita", cd, cdp, is_collapsible=True)
+    outras_receitas_item = _prepare_revenue_item("Outras Receitas Correntes", "outras_receita", cd, cdp, media_nac, is_collapsible=True)
     if outras_receitas_item:
         outras_receitas_item['children'].extend(filter(None, [
-            _prepare_revenue_item("Receita Patrimonial", "receita_patrimonial", cs, csp),
-            _prepare_revenue_item("Receita Agropecuária", "receita_agropecuaria", cs, csp),
-            _prepare_revenue_item("Receita Industrial", "receita_industrial", cs, csp),
-            _prepare_revenue_item("Receita de Serviços", "receita_servicos", cs, csp),
-            _prepare_revenue_item("Outras Receitas", "outras_receitas", cs, csp),
+            _prepare_revenue_item("Receita Patrimonial", "receita_patrimonial", cs, csp, media_nac),
+            _prepare_revenue_item("Receita Agropecuária", "receita_agropecuaria", cs, csp, media_nac),
+            _prepare_revenue_item("Receita Industrial", "receita_industrial", cs, csp, media_nac),
+            _prepare_revenue_item("Receita de Serviços", "receita_servicos", cs, csp, media_nac),
+            _prepare_revenue_item("Outras Receitas", "outras_receitas", cs, csp, media_nac),
         ]))
         revenue_tree.append(outras_receitas_item)
 
@@ -323,8 +373,22 @@ def municipio_detalhe_view(request, municipio_id):
         )
         .order_by("cod_ibge")
     )
-    data = list(qs)  # ~5.570 linhas é tranquilo
+    data = list(qs) 
 
+    # Calcula a variacao percentual da populacao e da receita corrente per capita
+    delta_populacao = 0.0
+    if municipio.populacao00 and municipio.populacao24 and municipio.populacao00 > 0:
+        delta_populacao = ((municipio.populacao24 - municipio.populacao00) / municipio.populacao00) * 100
+
+    delta_rc_pc = 0.0
+    if municipio.rc_00_pc and municipio.rc_24_pc and municipio.rc_00_pc > 0:
+        delta_rc_pc = ((municipio.rc_24_pc - municipio.rc_00_pc) / municipio.rc_00_pc) * 100
+
+    evolucao_historica = {
+        'delta_populacao': round(delta_populacao, 2),
+        'delta_rc_pc': round(delta_rc_pc, 2),
+        'has_2000_data': bool(municipio.populacao00 or municipio.rc_00_pc)
+    }
 
     context = {
         'municipio': municipio,
@@ -332,10 +396,11 @@ def municipio_detalhe_view(request, municipio_id):
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
         'data': data,
+        'evolucao_historica': evolucao_historica, 
     }
 
-    
     return render(request, 'detail/detalhe_municipio.html', context)
+
 
 
 
@@ -655,6 +720,10 @@ def conjunto_detalhe_view(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
@@ -1510,6 +1579,11 @@ def conjunto_fiscal_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
@@ -2084,6 +2158,11 @@ def conjunto_chart_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
@@ -2248,18 +2327,11 @@ def conjunto_data_api(request):
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
-    if regiao_filtro and regiao_filtro != 'todos':
-        queryset = queryset.filter(regiao=regiao_filtro)
-    if uf_filtro and uf_filtro != 'todos':
-        queryset = queryset.filter(uf=uf_filtro)
-    if rm_filtro and rm_filtro != 'todos':
-        queryset = queryset.filter(rm__nome=rm_filtro)
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
             queryset = queryset.filter(populacao24__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
             queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        # ... (adicione os outros `elif` para as faixas de porte como na view `conjunto_detalhe_view`)
         elif porte_filtro == '10 mil a 20 mil':
             queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
@@ -2272,6 +2344,11 @@ def conjunto_data_api(request):
             queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
             queryset = queryset.filter(populacao24__gte=500000)
+        # Novas regras adicionadas:
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
 
 
     if subgroup_filter and subgroup_filter != "todos":

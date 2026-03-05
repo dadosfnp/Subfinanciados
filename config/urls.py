@@ -11,10 +11,12 @@ from ifem import views as ifem_views
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+
     # --- PÁGINAS PRINCIPAIS ---
     path('', home_views.index, name='index'),
     path('analise/', home_views.home, name='home'),
     path('mapa/', map_views.map, name='mapa'),
+    path('selecionar-municipio/', detail_views.selecionar_municipio_view, name='selecionar_municipio'), # NOVA ROTA AQUI
     path('analise-municipal/', detail_views.conjunto_detalhe_view, name='analise_municipal'),
     path('municipio/<str:municipio_id>/', detail_views.municipio_detalhe_view, name='municipio_detalhe'),
 

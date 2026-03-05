@@ -1,0 +1,29 @@
+{% extends "global/head.html" %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'detail/css/selecionar_municipio.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<section class="selection-page-wrapper">
+    <div class="search-container-center">
+        
+        <div class="municipio-search-widget">
+            <h4 class="widget-title">Selecione um município</h4>
+            
+            <div class="search-input-container">
+                <input type="text" id="muni-search-input" placeholder="Digite o nome da sua cidade..." autocomplete="off">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <div id="muni-autocomplete-list" class="autocomplete-items hidden"></div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script src="{% static 'detail/js/selecionar_municipio.js' %}" defer></script>
+{% endblock content %}

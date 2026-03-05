@@ -1,128 +1,327 @@
 {% extends "global/head.html" %}
 {% load static %}
+{% load currency_filters %}
 
 {% block extra_head %}
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalhes de {{ municipio.name_muni_uf }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'detail/css/style_mun.css' %}">
+    <title>Detalhes de {{ municipio.name_muni_uf }} | IFEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    
+    <link rel="stylesheet" href="{% static 'detail/css/style_mun.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
-  {% load currency_filters %}
-
-  <div class="container mx-auto p-4 md:p-8">
-    <header class="flex flex-col md:flex-row justify-between items-start mb-8">
-      <div>
-        <h1 class="text-3xl md:text-5xl font-bold flex items-center">
-          {{ municipio.name_muni_uf }}
-          <div id="header-quintil-indicator-container" class="ranking-indicator-container ml-4">
-            <div class="ranking-indicator"></div>
-            <div class="ranking-tooltip"></div>
-          </div>
-        </h1>
-        <p class="text-lg md:text-2xl text-gray-500">Detalhamento da Receita Corrente</p>
-      </div>
+<main class="detail-content">
+    <header class="mb-12">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Análise do Município</span>
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            
+            <h1 class="hero-title mb-0">{{ municipio.name_muni_uf }}</h1>
+            
+            <div class="flex flex-col md:items-end shrink-0">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione a base de cálculo</span>
+                
+                <div id="global-base-toggle" class="segmented inline-flex p-1">
+                    <button class="segmented-option active text-sm px-6 py-2" type="button" data-base="nacional">Nacional</button>
+                    <button class="segmented-option text-sm px-6 py-2" type="button" data-base="estadual">Estadual</button>
+                    <button class="segmented-option text-sm px-6 py-2" type="button" data-base="faixa">Por Faixa</button>
+                </div>
+            </div>
+            
+        </div>
     </header>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="kpi-card p-6 rounded-xl">
-        <p class="text-xl font-medium text-gray-500">População</p>
-        <p class="text-3xl font-bold mt-2">{{ municipio.populacao24|br_integer }}</p>
-      </div>
-      <div class="kpi-card p-6 rounded-xl">
-        <p class="text-xl font-medium text-gray-500">Receita Corrente</p>
-        <p class="text-3xl font-bold mt-2">{{ municipio.rc_2024|br_float }}</p>
-      </div>
-      <div class="kpi-card p-6 rounded-xl">
-        <p class="text-xl font-medium text-gray-500">Receita per capita</p>
-        <p class="text-3xl font-bold mt-2">{{ municipio.rc_24_pc|br_float }}</p>
-      </div>
-      <div class="kpi-card p-6 rounded-xl">
-        <select id="ranking-select" class="w-full text-xl font-medium text-gray-500 border-0 focus:ring-0 p-0 mb-2 bg-transparent">
-          <option value="nacional">Ranking Nacional</option>
-          <option value="estadual">Ranking Estadual</option>
-          <option value="faixa">Ranking por Faixa Pop.</option>
-        </select>
-        <p id="ranking-value" class="text-3xl font-bold">{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}</p>
-      </div>
+<section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12">
+    <article class="kpi-card relative">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <h3 class="kpi-label mb-0">População (2024)</h3>
+        </div>
+
+        <div class="flex flex-col gap-5 mt-auto">
+            <div>
+                <span class="kpi-label mb-2">Total Habitantes</span>
+                <div class="kpi-hero-value" title="{{ municipio.populacao24|br_integer }}">{{ municipio.populacao24|br_integer }}</div>
+                <div class="kpi-hero-trend {% if evolucao_historica.delta_populacao > 0 %}positive{% else %}negative{% endif %}">
+                    {% if evolucao_historica.delta_populacao > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_populacao }}% 
+                    <span class="kpi-hero-trend-muted">desde 2000</span>
+                </div>
+            </div>
+
+            <div class="h-px w-full bg-slate-100"></div>
+
+            <div>
+                <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
+                <div class="kpi-pop-rank flex items-baseline"
+                     data-pop-nacional="{{ municipio.populacao24_rank_nacional|br_integer }} / {{ municipio.populacao24_total_nacional|br_integer }}"
+                     data-pop-estadual="{{ municipio.populacao24_rank_estadual|br_integer }} / {{ municipio.populacao24_total_estadual|br_integer }}"
+                     data-pop-faixa="{{ municipio.populacao24_rank_faixa|br_integer }} / {{ municipio.populacao24_total_faixa|br_integer }}">
+                    <span class="kpi-hero-value">{{ municipio.populacao24_rank_nacional|br_integer }}º</span>
+                    <span class="kpi-ranking-base">de {{ municipio.populacao24_total_nacional|br_integer }}</span>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    {% with p=municipio.percentil24_n %}
+    <article class="kpi-card relative border-b-[5px] {% if p <= 20 %}rank-card-1{% elif p <= 40 %}rank-card-2{% elif p <= 60 %}rank-card-3{% elif p <= 80 %}rank-card-4{% else %}rank-card-5{% endif %}">
+        
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 rounded-lg shrink-0 rank-bg-icon">
+                    <svg class="w-5 h-5 rank-text-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="kpi-label mb-0 rank-text-icon">Receita</h3>
+            </div>
+            
+            <div class="bg-slate-100 p-1 rounded-lg flex items-center text-[9px] font-bold uppercase tracking-wider">
+                <button type="button" class="kpi-rc-toggle active px-3 py-1 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
+                <button type="button" class="kpi-rc-toggle px-3 py-1 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Absoluta</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-5 mt-auto">
+            <div>
+                <span class="kpi-label mb-2" id="kpi-rc-label">Valor por Habitante</span>
+                
+                <div class="kpi-hero-value" id="kpi-rc-value"
+                     data-val-pc="R$ {{ municipio.rc_24_pc|br_float }}"
+                     data-val-tot="R$ {{ municipio.rc_2024|br_float }}">
+                    R$ {{ municipio.rc_24_pc|br_float }}
+                </div>
+                
+                <div class="kpi-hero-trend {% if evolucao_historica.delta_rc_pc > 0 %}positive{% else %}negative{% endif %}">
+                    {% if evolucao_historica.delta_rc_pc > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_rc_pc }}% 
+                    <span class="kpi-hero-trend-muted">desde 2000</span>
+                </div>
+            </div>
+
+            <div class="h-px w-full bg-slate-100"></div>
+
+            <div>
+                <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
+                <div class="kpi-rev-rank flex items-baseline"
+                     data-rev-nacional="{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}"
+                     data-rev-estadual="{{ municipio.rank_estadual|br_integer }} / {{ municipio.total_estadual|br_integer }}"
+                     data-rev-faixa="{{ municipio.rank_faixa|br_integer }} / {{ municipio.total_faixa|br_integer }}">
+                    <span class="kpi-hero-value">{{ municipio.rank_nacional|br_integer }}º</span>
+                    <span class="kpi-ranking-base">de {{ municipio.total_nacional|br_integer }}</span>
+                </div>
+            </div>
+        </div>
+    </article>
+    {% endwith %}
+</section>
+
+
+    <section class="dashboard-split mb-12">
+        <div>
+            <div class="section-heading">
+                <span>Estrutura de Receitas</span>
+                <div id="valor-toggle" class="segmented">
+                    <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
+                    <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
+                </div>
+            </div>
+            
+            <div class="dna-tree-wrapper" id="main-revenue-details-container">
+                {% if revenue_tree %}
+                    {% for item in revenue_tree %}
+                        {% include "detail/_revenue_item.html" with item=item level=0 %}
+                    {% endfor %}
+                {% else %}
+                    <div class="p-8 text-center text-slate-500 border border-slate-200 rounded-lg">Nenhum detalhamento encontrado.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+            <div class="flex flex-col">
+                <div class="section-heading">
+                    <span>Composição</span>
+                </div>
+                <div class="chart-card">
+                    <select id="chart-category-select" class="select-clean mb-4">
+                        <option value="main_categories">Carregando categorias...</option>
+                    </select>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <div class="section-heading">
+                    <span>Densidade Fiscal</span>
+                </div>
+                <div class="chart-card">
+                    <div style="height: 200px; position: relative;">
+                        <canvas id="densidadeReceita"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <main class="grid grid-cols-1 gap-8">
-      <section class="metric-card p-6 rounded-xl">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Detalhamento da Receita Corrente</h2>
-          <div id="valor-toggle" class="segmented">
-            <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
-            <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
-          </div>
+    <section class="mb-12">
+        <div class="section-heading mb-4">
+            <span>Síntese da Evolução (2000 - 2024)</span>
         </div>
 
-        {% if revenue_tree %}
-          <div id="main-revenue-details-container">
-            {% for item in revenue_tree %}
-              {% include "detail/_revenue_item.html" with item=item level=0 %}
-            {% endfor %}
-          </div>
+        {% if evolucao_historica.has_2000_data %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div class="lg:col-span-5 bg-[#f8fafc] rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="p-2 bg-[var(--fnp-dark-blue)] text-white rounded-lg shadow-md">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-[var(--fnp-dark-blue)] text-sm uppercase tracking-widest">Crescimento Relativo</h3>
+                    </div>
+                    
+                    <p class="text-slate-600 leading-relaxed text-base mb-8">
+                        Entre 2000 e 2024, a receita por habitante de <strong class="text-slate-800">{{ municipio.name_muni }}</strong> 
+                        {% if evolucao_historica.delta_rc_pc >= 0 %}
+                            cresceu <span class="text-emerald-600 font-black">+{{ evolucao_historica.delta_rc_pc }}%</span>,
+                        {% else %}
+                            caiu <span class="text-rose-600 font-black">{{ evolucao_historica.delta_rc_pc }}%</span>,
+                        {% endif %}
+                        enquanto a <span class="lbl-media-base">média nacional</span> variou <strong class="text-slate-800" id="val-media-rc">{{ media_nacional.delta_rc_pc|default:"11" }}%</strong>. 
+                    </br>No mesmo período, a população do município 
+                        {% if evolucao_historica.delta_populacao >= 0 %}
+                            aumentou <span class="text-emerald-600 font-black">+{{ evolucao_historica.delta_populacao }}%</span>,
+                        {% else %}
+                            encolheu <span class="text-rose-600 font-black">{{ evolucao_historica.delta_populacao }}%</span>,
+                        {% endif %}
+                        ante crescimento da <span class="lbl-media-base">média nacional</span> de <strong class="text-slate-800" id="val-media-pop">{{ media_nacional.delta_populacao|default:"15" }}%</strong>.
+                    </p>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Posição Fiscal</h4>
+                            <div id="timeline-toggle" class="segmented" style="padding: 2px; width: auto;">
+                                <button class="segmented-option active text-[10px] px-3 py-1" type="button" data-mode="quintil">Quintil</button>
+                                <button class="segmented-option text-[10px] px-3 py-1" type="button" data-mode="decil">Decil</button>
+                            </div>
+                        </div>
+
+<div class="flex items-center justify-center gap-8 py-6">
+    
+    <div class="flex flex-col items-center">
+        <span class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest">Início (2000)</span>
+        
+        <div class="ifem-tooltip-container">
+            <div class="timeline-circle-dynamic w-24 h-24 rounded-full flex flex-col items-center justify-center transition-colors duration-300" 
+                data-quintil="{{ municipio.quintil00|default:'-' }}" 
+                data-decil="{{ municipio.decil00|default:'-' }}">
+                <span class="dynamic-text text-[10px] font-bold uppercase tracking-wider opacity-90 mb-1"></span>
+                <span class="text-xl font-black">{{ municipio.percentil00_n|default:"0" }}%</span>
+            </div>
+            
+            <div class="ifem-tooltip-box">
+                Receita per capita maior que <strong>{{ municipio.percentil00_n|default:'0' }}%</strong> dos municípios brasileiros em 2000.
+            </div>
+        </div>
+    </div>
+
+    <div class="text-slate-300 px-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+
+    <div class="flex flex-col items-center">
+        <span class="text-[10px] font-bold text-[var(--fnp-dark-blue)] uppercase mb-3 tracking-widest">Atual (2024)</span>
+        
+        <div class="ifem-tooltip-container">
+            <div class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
+                data-quintil="{{ municipio.quintil24|default:'-' }}" 
+                data-decil="{{ municipio.decil24|default:'-' }}">
+                <span class="dynamic-text text-xs font-bold uppercase tracking-wider opacity-90 mb-1"></span>
+                <span class="text-3xl font-black">{{ municipio.percentil24_n|default:"0" }}%</span>
+            </div>
+
+            <div class="ifem-tooltip-box">
+                Receita per capita maior que <strong>{{ municipio.percentil24_n|default:'0' }}%</strong> dos municípios brasileiros em 2024.
+            </div>
+        </div>
+    </div>
+
+</div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Legenda dos Gráficos</span>
+                    <div class="flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-bold text-slate-500 uppercase">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#103758]"></span> {{ municipio.name_muni }} (Receita)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#EEAF19]"></span> {{ municipio.name_muni }} (População)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#cbd5e1]"></span> <span class="lbl-media-base-chart">Média Nacional</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col gap-5">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da Receita (2000-2024)</h4>
+                    <div class="flex-1 relative min-h-[160px]">
+                        <canvas id="chartReceita"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da População (2000-2024)</h4>
+                    <div class="flex-1 relative min-h-[160px]">
+                        <canvas id="chartPop"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script id="evolution-compare-data" type="application/json">
+        {
+            "nome_muni": "{{ municipio.name_muni|escapejs }}",
+            "receita": {
+                "mun": "{{ evolucao_historica.delta_rc_pc|default:'0' }}",
+                "est": "{{ media_estadual.delta_rc_pc|default:'5' }}",
+                "nac": "{{ media_nacional.delta_rc_pc|default:'11' }}",
+                "faixa": "{{ media_faixa.delta_rc_pc|default:'0' }}"
+            },
+            "populacao": {
+                "mun": "{{ evolucao_historica.delta_populacao|default:'0' }}",
+                "est": "{{ media_estadual.delta_populacao|default:'8' }}",
+                "nac": "{{ media_nacional.delta_populacao|default:'15' }}",
+                "faixa": "{{ media_faixa.delta_populacao|default:'0' }}"
+            }
+        }
+        </script>
         {% else %}
-          <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
-        {% endif %}
-      </section>
-
-      <section class="metric-card p-6 rounded-xl mt-8">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Composição da Receita Per Capita</h2>
-          <div class="flex gap-2 items-center">
-            <select id="chart-category-select" class="px-3 py-1.5 text-sm border rounded-lg">
-              <option value="main_categories">Categorias Principais</option>
-              <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
-              <option value="imposto">Impostos</option>
-              <option value="taxas">Taxas</option>
-              <option value="imposto">Impostos</option>
-              <option value="contribuicoes_melhoria">Contribuições de Melhoria</option>
-              <option value="contribuicoes">Contribuições</option>
-              <option value="transferencias_correntes">Transferências Correntes</option>
-              <option value="transferencias_uniao">Transferências da União</option>
-              <option value="transferencias_estado">Transferências dos Estados</option>
-              <option value="outras_receitas">Outras Receitas</option>
-            </select>
-          </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl py-12 text-center text-slate-400 font-medium shadow-sm">
+            Dados base do ano 2000 não encontrados para gerar o histórico comparativo.
         </div>
-          <div class="chart-section">
-            <div class="chart-slot">
-              <canvas id="myChart"></canvas>
-            </div>
-            <div class="chart-slot">
-              <canvas id="densidadeReceita"></canvas>
-            </div>
-          </div>
+        {% endif %}
+    </section>
 
-      </section>
+</main>
 
+{{ chart_data_json|json_script:"chart-data" }}
+{{ percentile_data_json|json_script:"percentile-data" }}
+{{ data|json_script:"mun-data" }}
 
-
-
-    </main>
-  </div>
-
-  {{ chart_data_json|json_script:"chart-data" }}
-  {{ percentile_data_json|json_script:"percentile-data" }}
-  {{ data|json_script:"mun-data" }}
-  <script id="municipio-data" type="application/json">
-  {
+<script id="municipio-data" type="application/json">
+{
     "rank_nacional": {{ municipio.rank_nacional|default_if_none:"null" }},
     "total_nacional": {{ municipio.total_nacional|default_if_none:"null" }},
     "rank_estadual": {{ municipio.rank_estadual|default_if_none:"null" }},
     "total_estadual": {{ municipio.total_estadual|default_if_none:"null" }},
     "rank_faixa": {{ municipio.rank_faixa|default_if_none:"null" }},
     "total_faixa": {{ municipio.total_faixa|default_if_none:"null" }}
-  }
-  </script>
+}
+</script>
 
-  <script src="{% static 'detail/js/script_mun.js' %}"></script>
-  <script src="{% static 'detail/js/script_density_mun.js' %}"></script>
+<script src="{% static 'detail/js/script_mun.js' %}"></script>
+<script src="{% static 'detail/js/script_density_mun.js' %}"></script>
+
 {% endblock content %}

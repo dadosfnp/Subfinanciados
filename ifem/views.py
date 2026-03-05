@@ -24,6 +24,7 @@ def busca_municipio_simples_api(request):
     results = []
     for m in qs:
             results.append({
+                'id': m.cod_ibge,
                 'nome': m.name_muni_uf,
                 'rc_pc': float(m.rc_24_pc or 0),
                 'quintil': str(m.quintil24) if m.quintil24 else "",

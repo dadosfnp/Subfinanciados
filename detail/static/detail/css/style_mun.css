@@ -1,36 +1,37 @@
-/* =========================================================
-   DETAIL (Município) 
-   ========================================================= */
+/* ==========================================================================
+   IFEM: DETALHE DO MUNICÍPIO (EDITORIAL DATA STYLE)
+   ========================================================================== */
 
-/* largura confortável do conteúdo principal */
-.container { max-width: 1200px; }
-
-/* Cartões no padrão do tema */
-.kpi-card,
-.metric-card{
-  background:#fff;
-  border-radius: var(--card-radius, 8px);
-  box-shadow:0 4px 8px rgba(0,0,0,.08);
-  border:1px solid transparent;
+/* --- 1. VARIÁVEIS LOCAIS (Design System IFEM) --- */
+:root {
+    --fnp-dark-blue: #103758;
+    --fnp-blue: #194685;
+    --fnp-yellow: #eeaf19;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-800: #1e293b;
+    --card-radius: 12px;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-/* Títulos das seções */
-.metric-card h2{ color:var(--fnp-blue, #194685); }
+/* --- CORES DE TEXTO PARA OS QUINTIS (Ranking) --- */
+.text-quintil-1 { color: #d73027 !important; }
+.text-quintil-2 { color: #fc8d59 !important; }
+.text-quintil-3 { color: #fee08b !important; } /* Amarelo pode ficar claro no branco, ajuste se precisar */
+.text-quintil-4 { color: #91cf60 !important; }
+.text-quintil-5 { color: #1a9850 !important; }
 
-/* KPIs — rótulo discreto e valor em destaque */
-.kpi-card p:first-child{ color:#6b7280; margin:0; }
-.kpi-card .text-3xl,
-.kpi-card .text-4xl{ color:var(--fnp-blue, #194685); line-height:1.15; }
-
-/* Botão do valor (per capita / reais) apenas com polimento */
-#valor-toggle-btn{ box-shadow:0 1px 2px rgba(0,0,0,.06); }
-
-/* ----------- Detalhamento (árvore) ----------- */
-.metric-detail-row{
-  display:flex;
-  align-items:center;
-  padding:.5rem 0;
-  border-bottom:1px solid #f3f4f6;
+.ranking-header-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-width: 220px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    text-align: right;
 }
 .metric-detail-row:last-child{ border-bottom:none; }
 
@@ -84,142 +85,590 @@
   pointer-events: none;          /* não intercepta o hover */
 }
 
-/* mostra o tooltip no hover */
-.ranking-indicator-container:hover .ranking-tooltip{
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* setinha decorativa opcional */
-.ranking-indicator-container{
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-}
-
-.ranking-indicator-container:hover .ranking-tooltip::before{
-  content: "";
-  position: absolute;
-  top: -6px;                     /* setinha encostando no quadradinho */
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 6px;
-  border-style: solid;
-  border-color: transparent transparent rgba(51,51,51,.95) transparent;
-}
-
-
-/* ----------- Gráfico ----------- */
-.metric-card canvas{
-  display:block;           /* evita “gaps” inline */
-  max-width:100%;
-}
-
-/* Responsivo leve */
-@media (max-width: 767.98px){
-  .kpi-card, .metric-card { border-radius:10px; }
-}
-
-/* Toggle segmentado — padrão */
-.segmented {
-  display: inline-flex; 
-  align-items: center; 
-  gap: 0;                   /* Remove o espaço entre os botões para ficarem colados */
-  background: #fff;         /* Fundo branco para a parte inativa */
-  border-radius: 6px;       /* Borda com arredondamento suave (quadrado arredondado) */
-  padding: 0;               /* Remove o preenchimento interno */
-  border: 1px solid var(--fnp-blue, #194685); /* Borda azul em volta de tudo */
-  overflow: hidden;         /* Garante que o fundo do botão ativo não vaze pelas bordas redondas */
-}
-
-.segmented .segmented-option {
-  border: 0; 
-  background: transparent; 
-  cursor: pointer;
-  padding: 0.35rem 1rem; 
-  border-radius: 0;         /* Zera o border-radius individual (o contêiner já cuida disso) */
-  font-weight: 600; 
-  color: var(--fnp-blue, #194685); 
-  transition: all 0.15s ease;
-}
-
-.segmented .segmented-option.active {
-  background: var(--fnp-blue, #194685); 
-  color: #fff;
-  box-shadow: none;         /* Retirada a sombra antiga para ficar fiel à nova imagem */
-}
-
-/* Opcional: Efeito de foco para acessibilidade */
-.segmented .segmented-option:focus { 
-  outline: none; 
-  background: rgba(25, 70, 133, 0.1); /* Leve feedback visual ao focar sem quebrar o layout */
-}
-.segmented .segmented-option.active:focus {
-  background: var(--fnp-blue, #194685); 
-}
-
-/* ===== Scroll fix (página de detalhe) ===== */
-:root{
-  /* ajuste se o seu header for fixo e tiver outra altura */
-  --header-height: 64px;
-}
-
-/* fallback: garante que o documento pode rolar se nada mais pegar */
+/* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */
+/* Garante o fundo branco absoluto e libera a rolagem natural nativa */
 html, body {
-  min-height: 100%;
-  overflow-y: auto;
+    background-color: #ffffff !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    font-family: 'Inter', sans-serif;
+    color: var(--slate-800);
 }
 
-/* contêiner com rolagem própria (substitui o wrapper padrão das páginas com sidebar) */
-.detail-scroll{
-  position: relative;
-  /* ocupa a janela menos a barra do cabeçalho fixo */
-  height: calc(100vh - var(--header-height));
-  max-height: calc(100vh - var(--header-height));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* rolagem suave em iOS */
-  padding-bottom: 1.5rem;            /* respiro pra última linha não colar na borda */
+.detail-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
 }
 
-/* quando o navegador suportar 100dvh (corrige barras de endereço móveis) */
-@supports (height: 100dvh) {
-  .detail-scroll{
-    height: calc(100dvh - var(--header-height));
-    max-height: calc(100dvh - var(--header-height));
-  }
+@media (min-width: 768px) {
+    .detail-content {
+        padding: 3rem 1.5rem;
+    }
 }
 
-/* garante que tooltips possam “sair” do cartão sem serem cortados */
-.metric-card { overflow: visible; position: relative; }
-.metric-detail-row { overflow: visible; }
-
-/* ============================GRÁFICOS (Composição + Densidade)============================ */
-
-.metric-card .chart-section{
-  width: 100%;
-  margin-top: 1rem;
-  padding-top: .75rem;
-  border-top: 1px solid #e5e7eb;   /* linha entre título e gráficos */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;                        /* espaço entre os dois gráficos */
+/* --- 3. TIPOGRAFIA EDITORIAL --- */
+.hero-title {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    color: var(--fnp-dark-blue);
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
 }
 
-/* cada gráfico tem seu PRÓPRIO PAI com altura fixa */
-.metric-card .chart-slot{
-  height: 260px;                    /* ajuste fino aqui */
-  position: relative;               /* Chart.js mede este pai */
-  overflow: hidden;                 /* impede vazar do cartão */
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
+.hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 500;
+    color: var(--slate-500);
 }
 
-/* canvases ocupam o slot por completo */
-.metric-card .chart-slot > canvas{
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
+.section-heading {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue);
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 40px;
+}
+
+@media (min-width: 768px) {
+    .section-heading {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+/* --- 4. BENTO CARDS (KPIs) --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+    align-items: stretch;
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card.highlight {
+    background: var(--fnp-dark-blue);
+    border-color: var(--fnp-dark-blue);
+}
+
+.kpi-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.kpi-card.highlight .kpi-label { color: #cbd5e1; }
+
+.kpi-value {
+    font-size: clamp(1.75rem, 3vw, 2rem);
+    font-weight: 900;
+    color: var(--fnp-blue);
+    line-height: 1;
+    margin-top: 0.5rem;
+}
+
+.kpi-card.highlight .kpi-value { color: #ffffff; }
+
+/* --- Modificadores para os Cards Hero Principais --- */
+.kpi-hero-value {
+    font-size: clamp(2rem, 4vw, 3rem); /* Equivalente ao text-5xl/6xl responsivo */
+    font-weight: 900;
+    color: var(--fnp-dark-blue, #103758);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+}
+
+.kpi-hero-trend {
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kpi-hero-trend.positive { color: #059669; }
+.kpi-hero-trend.negative { color: #e11d48; }
+.kpi-hero-trend-muted { color: #94a3b8; font-weight: 500; }
+
+.kpi-ranking-highlight {
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-weight: 900;
+    color: var(--fnp-dark-blue, #103758);
+    line-height: 1;
+}
+
+.kpi-ranking-base {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    margin-left: 0.5rem;
+}
+
+/* --- 5. TIMELINE STORYTELLING (Banner de Evolução) --- */
+.story-banner {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .story-banner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2rem;
+    }
+}
+
+/* Container flexível para a linha do tempo */
+.timeline-visual {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Mobile: empilhado */
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .timeline-visual {
+        flex-direction: row; /* Desktop: lado a lado */
+        gap: 0;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+}
+
+.timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.timeline-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 900;
+    background: #ffffff;
+    border: 3px solid var(--slate-200);
+    color: var(--slate-400);
+    transition: all 0.3s ease;
+}
+
+.timeline-circle.active {
+    background: var(--fnp-blue);
+    border-color: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(25, 70, 133, 0.2);
+    transform: scale(1.1);
+}
+
+/* Trava absoluta do SVG da seta para não estourar */
+.timeline-arrow {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px;
+    min-height: 32px;
+    color: var(--slate-200);
+    flex-shrink: 0;
+    transform: rotate(90deg); /* Mobile: aponta para baixo */
+}
+
+.timeline-arrow svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .timeline-arrow {
+        transform: rotate(0deg); /* Desktop: aponta para a direita */
+        margin: 0 1rem;
+    }
+}
+
+.impact-panel {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-100);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 180px;
+    text-align: center;
+}
+
+@media (min-width: 1024px) {
+    .impact-panel { text-align: left; }
+}
+
+/* --- 6. DNA FINANCEIRO (Árvore e Gráficos) --- */
+.dashboard-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-split {
+        grid-template-columns: 1.2fr 1fr;
+    }
+}
+
+/* Árvore de Receitas */
+.dna-tree-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.revenue-item-wrapper {
+    border-bottom: 1px solid var(--slate-100);
+}
+
+.revenue-item-wrapper:last-child {
+    border-bottom: none;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+    .tree-row { padding: 14px 20px; }
+}
+
+.tree-row:hover { background-color: var(--slate-50); }
+
+/* Níveis da Árvore (Indentação e Pesos) */
+.tree-row.level-0 { font-weight: 700; color: var(--fnp-dark-blue); }
+.tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
+.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 0.95rem; }
+.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 0.9rem; }
+
+@media (min-width: 768px) {
+    .tree-row.level-1 { padding-left: 40px; }
+    .tree-row.level-2 { padding-left: 60px; }
+    .tree-row.level-3 { padding-left: 80px; }
+}
+
+/* Seta Animada do Accordion */
+.tree-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--slate-400);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.tree-row.open .tree-chevron {
+    transform: rotate(90deg);
+    color: var(--fnp-dark-blue);
+}
+
+.tree-value {
+    text-align: right;
+    min-width: 70px;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+/* --- 7. INDICADORES DE RANKING E TOOLTIPS --- */
+.ranking-indicator-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+}
+
+.ranking-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+/* Paleta Quintis IFEM */
+.quintil-1 { background-color: #d73027; }
+.quintil-2 { background-color: #fc8d59; }
+.quintil-3 { background-color: #fee08b; }
+.quintil-4 { background-color: #91cf60; }
+.quintil-5 { background-color: #1a9850; }
+
+.ranking-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--slate-800);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--slate-800) transparent transparent transparent;
+}
+
+/* Ajuste do Tooltip para mobile (evita vazar da tela) */
+@media (max-width: 768px) {
+    .ranking-tooltip {
+        left: 0;
+        transform: translateX(0) translateY(10px);
+    }
+    .ranking-tooltip::after {
+        left: 10px;
+    }
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(0) translateY(-6px);
+    }
+}
+
+@media (min-width: 769px) {
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(-50%) translateY(-6px);
+    }
+}
+
+/* --- 8. GRÁFICOS E CONTROLES --- */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.25rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.select-clean {
+    width: 100%;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fnp-dark-blue);
+    background-color: var(--slate-50);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select-clean:focus {
+    border-color: var(--fnp-blue);
+}
+
+/* Segmented Control (Toggle) */
+.segmented {
+    display: inline-flex;
+    background: var(--slate-100);
+    padding: 6px;
+    border-radius: 14px;
+    width: 100%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+@media (min-width: 768px) {
+    .segmented { width: auto; }
+}
+
+.segmented-option {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--slate-500);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.segmented-option:hover:not(.active) {
+    color: var(--fnp-blue);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.segmented-option.active {
+    background: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(25, 70, 133, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --- AJUSTES DE POSICIONAMENTO DO RANKING --- */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-top-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    text-align: right;
+}
+
+.rank-display-bold {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--fnp-dark-blue);
+    line-height: 1;
+    margin-top: 0.25rem;
+}
+
+.rank-display-total {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    font-weight: 700;
+}
+
+.rank-card-1 { border-bottom-color: #A81C21; }
+.rank-card-1 .rank-bg-icon { background-color: #A81C2120; }
+.rank-card-1 .rank-text-icon { color: #A81C21; }
+
+.rank-card-2 { border-bottom-color: #E47326; }
+.rank-card-2 .rank-bg-icon { background-color: #E4732620; }
+.rank-card-2 .rank-text-icon { color: #E47326; }
+
+.rank-card-3 { border-bottom-color: #F4D01D; }
+.rank-card-3 .rank-bg-icon { background-color: #F4D01D20; }
+.rank-card-3 .rank-text-icon { color: #F4D01D; }
+
+.rank-card-4 { border-bottom-color: #6AC074; }
+.rank-card-4 .rank-bg-icon { background-color: #6AC07420; }
+.rank-card-4 .rank-text-icon { color: #6AC074; }
+
+.rank-card-5 { border-bottom-color: #1C9148; }
+.rank-card-5 .rank-bg-icon { background-color: #1C914820; }
+.rank-card-5 .rank-text-icon { color: #1C9148; }
+
+
+/* --- TOOLTIP CUSTOMIZADO IFEM (EVOLUÇÃO) --- */
+.ifem-tooltip-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    cursor: help;
+}
+
+.ifem-tooltip-box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Posição inicial para a animação */
+    margin-bottom: 12px;
+    width: 220px;
+    background-color: var(--fnp-dark-blue);
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(16, 55, 88, 0.3);
+    
+    /* Escondido por padrão, à prova de bugs */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* Animação suave */
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+/* Setinha do balão */
+.ifem-tooltip-box::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--fnp-dark-blue) transparent transparent transparent;
+}
+
+/* O gatilho do hover */
+.ifem-tooltip-container:hover .ifem-tooltip-box {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -8px); /* Sobe suavemente */
+}
+
+.ifem-tooltip-box strong {
+    font-weight: 900;
+    font-size: 13px;
 }

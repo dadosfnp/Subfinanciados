@@ -1,331 +1,870 @@
 {% extends "global/head.html" %}
+
 {% load static %}
+
+
 
 {% block extra_head %}
 
+
+
   <!-- Bootstrap (garante componentes e setas dos selects) -->
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
+
+
   <!-- Ícones / Fontes -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+
+
   <!-- CSS Global -->
+
   <link rel="stylesheet" href="{% static 'global/css/style.css' %}">
 
+
+
   <!-- CSS da Home -->
+
   <link rel="stylesheet" href="{% static 'home/css/style.css' %}">
 
+
+
   <!-- Chart.js e plugin de datalabels -->
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
+
+
   <!-- Dependências do modal de busca -->
+
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script defer src="{% static 'global/js/tooltips-init.js' %}"></script>
+
   <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+
   <script defer src="{% static 'global/js/search-modal.js' %}"></script>
 
+
+
   
-
-
 
 {% endblock extra_head %}
 
+
+
 {% block content %}
 
+
+
 <div class="content-wrapper">
+
   
+
   <style>
-    /* ========== Ajustes Mobile ========== */
-    @media (max-width: 991.98px) {
-      #filtrosOffcanvas { 
-        height: 80vh !important; 
-        background-color: #ffffff !important; 
-      }
+
+    /* Fundo branco na página inteira (Mobile e Desktop) */
+
+    html, body, .content-wrapper, .dashboard-content {
+
+      background-color: #ffffff !important;
+
     }
-    
-    /* ========== Ajustes Desktop (Análise Gráfica) ========== */
-    @media (min-width: 992px) {
-      /* Obriga a barra e o conteúdo dos gráficos a terem exatamente a mesma altura */
-      .content-wrapper {
-        display: flex !important;
-        align-items: stretch !important; 
-      }
-      
-      /* Anula as travas do Bootstrap e força a barra a esticar até o fim da página */
+
+
+
+    /* ========== Ajustes Mobile ========== */
+
+    @media (max-width: 991.98px) {
+
       #filtrosOffcanvas { 
-        height: auto !important; 
-        min-height: 100% !important; 
-        overflow: visible !important; /* Mata a barra de rolagem da estrutura */
-        background-color: #ffffff !important; /* Pinta de branco até o rodapé */
-        border-right: 1px solid #dee2e6;
+
+        height: 80vh !important; 
+
+        background-color: #ffffff !important;   
+
       }
 
-      /* Mata a barra de rolagem interna específica do corpo dos filtros */
-      #filtrosOffcanvas .offcanvas-body { 
-        overflow: visible !important; 
-        padding-bottom: 2rem !important; 
+      /* Remove qualquer tentativa do Bootstrap de colocar a película escura */
+
+      .offcanvas-backdrop { 
+
+        display: none !important; 
+
       }
+
     }
+
+    /* ========== Ajustes Desktop (Análise Gráfica) ========== */
+
+    @media (min-width: 992px) {
+
+      .content-wrapper {
+
+        display: flex !important;
+
+        align-items: stretch !important; 
+
+      }
+
+      
+
+      #filtrosOffcanvas { 
+
+        height: auto !important; 
+
+        min-height: 100% !important; 
+
+        overflow: visible !important; 
+
+        background-color: #ffffff !important; 
+
+        border-right: 1px solid #dee2e6;
+
+      }
+
+
+
+      #filtrosOffcanvas .offcanvas-body { 
+
+        overflow: visible !important; 
+
+        padding-bottom: 2rem !important; 
+
+      }
+
+    }
+
+
+
+    /* ========== Padronização Modal de Busca (Fundo Branco) ========== */
+
+    #search-modal .modal-content,
+
+    #search-modal .modal-header,
+
+    #search-modal .modal-body {
+
+      background-color: #ffffff !important;
+
+    }
+
+    #search-modal .list-group-item {
+
+      background-color: #ffffff !important;
+
+      color: #333333 !important;
+
+      border-bottom: 1px solid #e9ecef !important;
+
+    }
+
+    #search-modal .list-group-item:hover,
+
+    #search-modal .list-group-item.active {
+
+      background-color: #f0f4f8 !important; 
+
+      color: #103758 !important;
+
+    }
+
+    #search-input {
+
+      background-color: #ffffff !important;
+
+      color: #333333 !important;
+
+      border: 1px solid #ced4da !important;
+
+    }
+
+    /* RESPONSIVIDADE DOS BOTÕES E TÍTULOS DO GRÁFICO (GARANTIA APENAS MOBILE) */
+      @media (max-width: 991.98px) {
+        .responsive-chart-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 12px;
+          margin-bottom: 1.2rem !important;
+        }
+        .responsive-chart-header .chart-controls, 
+        .responsive-chart-header .toggle-container {
+          width: 100%;
+          display: flex;
+        }
+        .responsive-chart-header .toggle-option {
+          flex: 1; /* Faz os botões dividirem o espaço no mobile */
+          text-align: center;
+          padding: 8px 4px;
+          font-size: 0.9rem;
+        }
+        .table-card .d-flex {
+          align-items: flex-start !important;
+          gap: 8px;
+        }
+        .table-card h5 {
+          font-size: 1rem;
+          line-height: 1.4;
+        }
+        .table-card .btn-info-tooltip {
+          margin-top: 2px;
+        }
+      }
+
+      /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
+    .dropdown-menu {
+      background-color: #ffffff !important;
+      border: 1px solid #e9ecef !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; /* Sombra leve para destacar */
+    }
+    
+    .dropdown-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+    }
+    
+    .dropdown-item:hover, 
+    .dropdown-item:focus {
+      background-color: #f0f4f8 !important; /* Cor de destaque suave ao passar o dedo/mouse */
+      color: #103758 !important;
+    }
+
+    /* ========== Destaque Exclusivo: Análise Gráfica (1º Item do Menu) ========== */
+    .dropdown-menu li:nth-child(1) .dropdown-item,
+    .dropdown-menu > .dropdown-item:nth-child(1),
+    .dropdown-item[href="/analise/"] {
+      color: #103758 !important;
+      font-weight: 700 !important;
+    }
+
   </style>
 
-  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel">
+
+
+  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
+
     
+
     <div class="offcanvas-header d-lg-none border-bottom bg-white p-0" style="position: relative; height: 70px; z-index: 1055;">
+
       
+
       <div class="w-100 d-flex justify-content-center align-items-center h-100">
+
         <i class="fa-solid fa-sliders fs-5 me-2" style="color: #103758;"></i>
+
         <h5 class="offcanvas-title fw-bold mb-0 text-nowrap" id="filtrosOffcanvasLabel" style="color: #103758; font-size: 1.15rem;">
+
           Filtros de Análise
+
         </h5>
+
       </div>
 
+
+
       <button type="button" data-bs-dismiss="offcanvas" data-bs-target="#filtrosOffcanvas" aria-label="Fechar" 
+
               style="position: absolute !important; top: -12px !important; right: -12px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; border: none !important; background-color: #e2e8f0 !important; color: #103758 !important; padding: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important; cursor: pointer !important; z-index: 9999 !important; box-shadow: none !important;">
+
         <i class="fa-solid fa-xmark" style="font-size: 16px; pointer-events: none !important; margin: 0 !important; padding: 0 !important;"></i>
+
       </button>
+
       
+
     </div>
 
+
+
     <div class="offcanvas-body d-flex flex-column px-4 py-4 p-lg-0">
+
       
+
       <h4 class="d-none d-lg-block">Filtros</h4>
+
       <hr class="d-none d-lg-block">
 
+
+
       <div id="filter-groups">
+
         
+
         <div class="filter-section mb-4">
+
           <h6>Configurações de Visualização</h6>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="displayFormat" id="formatNumero" value="numero" checked>
+
             <label class="form-check-label" for="formatNumero">Número</label>
+
           </div>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="displayFormat" id="formatPorcentagem" value="porcentagem">
+
             <label class="form-check-label" for="formatPorcentagem">Porcentagem</label>
+
           </div>
+
         </div>
 
+
+
         <div class="filter-section mb-4">
+
           <div class="d-flex align-items-center mb-1">
+
             <h6 class="mb-0 me-1">Quantil</h6>
+
             <button type="button" class="btn-info-tooltip shadow-none border-0 bg-transparent p-0" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="O gráfico e a tabela mostram os municípios organizados em quintis, de acordo com sua receita per capita. <br> Primeiro, os municípios são ordenados do menor para o maior valor, depois, são divididos em cinco grupos com o mesmo número de municípios. <br>O primeiro quintil representa os 20% com menor receita per capita, e o último quintil representa os 20% com maior receita per capita.">
+
               <i class="fa-solid fa-circle-info text-secondary"></i>
+
             </button>
+
           </div>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="quantilType" id="quantilQuintil" value="quintil" checked>
+
             <label class="form-check-label" for="quantilQuintil">Quintil</label>
+
           </div>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="quantilType" id="quantilDecil" value="decil">
+
             <label class="form-check-label" for="quantilDecil">Decil</label>
+
           </div>
+
         </div>
 
+
+
         <div class="filter-section mb-4">
+
           <div class="d-flex align-items-center mb-1">
+
               <h6 class="mb-0 me-1">Modo de Cálculo</h6>
+
               <button type="button" class="btn-info-tooltip shadow-none border-0 bg-transparent p-0" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="O modo 'Total' considera todos os municípios para calcular os quintis, independentemente dos filtros aplicados. <br>O modo 'Aplicar Filtros' recalcula os quintis com base apenas nos municípios que atendem aos critérios dos filtros selecionados.">
+
                 <i class="fa-solid fa-circle-info text-secondary"></i>
+
               </button>
+
           </div>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="calculationMode" id="calcModeTotal" value="total" checked>
+
             <label class="form-check-label" for="calcModeTotal">Total (Quintis Globais)</label>
+
           </div>
+
           <div class="form-check">
+
             <input class="form-check-input" type="radio" name="calculationMode" id="calcModeFiltered" value="por_filtro">
+
             <label class="form-check-label" for="calcModeFiltered">Aplicar Filtros (Quintis Recalculados)</label>
+
           </div>
+
         </div>
 
+
+
         <div class="filter-section mb-4">
+
           <h6>Filtros Geográficos</h6>
 
           <div class="filter-group mb-2">
-            <label for="filtro-regiao" class="form-label mb-1">Região:</label>
-            <select id="filtro-regiao" class="form-select form-select-sm">
-              <option value="todos">Todas</option>
-            </select>
-          </div>
-
-          <div class="filter-group mb-2">
-            <label for="filtro-rm" class="form-label mb-1">Recorte Metropolitano:</label>
+            <label for="filtro-porte" class="form-label mb-1">Faixa Populacional:</label>
             <div class="input-group input-group-sm">
-              <select id="filtro-rm" class="form-select form-select-sm">
+              <select id="filtro-porte" class="form-select form-select-sm">
                 <option value="todos">Todos</option>
+                <option value="Até 5 mil">Até 5 mil</option>
+                <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+                <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+                <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+                <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+                <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+                <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+                <option value="Acima de 500 mil">Acima de 500 mil</option>
+                <option disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;──────────&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
+                <option value="Acima de 80 mil">Acima de 80 mil</option>
+                <option value="Abaixo de 80 mil">Abaixo de 80 mil</option>
               </select>
-              <button type="button" class="btn btn-outline-secondary" data-search-for="#filtro-rm" title="Buscar na lista">
+              <button type="button" class="btn btn-outline-secondary" data-search-for="#filtro-porte" title="Buscar na lista">
                 <i class="fa-solid fa-magnifying-glass"></i>
               </button>
             </div>
           </div>
 
           <div class="filter-group mb-2">
-            <label for="filtro-uf" class="form-label mb-1">UF:</label>
-            <div class="input-group input-group-sm">
-              <select id="filtro-uf" class="form-select form-select-sm">
-                <option value="todos">Todas</option>
-              </select>
-              <button type="button" class="btn btn-outline-secondary" data-search-for="#filtro-uf" title="Buscar na lista">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-            </div>
+
+            <label for="filtro-regiao" class="form-label mb-1">Região:</label>
+
+            <select id="filtro-regiao" class="form-select form-select-sm">
+
+              <option value="todos">Todas</option>
+
+            </select>
+
           </div>
+
+
+
+          <div class="filter-group mb-2">
+
+            <label for="filtro-rm" class="form-label mb-1">Recorte Metropolitano:</label>
+
+            <div class="input-group input-group-sm">
+
+              <select id="filtro-rm" class="form-select form-select-sm">
+
+                <option value="todos">Todos</option>
+
+              </select>
+
+              <button type="button" class="btn btn-outline-secondary" data-search-for="#filtro-rm" title="Buscar na lista">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="filter-group mb-2">
+
+            <label for="filtro-uf" class="form-label mb-1">UF:</label>
+
+            <div class="input-group input-group-sm">
+
+              <select id="filtro-uf" class="form-select form-select-sm">
+
+                <option value="todos">Todas</option>
+
+              </select>
+
+              <button type="button" class="btn btn-outline-secondary" data-search-for="#filtro-uf" title="Buscar na lista">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+
 
         </div>
+
       </div>
+
+
 
       <div class="d-grid mt-auto pt-4 pb-5 mb-4">
+
         <button id="btn-limpar-filtros" class="btn btn-secondary text-white fw-medium shadow-sm">
+
           Limpar Filtros
+
         </button>
+
       </div>
 
+
+
     </div> 
+
   </aside>
 
+
+
   <main class="dashboard-content position-relative">
+
     
+
     <button class="btn btn-fnp d-flex d-lg-none justify-content-center align-items-center rounded-circle shadow-lg position-fixed p-0" 
+
             type="button" 
+
             data-bs-toggle="offcanvas" 
+
             data-bs-target="#filtrosOffcanvas" 
+
             aria-controls="filtrosOffcanvas"
+
             style="width: 50px; height: 50px; bottom: 25px; left: 25px; z-index: 1100; opacity: 0.9;">
+
       <i class="fa-solid fa-magnifying-glass fs-5 text-white"></i>
+
     </button>
+
+
 
     <div class="summary-cards-row">
 
+
+
       <div class="summary-card">
+
         <span class="icon"><i class="fa-solid fa-map"></i></span>
+
         <div class="text-content">
+
           <h6>Total de Municípios</h6>
+
           <div class="value" id="summary-total-municipios">0 (0%)</div>
+
         </div>
+
       </div>
 
+
+
       <div class="summary-card">
+
         <span class="icon"><i class="fa-solid fa-dollar-sign"></i></span>
+
         <div class="text-content">
+
           <h6>  Média Receita Corrente Per Capita</h6>
+
           <div class="value" id="summary-media-receita">0</div>
+
         </div>
+
       </div>
 
+
+
       <div class="summary-card">
+
         <span class="icon"><i class="fa-solid fa-arrow-down-up-across-line"></i></span>
+
         <div class="text-content">
+
           <h6>Diferença % </h6>
+
           <div class="value" id="summary-diff-nacional">0%</div>
+
           <div class="sub-value" id="summary-diff-nacional-trend"></div>
+
         </div>
+
       </div>
 
+
+
       <div class="summary-card">
+
         <span class="icon"><i class="fa-solid fa-chart-line"></i></span>
+
         <div class="text-content">
+
           <h6>Coefiente de Variação</h6>
+
           <div class="value" id="summary-gini">0</div>
+
         </div>
+
       </div>
+
+
 
     </div>
+
+
 
     <div class="chart-card">
-      <div class="d-flex align-items-center justify-content-between mb-1">
+
+      <div class="d-flex align-items-center justify-content-between mb-1 responsive-chart-header">
+
         
+
         <!-- Lado esquerdo: título + tooltip -->
+
         <div class="d-flex align-items-center">
+
           <h5 class="mb-0 me-1">Distribuição da População Municipal</h5>
+
           <button type="button"
+
                   class="btn-info-tooltip"
+
                   data-bs-toggle="tooltip"
+
                   data-bs-placement="right"
+
                   data-bs-html="true"
+
                   title="O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2024 ou na comparação entre 2000 e 2024. <br>O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. <br>A lógica se repete nos demais quintis, até o último quintil, que representa os municípios com maior receita per capita.<br> Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.">
+
             <i class="fa-solid fa-circle-info text-secondary"></i>
+
           </button>
+
         </div>
+
+
 
         <!-- Lado direito: toggle -->
+
         <div class="chart-controls">
+
           <div class="toggle-container">
+
             <span class="toggle-option active" data-option="2024">2024</span>
+
             <span class="toggle-option" data-option="2000 e 2024">2000 e 2024</span>
+
           </div>
+
         </div>
+
       </div>
+
       <div class="chart-container" style="position: relative; height:400px; width:100%">
+
         <canvas id="populacaoQuintilChart"></canvas>
+
       </div>
+
     </div>
 
+
+
     <div class="table-card" id="table-card-2024">
+
       <div class="d-flex align-items-center mb-1">
+
             <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2024)</h5>
+
             <button type="button"
+
                     class="btn-info-tooltip"
+
                     data-bs-toggle="tooltip"
+
                     data-bs-placement="right"
+
                     data-bs-html="true"
+
                     title="A tabela abaixo cruza duas informações: faixas populacionais dos municípios e seus quintis de receita per capita. <br>Cada linha representa uma faixa de tamanho populacional e mostra como os municípios dessa faixa estão distribuídos entre os diferentes quintis. <br>Por exemplo, para a faixa de municípios com até 5 mil habitantes, a tabela indica quantos deles estão em cada quintil. <br>Isso permite entender se determinado grupo de municípios de certa faixa populacional tendem a estar entre os mais pobres ou mais ricos do país.">
+
               <i class="fa-solid fa-circle-info text-secondary"></i>
+
             </button>
+
       </div>
+
       <div class="table-responsive">
+
         <table class="table table-striped table-hover" id="table-2024">
+
           <thead></thead>
+
           <tbody></tbody>
+
         </table>
+
       </div>
+
     </div>
 
     <div class="table-card d-none" id="table-card-2000">
+
       <div class="d-flex align-items-center mb-1">
+
         <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2000)</h5>
+
         <button type="button"
+
               class="btn-info-tooltip"
+
               data-bs-toggle="tooltip"
+
               data-bs-placement="right"
+
               data-bs-html="true"
+
               title="A tabela abaixo cruza duas informações: faixas populacionais dos municípios e seus quintis de receita per capita. <br>Cada linha representa uma faixa de tamanho populacional e mostra como os municípios dessa faixa estão distribuídos entre os diferentes quintis. <br>Por exemplo, para a faixa de municípios com até 5 mil habitantes, a tabela indica quantos deles estão em cada quintil. <br>Isso permite entender se determinado grupo de municípios de certa faixa populacional tendem a estar entre os mais pobres ou mais ricos do país.">
+
           <i class="fa-solid fa-circle-info text-secondary"></i>
+
         </button>
+
       </div>
+
       <div class="table-responsive">
+
         <table class="table table-striped table-hover" id="table-2000">
+
           <thead></thead>
+
           <tbody></tbody>
+
         </table>
+
       </div>
+
     </div>
+
+
 
   </main>
+
 </div>
+
+
 
 <!-- Modal de busca (Command Palette) -->
+
 <div id="search-modal" class="modal fade" tabindex="-1" aria-hidden="true">
+
   <div class="modal-dialog modal-dialog-scrollable">
+
     <div class="modal-content">
+
       <div class="modal-header py-2">
+
         <input id="search-input" class="form-control" placeholder="Digite para buscar..." />
+
         <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Fechar"></button>
+
       </div>
+
       <div class="modal-body p-0">
+
         <ul id="search-list" class="list-group list-group-flush"></ul>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
 
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    const filtrosOffcanvasEl = document.getElementById('filtrosOffcanvas');
+
+    const filterGroups = document.getElementById('filter-groups');
+
+    const btnLimpar = document.getElementById('btn-limpar-filtros');
+
+    const searchModalEl = document.getElementById('search-modal');
+
+    
+
+    if (!filtrosOffcanvasEl) return;
+
+    
+
+    // Instância do Offcanvas do Bootstrap
+
+    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvasEl);
+
+
+
+    // 1. MINIMIZAR AO SELECIONAR UM FILTRO (Selects e Radios)
+
+    if (filterGroups) {
+
+      const inputs = filterGroups.querySelectorAll('select, input[type="radio"]');
+
+      inputs.forEach(input => {
+
+        input.addEventListener('change', function() {
+
+          if (window.innerWidth < 992) {
+
+            setTimeout(() => {
+
+              offcanvasInstance.hide();
+
+            }, 300);
+
+          }
+
+        });
+
+      });
+
+    }
+
+    // 2. MINIMIZAR AO CLICAR EM LIMPAR FILTROS
+
+    if (btnLimpar) {
+
+      btnLimpar.addEventListener('click', function() {
+
+        if (window.innerWidth < 992) {
+
+          setTimeout(() => {
+
+            offcanvasInstance.hide();
+
+          }, 300);
+
+        }
+
+      });
+
+    }
+
+    // 3. MINIMIZAR SE A BUSCA (LUPA INTERNA) FOR ABERTA
+
+    if (searchModalEl) {
+
+      searchModalEl.addEventListener('show.bs.modal', function () {
+
+        if (window.innerWidth < 992) {
+
+          offcanvasInstance.hide();
+
+        }
+
+      });
+
+    }
+
+  });
+
+</script>
 
 {% now "U" as ts %}
+
 <script src="{% static 'home/js/script.js' %}?v={{ ts }}"></script>
 
 {% endblock content %}

@@ -223,19 +223,19 @@ async function atualizarFiltros() {
 
         if (data.chartData.datasets?.length > 0) {
 
-            // 1. Função Auxiliar para criar a Hachura (Listra Diagonal)
+            // 1. Função Auxiliar para criar a Hachura (Fundo Colorido + Listras Brancas)
             const createDiagonalPattern = (color) => {
                 const shape = document.createElement('canvas');
                 shape.width = 10;
                 shape.height = 10;
                 const c = shape.getContext('2d');
                 
-                // Fundo Branco
-                c.fillStyle = '#ffffff';
+                // Fundo Colorido (Cor do Quintil)
+                c.fillStyle = color;
                 c.fillRect(0, 0, 10, 10);
                 
-                // Linha Diagonal na cor do Quintil
-                c.strokeStyle = color;
+                // Linha Diagonal BRANCA
+                c.strokeStyle = '#ffffff';
                 c.lineWidth = 2; 
                 c.beginPath();
                 c.moveTo(0, 10);
@@ -255,23 +255,20 @@ async function atualizarFiltros() {
             }
 
             data.chartData.datasets.forEach((dataset) => {
-                // Pega as cores sólidas do Quintil
+                // Pega as cores base do Quintil
                 const barColors = getColors(dataset.data.length);
                 
                 // Identifica se é 2024
                 const is2024 = dataset.label.toString().includes('2024');
 
-                // Lógica de Fundo (INVERTIDA):
+                // Lógica de Fundo:
                 // Se for 2024: Usa a Cor Sólida normal (color)
-                // Se for 2000 (else): Usa a Hachura (createDiagonalPattern)
+                // Se for 2000 (else): Usa a Hachura (Fundo colorido + listra branca)
                 const backgroundColors = barColors.map(color => 
                     is2024 ? color : createDiagonalPattern(color) 
-            );
+                );
 
-                // Lógica de Borda:
-                // Se quiser borda preta igual ao print: use '#000000'
-                // Se quiser borda colorida combinando: use barColors
-                // Vou manter 'barColors' para garantir a identidade visual
+                // Lógica de Borda
                 const borderColors = barColors; 
 
                 populacaoQuintilChart.data.datasets.push({
@@ -380,20 +377,20 @@ options: {
                 label.strokeStyle = '#000000';
                 label.lineWidth = 1;
 
-                // 2. Lógica de Preenchimento (Preto e Branco apenas)
+                // 2. Lógica de Preenchimento da Legenda
                 if (label.text.includes('2000')) {
-                    // === ANO 2000: HACHURA PRETA E BRANCA ===
+                    // === ANO 2000: HACHURA BRANCA SOBRE FUNDO PRETO ===
                     const patternCanvas = document.createElement('canvas');
                     patternCanvas.width = 10;
                     patternCanvas.height = 10;
                     const ctx = patternCanvas.getContext('2d');
 
-                    // Fundo Branco
-                    ctx.fillStyle = '#ffffff';
+                    // Fundo Preto
+                    ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, 10, 10);
 
-                    // Linha Diagonal PRETA
-                    ctx.strokeStyle = '#000000';
+                    // Linha Diagonal BRANCA
+                    ctx.strokeStyle = '#ffffff';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.moveTo(0, 10);
@@ -406,7 +403,7 @@ options: {
                     
                 } else {
                     // === ANO 2024: PRETO SÓLIDO ===
-                    label.fillStyle = '#000000'; // <--- Força preto sólido aqui
+                    label.fillStyle = '#000000'; 
                 }
             });
 
