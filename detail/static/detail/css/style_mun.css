@@ -1,234 +1,476 @@
-/* =========================================================
-   DETAIL (Município) - Estilos Principais e Layout
-   ========================================================= */
+/* ==========================================================================
+   IFEM: DETALHE DO MUNICÍPIO (EDITORIAL DATA STYLE)
+   ========================================================================== */
 
-/* Padronização do Fundo Branco e Responsividade */
-html, body {
-  background-color: #ffffff !important;
-  min-height: 100%;
-  overflow-y: auto;
-}
-
-/* Largura confortável do conteúdo principal */
-.container { max-width: 1200px; }
-
-/* Contêiner com rolagem própria (fallback para layout) */
+/* --- 1. VARIÁVEIS LOCAIS (Design System IFEM) --- */
 :root {
-  --header-height: 64px;
-}
-.detail-scroll {
-  position: relative;
-  height: calc(100vh - var(--header-height));
-  max-height: calc(100vh - var(--header-height));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 1.5rem;
-}
-@supports (height: 100dvh) {
-  .detail-scroll {
-    height: calc(100dvh - var(--header-height));
-    max-height: calc(100dvh - var(--header-height));
-  }
+    --fnp-dark-blue: #103758;
+    --fnp-blue: #194685;
+    --fnp-yellow: #eeaf19;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-800: #1e293b;
+    --card-radius: 12px;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-/* =========================================================
-   CARTÕES (Cards) E SEÇÕES DE MÉTRICAS
-   ========================================================= */
-.kpi-card,
-.metric-card {
-  background: #fff;
-  border-radius: var(--card-radius, 8px);
-  box-shadow: 0 4px 8px rgba(0,0,0,.08);
-  border: 1px solid transparent;
-  overflow: visible;
-  position: relative;
+/* --- CORES DE TEXTO PARA OS QUINTIS (Ranking) --- */
+.text-quintil-1 { color: #d73027 !important; }
+.text-quintil-2 { color: #fc8d59 !important; }
+.text-quintil-3 { color: #fee08b !important; } /* Amarelo pode ficar claro no branco, ajuste se precisar */
+.text-quintil-4 { color: #91cf60 !important; }
+.text-quintil-5 { color: #1a9850 !important; }
+
+.ranking-header-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-width: 220px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    text-align: right;
 }
-@media (max-width: 767.98px) {
-  .kpi-card, .metric-card { border-radius: 10px; }
+.select-right {
+    text-align: right;
+    text-align-last: right;
 }
 
-.metric-card h2 { color: var(--fnp-blue, #194685); }
-.kpi-card p:first-child { color: #6b7280; margin: 0; }
-.kpi-card .text-3xl,
-.kpi-card .text-4xl { color: var(--fnp-blue, #194685); line-height: 1.15; }
-
-/* =========================================================
-   TOGGLES E CONTROLES SEGMENTADOS
-   ========================================================= */
-#valor-toggle-btn { box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-
-.segmented {
-  display: inline-flex; 
-  align-items: center; 
-  gap: 0;
-  background: #fff;
-  border-radius: 6px;
-  padding: 0;
-  border: 1px solid var(--fnp-blue, #194685);
-  overflow: hidden;
-}
-.segmented .segmented-option {
-  border: 0; 
-  background: transparent; 
-  cursor: pointer;
-  padding: 0.35rem 1rem; 
-  border-radius: 0;
-  font-weight: 600; 
-  color: var(--fnp-blue, #194685); 
-  transition: all 0.15s ease;
-}
-.segmented .segmented-option.active {
-  background: var(--fnp-blue, #194685); 
-  color: #fff;
-  box-shadow: none;
-}
-.segmented .segmented-option:focus { 
-  outline: none; 
-  background: rgba(25, 70, 133, 0.1);
-}
-.segmented .segmented-option.active:focus {
-  background: var(--fnp-blue, #194685); 
-}
-@media (max-width: 767.98px) {
-  .segmented { display: flex; width: 100%; }
-  .segmented-option { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.85rem; }
-  select#chart-category-select { width: 100%; max-width: 100%; }
+/* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */
+/* Garante o fundo branco absoluto e libera a rolagem natural nativa */
+html, body {
+    background-color: #ffffff !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    font-family: 'Inter', sans-serif;
+    color: var(--slate-800);
 }
 
-/* =========================================================
-   MENU SUPERIOR / DROPDOWNS
-   ========================================================= */
-.dropdown-menu {
-  background-color: #ffffff !important;
-  border: 1px solid #e9ecef !important;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-}
-.dropdown-item {
-  background-color: #ffffff !important;
-  color: #333333 !important;
-}
-.dropdown-item:hover, 
-.dropdown-item:focus {
-  background-color: #f0f4f8 !important; 
-  color: #103758 !important;
+.detail-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
 }
 
-/* =========================================================
-   ÁRVORE DE RECEITAS (Detalhamento)
-   ========================================================= */
-.metric-detail-row {
-  display: flex;
-  align-items: center;
-  padding: .5rem 0;
-  border-bottom: 1px solid #f3f4f6;
-  overflow: visible;
+@media (min-width: 768px) {
+    .detail-content {
+        padding: 3rem 1.5rem;
+    }
 }
-.metric-detail-row:last-child { border-bottom: none; }
 
-.toggle-heading,
-.toggle-subheading {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* --- 3. TIPOGRAFIA EDITORIAL --- */
+.hero-title {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    color: var(--fnp-dark-blue);
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
 }
-.toggle-heading .arrow,
-.toggle-subheading .arrow { transition: transform .2s ease-in-out; }
-.toggle-heading.open .arrow,
-.toggle-subheading.open .arrow { transform: rotate(90deg); }
 
-/* =========================================================
-   TOOLTIPS E INDICADORES DE RANKING
-   ========================================================= */
+.hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 500;
+    color: var(--slate-500);
+}
+
+.section-heading {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--fnp-dark-blue);
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 40px;
+}
+
+@media (min-width: 768px) {
+    .section-heading {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+/* --- 4. BENTO CARDS (KPIs) --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+    align-items: stretch;
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card.highlight {
+    background: var(--fnp-dark-blue);
+    border-color: var(--fnp-dark-blue);
+}
+
+.kpi-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.kpi-card.highlight .kpi-label { color: #cbd5e1; }
+
+.kpi-value {
+    font-size: clamp(1.75rem, 3vw, 2rem);
+    font-weight: 900;
+    color: var(--fnp-blue);
+    line-height: 1;
+    margin-top: 0.5rem;
+}
+
+.kpi-card.highlight .kpi-value { color: #ffffff; }
+
+/* --- 5. TIMELINE STORYTELLING (Banner de Evolução) --- */
+.story-banner {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .story-banner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2rem;
+    }
+}
+
+/* Container flexível para a linha do tempo */
+.timeline-visual {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Mobile: empilhado */
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .timeline-visual {
+        flex-direction: row; /* Desktop: lado a lado */
+        gap: 0;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+}
+
+.timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.timeline-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 900;
+    background: #ffffff;
+    border: 3px solid var(--slate-200);
+    color: var(--slate-400);
+    transition: all 0.3s ease;
+}
+
+.timeline-circle.active {
+    background: var(--fnp-blue);
+    border-color: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(25, 70, 133, 0.2);
+    transform: scale(1.1);
+}
+
+/* Trava absoluta do SVG da seta para não estourar */
+.timeline-arrow {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px;
+    min-height: 32px;
+    color: var(--slate-200);
+    flex-shrink: 0;
+    transform: rotate(90deg); /* Mobile: aponta para baixo */
+}
+
+.timeline-arrow svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .timeline-arrow {
+        transform: rotate(0deg); /* Desktop: aponta para a direita */
+        margin: 0 1rem;
+    }
+}
+
+.impact-panel {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-100);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 180px;
+    text-align: center;
+}
+
+@media (min-width: 1024px) {
+    .impact-panel { text-align: left; }
+}
+
+/* --- 6. DNA FINANCEIRO (Árvore e Gráficos) --- */
+.dashboard-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-split {
+        grid-template-columns: 1.2fr 1fr;
+    }
+}
+
+/* Árvore de Receitas */
+.dna-tree-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.revenue-item-wrapper {
+    border-bottom: 1px solid var(--slate-100);
+}
+
+.revenue-item-wrapper:last-child {
+    border-bottom: none;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+    .tree-row { padding: 14px 20px; }
+}
+
+.tree-row:hover { background-color: var(--slate-50); }
+
+/* Níveis da Árvore (Indentação e Pesos) */
+.tree-row.level-0 { font-weight: 700; color: var(--fnp-dark-blue); }
+.tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
+.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 0.95rem; }
+.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 0.9rem; }
+
+@media (min-width: 768px) {
+    .tree-row.level-1 { padding-left: 40px; }
+    .tree-row.level-2 { padding-left: 60px; }
+    .tree-row.level-3 { padding-left: 80px; }
+}
+
+/* Seta Animada do Accordion */
+.tree-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--slate-400);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.tree-row.open .tree-chevron {
+    transform: rotate(90deg);
+    color: var(--fnp-dark-blue);
+}
+
+.tree-value {
+    text-align: right;
+    min-width: 70px;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+/* --- 7. INDICADORES DE RANKING E TOOLTIPS --- */
 .ranking-indicator-container {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
 }
-.ranking-indicator,
-.ranking-indicator-estadual { width: 14px; height: 14px; border-radius: 3px; }
 
-.quintil-1 { background: #d73027; }
-.quintil-2 { background: #fc8d59; }
-.quintil-3 { background: #fee08b; }
-.quintil-4 { background: #91cf60; }
-.quintil-5 { background: #1a9850; }
+.ranking-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+/* Paleta Quintis IFEM */
+.quintil-1 { background-color: #d73027; }
+.quintil-2 { background-color: #fc8d59; }
+.quintil-3 { background-color: #fee08b; }
+.quintil-4 { background-color: #91cf60; }
+.quintil-5 { background-color: #1a9850; }
 
 .ranking-tooltip {
-  position: absolute;
-  z-index: 1000;
-  left: 50%;
-  bottom: calc(100% + 8px); 
-  top: auto;
-  transform: translateX(-50%);
-  padding: 6px 10px;
-  background: rgba(51,51,51,.95);
-  color: #fff;
-  border-radius: 6px;
-  font-size: .75rem;
-  line-height: 1.2;
-  white-space: normal;
-  max-width: 260px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.18);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .18s ease, transform .18s ease, visibility .18s;
-  pointer-events: none;
-}
-.ranking-indicator-container:hover .ranking-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-.ranking-indicator-container:hover .ranking-tooltip::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 6px;
-  border-style: solid;
-  border-color: transparent transparent rgba(51,51,51,.95) transparent;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--slate-800);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* =========================================================
-   GRÁFICOS E COMPOSIÇÃO DE RECEITA
-   ========================================================= */
-.chart-section {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2.5rem;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
+.ranking-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--slate-800) transparent transparent transparent;
 }
 
-.chart-slot {
-  position: relative;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 350px; 
-  overflow: hidden;
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
+/* Ajuste do Tooltip para mobile (evita vazar da tela) */
+@media (max-width: 768px) {
+    .ranking-tooltip {
+        left: 0;
+        transform: translateX(0) translateY(10px);
+    }
+    .ranking-tooltip::after {
+        left: 10px;
+    }
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(0) translateY(-6px);
+    }
 }
 
-.chart-slot canvas {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: 100%;
-  display: block;
+@media (min-width: 769px) {
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(-50%) translateY(-6px);
+    }
 }
 
-@media (min-width: 992px) {
-  .chart-slot { height: 450px; }
+/* --- 8. GRÁFICOS E CONTROLES --- */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.25rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
 }
 
-.metric-card .chart-section {
-  width: 100%;
-  margin-top: 1rem;
-  padding-top: .75rem;
-  border-top: 1px solid #e5e7eb;
-  gap: 16px;
+.select-clean {
+    width: 100%;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fnp-dark-blue);
+    background-color: var(--slate-50);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select-clean:focus {
+    border-color: var(--fnp-blue);
+}
+
+/* Segmented Control (Toggle) */
+.segmented {
+    display: inline-flex;
+    background: var(--slate-100);
+    padding: 4px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .segmented { width: auto; }
+}
+
+.segmented-option {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--slate-500);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.segmented-option.active {
+    background: #ffffff;
+    color: var(--fnp-dark-blue);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
