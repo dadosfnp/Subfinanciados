@@ -75,14 +75,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const ind = container.querySelector('.ranking-indicator') || container;
     const tip = container.querySelector('.ranking-tooltip');
 
-    ind.classList.remove('quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
-    if (percentile <= 20) ind.classList.add('quintil-1');
+    ind.classList.remove('quintil-0','quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
+    if (percentile < 0) ind.classList.add('quintil-0');
+    else if (percentile <= 20) ind.classList.add('quintil-1');
     else if (percentile <= 40) ind.classList.add('quintil-2');
     else if (percentile <= 60) ind.classList.add('quintil-3');
     else if (percentile <= 80) ind.classList.add('quintil-4');
     else ind.classList.add('quintil-5');
 
-    if (tip) tip.textContent = `O município supera ${percentile}% dos outros municípios`;
+    if (tip && percentile > 0) tip.textContent = `O município supera ${percentile}% dos outros municípios`;
+    else if (tip) tip.textContent = '';
   }
 
   // ------------ toggles ------------
@@ -180,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
           paintIndicator(container, pct);
         } else if (container) {
           const ind = container.querySelector('.ranking-indicator');
-          ind?.classList.remove('quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
+          ind?.classList.remove('quintil-0','quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
           const tip = container.querySelector('.ranking-tooltip');
           if (tip) tip.textContent = 'Ranking não disponível';
         }
@@ -380,6 +382,8 @@ const DENSITY_CHILD_KEYS = {
     [normalize("Imposto sobre a Transmissão 'Inter Vivos'"), 'itbi'],
     [normalize('Imposto sobre a Propriedade Predial e Territorial Urbana'), 'iptu'],
     [normalize('Imposto de Renda'), 'imposto_renda'],
+    [normalize('IPVA'), 'imposto_ipva'],
+    [normalize('ICMS'), 'imposto_icms'],
     [normalize('Outros Impostos'), 'outros_impostos'],
     [normalize('Outros'), 'outros_impostos'],
   ]),
@@ -407,6 +411,7 @@ const DENSITY_CHILD_KEYS = {
   // TRANSF. UNIÃO (todos os filhos existentes no #mun-data)
   transferencias_uniao: new Map([
     [normalize('Cota-Parte do FPM'),                                   'transferencias_uniao_fpm'],
+    [normalize('Cota-Parte do FPE'),                                   'transferencias_uniao_fpe'],
     [normalize('Compensação Financeira (Recursos Naturais)'),          'transferencias_uniao_exploracao'],
     [normalize('Recursos do SUS'),                                     'transferencias_uniao_sus'],
     [normalize('Recursos do FNDE'),                                    'transferencias_uniao_fnde'],

@@ -293,6 +293,8 @@ document.addEventListener('DOMContentLoaded', function () {
       'ITBI': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ITBI'],
       'ISS':  ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ISS'],
       'Imposto de Renda': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','Imposto de Renda'],
+      'ICMS': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','ICMS'],
+      'IPVA': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','IPVA'],
       'Outros': ['Impostos, Taxas e Contribuições de Melhoria','Impostos','Outros Impostos'],
     },
     taxas: {
