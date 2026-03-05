@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand
-from home.models import Municipio
+from home.models import Municipio, Percentis
 
 class Command(BaseCommand):
     help = 'Importa dados de municípios do arquivo Excel, limpando os nomes das colunas.'
@@ -11,6 +11,7 @@ class Command(BaseCommand):
         pop = pd.read_excel('base_datas/populacao.xlsx')
         rec24 = pd.read_excel('base_datas/receitas_correntes_2024.xlsx')
         rec00 = pd.read_excel('base_datas/receitas_correntes_2000.xlsx')
+        percentis = pd.read_excel('base_datas/percentis_limites.xlsx')
         
         # 2. Converte todos os nomes de colunas para minúsculo
         pop.columns = pop.columns.str.lower()
@@ -67,6 +68,7 @@ class Command(BaseCommand):
                 cod_ibge=row['cod_ibge'],
                 name_muni=row['nome_muni'],
                 cadunico = row['pop_cadunico_24'],
+                sus_dependente = row['dependencia_sus'],
                 uf=row['uf'],
                 coordx=row['coordx'],
                 coordy=row['coordy'],
@@ -106,5 +108,5 @@ class Command(BaseCommand):
                 populacao24_total_faixa = row['total_fax_pop']
 
             )
-        
+
         self.stdout.write(self.style.SUCCESS('Dados importados com sucesso!'))

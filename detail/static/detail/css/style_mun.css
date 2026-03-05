@@ -33,9 +33,56 @@
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
     text-align: right;
 }
-.select-right {
-    text-align: right;
-    text-align-last: right;
+.metric-detail-row:last-child{ border-bottom:none; }
+
+.toggle-heading,
+.toggle-subheading{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.toggle-heading .arrow,
+.toggle-subheading .arrow{ transition:transform .2s ease-in-out; }
+.toggle-heading.open .arrow,
+.toggle-subheading.open .arrow{ transform:rotate(90deg); }
+
+/* Indicadores/tooltip de ranking (mesmo padrão global) */
+.ranking-indicator-container{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  vertical-align:middle;
+}
+.ranking-indicator{ width:14px; height:14px; border-radius:3px; }
+.ranking-indicator-estadual{ width:14px; height:14px; border-radius:3px; }
+
+.quintil-0{ background:grey}
+.quintil-1{ background:#d73027; }
+.quintil-2{ background:#fc8d59; }
+.quintil-3{ background:#fee08b; }
+.quintil-4{ background:#91cf60; }
+.quintil-5{ background:#1a9850; }
+
+.ranking-tooltip{
+  position: absolute;
+  z-index: 1000;                 /* fica por cima do cabeçalho/itens */
+  left: 50%;
+  bottom: calc(100% + 8px); top: auto;         /* aparece ACIMA do quadradinho */
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  border-radius: 6px;
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;           /* permite quebra de linha se precisar */
+  max-width: 260px;              /* não estoura em telas menores */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;          /* não intercepta o hover */
 }
 
 /* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */

@@ -54,6 +54,66 @@
                           </span>
                 </div>
             </div>
+
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="nacional">
+                <div class="ranking-indicator 
+                {% if item.percentiles.nacional < 0 %}quintil-0
+                {% elif item.percentiles.nacional > 0 and item.percentiles.nacional <= 20 %}quintil-1
+                {% elif item.percentiles.nacional > 20 and item.percentiles.nacional <= 40 %}quintil-2
+                {% elif item.percentiles.nacional > 40 and item.percentiles.nacional <= 60 %}quintil-3
+                {% elif item.percentiles.nacional > 60 and item.percentiles.nacional <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+
+                {% if item.percentiles.nacional > 0 %}
+                    <div class="ranking-tooltip">O município supera {{item.percentiles.nacional|default_if_none:"--"}}% dos outros municípios do país</div>
+                {% endif %}
+            </div>
+            
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="estadual">
+                <div class="ranking-indicator
+                {% if item.percentiles.estadual < 0 %}quintil-0
+                {% elif item.percentiles.estadual > 0 and item.percentiles.estadual <= 20 %}quintil-1
+                {% elif item.percentiles.estadual > 20 and item.percentiles.estadual <= 40 %}quintil-2
+                {% elif item.percentiles.estadual > 40 and item.percentiles.estadual <= 60 %}quintil-3
+                {% elif item.percentiles.estadual > 60 and item.percentiles.estadual <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+
+                {% if item.percentiles.estadual > 0  %}
+                    <div class="ranking-tooltip">O município supera {{item.percentiles.estadual|default_if_none:"--"}}% dos outros municípios do mesmo estado</div>
+                {% endif %}
+
+            </div>
+
+            <div class="ranking-indicator-container flex-shrink-0 hidden" data-ranking="faixa">
+                <div class="ranking-indicator
+                {% if item.percentiles.faixa < 0 %}quintil-0
+                {% elif item.percentiles.faixa >= 0 and item.percentiles.faixa <= 20 %}quintil-1
+                {% elif item.percentiles.faixa > 20 and item.percentiles.faixa <= 40 %}quintil-2
+                {% elif item.percentiles.faixa > 40 and item.percentiles.faixa <= 60 %}quintil-3
+                {% elif item.percentiles.faixa > 60 and item.percentiles.faixa <= 80 %}quintil-4
+                {% else %}quintil-5
+                {% endif %}"></div>
+                
+                 {% if item.percentiles.faixa > 0 %}
+                    <div class="ranking-tooltip">O município supera {{item.percentiles.faixa|default_if_none:"--"}}% dos outros municípios da mesma faixa populacional</div>
+                {% endif %}
+            </div>
+
+
+
+            {% if has_children %}<span class="arrow mx-2 flex-shrink-0">&#9654;</span>{% else %}<span class="w-4 mx-2 flex-shrink-0"></span>{% endif %}
+            
+            <span class="text-content truncate 
+                {% if level == 0 %}text-gray-700 font-semibold{% else %}text-gray-600 text-sm{% endif %}">
+                {{ item.name }}
+            </span>
+        </div>
+
+        <div class="text-right pl-2 flex-shrink-0 {% if level == 0 %}font-semibold{% else %}text-sm{% endif %}">
+            <span class="valor-absoluto hidden">{{ item.value_abs|br_float }}</span>
+            <span class="valor-per-capita">{{ item.value_pc|br_float }}</span>
         </div>
     </div>
 
