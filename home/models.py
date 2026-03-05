@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 
+
 class RegiaoMetropolitana(models.Model):
     nome = models.CharField(max_length=255, unique=True, help_text="Nome único da Região Metropolitana")
 
@@ -536,3 +537,4 @@ class MediaNacionalReceita(models.Model):
 
     def __str__(self):
         return f"Médias Nacionais - Ano {self.ano_referencia}"
+    

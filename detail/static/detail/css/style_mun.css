@@ -474,3 +474,110 @@ html, body {
     color: var(--fnp-dark-blue);
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+/* --- AJUSTES DE POSICIONAMENTO DO RANKING --- */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-top-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    text-align: right;
+}
+
+.rank-display-bold {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--fnp-dark-blue);
+    line-height: 1;
+    margin-top: 0.25rem;
+}
+
+.rank-display-total {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    font-weight: 700;
+}
+
+.rank-card-1 { border-bottom-color: #A81C21; }
+.rank-card-1 .rank-bg-icon { background-color: #A81C2120; }
+.rank-card-1 .rank-text-icon { color: #A81C21; }
+
+.rank-card-2 { border-bottom-color: #E47326; }
+.rank-card-2 .rank-bg-icon { background-color: #E4732620; }
+.rank-card-2 .rank-text-icon { color: #E47326; }
+
+.rank-card-3 { border-bottom-color: #F4D01D; }
+.rank-card-3 .rank-bg-icon { background-color: #F4D01D20; }
+.rank-card-3 .rank-text-icon { color: #F4D01D; }
+
+.rank-card-4 { border-bottom-color: #6AC074; }
+.rank-card-4 .rank-bg-icon { background-color: #6AC07420; }
+.rank-card-4 .rank-text-icon { color: #6AC074; }
+
+.rank-card-5 { border-bottom-color: #1C9148; }
+.rank-card-5 .rank-bg-icon { background-color: #1C914820; }
+.rank-card-5 .rank-text-icon { color: #1C9148; }
+
+
+/* --- TOOLTIP CUSTOMIZADO IFEM (EVOLUÇÃO) --- */
+.ifem-tooltip-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    cursor: help;
+}
+
+.ifem-tooltip-box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Posição inicial para a animação */
+    margin-bottom: 12px;
+    width: 220px;
+    background-color: var(--fnp-dark-blue);
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(16, 55, 88, 0.3);
+    
+    /* Escondido por padrão, à prova de bugs */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* Animação suave */
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+/* Setinha do balão */
+.ifem-tooltip-box::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--fnp-dark-blue) transparent transparent transparent;
+}
+
+/* O gatilho do hover */
+.ifem-tooltip-container:hover .ifem-tooltip-box {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -8px); /* Sobe suavemente */
+}
+
+.ifem-tooltip-box strong {
+    font-weight: 900;
+    font-size: 13px;
+}
