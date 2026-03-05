@@ -24,9 +24,19 @@
 {% block content %}
 
 <style>
-  /* Força o fundo branco na página inteira */
+  /* Fundo branco na página inteira */
   html, body, .content-wrapper, .dashboard-content {
     background-color: #ffffff !important;
+  }
+
+  /* ==========================================================================
+     REMOVER SOMBRA DA SIDEBAR
+     ========================================================================== */
+  
+  /* 1. Remove a sombra pesada apenas da Gaveta Lateral e deixa a linha fina */
+  .sidebar, .content-wrapper .sidebar, .offcanvas-lg {
+      box-shadow: none !important; 
+      border-right: 1px solid #dee2e6 !important; 
   }
 
   /* ========== Ajustes Mobile (Gaveta 80%) ========== */
@@ -118,32 +128,39 @@
     }
   }
 
-  /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
-    .dropdown-menu {
-      background-color: #ffffff !important;
-      border: 1px solid #e9ecef !important;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-    }
-    
-    .dropdown-item {
-      background-color: #ffffff !important;
-      color: #333333 !important;
-    }
-    
-    .dropdown-item:hover, 
-    .dropdown-item:focus {
-      background-color: #f0f4f8 !important; 
-      color: #103758 !important;
-    }
+  /* ========== Padronização e Correção do Menu (Análise Agregada) ========== */
 
-/* ========== Destaque Exclusivo: Análise Agregada (3º Item do Menu) ========== */
-    .dropdown-menu li:nth-child(3) .dropdown-item,
-    .dropdown-menu > .dropdown-item:nth-child(3),
-    .dropdown-item[href*="/conjunto"],
-    .dropdown-item[href*="/analise-agregada"] {
-      color: #103758 !important;
-      font-weight: 700 !important;
-    }
+/* 1. Zera todos os itens para inativos (Garante que "Análise Município" perca o negrito vazado) */
+.dropdown-menu .dropdown-item {
+    background-color: transparent !important;
+    color: #334155 !important;
+    font-weight: 400 !important;
+}
+
+/* Hover (passar o mouse) padrão para todos */
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background-color: #f1f5f9 !important; 
+    color: #103758 !important;
+}
+
+/* 2. Destaque EXCLUSIVO para "Análise Agregada" (Garante que só ele brilhe) */
+.dropdown-menu li:nth-child(4) .dropdown-item, /* Força a 4ª aba (Agregada) */
+.dropdown-menu > .dropdown-item:nth-child(4),
+.dropdown-menu .dropdown-item[href*="/conjunto"],
+.dropdown-menu .dropdown-item[href*="/analise-agregada"] {
+    background-color: transparent !important;
+    color: #103758 !important; /* Azul FNP */
+    font-weight: 700 !important; /* Só ele tem negrito */
+}
+
+/* 3. Trava de Segurança: Força o 3º item (Análise Município) a ficar desligado nesta página */
+.dropdown-menu li:nth-child(3) .dropdown-item,
+.dropdown-menu > .dropdown-item:nth-child(3),
+.dropdown-menu .dropdown-item[href*="/municipio"] {
+    color: #334155 !important; /* Volta pra cinza */
+    font-weight: 400 !important; /* Sem negrito */
+}
 
 </style>
 
