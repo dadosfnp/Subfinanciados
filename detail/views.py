@@ -4,6 +4,9 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
+from django.db.models.functions import Coalesce
+from functools import reduce
+import operator
 
 def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, is_collapsible=False):
     if not model_instance:
@@ -469,7 +472,7 @@ def municipio_details_api(request):
 def _prepare_revenue_item_aggregated(
     name: str,
     field_base: str,      # ex: "imposto_taxas_contribuicoes" (pra casar com total_* no aggregated_data)
-    field_path: str,      # ex: "conta_detalhada__imposto_taxas_contribuicoes" (pra usar no queryset/F())
+    field_path,           # str OU list[str]/tuple[str]
     aggregated_data: dict,
     queryset,
     value_pc_nac: float,
@@ -477,13 +480,20 @@ def _prepare_revenue_item_aggregated(
 ):
     value_abs = aggregated_data.get(f"total_{field_base}", 0) or 0
 
+    # aceita 1 ou vários paths
+    field_paths = [field_path] if isinstance(field_path, str) else list(field_path)
+
+    # soma campos (NULL vira 0)
+    expr_total = reduce(operator.add, [Coalesce(F(p), 0.0) for p in field_paths])
+
     qs_pc = (
         queryset
         .filter(populacao24__gt=0)
-        .filter(Q(**{f"{field_path}__gt": 0}))
+        .annotate(total=expr_total)
+        .filter(total__gt=0)  # tira zeros (e nulos viram 0 por causa do Coalesce)
         .annotate(
             pc=ExpressionWrapper(
-                F(field_path) / F("populacao24"),
+                F("total") / F("populacao24"),
                 output_field=FloatField(),
             )
         )
@@ -505,26 +515,38 @@ def _prepare_revenue_item_aggregated(
         "value_pc": value_pc,
         "diff": diff,
         "children": [],
+        # opcional: guardar quais campos compõem o item (ajuda debug)
+        "field_path": field_paths,
     }
 
     if is_collapsible:
         item["target_id"] = f"detalhe-{field_base.replace('_', '-')}"
     return item
 
-def nacional_pc_media(field_path):
+from django.db.models import F, Avg, FloatField, ExpressionWrapper
+
+def nacional_pc_media(fields):
+
+    if isinstance(fields, str):
+        expr = F(fields)
+    else:
+        expr = None
+        for f in fields:
+            expr = F(f) if expr is None else expr + F(f)
+
     qs = (
         Municipio.objects
-        .filter(
-            Q(populacao24__gt=0),
-            Q(**{f"{field_path}__gt": 0})
-        )
+        .filter(populacao24__gt=0)
+        .annotate(total=expr)          # cria a soma primeiro
+        .filter(total__gt=0)           # remove os zeros
         .annotate(
             pc=ExpressionWrapper(
-                F(field_path) / F('populacao24'),
+                F('total') / F('populacao24'),
                 output_field=FloatField()
             )
         )
     )
+
     return qs.aggregate(avg=Avg('pc'))['avg'] or 0
 
 def conjunto_detalhe_view(request):
@@ -542,8 +564,6 @@ def conjunto_detalhe_view(request):
     nacional_med_iptu = nacional_pc_media('conta_mais_especifica__iptu')
     nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
     nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
-    nacional_med_icms = nacional_pc_media('conta_mais_especifica__imposto_icms')
-    nacional_med_ipva = nacional_pc_media('conta_mais_especifica__imposto_ipva')
 
     nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
 
@@ -572,7 +592,7 @@ def conjunto_detalhe_view(request):
     # TRF_UNI
     nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
     nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
-    nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
+    #nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
     nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
     nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
     nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
@@ -582,8 +602,8 @@ def conjunto_detalhe_view(request):
 
     # TRF_EST
     nacional_med_tranferencias_estados_pc = nacional_pc_media('conta_especifica__tranferencias_estados')
-    nacional_med_transferencias_estado_icms_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_icms')
-    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_ipva')
+    nacional_med_transferencias_estado_icms_pc = nacional_pc_media(['conta_mais_especifica__transferencia_estado_icms', 'conta_mais_especifica__imposto_icms'])
+    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media(['conta_mais_especifica__transferencia_estado_ipva', 'conta_mais_especifica__imposto_ipva'])
     nacional_med_transferencias_estado_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_exploracao')
     nacional_med_transferencias_estado_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_sus')
     nacional_med_transferencias_estado_assistencia_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_assistencia')
@@ -674,8 +694,6 @@ def conjunto_detalhe_view(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_imposto_icms=Sum('conta_mais_especifica__imposto_icms'),
-        total_imposto_ipva=Sum('conta_mais_especifica__imposto_ipva'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
 
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
@@ -688,7 +706,7 @@ def conjunto_detalhe_view(request):
         total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
 
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
-        total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
+        #total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
@@ -696,8 +714,8 @@ def conjunto_detalhe_view(request):
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
 
-        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
-        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
+        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms') + Sum('conta_mais_especifica__imposto_icms'),  
+        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva') + Sum('conta_mais_especifica__imposto_ipva'),
         total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
         total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
         total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
@@ -775,22 +793,6 @@ def conjunto_detalhe_view(request):
                             aggregated_data,
                             queryset,
                             nacional_med_renda,
-                        ),
-                        _prepare_revenue_item_aggregated(
-                            "Imposto sobre o ICMS",
-                            "icms",
-                            "conta_mais_especifica__imposto_icms",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_icms,
-                        ),
-                        _prepare_revenue_item_aggregated(
-                            "Imposto sobre o IPVA",
-                            "ipva",
-                            "conta_mais_especifica__imposto_ipva",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_ipva,
                         ),
                         _prepare_revenue_item_aggregated(
                             "Outros Impostos",
@@ -996,14 +998,14 @@ def conjunto_detalhe_view(request):
                             queryset,
                             nacional_med_tranferencias_uniao_fpm_pc,
                         ),
-                        _prepare_revenue_item_aggregated(
-                            "Cota-Parte do FPE",
-                            "transferencia_uniao_fpe",
-                            "conta_mais_especifica__transferencia_uniao_fpe",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_tranferencias_uniao_fpe_pc,
-                        ),
+                        #_prepare_revenue_item_aggregated(
+                        #    "Cota-Parte do FPE",
+                        #    "transferencia_uniao_fpe",
+                        #    "conta_mais_especifica__transferencia_uniao_fpe",
+                        #    aggregated_data,
+                        #    queryset,
+                        #    nacional_med_tranferencias_uniao_fpe_pc,
+                        #),
                         _prepare_revenue_item_aggregated(
                             "Compensação Financeira (Recursos Naturais)",
                             "transferencia_uniao_exploracao",
@@ -1078,7 +1080,7 @@ def conjunto_detalhe_view(request):
                         _prepare_revenue_item_aggregated(
                             "Cota-Parte do ICMS",
                             "transferencia_estado_icms",
-                            "conta_mais_especifica__transferencia_estado_icms",
+                            ["conta_mais_especifica__transferencia_estado_icms", "conta_mais_especifica__imposto_icms"],
                             aggregated_data,
                             queryset,
                             nacional_med_transferencias_estado_icms_pc,
@@ -1086,7 +1088,7 @@ def conjunto_detalhe_view(request):
                         _prepare_revenue_item_aggregated(
                             "Cota-Parte do IPVA",
                             "transferencia_estado_ipva",
-                            "conta_mais_especifica__transferencia_estado_ipva",
+                            ["conta_mais_especifica__transferencia_estado_ipva", 'conta_mais_especifica__imposto_ipva'],  
                             aggregated_data,
                             queryset,
                             nacional_med_transferencias_estado_ipva_pc,
@@ -1225,14 +1227,12 @@ def conjunto_detalhe_view(request):
             ],
         },
         "imposto": {
-            "labels": ["IPTU", "ITBI", "ISS", "Imposto de Renda", "ICMS", "IPVA" "Outros"],
+            "labels": ["IPTU", "ITBI", "ISS", "Imposto de Renda", "Outros"],
             "values": [
                 v('total_iptu'),
                 v('total_itbi'),
                 v('total_iss'),
                 v('total_imposto_renda'),
-                v('total_imposto_icms'),
-                v('total_imposto_ipva'),
                 v('total_outros_impostos'),
             ],
         },
@@ -1270,7 +1270,7 @@ def conjunto_detalhe_view(request):
             "labels": ["FPM", "FPE", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
             "values": [
                 v('total_transferencia_uniao_fpm'),
-                v('total_transferencia_uniao_fpe'),
+                #v('total_transferencia_uniao_fpe'),
                 v('total_transferencia_uniao_exploracao'),
                 v('total_transferencia_uniao_sus'),
                 v('total_transferencia_uniao_fnde'),
@@ -1282,9 +1282,9 @@ def conjunto_detalhe_view(request):
         },
         "transferencias_estado": {
             "labels": ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
-            "values": [
-                v('total_transferencia_estado_icms'),
-                v('total_transferencia_estado_ipva'),
+            "values": [                
+                v('total_transferencia_estado_icms') + v('total_imposto_icms'),
+                v('total_transferencia_estado_ipva') + v('total_imposto_ipva'),
                 v('total_transferencia_estado_exploracao'),
                 v('total_transferencia_estado_sus'),
                 v('total_transferencia_estado_assistencia'),
@@ -1392,8 +1392,7 @@ def conjunto_detalhe_view(request):
     )
 
     data_f = list(qsf)  # ~5.570 linhas é tranquilo
-    print(data_f)
-    print("a")
+
     context = {
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
@@ -1402,7 +1401,7 @@ def conjunto_detalhe_view(request):
         'data_f_json': data_f,
     }
 
-    print(revenue_tree)
+    print(nacional_med_outras_receitas_outras_pc)
     return render(request, 'detail/detalhe_conjunto.html', context)
 
 
@@ -1424,8 +1423,6 @@ def conjunto_fiscal_api(request):
     nacional_med_iptu = nacional_pc_media('conta_mais_especifica__iptu')
     nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
     nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
-    nacional_med_icms = nacional_pc_media('conta_mais_especifica__imposto_icms')
-    nacional_med_ipva = nacional_pc_media('conta_mais_especifica__imposto_ipva')
 
     nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
 
@@ -1454,7 +1451,7 @@ def conjunto_fiscal_api(request):
     # TRF_UNI
     nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
     nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
-    nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
+    #nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
     nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
     nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
     nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
@@ -1464,8 +1461,8 @@ def conjunto_fiscal_api(request):
 
     # TRF_EST
     nacional_med_tranferencias_estados_pc = nacional_pc_media('conta_especifica__tranferencias_estados')
-    nacional_med_transferencias_estado_icms_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_icms')
-    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_ipva')
+    nacional_med_transferencias_estado_icms_pc = nacional_pc_media(['conta_mais_especifica__transferencia_estado_icms', 'conta_mais_especifica__imposto_icms'])
+    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media(['conta_mais_especifica__transferencia_estado_ipva', 'conta_mais_especifica__imposto_ipva'])
     nacional_med_transferencias_estado_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_exploracao')
     nacional_med_transferencias_estado_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_sus')
     nacional_med_transferencias_estado_assistencia_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_assistencia')
@@ -1540,8 +1537,6 @@ def conjunto_fiscal_api(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_imposto_icms=Sum('conta_mais_especifica__imposto_icms'),
-        total_imposto_ipva=Sum('conta_mais_especifica__imposto_ipva'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -1551,15 +1546,15 @@ def conjunto_fiscal_api(request):
         total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
         total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
-        total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
+        #total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
         total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
-        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
-        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
+        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms') + Sum('conta_mais_especifica__imposto_icms'),
+        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva') + Sum('conta_mais_especifica__imposto_ipva'),
         total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
         total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
         total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
@@ -1634,23 +1629,7 @@ def conjunto_fiscal_api(request):
                             aggregated_data,
                             queryset,
                             nacional_med_renda,
-                        ),
-                        _prepare_revenue_item_aggregated(
-                            "ICMS",
-                            "imposto_icms",
-                            "conta_mais_especifica__imposto_icms",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_icms,
-                        ),
-                         _prepare_revenue_item_aggregated(
-                            "IPVA",
-                            "imposto_ipva",
-                            "conta_mais_especifica__imposto_ipva",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_ipva,
-                        ),                       
+                        ),                     
                         _prepare_revenue_item_aggregated(
                             "Outros Impostos",
                             "outros_impostos",
@@ -1855,14 +1834,14 @@ def conjunto_fiscal_api(request):
                             queryset,
                             nacional_med_tranferencias_uniao_fpm_pc,
                         ),
-                         _prepare_revenue_item_aggregated(
-                            "Cota-Parte do FPE",
-                            "transferencia_uniao_fpe",
-                            "conta_mais_especifica__transferencia_uniao_fpe",
-                            aggregated_data,
-                            queryset,
-                            nacional_med_tranferencias_uniao_fpm_pc,
-                        ),                       
+                        #_prepare_revenue_item_aggregated(
+                         #   "Cota-Parte do FPE",
+                         #   "transferencia_uniao_fpe",
+                         #   "conta_mais_especifica__transferencia_uniao_fpe",
+                         #   aggregated_data,
+                         #   queryset,
+                         #   nacional_med_tranferencias_uniao_fpe_pc,
+                        #),                       
                         _prepare_revenue_item_aggregated(
                             "Compensação Financeira (Recursos Naturais)",
                             "transferencia_uniao_exploracao",
@@ -1937,7 +1916,7 @@ def conjunto_fiscal_api(request):
                         _prepare_revenue_item_aggregated(
                             "Cota-Parte do ICMS",
                             "transferencia_estado_icms",
-                            "conta_mais_especifica__transferencia_estado_icms",
+                            ["conta_mais_especifica__transferencia_estado_icms", "conta_mais_especifica__imposto_icms"],
                             aggregated_data,
                             queryset,
                             nacional_med_transferencias_estado_icms_pc,
@@ -1945,7 +1924,7 @@ def conjunto_fiscal_api(request):
                         _prepare_revenue_item_aggregated(
                             "Cota-Parte do IPVA",
                             "transferencia_estado_ipva",
-                            "conta_mais_especifica__transferencia_estado_ipva",
+                            ["conta_mais_especifica__transferencia_estado_ipva", "conta_mais_especifica__imposto_ipva"],
                             aggregated_data,
                             queryset,
                             nacional_med_transferencias_estado_ipva_pc,
@@ -2136,8 +2115,6 @@ def conjunto_chart_api(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_imposto_icms=Sum('conta_mais_especifica__imposto_icms'),
-        total_imposto_ipva=Sum('conta_mais_especifica__imposto_ipva'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -2147,15 +2124,15 @@ def conjunto_chart_api(request):
         total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
         total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
-        total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
+        #total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
         total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
-        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
-        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
+        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms') + Sum('conta_mais_especifica__imposto_icms'),
+        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva') + Sum('conta_mais_especifica__imposto_ipva'),
         total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
         total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
         total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
@@ -2190,8 +2167,6 @@ def conjunto_chart_api(request):
                 v('total_itbi'),
                 v('total_iss'),
                 v('total_imposto_renda'),
-                v('total_imposto_icms'),
-                v('total_imposto_ipva'),
                 v('total_outros_impostos'),
             ],
         },
@@ -2226,10 +2201,12 @@ def conjunto_chart_api(request):
             ],
         },
         "transferencias_uniao": {
-            "labels": ["FPM", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
+            "labels": ["FPM", 
+                       #"FPE,
+                       "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
             "values": [
                 v('total_transferencia_uniao_fpm'),
-                v('total_transferencia_uniao_fpe'),
+                #v('total_transferencia_uniao_fpe'),
                 v('total_transferencia_uniao_exploracao'),
                 v('total_transferencia_uniao_sus'),
                 v('total_transferencia_uniao_fnde'),
@@ -2241,8 +2218,8 @@ def conjunto_chart_api(request):
         "transferencias_estado": {
             "labels": ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
             "values": [
-                v('total_transferencia_estado_icms'),
-                v('total_transferencia_estado_ipva'),
+                v('total_transferencia_estado_icms') + v('total_imposto_icms'),
+                v('total_transferencia_estado_ipva') + v('total_imposto_ipva'),
                 v('total_transferencia_estado_exploracao'),
                 v('total_transferencia_estado_sus'),
                 v('total_transferencia_estado_assistencia'),
@@ -2314,8 +2291,6 @@ def conjunto_data_api(request):
             itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
             iss = F('conta_mais_especifica__iss')/F('populacao24'),
             imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
-            imposto_icms = F('conta_mais_especifica__imposto_icms')/F('populacao24'),
-            imposto_ipva = F('conta_mais_especifica__imposto_ipva')/F('populacao24'),
             outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
             taxas = F('conta_especifica__taxas')/F('populacao24'),
             taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
@@ -2333,7 +2308,7 @@ def conjunto_data_api(request):
             transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
             transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
             fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao24'),
-            fpe = F('conta_mais_especifica__transferencia_uniao_fpe')/F('populacao24'),
+            #fpe = F('conta_mais_especifica__transferencia_uniao_fpe')/F('populacao24'),
             transferencia_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao24'),
             transferencia_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao24'),
             transferencia_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao24'),
@@ -2341,8 +2316,8 @@ def conjunto_data_api(request):
             transferencia_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao24'),
             outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao24'),
             transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
-            transferencia_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao24'),
-            transferencia_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao24'),
+            transferencia_estado_icms = (F('conta_mais_especifica__transferencia_estado_icms') + F('conta_mais_especifica__imposto_icms'))/F('populacao24'),
+            transferencia_estado_ipva = (F('conta_mais_especifica__transferencia_estado_ipva') + F('conta_mais_especifica__imposto_ipva'))/F('populacao24'),
             transferencia_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao24'),
             transferencia_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao24'),
             transferencia_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao24'),
@@ -2363,8 +2338,6 @@ def conjunto_data_api(request):
             "itbi",
             "iss",
             "imposto_renda",
-            "imposto_icms",
-            "imposto_ipva",
             "outros_impostos",
             "taxas",
             "taxa_policia",
@@ -2382,7 +2355,7 @@ def conjunto_data_api(request):
             "transferencias_correntes",
             "transferencias_uniao",
             "fpm",
-            "fpe",
+            #"fpe",
             "transferencia_uniao_exploracao",
             "transferencia_uniao_sus",
             "transferencia_uniao_fnde",
