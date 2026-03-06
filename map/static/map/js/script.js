@@ -290,68 +290,24 @@ map.on("load", async () => {
   filtroMunicipio.addEventListener('change', gerenciarBadges);
   document.getElementById('btn-limpar-filtros').addEventListener('click', () => setTimeout(gerenciarBadges, 100));
 
-}); // ← CLOSES map.on("load", ...)
-
-// ===================== Popup =====================
-map.on("click", "populacao-circulos", (e) => {
-  if (e.features.length === 0) return;
-  const properties  = e.features[0].properties;
-  const coordinates = e.features[0].geometry.coordinates.slice();
-  if (!properties.cod_ibge) return;
-
-  
-  // ---- Percentil: cor no trecho em negrito (verde/ vermelho) ----
-  let percentil_texto = '';
-  if (properties.percentil24_n != null) {
-    const p = Number(properties.percentil24_n);
-    const arred = Math.round(p);
-
-    const isSuperior = p > 50;
-    const palavra    = isSuperior ? 'superior a' : 'inferior a';
-    const percentual = isSuperior ? arred : (100 - arred);
-
-    // cores (inline para garantir prioridade, sem depender do CSS)
-    const cor = isSuperior ? '#16a34a' /* verde */ : '#dc2626' /* vermelho */;
-
-    percentil_texto = `
-      <p class="mt-3 fst-italic small">
-        Este município tem receita per capita
-        <strong style="color:${cor}">${palavra} ${percentual}%</strong>
-        dos municípios do país.
-      </p>`;
-  }
-
-  // ---- Texto do quintil/decil dinâmico ----
-  let dynamicQuantileText = 'N/D';
-  if (properties.dynamic_quantile !== null && properties.dynamic_quantile !== undefined) {
-    if (filtroClassificacao.value === 'quintil')      dynamicQuantileText = `${properties.dynamic_quantile}º quintil`;
-    else if (filtroClassificacao.value === 'decil')   dynamicQuantileText = `${properties.dynamic_quantile}º decil`;
-  }
-
-  const html = `
-    <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
-    <hr class="mt-0 mb-2">
-    <div class="popup-details">
-      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
-      <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
-      <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
-      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
-    </div>
-    ${percentil_texto}
-    <div class="d-grid mt-3">
-      <a href="/municipio/${properties.cod_ibge}/" class="btn btn-primary btn-sm" target="_blank">Ver Mais Detalhes</a>
-    </div>
-  `;
-  new mapboxgl.Popup({ minWidth:'400px', maxWidth:'500px' }).setLngLat(coordinates).setHTML(html).addTo(map);
 });
 
+/* ===================== Popup de Clique no Mapa ===================== */
+map.on("click", "populacao-circulos", (e) => {
+    if (e.features.length === 0) return;
+    
+    /* Extrai a feature clicada e delega a renderizacao para a funcao padronizada */
+    const feature = e.features[0];
+    abrirPopupDoMunicipioSelecionado(feature);
+});
+
+/* Gerenciamento de fechamento do popup ao clicar no vazio do mapa */
 map.on("click", (e) => {
-  const features = map.queryRenderedFeatures(e.point, { layers: ["populacao-circulos"] });
-  if (!features.length && popupAtivo) {
-    popupAtivo.remove();
-    popupAtivo = null;
-  }
+    const features = map.queryRenderedFeatures(e.point, { layers: ["populacao-circulos"] });
+    if (!features.length && popupAtivo) {
+        popupAtivo.remove();
+        popupAtivo = null;
+    }
 });
 
 
@@ -406,62 +362,117 @@ function applyZoom(geojsonData) {
 
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed:0.8, curve:1.3 });
 }
-// ====== Ativa popup ao selecionar Município ======
+
+
 function abrirPopupDoMunicipioSelecionado(feature) {
-  if (!feature || !feature.geometry || !feature.properties) return;
+  if (!feature?.properties) return;
 
-  const properties  = feature.properties;
-  const coordinates = feature.geometry.coordinates.slice();
+  const props = feature.properties;
+  const coords = feature.geometry.coordinates.slice();
 
-  if (!properties.cod_ibge) return;
-
-  let percentil_texto = '';
-  if (properties.percentil24_n != null) {
-    const p = Number(properties.percentil24_n);
-    const arred = Math.round(p);
-
-    const isSuperior = p > 50;
-    const palavra    = isSuperior ? 'superior a' : 'inferior a';
-    const percentual = isSuperior ? arred : (100 - arred);
-    const cor = isSuperior ? '#16a34a' : '#dc2626';
-
-    percentil_texto = `
-      <p class="mt-3 fst-italic small">
-        Este município tem receita per capita
-        <strong style="color:${cor}">${palavra} ${percentual}%</strong>
-        dos municípios do país.
-      </p>`;
+  /* 1. Recupera a cor do quintil (usada na bolinha do mapa) */
+  const corQuintil = map.getPaintProperty('populacao-circulos', 'circle-color');
+  
+  /* Logica para pegar a cor exata baseada no valor do quintil atual da feature */
+  let corDaTag = '#94a3b8'; // Cor default (cinza)
+  if (Array.isArray(corQuintil)) {
+      // Procura a cor correspondente ao valor do dynamic_quantile no array do Mapbox
+      for (let i = 2; i < corQuintil.length; i += 2) {
+          if (props.dynamic_quantile === corQuintil[i]) {
+              corDaTag = corQuintil[i+1];
+              break;
+          }
+      }
   }
 
-  let dynamicQuantileText = 'N/D';
-  if (properties.dynamic_quantile !== null && properties.dynamic_quantile !== undefined) {
-    if (filtroClassificacao.value === 'quintil')    dynamicQuantileText = `${properties.dynamic_quantile}º quintil`;
-    else if (filtroClassificacao.value === 'decil') dynamicQuantileText = `${properties.dynamic_quantile}º decil`;
+  const quintilValue = props.dynamic_quantile || 'N/D';
+  const tipoLabel = (typeof filtroClassificacao !== 'undefined' && filtroClassificacao.value === 'decil') ? 'Decil' : 'Quintil';
+
+  /* SVGs com cores consistentes */
+  const icons = {
+    pop: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>`,
+    money: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px; color:#103758;"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+    sus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>`,
+    card: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect></svg>`,
+    rank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>`
+  };
+
+  /* Frase de Sintese (Logica de cores mantida) */
+  let summaryHTML = '';
+  if (props.percentil24_n != null) {
+    const p = Number(props.percentil24_n);
+    const isSuperior = p > 50;
+    const statusClass = isSuperior ? 'text-status-superior' : 'text-status-inferior';
+    const borderClass = isSuperior ? 'border-status-superior' : 'border-status-inferior';
+    summaryHTML = `
+      <div class="popup-badge-summary ${borderClass} ${statusClass}">
+        Este município possui uma receita per capita <strong class="${statusClass}">${isSuperior ? 'superior a' : 'inferior a'} ${isSuperior ? Math.round(p) : (100 - Math.round(p))}%</strong> do país.
+      </div>`;
   }
 
   const html = `
-    <h5 class="text-center mb-2"><strong><i class="fa-solid fa-city"></i> ${properties.name_muni_uf}</strong></h5>
-    <hr class="mt-0 mb-2">
-    <div class="popup-details">
-      <p><i class="fa-solid fa-users"></i> <strong>População:</strong> ${(+properties.Populacao24).toLocaleString("pt-BR")}</p>
-      <p><i class="fa-solid fa-users"></i> <strong>% População CadÚnico:</strong> ${(+properties.perc_pop_cadunico).toFixed(2)}%</p>
-      <p><i class="fa-solid fa-coins"></i> <strong>Receita p/c:</strong> ${(+properties.rc_24_pc).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
-      <p><i class="fa-solid fa-chart-column"></i> <strong>Classificação:</strong> ${dynamicQuantileText}</p>
-      <p><i class="fa-solid fa-ranking-star"></i> <strong>Percentil Nacional:</strong> ${properties.percentil24 || 'N/D'}</p>
-    </div>
-    ${percentil_texto}
-    <div class="d-grid mt-3">
-      <a href="/municipio/${properties.cod_ibge}/" class="btn btn-primary btn-sm" target="_blank">Ver Mais Detalhes</a>
+    <div class="popup-wrapper">
+      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="popup-icon-box"><i class="fa-solid fa-city"></i></div>
+          <h4 class="popup-title">${props.name_muni_uf}</h4>
+        </div>
+        <span class="popup-badge-quintil" style="background-color: ${corDaTag}">${quintilValue}º ${tipoLabel}</span>
+      </div>
+      
+      <div class="popup-data-grid">
+        <div class="popup-data-row">
+          ${icons.pop}
+          <div class="popup-info-content">
+            <span class="popup-label">População</span>
+            <span class="popup-value">${(+props.Populacao24).toLocaleString("pt-BR")}</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.money}
+          <div class="popup-info-content">
+            <span class="popup-label">Receita p/c</span>
+            <span class="popup-value" style="color:#103758; font-size:18px; font-weight:900;">${(+props.rc_24_pc).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.sus}
+          <div class="popup-info-content">
+            <span class="popup-label">Pop. SUS Dependente</span>
+            <span class="popup-value">${props.sus_dependente || 'N/D'}%</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.card}
+          <div class="popup-info-content">
+            <span class="popup-label">Pop. CadÚnico</span>
+            <span class="popup-value">${(+props.perc_pop_cadunico).toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.rank}
+          <div class="popup-info-content">
+            <span class="popup-label">Percentil Nacional</span>
+            <span class="popup-value">${props.percentil24 || 'N/D'}</span>
+          </div>
+        </div>
+      </div>
+
+      ${summaryHTML}
+
+      <a href="/municipio/${props.cod_ibge}/" class="popup-btn-details" target="_blank">
+        VER PAINEL COMPLETO <i class="fa-solid fa-chevron-right"></i>
+      </a>
     </div>
   `;
 
   if (popupAtivo) popupAtivo.remove();
-
-  popupAtivo = new mapboxgl.Popup({ minWidth:'400px', maxWidth:'500px' })
-    .setLngLat(coordinates)
-    .setHTML(html)
-    .addTo(map);
-
+  popupAtivo = new mapboxgl.Popup({ minWidth: '340px', maxWidth: '420px', className: 'ifem-premium-popup', closeButton: false, offset: 20 })
+    .setLngLat(coords).setHTML(html).addTo(map);
 }
 
 function hideBaseMunicipalityLayers() {
