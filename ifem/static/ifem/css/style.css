@@ -2,31 +2,24 @@
    1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS
    ========================================================================== */
 
-/* * Define variáveis CSS (Custom Properties) no escopo global.
- * Centraliza a gestão de cores e dimensões estruturais.
- */
+/* Define variáveis CSS (Custom Properties) no escopo global */
 :root {
-    --nav-height: 70px;          /* Altura fixa da barra de navegação */
-    --fnp-dark-blue: #103758;    /* Cor primária escura (Brand) */
-    --fnp-blue: #2F80ED;         /* Cor primária padrão (Brand) */
-    --fnp-yellow: #EEAF19;       /* Cor secundária/destaque (Brand) */
-    --fnp-green: #27AE60;        /* Cor de sucesso/positivo (Brand) */
-    --fnp-light-gray: #f8f9fa;   /* Cor de fundo para seções secundárias */
-    --accent-red: #c62828;       /* Cor de alerta/negativo */
+    --nav-height: 70px;
+    --fnp-dark-blue: #103758;
+    --fnp-blue: #2F80ED;
+    --fnp-yellow: #EEAF19;
+    --fnp-green: #27AE60;
+    --fnp-light-gray: #f8f9fa;
+    --accent-red: #c62828;   
 }
 
-/* * Configurações do elemento raiz HTML.
- * scroll-behavior: auto evita conflitos com animações JS.
- * scroll-padding-top compensa a navbar fixa ao usar âncoras.
- */
+/* Configurações do elemento raiz HTML */
 html {
     scroll-behavior: auto !important;
     scroll-padding-top: 140px;
 }
 
-/* * Definições base do corpo da página.
- * Aplica a tipografia 'Inter' globalmente e remove margens padrão.
- */
+/* Definições base do corpo da página */
 body {
     font-family: 'Inter', sans-serif;
     margin: 0;
@@ -35,9 +28,7 @@ body {
     background-color: #fff;
 }
 
-/* * Reset e padronização de títulos.
- * Garante peso da fonte e cor consistente para hierarquia H1-H6.
- */
+/* Reset e padronização de títulos */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 800;
     color: #111;
@@ -45,9 +36,7 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Inter', sans-serif;
 }
 
-/* * Padronização de parágrafos.
- * Define altura de linha para legibilidade e cor de texto suave.
- */
+/* Define altura de linha para legibilidade e cor de texto suave */
 p {
     line-height: 1.6;
     color: #444;
@@ -219,14 +208,10 @@ p {
     pointer-events: all; 
 }
 
-/* --- TRILHO PRINCIPAL --- */
+/* TRILHO PRINCIPAL */
 .story-track {
-    /* position: relative;  <--- APAGUE OU COMENTE ESTA LINHA!!! */
     
-    /* Ao remover o 'relative', os logos (que são absolute) vão ignorar este container
-       e buscar a próxima referência, que é a barra .story-nav (largura total da tela). 
-       Assim, eles vão colar na borda real do monitor. */
-
+    /* Sem 'relative', os logos (absolute) ignoram este container e usam .story-nav como referência, alinhando na borda da tela. */
     flex: 1;
     display: flex;
     align-items: center;
@@ -245,11 +230,11 @@ p {
     right: auto !important;
 }
 
-/* --- LOGOS (FIXOS NAS PONTAS) --- */
+/* LOGOS (FIXOS NAS PONTAS) */
 .nav-logo {
-    position: absolute; /* Tira do fluxo para não empurrar o menu */
+    position: absolute;
     top: 50%;
-    transform: translateY(-50%); /* Centraliza verticalmente */
+    transform: translateY(-50%);
     z-index: 10;
     display: flex;
     align-items: center;
@@ -272,7 +257,7 @@ p {
 #nav-problema, #nav-noticias { margin: 0 !important; }
 
 
-/* --- ITEM DE NAVEGAÇÃO (Menu Central) --- */
+/* ITEM DE NAVEGAÇÃO (Menu Central) */
 .story-item {
     display: flex; 
     align-items: center; 
@@ -337,7 +322,7 @@ p {
 .section-header-mobile { display: none; }
 
 @media(max-width: 1100px) {
-    /* Esconde logos em telas médias para não sobrepor o menu */
+
     .nav-logo { display: none; }
 }
 
@@ -361,17 +346,15 @@ p {
    4. ESTRUTURA GERAL DAS SEÇÕES
    ========================================================================== */
 
-/* * Container padrão para seções de conteúdo (Estilo "Livro").
- * Define altura mínima de tela cheia e background branco.
- */
+/* Container padrão para seções de conteúdo (Estilo "Livro") */
 .book-section {
     position: relative; 
     background: #fff;
     min-height: 100vh; 
     border-bottom: 1px solid #eee;
-    padding-bottom: 0 !important; /* Força o fim da seção a subir */
+    padding-bottom: 0 !important; 
     margin-bottom: 0 !important;
-    scroll-margin-top: var(--nav-height); /* Ajuste de scroll para âncoras */
+    scroll-margin-top: var(--nav-height); 
 }
 
 /* Container de conteúdo centralizado e limitado a 1200px */
@@ -381,12 +364,10 @@ p {
     gap: 50px;
     max-width: 1200px; 
     margin: 0 auto;
-    flex-wrap: wrap; /* Permite quebra de linha em telas menores */
+    flex-wrap: wrap; 
 }
 
-/* * Colunas flexíveis para layout de Texto e Visual.
- * min-width garante legibilidade antes da quebra de linha (wrap).
- */
+/* Colunas flexíveis para layout de Texto e Visual */
 .text-col, .visual-col {
     flex: 1; 
     min-width: 320px;
@@ -752,7 +733,7 @@ p {
 .info-icon {
     width: 18px;
     height: 18px;
-    color: #9ca3af; /* Cinza suave */
+    color: #9ca3af; 
     transition: color 0.2s ease;
 }
 
@@ -765,7 +746,7 @@ p {
     visibility: hidden;
     opacity: 0;
     position: absolute;
-    bottom: 140%; /* Posiciona acima do ícone */
+    bottom: 140%; 
     left: 50%;
     transform: translateX(-50%) translateY(5px);
     width: 220px;
@@ -780,14 +761,14 @@ p {
     z-index: 10;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none; /* Evita flicker */
+    pointer-events: none; 
 }
 
 /* Seta do Tooltip */
 .tooltip-content::after {
     content: "";
     position: absolute;
-    top: 100%; /* Embaixo da caixa */
+    top: 100%; 
     left: 50%;
     margin-left: -5px;
     border-width: 5px;
@@ -805,22 +786,14 @@ p {
    5.1 CARROSSEL IN-PLACE: O PROBLEMA (PAINEL DESLIZANTE)
    ========================================================================== */
 
-/*
- * Container de Visualização (Máscara)
- * Restringe a exibição ao painel ativo e previne alteração de layout (reflow).
- * Oculta o conteúdo excedente no eixo horizontal.
- */
+/* Container de Visualização (Máscara) */
 .slider-viewport-prob {
     position: relative;
     overflow: hidden;
     width: 100%;
 }
 
-/*
- * Trilho de Navegação Horizontal
- * Comporta os painéis e executa a transição física bidirecional.
- * Largura de 200% para acomodar dois painéis de 100% da viewport cada.
- */
+/* Trilho de navegação horizontal comporta os painéis e executa a transição física bidirecional */
 .slider-track-prob {
     display: flex;
     width: 200%; 
@@ -829,10 +802,7 @@ p {
     align-items: flex-start;
 }
 
-/*
- * Painel Individual
- * Ocupa 50% do trilho (equivalente a 100% da viewport visível).
- */
+/* Painel Individual */
 .slider-panel-prob {
     width: 50%;
     flex-shrink: 0;
@@ -845,16 +815,13 @@ p {
     padding-bottom: 80px;
 }
 
-/*
- * Container de Scroll Interno (Texto Longo)
- * Congela a altura máxima e ativa o scrollbar vertical interno.
- */
+/* Container de Scroll Interno (Texto Longo) */
 .scrollable-text {
     max-height: 520px;
     overflow-y: auto;
     padding-right: 15px;
     margin-top: 10px;
-    margin-bottom: 80px; /* Espaço reservado para o botão não sobrepor o texto */
+    margin-bottom: 80px; 
 }
 
 /* Customização do Scrollbar Interno (Webkit) */
@@ -873,12 +840,10 @@ p {
     background: var(--fnp-dark-blue, #103758); 
 }
 
-/*
- * Controles de Ação (Botões do Slider)
- */
+/* Controles de Ação (Botões do Slider) */
 .slider-actions {
     position: absolute;
-    bottom: 20px; /* Distância fixa do fundo do card */
+    bottom: 20px; 
     left: 0;
     display: flex;
     gap: 15px;
@@ -938,9 +903,7 @@ p {
    6. SEÇÃO: METODOLOGIA
    ========================================================================== */
 
-/*
- * Estrutura Base e Cards
- */
+/* Estrutura Base e Cards */
 .metodologia-infographic {
     display: flex;
     flex-direction: column;
@@ -966,9 +929,7 @@ p {
     flex-direction: column;
 }
 
-/*
- * Cabeçalhos e Tipografia
- */
+/* Cabeçalhos e Tipografia */
 .step-header {
     display: flex;
     flex-direction: column;
@@ -1019,9 +980,7 @@ p {
     width: 100%;
 }
 
-/*
- * Card 1: Gráfico de Barras
- */
+/* Card 1: Gráfico de Barras */
 .bars-container {
     display: flex;
     align-items: flex-end;
@@ -1121,9 +1080,7 @@ p {
     50% { transform: translateY(8px); }
 }
 
-/*
- * Card 2: Quintis e Decis
- */
+/* Card 2: Quintis e Decis */
 .row-quintis-pro {
     display: flex !important;
     width: 100% !important;
@@ -1180,9 +1137,7 @@ p {
     line-height: 1.2; 
 }
 
-/*
- * Interações e Animação CSS Nativa
- */
+/* Interações e Animação CSS Nativa */
 .box-q-pro:hover { 
     transform: translateY(-4px); 
     box-shadow: 0 6px 12px rgba(0,0,0,0.15); 
@@ -1221,10 +1176,7 @@ p {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/*
- * Sistema Unificado de Tooltip (Quintis e Decis)
- * Utiliza o atributo data-tooltip para gerar baloes informativos.
- */
+/* Sistema Unificado de Tooltip (Quintis e Decis) para gerar baloes informativos */
 .box-q-pro::after,
 .box-d-pro::after {
     content: attr(data-tooltip);
@@ -1276,9 +1228,7 @@ p {
     visibility: visible;
 }
 
-/*
- * Divisor Fino (Aprofundamento)
- */
+/* Divisor Fino (Aprofundamento) */
 .divider-pro {
     display: flex;
     align-items: center;
@@ -1308,9 +1258,7 @@ p {
     z-index: 2; 
 }
 
-/*
- * Paleta de Cores FNP
- */
+/* Paleta de Cores FNP */
 .q-red { background: #A81C21; } 
 .q-orange { background: #E47326; } 
 .q-yellow { background: #F4D01D; } 
@@ -1328,9 +1276,7 @@ p {
 .d-9 { background: #2D964D; } 
 .d-10 { background: #076931; }
 
-/*
- * Tópicos da Metodologia (Saiba Mais)
- */
+/* Tópicos da Metodologia (Saiba Mais) */
 .methodology-topics {
     display: flex;
     flex-direction: column;
@@ -1370,9 +1316,7 @@ p {
     font-weight: 600; 
 }
 
-/*
- * Responsividade
- */
+/* Responsividade */
 @media (max-width: 480px) {
     .row-quintis-pro { flex-wrap: wrap; }
     .box-q-pro { flex: 1 1 45%; }
@@ -1389,9 +1333,9 @@ p {
    7. SEÇÃO: FUNCIONALIDADES (GRID E CARDS) - REVISADO
    ========================================================================== */
 
-/* Adicione isso para expandir a área horizontal somente nesta seção */
+/* Expansão de área horizontal nesta seção */
 #funcionalidades .section-content {
-    max-width: 1400px; /* Aumentado de 1200px para 1400px */
+    max-width: 1400px; 
 }
 
    /* Cores do Tema FNP */
@@ -1445,11 +1389,11 @@ p {
 
 .feature-card:nth-child(3) .cta-link {
     background: var(--fnp-yellow) !important;
-    color: #000 !important; /* Texto preto para legibilidade */
+    color: #000 !important; 
 }
 
 .feature-card:nth-child(3):hover .cta-link {
-    background: #f39c12; /* Laranja suave no hover para feedback */
+    background: #f39c12; 
     box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
 }
 
@@ -1498,7 +1442,7 @@ p {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-top: 40px; /* Espaço entre os cards e o botão */
+    margin-top: 40px; 
     margin-bottom: 10px;
 }
 
@@ -1508,9 +1452,9 @@ p {
     align-items: center;
     gap: 10px;
     padding: 12px 28px;
-    background-color: white; /* Fundo branco */
-    border: 1px solid #e0e0e0; /* Borda cinza sutil (padrão do site) */
-    color: var(--fnp-dark-blue); /* Texto escuro */
+    background-color: white; 
+    border: 1px solid #e0e0e0; 
+    color: var(--fnp-dark-blue); 
     border-radius: 50px;
     font-size: 0.95rem;
     font-weight: 600;
@@ -1520,7 +1464,6 @@ p {
     /* Removido text-transform uppercase para igualar ao padrão "Saiba mais" */
 }
 /*Mensagem Em Construção*/
-/* Estilo da mensagem dentro do modal */
 .construction-message {
     padding: 3rem 2rem;
     text-align: center;
@@ -1544,14 +1487,14 @@ p {
 }
 /* Fundo escuro do modal */
 .tutorial-modal {
-    display: none; /* Escondido por padrão */
+    display: none; 
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
+    background-color: rgba(0, 0, 0, 0.5); 
     align-items: center;
     justify-content: center;
 }
@@ -1602,7 +1545,7 @@ p {
     color: var(--fnp-blue);
     background-color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.1); /* Sombra mais suave */
+    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.1); 
 }
 
 /* Garante que o ícone SVG acompanhe a mudança de cor do texto */
@@ -1616,14 +1559,14 @@ p {
     color: var(--fnp-blue);
 }
 
-/* --- Modal de Vídeo --- */
+/* Modal de Vídeo */
 .video-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Fundo escuro */
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(5px);
     z-index: 10000;
     display: flex;
@@ -1685,7 +1628,7 @@ p {
     background: rgba(255, 0, 0, 0.7);
 }
 
-/* Mantém estilos anteriores dos Cards, Hover, etc... */
+/* Mantém estilos anteriores dos Cards, Hover e demais */
 .feature-card {
     background: white; 
     border-radius: 16px; 
@@ -1708,12 +1651,12 @@ p {
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     position: relative; 
-    height: 550px; /* Aumentado levemente para acomodar o botão */
+    height: 550px; 
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
     display: flex; 
     flex-direction: column;
-    text-decoration: none !important; /* Remove sublinhado de link */
-    color: inherit !important; /* Mantém a cor do texto original */
+    text-decoration: none !important; 
+    color: inherit !important; 
     font-family: 'Inter', sans-serif;
 }
 
@@ -1753,7 +1696,7 @@ p {
     z-index: 2; 
     background: white;
     transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transform: translateY(calc(100% - 90px)); /* Mostra apenas o header */
+    transform: translateY(calc(100% - 90px)); 
     box-sizing: border-box;
 }
 
@@ -1817,7 +1760,7 @@ p {
 }
 
 .feature-card:hover .cta-link {
-    background: #27AE60; /* Muda para verde no hover para feedback visual */
+    background: #27AE60; 
 }
 
 /* Ícones */
@@ -1891,9 +1834,7 @@ p {
 .btn-read-more.active .chevron-icon { transform: rotate(180deg); }
 .chevron-icon { width: 16px; height: 16px; transition: transform 0.4s ease; }
 
-/* * Container de conteúdo oculto.
- * Controlado via max-height para animação de abertura suave.
- */
+/* Container de conteúdo oculto */
 .expandable-content {
     max-height: 0; 
     overflow: hidden; 
@@ -1920,7 +1861,7 @@ p {
 /* Container de Scroll: Esconde a barra nativa mas mantém funcionalidade */
 .news-container {
     width: 100%;
-    padding: 20px 5px; /* Padding para não cortar sombras dos cards */
+    padding: 20px 5px; 
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
@@ -1947,8 +1888,8 @@ p {
 .news-card-pro {
     position: relative !important;;
     display: block;
-    flex: 0 0 320px; /* Largura fixa */
-    height: 450px;   /* Altura fixa */
+    flex: 0 0 320px; 
+    height: 450px;   
     border-radius: 16px;
     overflow: hidden;
     text-decoration: none;
@@ -2029,7 +1970,7 @@ p {
     color: #fff;
     line-height: 1.3;
     margin: 0 0 16px 0;
-    display: block; /* Garante que o texto flua naturalmente */
+    display: block; 
 }
 
 /* Link "Ler mais" */
@@ -2270,7 +2211,7 @@ p {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 30px;
     display: flex;
-    justify-content: space-between; /* Separa texto e botão */
+    justify-content: space-between; 
     align-items: center;
     font-size: 0.85rem;
     color: #ffffff !important;
@@ -2336,7 +2277,7 @@ p {
    ========================================================================== */
 
 .cta-section {
-    background-color: #f8f9fa; /* Cinza bem claro para diferenciar */
+    background-color: #f8f9fa; 
     padding: 80px 20px;
     text-align: center;
     border-top: 1px solid rgba(0,0,0,0.05);
@@ -2367,16 +2308,16 @@ p {
 /* Botão Principal Grande */
 .btn-primary-cta {
     display: inline-block;
-    background-color: #6AC074; /* Verde IFEM */
+    background-color: #6AC074; 
     color: white;
     font-family: 'Inter', sans-serif;
     font-size: 1.1rem;
     font-weight: 700;
     padding: 18px 40px;
-    border-radius: 50px; /* Redondo estilo "Pill" */
+    border-radius: 50px; 
     text-decoration: none;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(106, 192, 116, 0.4); /* Sombra verde */
+    box-shadow: 0 4px 15px rgba(106, 192, 116, 0.4); 
 }
 
 .btn-primary-cta:hover {
@@ -2690,9 +2631,6 @@ p {
     border-color: transparent transparent var(--fnp-dark-blue) transparent;
 }
 
-/*==========================================================================
-    Efeitos extras
-========================================================================== */
 
 /* O fundo da linha ganha um destaque mais evidente */
 .chart-row {
@@ -2739,7 +2677,7 @@ p {
  Destaque Cruzado: Texto -> Gráfico
 ====================================================================== */ 
 .text-highlight {
-    color: #FACC15; /* O amarelo FNP garante o destaque no fundo escuro */
+    color: #FACC15;
     font-weight: 700;
     cursor: pointer;
     text-decoration: none; 
@@ -2777,22 +2715,18 @@ p {
 
 
 /* ==========================================================================
-   RESPONSIVIDADE MOBILE: SEÇÃO RAIZ DA DISTORÇÃO / EVOLUÇÃO
+   RESPONSIVIDADE MOBILE: SEÇÃO RAIZ DA DISTORÇÃO
    ========================================================================== */
 
 @media (max-width: 992px) {
-    /* * Força o empilhamento vertical das colunas.
-     * Aplica-se aos IDs mapeados para a seção de evolução/distorção.
-     */
+    /* Empilhamento vertical das colunas aplicando aos IDs mapeados para a seção de evolução/distorção */
     #evolucao .section-content,
     #raiz-distorcao .section-content {
         flex-direction: column !important;
         gap: 40px;
     }
 
-    /* * Desativa o comportamento sticky no mobile para evitar sobreposição.
-     * Retorna o elemento ao fluxo normal do documento.
-     */
+    /* Desativa o comportamento sticky no mobile para evitar sobreposição */
     #evolucao .text-col,
     #raiz-distorcao .text-col {
         position: relative !important;
@@ -2802,9 +2736,7 @@ p {
         padding-bottom: 0;
     }
 
-    /* * Expande o container do gráfico para ocupar a tela inteira,
-     * prevenindo compressão dos elementos internos.
-     */
+    /* Expande o container do gráfico para ocupar a tela inteira */
     #evolucao .visual-col,
     #raiz-distorcao .visual-col {
         width: 100% !important;
@@ -2948,9 +2880,7 @@ p {
 
 .hidden { display: none !important; }
 
-/*
- * Estrutura do card compacto de resultados
- */
+/* Estrutura do card compacto de resultados */
 .muni-compact-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -2977,9 +2907,7 @@ p {
     margin: 0;
 }
 
-/*
- * Sistema de tooltip para indicadores de variação
- */
+/* Sistema de tooltip para indicadores de variação */
 .muni-tooltip-wrapper {
     position: relative;
     display: inline-flex;
@@ -3022,9 +2950,7 @@ p {
     opacity: 1;
 }
 
-/*
- * Tipografia e layout de valores principais
- */
+/* Tipografia e layout de valores principais */
 .muni-label {
     font-size: 0.8rem;
     text-transform: uppercase;
@@ -3048,9 +2974,7 @@ p {
     border-top: 1px dashed #e2e8f0;
 }
 
-/*
- * Estilização das etiquetas (badges) de agrupamento
- */
+/* Estilização das etiquetas (badges) de agrupamento */
 .muni-badge {
     padding: 6px 14px;
     border-radius: 9999px;
@@ -3061,9 +2985,7 @@ p {
     color: #475569;
 }
 
-/*
- * Componente de variação percentual
- */
+/* Componente de variação percentual */
 .muni-percent-tag {
     font-size: 0.875rem;
     font-weight: 700;
@@ -3084,12 +3006,7 @@ p {
     color: #A81C21; 
 }
 
-/*
- * Tooltip nativo via CSS para o indicador de variacao percentual
- */
-/*
- * Container do indicador percentual e texto explicativo.
- */
+/* Tooltip nativo via CSS para o indicador de variacao percentual */
 .muni-percent-wrapper {
     display: flex;
     flex-direction: column;
@@ -3099,9 +3016,7 @@ p {
     cursor: help;
 }
 
-/*
- * Tipografia do texto explicativo explicito.
- */
+/* Tipografia do texto explicativo explicito. */
 .muni-percent-text {
     font-size: 0.65rem;
     color: #64748b;
@@ -3110,10 +3025,9 @@ p {
     letter-spacing: 0.02em;
 }
 
-/*
- * Sistema de Tooltip alinhado a direita.
- * Previne overflow de tela limitando a largura e reajustando a origem.
- */
+ /* ==========================================================================
+   SISTEMA DE TOOLTIP ALINHADO A DIREITA 
+   ========================================================================== */
 .muni-percent-wrapper::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -3174,9 +3088,9 @@ p {
 
 /* Coluna Esquerda (Sticky) */
 .faq-sticky-col {
-    flex: 0 0 35%; /* Ocupa 35% da largura */
+    flex: 0 0 35%; 
     position: sticky;
-    top: 120px; /* Gruda logo abaixo da navbar */
+    top: 120px; 
     display: flex;
     flex-direction: column;
 }
@@ -3206,7 +3120,7 @@ p {
 
 /* Coluna Direita (Accordion) */
 .faq-accordion-col {
-    flex: 1; /* Ocupa o espaço restante */
+    flex: 1; 
 }
 
 .accordion-list {
@@ -3303,7 +3217,7 @@ p {
     background-color: var(--fnp-dark-blue);
 }
 
-/* Corpo do Accordion (Oculto via Grid CSS moderno) */
+/* Corpo do Accordion */
 .accordion-body {
     display: grid;
     grid-template-rows: 0fr;
@@ -3342,5 +3256,18 @@ p {
     }
 
     .faq-title { font-size: 2rem; }
-    .faq-icon-decoration { display: none; } /* Oculta ícone no mobile para focar no texto */
+    .faq-icon-decoration { display: none; } 
+}
+
+/* ==========================================================================
+   AJUSTE MOBILE: SUBTÍTULO NA MESMA LINHA
+   ========================================================================== */
+@media (max-width: 575.98px) {
+    .hero-content .hero-subtitle {
+        white-space: nowrap; 
+        font-size: clamp(0.7rem, 3.8vw, 0.95rem); 
+        letter-spacing: -0.01em; 
+        padding: 0;
+        width: 100%;
+    }
 }
