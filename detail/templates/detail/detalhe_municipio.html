@@ -26,7 +26,7 @@
                 <div id="global-base-toggle" class="segmented inline-flex p-1">
                     <button class="segmented-option active text-sm px-6 py-2" type="button" data-base="nacional">Nacional</button>
                     <button class="segmented-option text-sm px-6 py-2" type="button" data-base="estadual">Estadual</button>
-                    <button class="segmented-option text-sm px-6 py-2" type="button" data-base="faixa">Por Faixa</button>
+                    <button class="segmented-option text-sm px-6 py-2" type="button" data-base="faixa">Por Porte</button>
                 </div>
             </div>
             
@@ -84,7 +84,7 @@
             
             <div class="bg-slate-100 p-2 rounded-lg flex items-center text-xs font-bold uppercase tracking-wider">
                 <button type="button" class="kpi-rc-toggle active px-3 py-2 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
-                <button type="button" class="kpi-rc-toggle px-3 py-2 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Absoluto</button>
+                <button type="button" class="kpi-rc-toggle px-3 py-2 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Valor Total</button>
             </div>
 
         </div>
@@ -129,12 +129,17 @@
     <section class="dashboard-split mb-12">
         <div>
             <div class="section-heading">
-                <span>Estrutura de Receitas</span>
+                <span>Estrutura de Receitas</span>                       
                 <div id="valor-toggle" class="segmented">
                     <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
                     <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
                 </div>
             </div>
+
+                        <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+                        <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Explore cada tipo de receita até o seu nível mais detalhado.
+                        </div>
             
             <div class="dna-tree-wrapper" id="main-revenue-details-container">
                 {% if revenue_tree %}
@@ -152,6 +157,10 @@
                 <div class="section-heading">
                     <span>Composição</span>
                 </div>
+                        <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+                        <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Veja a proporção de cada tipo de receita.
+                        </div>
                 <div class="chart-card">
                     <select id="chart-category-select" class="select-clean mb-4">
                         <option value="main_categories">Carregando categorias...</option>
@@ -166,6 +175,10 @@
                 <div class="section-heading">
                     <span>Densidade Fiscal Nacional</span>
                 </div>
+                        <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+                        <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            A linha pontilhada marca a posição do município na distribuição nacional. Quanto mais alta a curva, maior a concentração de cidades com aquele valor.
+                        </div>
                 <div class="chart-card">
                     <div style="height: 200px; position: relative;">
                         <canvas id="densidadeReceita"></canvas>
@@ -176,8 +189,14 @@
     </section>
 
     <section class="mb-12">
-        <div class="section-heading mb-4">
-            <span>Síntese Fiscal e Demográfica (2000 - 2024) *Em valores de 2024</span>
+        <div class="mb-6">
+            <div class="section-heading mb-1">
+                <span>Síntese Fiscal e Demográfica (2000 - 2024)</span>
+            </div>
+            <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                * Valores financeiros corrigidos pela inflação para 2024
+            </div>
         </div>
 
         {% if evolucao_historica.has_2000_data %}
@@ -192,14 +211,14 @@
                         {% else %}
                             caiu <span class="text-rose-600 font-black">{{ evolucao_historica.delta_rc_pc }}%</span>,
                         {% endif %}
-                        enquanto a <span class="lbl-media-base">média nacional</span> variou <strong class="text-slate-800" id="val-media-rc">{{ media_nacional.delta_rc_pc|default:"11" }}%</strong>. 
+                        enquanto a <span class="lbl-media-base">média nacional</span> variou <strong class="text-slate-800" id="val-media-rc">316%</strong>. 
                     </br>No mesmo período, a população do município 
                         {% if evolucao_historica.delta_populacao >= 0 %}
                             aumentou <span class="text-emerald-600 font-black">+{{ evolucao_historica.delta_populacao }}%</span>,
                         {% else %}
                             teve queda de <span class="text-rose-600 font-black">{{ evolucao_historica.delta_populacao }}%</span>,
                         {% endif %}
-                        ante crescimento da <span class="lbl-media-base">média nacional</span> de <strong class="text-slate-800" id="val-media-pop">{{ media_nacional.delta_populacao|default:"15" }}%</strong>.
+                        ante crescimento da <span class="lbl-media-base">média nacional</span> de <strong class="text-slate-800" id="val-media-pop">15%</strong>.
                     </p>
 
                     <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
@@ -293,14 +312,14 @@
             "nome_muni": "{{ municipio.name_muni|escapejs }}",
             "receita": {
                 "mun": "{{ evolucao_historica.delta_rc_pc|default:'0' }}",
-                "est": "{{ media_estadual.delta_rc_pc|default:'5' }}",
-                "nac": "{{ media_nacional.delta_rc_pc|default:'11' }}",
+                "est": "{{ media_estadual.delta_rc_pc|default:'0' }}",
+                "nac": "316",
                 "faixa": "{{ media_faixa.delta_rc_pc|default:'0' }}"
             },
             "populacao": {
                 "mun": "{{ evolucao_historica.delta_populacao|default:'0' }}",
-                "est": "{{ media_estadual.delta_populacao|default:'8' }}",
-                "nac": "{{ media_nacional.delta_populacao|default:'15' }}",
+                "est": "{{ media_estadual.delta_populacao|default:'0' }}",
+                "nac": "15",
                 "faixa": "{{ media_faixa.delta_populacao|default:'0' }}"
             }
         }
