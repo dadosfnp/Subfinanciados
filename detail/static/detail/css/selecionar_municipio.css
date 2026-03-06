@@ -96,3 +96,93 @@
 .hidden {
     display: none;
 }
+
+/* ==========================================================================
+   MENU SUPERIOR - ESTILO PADRÃO FNP E CORREÇÃO DE Z-INDEX (DETALHE MUNICÍPIO)
+   ========================================================================== */
+
+/* 1. APENAS a barra de navegação vai para o topo absoluto */
+header, nav, .navbar {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+/* 2. Impede que os containers cortem o menu, MAS SEM elevar o z-index deles! */
+.container, .container-fluid {
+    overflow: visible !important;
+}
+
+/* 3. Rebaixa ativamente os textos, títulos e cards da página para o fundo */
+main, .detail-content, .hero-title, .ranking-header-box, .kpi-card {
+    position: relative !important;
+    z-index: 1 !important; /* Força o "Américo Brasiliense" a ficar atrás do menu */
+}
+
+/* 4. Estilo exato do Dropdown flutuante */
+.dropdown-menu.show {
+    display: block !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999999 !important; /* Rei da tela */
+    background-color: #ffffff !important; 
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+    padding: 8px 0 !important;
+    min-width: 200px !important;
+    margin-top: 10px !important;
+}
+
+.dropdown-menu:not(.show) {
+    display: none !important;
+}
+
+/* 5. Padronização dos Itens do Menu (Inativos) */
+a.dropdown-item, 
+.dropdown-menu .dropdown-item {
+    background-color: transparent !important;
+    color: #334155 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    padding: 10px 20px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-weight: 400 !important; 
+}
+
+a.dropdown-item:hover, 
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background-color: #f1f5f9 !important; 
+    color: #103758 !important;
+}
+
+/* 6. Item ATIVO (Força a aba 'Análise Município' a ficar ativa nesta página) */
+a.dropdown-item.active,
+.dropdown-menu .dropdown-item.active,
+.dropdown-menu .dropdown-item[href*="municipio"], /* Ativa pela URL */
+.dropdown-menu li:nth-child(3) .dropdown-item { /* Ativa pela posição no menu */
+    background-color: transparent !important; 
+    color: #194685 !important; /* Azul FNP */
+    font-weight: 700 !important; 
+}
+
+/* ==========================================================================
+   AJUSTE MOBILE: TEXTO DO CAMPO DE PESQUISA
+   ========================================================================== */
+
+@media (max-width: 575.98px) {
+    /* Diminui a fonte e ajusta o espaçamento interno para ganhar área útil */
+    #muni-search-input {
+        font-size: 0.85rem !important; 
+        padding-left: 40px !important; /* Traz o texto um pouco mais perto da lupa */
+        padding-right: 15px !important;
+    }
+    
+    /* Garante que o placeholder (texto cinza) obedeça o novo tamanho */
+    #muni-search-input::placeholder {
+        font-size: 0.85rem !important;
+    }
+}

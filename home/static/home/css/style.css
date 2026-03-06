@@ -268,3 +268,75 @@
     background-color: #0d264d !important;
     border-color: #0d264d !important;
 }
+
+/* ==========================================================================
+   PADRONIZAÇÃO DA SIDEBAR (FONTES E CORES) - HOME (IDÊNTICO AO MAPA)
+   ========================================================================== */
+
+/* 1. Garante a fonte padrão em toda a gaveta lateral */
+.sidebar {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* 2. TÍTULOS PRINCIPAIS E DE SEÇÃO (Filtros, Configurações, Quantil, etc) */
+.sidebar h1, .sidebar h2, .sidebar h3, .sidebar h4, .sidebar h5, .sidebar h6 {
+    color: #103758 !important; /* Azul FNP Oficial */
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important; /* REDUZIDO de 700 para 600 para igualar a leveza do mapa */
+    margin-bottom: 0.5rem !important;
+    letter-spacing: -0.01em !important; /* Deixa o texto mais elegante */
+}
+
+/* Tamanhos ajustados para não ficarem grosseiros */
+.sidebar h4 { font-size: 1.15rem !important; margin-bottom: 1rem !important; }
+.sidebar h6 { font-size: 0.95rem !important; }
+
+/* 3. TÍTULOS DOS CAMPOS (Labels como Faixa Populacional, Região) */
+.sidebar .form-label {
+    display: block !important;
+    margin: 0 0 0.5rem 0 !important;
+    color: #103758 !important; /* Azul FNP */
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important; /* Semi-bold elegante */
+    font-size: 0.9rem !important; /* Mesmo tamanho do mapa */
+}
+
+/* 4. OPÇÕES DE SELEÇÃO (Radio Buttons: Número, Porcentagem, etc) */
+.sidebar .form-check-label {
+    display: inline-block !important;
+    color: #374151 !important; /* Cinza escuro elegante */
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important; /* Texto normal, sem negrito */
+    font-size: 0.9rem !important; /* Mesmo tamanho do mapa */
+    margin-bottom: 0 !important;
+    padding-top: 2px !important;
+}
+
+/* 5. CAIXINHAS DE SELEÇÃO E INPUTS (Selects) */
+.sidebar .form-select,
+.sidebar select,
+.sidebar .form-control {
+    font-family: 'Inter', sans-serif !important;
+    color: #374151 !important;
+    font-size: 0.875rem !important; /* Tamanho exato do mapa */
+}
+
+/* 6. LUPA (Garante o ícone Azul FNP) */
+.sidebar .input-group > .btn svg,
+.sidebar .input-group > .btn i {
+    fill: #103758 !important;
+    color: #103758 !important;
+}
+
+/* ==========================================================================
+   PADRONIZAÇÃO DOS CARDS (VISUAL CLEAN IGUAL À ANÁLISE AGREGADA)
+   ========================================================================== */
+
+/* Substitui as bordas duras e sombras antigas pelo visual "flutuante" da Agregada */
+.summary-card,
+.chart-card,
+.table-card {
+    border: none !important; /* Remove a linha cinza (as "marcas" nas bordas) */
+    border-radius: 8px !important; /* Deixa o arredondamento idêntico ao da Agregada (8px) */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important; /* Aplica a mesma sombra suave e neutra */
+}
