@@ -312,15 +312,15 @@
             "nome_muni": "{{ municipio.name_muni|escapejs }}",
             "receita": {
                 "mun": "{{ evolucao_historica.delta_rc_pc|default:'0' }}",
-                "est": "{{ media_estadual.delta_rc_pc|default:'0' }}",
-                "nac": "316",
-                "faixa": "{{ media_faixa.delta_rc_pc|default:'0' }}"
+                "est": "{{ media_estadual_rc_pc|default:'0' }}",
+                "nac": "{{ media_nacional_rc_pc|default:'0' }}",
+                "faixa": "{{ media_faixa_rc_pc|default:'0' }}"
             },
             "populacao": {
                 "mun": "{{ evolucao_historica.delta_populacao|default:'0' }}",
-                "est": "{{ media_estadual.delta_populacao|default:'0' }}",
-                "nac": "15",
-                "faixa": "{{ media_faixa.delta_populacao|default:'0' }}"
+                "est": "{{ media_estadual_pop|default:'0' }}",
+                "nac": "{{ media_nacional_pop|default:'0' }}",
+                "faixa": "{{ media_faixa_pop|default:'0' }}"
             }
         }
         </script>
