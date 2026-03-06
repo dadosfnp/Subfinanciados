@@ -2,9 +2,11 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita
+from django.db.models.functions import Coalesce
+from functools import reduce
+import operator
 
 def selecionar_municipio_view(request):
     """
@@ -535,7 +537,7 @@ def municipio_details_api(request):
 def _prepare_revenue_item_aggregated(
     name: str,
     field_base: str,      # ex: "imposto_taxas_contribuicoes" (pra casar com total_* no aggregated_data)
-    field_path: str,      # ex: "conta_detalhada__imposto_taxas_contribuicoes" (pra usar no queryset/F())
+    field_path,           # str OU list[str]/tuple[str]
     aggregated_data: dict,
     queryset,
     value_pc_nac: float,
@@ -543,13 +545,20 @@ def _prepare_revenue_item_aggregated(
 ):
     value_abs = aggregated_data.get(f"total_{field_base}", 0) or 0
 
+    # aceita 1 ou vários paths
+    field_paths = [field_path] if isinstance(field_path, str) else list(field_path)
+
+    # soma campos (NULL vira 0)
+    expr_total = reduce(operator.add, [Coalesce(F(p), 0.0) for p in field_paths])
+
     qs_pc = (
         queryset
         .filter(populacao24__gt=0)
-        .filter(Q(**{f"{field_path}__gt": 0}))
+        .annotate(total=expr_total)
+        .filter(total__gt=0)  # tira zeros (e nulos viram 0 por causa do Coalesce)
         .annotate(
             pc=ExpressionWrapper(
-                F(field_path) / F("populacao24"),
+                F("total") / F("populacao24"),
                 output_field=FloatField(),
             )
         )
@@ -570,33 +579,45 @@ def _prepare_revenue_item_aggregated(
         "value_abs": value_abs,
         "value_pc": value_pc,
         "diff": diff,
+        "media_nacional": value_pc_nac,
         "children": [],
+        # opcional: guardar quais campos compõem o item (ajuda debug)
+        "field_path": field_paths,
     }
 
     if is_collapsible:
         item["target_id"] = f"detalhe-{field_base.replace('_', '-')}"
     return item
 
-def nacional_pc_media(field_path):
+
+def nacional_pc_media(fields):
+
+    if isinstance(fields, str):
+        expr = F(fields)
+    else:
+        expr = None
+        for f in fields:
+            expr = F(f) if expr is None else expr + F(f)
+
     qs = (
         Municipio.objects
-        .filter(
-            Q(populacao24__gt=0),
-            Q(**{f"{field_path}__gt": 0})
-        )
+        .filter(populacao24__gt=0)
+        .annotate(total=expr)          # cria a soma primeiro
+        .filter(total__gt=0)           # remove os zeros
         .annotate(
             pc=ExpressionWrapper(
-                F(field_path) / F('populacao24'),
+                F('total') / F('populacao24'),
                 output_field=FloatField()
             )
         )
     )
+
     return qs.aggregate(avg=Avg('pc'))['avg'] or 0
 
 def conjunto_detalhe_view(request):
     queryset = Municipio.objects.all()
 
-    # Calcular a média nacional de receita per capita para comparação
+     # Calcular a média nacional de receita per capita para comparação
     # ITC
     nacional_med_itc_pc = nacional_pc_media('conta_detalhada__imposto_taxas_contribuicoes')
 
@@ -609,7 +630,7 @@ def conjunto_detalhe_view(request):
     nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
     nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
 
-    nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
+    nacional_med_outros_impostos = nacional_pc_media(['conta_mais_especifica__outros_impostos', 'conta_mais_especifica__imposto_icms', 'conta_mais_especifica__imposto_ipva'])
 
     # ITC_TAX
     nacional_med_taxas_pc = nacional_pc_media('conta_especifica__taxas')
@@ -636,6 +657,7 @@ def conjunto_detalhe_view(request):
     # TRF_UNI
     nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
     nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
+    #nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
     nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
     nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
     nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
@@ -741,7 +763,7 @@ def conjunto_detalhe_view(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
+        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'),
 
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -753,6 +775,7 @@ def conjunto_detalhe_view(request):
         total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
 
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
+        #total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
@@ -760,8 +783,8 @@ def conjunto_detalhe_view(request):
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
         total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
 
-        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
-        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
+        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms') ,  
+        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva') ,
         total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
         total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
         total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
@@ -843,7 +866,7 @@ def conjunto_detalhe_view(request):
                         _prepare_revenue_item_aggregated(
                             "Outros Impostos",
                             "outros_impostos",
-                            "conta_mais_especifica__outros_impostos",
+                            ["conta_mais_especifica__outros_impostos", "conta_mais_especifica__imposto_icms", "conta_mais_especifica__imposto_ipva"],
                             aggregated_data,
                             queryset,
                             nacional_med_outros_impostos,
@@ -1271,7 +1294,7 @@ def conjunto_detalhe_view(request):
                 v('total_itbi'),
                 v('total_iss'),
                 v('total_imposto_renda'),
-                v('total_outros_impostos'),
+                v('total_outros_impostos') + v('total_imposto_icms') + v('total_imposto_ipva'),
             ],
         },
         "taxas": {
@@ -1462,7 +1485,7 @@ def conjunto_fiscal_api(request):
     nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
     nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
 
-    nacional_med_outros_impostos = nacional_pc_media('conta_mais_especifica__outros_impostos')
+    nacional_med_outros_impostos = nacional_pc_media(['conta_mais_especifica__outros_impostos', 'conta_mais_especifica__imposto_icms', 'conta_mais_especifica__imposto_ipva'])
 
     # ITC_TAX
     nacional_med_taxas_pc = nacional_pc_media('conta_especifica__taxas')
@@ -1579,7 +1602,7 @@ def conjunto_fiscal_api(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
+        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
         total_outras_taxas=Sum('conta_mais_especifica__outras_taxas'),
@@ -1674,7 +1697,7 @@ def conjunto_fiscal_api(request):
                         _prepare_revenue_item_aggregated(
                             "Outros Impostos",
                             "outros_impostos",
-                            "conta_mais_especifica__outros_impostos",
+                            ["conta_mais_especifica__outros_impostos", "conta_mais_especifica__imposto_icms", "conta_mais_especifica__imposto_ipva"],
                             aggregated_data,
                             queryset,
                             nacional_med_outros_impostos,
@@ -2153,7 +2176,7 @@ def conjunto_chart_api(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
+        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
         total_outras_taxas=Sum('conta_mais_especifica__outras_taxas'),
@@ -2204,7 +2227,7 @@ def conjunto_chart_api(request):
                 v('total_itbi'),
                 v('total_iss'),
                 v('total_imposto_renda'),
-                v('total_outros_impostos'),
+                v('total_outros_impostos') + v('total_imposto_icms') + v('total_imposto_ipva'),
             ],
         },
         "taxas": {
@@ -2323,7 +2346,7 @@ def conjunto_data_api(request):
             itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
             iss = F('conta_mais_especifica__iss')/F('populacao24'),
             imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
-            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
+            outros_impostos = (F('conta_mais_especifica__outros_impostos') +  F('conta_mais_especifica__imposto_icms') + F('conta_mais_especifica__imposto_ipva'))/F('populacao24'),
             taxas = F('conta_especifica__taxas')/F('populacao24'),
             taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
             taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao24'),

@@ -1,0 +1,63 @@
+{% load currency_filters %}
+{% with has_children=item.children %}
+<div class="revenue-item-wrapper">
+    
+    <div class="tree-row transition-colors hover:bg-slate-50 border-b border-slate-100 last:border-0 level-{{ level }} {% if level == 0 %}p-4{% else %}py-3 pr-2{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
+         {% if has_children %}data-target="{{ item.target_id }}"{% endif %}
+         data-field-base="{{ item.field_base }}" 
+         style="cursor: pointer;">
+         
+        <div class="flex flex-col w-full">
+            
+            <div class="flex items-center justify-between gap-4 mb-1.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="revenue-color-indicator w-3 h-3 rounded-sm shrink-0 transition-colors duration-300"
+                        style="background-color: {% if item.diff.pc == 0 %} grey {% elif item.diff.pc <= -60 %} #d73027 {% elif item.diff.pc <= -20 %} #fc8d59 {% elif item.diff.pc <= 20 %} #fee08b {% elif item.diff.pc <= 60 %} #91cf60 {% else %} #1a9850{% endif %};">
+                    </div>
+                    <h4 class="{% if level == 0 %}text-lg{% else %}text-base{% endif %} font-bold text-[#103758] truncate">{{ item.name }}</h4>
+                </div>
+                
+                {% if has_children %}
+                    <svg class="tree-chevron w-5 h-5 text-slate-400 shrink-0 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                {% endif %}
+            </div>
+
+<div class="pl-[22px] mb-3">
+
+            <p class="revenue-dynamic-phrase text-[13px] text-slate-500 font-medium truncate"> {% if item.diff.pc >= 50 %} O conjunto tem a média {{ item.diff.pc }}% maior que a nacional 
+                                                                                                   {% elif item.diff.pc < 50 %} O conjunto tem a média {{ item.diff.pc }}% menor que a nacional {% endif %} </p>
+            </div>
+            
+            <div class="pl-[22px] flex items-center gap-12 sm:gap-16 tree-value">
+                <div>
+                    <span class="block text-[10px] font-semibold text-slate-400 mb-0.5 lbl-tipo-valor">Valor por Habitante</span>
+                    <span class="block text-[15px] font-black text-[#103758]">
+                        <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_float }}</span>
+                        <span class="valor-per-capita">R$ {{ item.value_pc|br_float }}</span>
+                    </span>
+                </div>
+                <div>
+                    <span class="revenue-dynamic-media-label block text-[10px] font-semibold text-slate-400 mb-0.5">Média Nacional</span>
+
+                    <span class="revenue-dynamic-media-value block text-[15px] font-black text-slate-500"> R$ {{ item.media_nacional|floatformat:2 }} </span>
+
+                    
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if has_children %}
+    <div id="{{ item.target_id }}" class="hidden pl-3 border-l-2 border-slate-100 ml-4 mt-1 mb-1">
+        {% for child in item.children %}
+            {% include "detail/_revenue_item_aggregate.html" with item=child level=level|add:1 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
+<!--vai-->

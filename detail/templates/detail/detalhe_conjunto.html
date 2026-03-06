@@ -268,16 +268,18 @@
     <section class="metric-card">
       <h5>
         Detalhamento da Receita Corrente
+        <!--
         <div id="valor-toggle" class="segmented">
           <button id="btn-per-capita" class="segmented-option active" type="button">Per Capita</button>
           <button id="btn-valores-reais" class="segmented-option" type="button">Valores Reais</button>
         </div>
+        -->
       </h5>
 
       <div id="main-revenue-details-container">
         {% if revenue_tree %}
           {% for item in revenue_tree %}
-            {% include "detail/_revenue_item.html" with item=item level=0 %}
+            {% include "detail/_revenue_item_aggregate.html" with item=item level=0 %}
           {% endfor %}
         {% else %}
           <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
