@@ -394,6 +394,7 @@ html, body {
 }
 
 /* Paleta Quintis IFEM */
+.quintil-0 { background-color: grey; }
 .quintil-1 { background-color: #d73027; }
 .quintil-2 { background-color: #fc8d59; }
 .quintil-3 { background-color: #fee08b; }

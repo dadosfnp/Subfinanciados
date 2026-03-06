@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand
-from home.models import Municipio
+from home.models import Municipio, Percentis
 
 class Command(BaseCommand):
     help = 'Importa dados de municípios do arquivo Excel, limpando os nomes das colunas.'
@@ -67,6 +67,7 @@ class Command(BaseCommand):
                 cod_ibge=row['cod_ibge'],
                 name_muni=row['nome_muni'],
                 cadunico = row['pop_cadunico_24'],
+                sus_dependente = row['dependencia_sus'],
                 uf=row['uf'],
                 coordx=row['coordx'],
                 coordy=row['coordy'],
@@ -85,7 +86,7 @@ class Command(BaseCommand):
                 regiao=row['regiao'],
                 name_muni_uf = row['name_muni_uf'],
                 rc_24_pc = row['receita_pc'],
-                rc_00_pc = row['receita_00_pc'],
+                rc_00_pc = row['receita_00_pc'] * 4.26381510960405,
                 rank_nacional = row['rank_nacional'],
                 total_nacional = row['total_nacional'],
                 rank_estadual = row['rank_estadual'] ,
@@ -106,5 +107,5 @@ class Command(BaseCommand):
                 populacao24_total_faixa = row['total_fax_pop']
 
             )
-        
+
         self.stdout.write(self.style.SUCCESS('Dados importados com sucesso!'))

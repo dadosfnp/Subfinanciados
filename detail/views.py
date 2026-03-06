@@ -108,6 +108,8 @@ def municipio_detalhe_view(request, municipio_id):
                 _prepare_revenue_item("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", cme, cmep, media_nac),
                 _prepare_revenue_item("Imposto sobre Serviços", "iss", cme, cmep, media_nac),
                 _prepare_revenue_item("Imposto de Renda", "imposto_renda", cme, cmep, media_nac),
+                _prepare_revenue_item("ICMS", "imposto_icms", cme, cmep, media_nac),
+                _prepare_revenue_item("IPVA", "imposto_ipva", cme, cmep, media_nac),
                 _prepare_revenue_item("Outros Impostos", "outros_impostos", cme, cmep, media_nac),
             ]))
             itc_item['children'].append(imposto_item)
@@ -150,6 +152,7 @@ def municipio_detalhe_view(request, municipio_id):
         if uniao:
             uniao['children'].extend(filter(None, [
                 _prepare_revenue_item("Cota-Parte do FPM", "transferencia_uniao_fpm", cme, cmep, media_nac),
+                _prepare_revenue_item("Cota-Parte do FPE", "transferencia_uniao_fpe", cme, cmep, media_nac),
                 _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", cme, cmep, media_nac),
                 _prepare_revenue_item("Recursos do SUS", "transferencia_uniao_sus", cme, cmep, media_nac),
                 _prepare_revenue_item("Recursos do FNDE", "transferencia_uniao_fnde", cme, cmep, media_nac),
@@ -207,8 +210,8 @@ def municipio_detalhe_view(request, municipio_id):
             [cs.imposto_pc, cs.taxas_pc, cs.contribuicoes_melhoria_pc]
         ),
         "imposto": get_chart_series(
-            ["IPTU", "ITBI", "ISS", "Imposto de Renda", "Outros"],
-            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.imposto_renda_pc, cme.outros_impostos_pc]
+            ["IPTU", "ITBI", "ISS", "Imposto de Renda", "ICMS", "IPVA", "Outros"],
+            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.imposto_renda_pc, cme.imposto_icms_pc, cme.imposto_ipva_pc, cme.outros_impostos_pc]
         ),
         "taxas": get_chart_series(
             ["Poder de Polícia", "Prestação de Serviços", "Outras"],
@@ -227,8 +230,8 @@ def municipio_detalhe_view(request, municipio_id):
             [cs.tranferencias_uniao_pc, cs.tranferencias_estados_pc, cs.outras_tranferencias_pc]
         ),
         "transferencias_uniao": get_chart_series(
-            ["FPM", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
-            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fundeb_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
+            ["FPM", "FPE", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
+            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_fpe_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fundeb_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
         ),
         "transferencias_estado": get_chart_series(
             ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
@@ -265,6 +268,8 @@ def municipio_detalhe_view(request, municipio_id):
             itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
             iss = F('conta_mais_especifica__iss')/F('populacao24'),
             imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
+            imposto_icms = F('conta_mais_especifica__imposto_icms')/F('populacao24'),
+            imposto_ipva = F('conta_mais_especifica__imposto_ipva')/F('populacao24'),
             outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
             taxas = F('conta_especifica__taxas')/F('populacao24'),
             taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
@@ -287,6 +292,7 @@ def municipio_detalhe_view(request, municipio_id):
             transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
             transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
             transferencias_uniao_fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao24'),
+            transferencia_uniao_fpe = F('conta_mais_especifica__transferencia_uniao_fpe')/F('populacao24'),
             transferencias_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao24'),
             transferencias_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao24'),
             transferencias_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao24'),
@@ -317,6 +323,8 @@ def municipio_detalhe_view(request, municipio_id):
             "iptu",
             "itbi",
             "iss",
+            "imposto_icms",
+            "imposto_ipva",           
             "imposto_renda",
             "outros_impostos",
             "taxas",
@@ -337,6 +345,7 @@ def municipio_detalhe_view(request, municipio_id):
             "transferencias_correntes",
             "transferencias_uniao",
             "transferencias_uniao_fpm",
+            "transferencia_uniao_fpe",
             "transferencias_uniao_exploracao",
             "transferencias_uniao_sus",
             "transferencias_uniao_fnde",
@@ -489,6 +498,8 @@ def municipio_details_api(request):
         total_itbi=Sum('conta_mais_especifica__itbi'),
         total_iss=Sum('conta_mais_especifica__iss'),
         total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
+        total_imposto_icms=Sum('conta_mais_especifica__imposto_icms'),
+        total_imposto_ipva=Sum('conta_mais_especifica__imposto_ipva'),
         total_outros_impostos=Sum('conta_mais_especifica__outros_impostos'),
         total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
         total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
@@ -498,6 +509,7 @@ def municipio_details_api(request):
         total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
         total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
         total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
+        total_transferencia_uniao_fpe=Sum('conta_mais_especifica__transferencia_uniao_fpe'),
         total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
         total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),

@@ -13,9 +13,9 @@
                 <div class="flex items-center gap-2.5">
                     <div class="revenue-color-indicator w-3 h-3 rounded-sm shrink-0 transition-colors duration-300"
                         style="background-color: #e2e8f0;" 
-                        data-q-nacional="{% if item.percentiles.nacional %}{% if item.percentiles.nacional <= 20 %}1{% elif item.percentiles.nacional <= 40 %}2{% elif item.percentiles.nacional <= 60 %}3{% elif item.percentiles.nacional <= 80 %}4{% else %}5{% endif %}{% endif %}"
-                        data-q-estadual="{% if item.percentiles.estadual %}{% if item.percentiles.estadual <= 20 %}1{% elif item.percentiles.estadual <= 40 %}2{% elif item.percentiles.estadual <= 60 %}3{% elif item.percentiles.estadual <= 80 %}4{% else %}5{% endif %}{% endif %}"
-                        data-q-faixa="{% if item.percentiles.faixa %}{% if item.percentiles.faixa <= 20 %}1{% elif item.percentiles.faixa <= 40 %}2{% elif item.percentiles.faixa <= 60 %}3{% elif item.percentiles.faixa <= 80 %}4{% else %}5{% endif %}{% endif %}">
+                        data-q-nacional="{% if item.percentiles.nacional < 0 %}0{% elif item.percentiles.nacional <= 20 %}1{% elif item.percentiles.nacional <= 40 %}2{% elif item.percentiles.nacional <= 60 %}3{% elif item.percentiles.nacional <= 80 %}4{% else %}5{% endif %}"
+                        data-q-estadual="{% if item.percentiles.estadual < 0 %}0{% elif item.percentiles.estadual <= 20 %}1{% elif item.percentiles.estadual <= 40 %}2{% elif item.percentiles.estadual <= 60 %}3{% elif item.percentiles.estadual <= 80 %}4{% else %}5{% endif %}"
+                        data-q-faixa="{% if item.percentiles.faixa < 0 %}0{% elif item.percentiles.faixa <= 20 %}1{% elif item.percentiles.faixa <= 40 %}2{% elif item.percentiles.faixa <= 60 %}3{% elif item.percentiles.faixa <= 80 %}4{% else %}5{% endif %}">
                     </div>
                     <h4 class="{% if level == 0 %}text-lg{% else %}text-base{% endif %} font-bold text-[#103758] truncate">{{ item.name }}</h4>
                 </div>
