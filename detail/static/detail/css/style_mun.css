@@ -635,3 +635,25 @@ html, body {
     font-weight: 900;
     font-size: 13px;
 }
+
+.popup-badge-summary {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center; 
+    display: block;
+    width: 100%;
+}
+
+#timeline-dynamic-summary {
+    text-align: center;
+    margin-top: 15px;
+    padding: 0 10px;
+    line-height: 1.6;
+    display: block;
+    width: 100%;
+}

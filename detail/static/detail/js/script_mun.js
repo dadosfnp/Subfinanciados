@@ -577,13 +577,13 @@ const FNP_DECIL_COLORS = {
 
 function updateTimelineColors(mode) {
     const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
+    const summaryContainer = document.getElementById('timeline-dynamic-summary');
     
+    // 1. Atualiza as cores e rótulos de cada círculo individualmente
     timelineCircles.forEach(circle => {
         const rawValue = circle.getAttribute('data-' + mode) || '-';
         const labelSpan = circle.querySelector('.dynamic-label');
         const valueSpan = circle.querySelector('.dynamic-value');
-
-        /* Extrai o valor numerico do atributo de dados para aplicar a regra correta (ex: "Quintil 3" vira "3") */
         const numMatch = rawValue.match(/\d+/);
         const num = numMatch ? numMatch[0] : null;
 
@@ -594,30 +594,23 @@ function updateTimelineColors(mode) {
             if (mode === 'percentil') {
                 if (labelSpan) labelSpan.textContent = 'Percentil';
                 if (valueSpan) valueSpan.textContent = num + '%';
-                
-                /* Mapeia o percentil (0-100) para um decil (1-10) a fim de obter a cor de fundo correspondente */
                 const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
                 hex = FNP_DECIL_COLORS[decilVal];
                 isLightBackground = (decilVal === 5 || decilVal === 6);
             } 
             else if (mode === 'quintil') {
                 if (labelSpan) labelSpan.textContent = 'Quintil';
-                /* Restaura o indicador ordinal do valor de ranking */
                 if (valueSpan) valueSpan.textContent = num + 'º';
-                
                 hex = FNP_RANK_COLORS[num];
                 isLightBackground = (num === '3');
             } 
             else if (mode === 'decil') {
                 if (labelSpan) labelSpan.textContent = 'Decil';
-                /* Restaura o indicador ordinal do valor de ranking */
                 if (valueSpan) valueSpan.textContent = num + 'º';
-                
                 hex = FNP_DECIL_COLORS[num];
                 isLightBackground = (num === '5' || num === '6');
             }
         } else {
-            /* Fallback visual caso o valor de data-* nao seja encontrado ou esteja vazio */
             if (labelSpan) labelSpan.textContent = mode;
             if (valueSpan) valueSpan.textContent = '-';
         }
@@ -629,12 +622,11 @@ function updateTimelineColors(mode) {
             circle.style.backgroundColor = '#f1f5f9';
             circle.style.color = '#94a3b8';
         }
+    }); // Fim do loop dos círculos
 
-    /* Logica de atualizacao do texto de sintese dinamica da timeline */
-    const summaryContainer = document.getElementById('timeline-dynamic-summary');
+    // 2. Lógica de síntese (executa apenas UMA VEZ após o loop)
     if (summaryContainer && timelineCircles.length >= 2) {
         const muniName = summaryContainer.getAttribute('data-muni-name');
-        
         const raw00 = timelineCircles[0].getAttribute('data-' + mode);
         const raw24 = timelineCircles[1].getAttribute('data-' + mode);
         
@@ -645,31 +637,41 @@ function updateTimelineColors(mode) {
             const val00 = parseInt(num00[0]);
             const val24 = parseInt(num24[0]);
             
-            if (mode === 'percentil') {
-                /* Define a direcao da evolucao comparando o percentil atual com o base */
-                let evolucaoTexto = '';
-                if (val24 > val00) {
-                    evolucaoTexto = '<span class="text-emerald-600 font-bold">avançou</span>';
-                } else if (val24 < val00) {
-                    evolucaoTexto = '<span class="text-rose-600 font-bold">recuou</span>';
-                } else {
-                    evolucaoTexto = '<span class="text-slate-500 font-bold">manteve-se</span>';
-                }
-                
-                /* Injeta a string formatada especifica para o modo percentil */
-                summaryContainer.innerHTML = `A receita de <strong class="text-slate-700">${muniName}</strong> era maior que a de <span class="font-bold text-[var(--fnp-dark-blue)]">${val00}%</span> do país em 2000, esse cenário ${evolucaoTexto} para <span class="font-bold text-[var(--fnp-dark-blue)]">${val24}%</span> em 2024.`;
-            } else {
-                /* Injeta a string padrao para modos ordinais (Quintil e Decil) */
-                const text00 = `${val00}º ${mode}`;
-                const text24 = `${val24}º ${mode}`;
-                summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">${muniName}</strong> foi do <span class="font-bold text-[var(--fnp-dark-blue)]">${text00}</span> para o <span class="font-bold text-[var(--fnp-dark-blue)]">${text24}</span>.`;
-            }
+        if (val24 === val00) {
+            /* Tratamento de estabilidade unificado para todos os modos */
+            summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição se manteve</strong>.`;
+        } 
+        else if (mode === 'percentil') {
+            /* Helper para narrativa de percentil com inversao de lógica < 50% */
+            const formatPercentilNarrativa = (v, isFull) => {
+                const isInf = v < 50;
+                const displayVal = isInf ? (100 - v) : v;
+                const textoStatus = isInf ? 'inferior a' : 'superior a';
+                const corStatus = isInf ? 'text-rose-600' : 'text-emerald-600';
+                const sufixoGeo = isFull ? ' dos municípios do país' : ' do país';
+                return `<span class="${corStatus} font-black">${textoStatus} ${displayVal}%</span>${sufixoGeo}`;
+            };
+
+            const statusAcao = val24 > val00 ? 'MELHOROU' : 'PIOROU';
+            const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
+
+            summaryContainer.innerHTML = `A situação da receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
+        } 
+        else {
+            /* Padrao Premium para Quintil e Decil com destaque no resultado */
+            const isMelhor = val24 > val00;
+            const statusAcao = isMelhor ? 'MELHOROU' : 'PIOROU';
+            const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
+            
+            const text00 = `${val00}º ${mode}`;
+            const text24 = `${val24}º ${mode}`;
+
+            summaryContainer.innerHTML = `Entre 2000 e 2024, a posição da receita per capita de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
+        }
         } else {
             summaryContainer.innerHTML = '';
         }
-
     }
-    });
 }
 
 timelineBtns.forEach(btn => {
@@ -935,8 +937,9 @@ timelineBtns.forEach(btn => {
     if (typeof buildSelectFor === 'function') buildSelectFor(currentKey);
     if (typeof renderChart === 'function') renderChart(currentKey);
     initializeToggleListeners();
-    updateTimelineColors('quintil');
-    
+    // Detecta qual modo esta ativo no HTML e inicializa a timeline com ele */
+    const activeTimelineMode = document.querySelector('#timeline-toggle .segmented-option.active')?.dataset.mode || 'percentil';
+    updateTimelineColors(activeTimelineMode);    
     // Dispara a visualização global padrão
     updateGlobalBase('nacional');
 
