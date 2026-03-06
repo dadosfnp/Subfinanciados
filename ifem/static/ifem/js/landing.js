@@ -376,15 +376,44 @@ window.scrollToId = function(id) {
     });
 };
 
-/*
- * Controle de Carrossel In-place: Seção O Problema
- * Executa o deslize horizontal entre os painéis de resumo e aprofundamento.
- */
+/* Controle de Carrossel In-place: Seção O Problema */
 window.slideProblema = function(index) {
     const track = document.getElementById('problema-slider');
     if (track) {
+        // 1. Faz o painel deslizar para o lado
         const percentage = index * -50;
         track.style.transform = `translateX(${percentage}%)`;
+
+        // 2. Trava o texto no começo e sobe a tela
+        setTimeout(() => {
+            const panels = track.querySelectorAll('.slider-panel-prob');
+            
+            if (panels[index]) {
+                // Acha a caixa que tem o texto longo com scroll
+                const textBox = panels[index].querySelector('.scrollable-text');
+                
+                // Força o scroll interno do texto a voltar para o 0 (topo)
+                if (textBox) {
+                    textBox.scrollTop = 0; 
+                }
+
+                // No mobile, dá um "puxão" na tela principal para o topo do painel
+                if (window.innerWidth < 992) {
+                    const viewport = track.parentElement; 
+                    if (viewport) {
+                        // Calcula o topo exato dando o desconto de 90px do menu azul
+                        const topPos = viewport.getBoundingClientRect().top + window.scrollY - 90;
+                        
+                        gsap.to(window, {
+                            duration: 0.5,
+                            scrollTo: topPos,
+                            ease: "power2.out",
+                            overwrite: "auto"
+                        });
+                    }
+                }
+            }
+        }, 50); 
     }
 };
 
@@ -421,10 +450,7 @@ window.toggleTutorial = function() {
     }
 };
 
-/**
- * widget_busca_municipio.js
- * Gerencia a busca assíncrona e exibição de indicadores municipais.
- */
+/* Widget_busca_municipio.js gerencia a busca assíncrona e exibição de indicadores municipais */
 document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("muni-search-input");
     const autocompleteList = document.getElementById("muni-autocomplete-list");
@@ -516,9 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
             percentWrapper.setAttribute('data-tooltip', tooltipDetalhe);
         }
 
-        /**
-         * Mapeamento de paletas institucionais.
-         */
+        /* Mapeamento de paletas institucionais */
         const quintilColors = {
             1: { bg: '#A81C21', text: '#ffffff' },
             2: { bg: '#E47326', text: '#ffffff' },
@@ -602,3 +626,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+

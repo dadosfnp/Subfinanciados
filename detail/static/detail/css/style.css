@@ -380,25 +380,27 @@ a.dropdown-item.active,
         font-size: 0.85rem !important;
     }
 
-    /* 5. ESTRUTURA DOS ITENS: Impede o texto de "atropelar" a setinha (>) */
-    .toggle-heading, .toggle-subheading, .tree-row, .revenue-item-wrapper {
-        display: flex !important;
-        flex-direction: column !important; /* Empilha o texto e a caixa cinza */
-        align-items: flex-start !important;
-        height: auto !important;
-        padding: 16px 0 !important;
-        box-sizing: border-box !important;
-        width: 100% !important;
-        position: relative !important; /* Necessário para prender a setinha */
+    /* 5. ESTRUTURA DOS ITENS: Enquadramento harmônico sem vazamento */
+    body .toggle-heading, 
+    body .toggle-subheading, 
+    body .tree-row, 
+    body .revenue-item-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch; 
+        height: auto;
+        padding: 16px 0;
+        box-sizing: border-box;
+        width: auto; 
+        position: relative;
     }
 
-    /* Trava o texto para deixar 30px livres na direita para a setinha respirar */
-    .toggle-heading > div:first-child, 
-    .toggle-subheading > div:first-child,
-    .tree-row > div:first-child {
-        max-width: calc(100% - 30px) !important; 
-        line-height: 1.4 !important;
-        margin-bottom: 12px !important;
+    /* Trava o título para ele encolher se necessário, protegendo a seta */
+    body .toggle-heading > div:first-child, 
+    body .toggle-subheading > div:first-child,
+    body .tree-row > div:first-child {
+        max-width: calc(100% - 35px); 
+        min-width: 0;
     }
 
     /* Fixa a setinha (>) no topo direito da área, sempre alinhada */
@@ -491,4 +493,40 @@ a.dropdown-item.active,
 .content-wrapper .sidebar .input-group > .btn i {
     fill: #103758 !important;
     color: #103758 !important;
+}
+
+/* ==========================================================================
+   MOBILE: ENQUADRAMENTO DE SUBCARDS PROFUNDOS (ANTI-BLOWOUT)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 1. Reduz o "degrau" da escada para níveis profundos não fugirem para a direita.
+       Vence as classes ml-4 e pl-3 do Tailwind através da especificidade da tag body. */
+    body .revenue-item-wrapper div[id] {
+        margin-left: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    /* 2. Remove o recuo extra de 22px dos textos/valores para ganhar área útil */
+    body .revenue-item-wrapper .tree-row div.pl-\[22px\] {
+        padding-left: 0;
+        min-width: 0; /* Destrava o limite lateral */
+    }
+
+    /* 3. A MÁGICA (Destravando o Flexbox):
+       O 'min-width: 0' diz ao Flexbox que ele tem permissão para encolher
+       além do tamanho do texto. Isso ativa o 'truncate' do seu HTML e
+       impede que a seta vaze da tela. */
+    body .revenue-item-wrapper .tree-row .flex-col {
+        min-width: 0;
+    }
+
+    body .revenue-item-wrapper .tree-row .justify-between {
+        min-width: 0;
+    }
+
+    /* Permite que o grupo do Título + Bolinha colorida encolha */
+    body .revenue-item-wrapper .tree-row .justify-between > .flex.items-center {
+        min-width: 0;
+        flex: 1; /* Ocupa o espaço livre sem empurrar a seta */
+    }
 }
