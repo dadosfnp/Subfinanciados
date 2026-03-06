@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
-from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita, MediaUfReceita, MediaPorteReceita
+from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita, MediaUfReceita, MediaPorteReceita, CrescimentoMedioUf, CrescimentoMedioPorte
 from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
@@ -413,6 +413,13 @@ def municipio_detalhe_view(request, municipio_id):
         'has_2000_data': bool(municipio.populacao00 or municipio.rc_00_pc)
     }
 
+    media_nacional_rc_pc = 316.7372  # Valor fixo da média nacional para 2024
+    media_nacional_pop = 16.04228
+
+
+    media_estadual = CrescimentoMedioUf.objects.filter(uf=municipio.uf).first()
+    media_porte = CrescimentoMedioPorte.objects.filter(porte=faixa).first()
+    
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
@@ -420,6 +427,14 @@ def municipio_detalhe_view(request, municipio_id):
         'percentile_data_json': json.dumps(percentile_data),
         'data': data,
         'evolucao_historica': evolucao_historica, 
+
+        'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
+        'media_estadual_rc_pc': round(media_estadual.receita, 2) if media_estadual else None,
+        'media_faixa_rc_pc': round(media_porte.receita, 2) if media_porte else None,
+
+        'media_nacional_pop': round(media_nacional_pop, 2),
+        'media_estadual_pop': round(media_estadual.populacao, 2) if media_estadual else None,
+        'media_faixa_pop': round(media_porte.populacao, 2) if media_porte else None,
     }
 
     return render(request, 'detail/detalhe_municipio.html', context)

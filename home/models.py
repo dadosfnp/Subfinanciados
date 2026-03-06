@@ -639,7 +639,7 @@ class MediaPorteReceita(models.Model):
     Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
     """
     ano_referencia = models.IntegerField(unique=False)
-    porte = models.CharField(max_length=2)
+    porte = models.CharField(max_length=50000)
     
     # Metricas de Nivel 1 - Conta Detalhada
     imposto_taxas_contribuicoes = models.FloatField(null=True, blank=True)
@@ -697,3 +697,27 @@ class MediaPorteReceita(models.Model):
     def __str__(self):
         return f"Médias {self.porte} - Ano {self.ano_referencia}"
     
+class CrescimentoMedioUf(models.Model):
+    """
+    Entidade de registro unico para armazenamento dos crescimentos médios pre-calculados.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    uf = models.CharField(max_length=2)
+    
+    # Metricas de Nivel 1 - Conta Detalhada
+    receita = models.FloatField(null=True, blank=True)
+    populacao = models.FloatField(null=True, blank=True)
+
+
+class CrescimentoMedioPorte(models.Model):
+    """
+    Entidade de registro unico para armazenamento dos crescimentos médios pre-calculados.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    porte = models.CharField(max_length=50000)
+
+    # Metricas de Nivel 1 - Conta Detalhada
+    receita = models.FloatField(null=True, blank=True)
+    populacao = models.FloatField(null=True, blank=True)
