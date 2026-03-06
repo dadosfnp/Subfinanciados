@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     [labelNorm('ITBI'), 'itbi'],
     [labelNorm('ISS'),  'iss'],
     [labelNorm('Cota-Parte do FPM'), 'fpm'],
+    [labelNorm('Cota-Parte do FPE'), 'fpe'],
     [labelNorm('Cota-Parte do ICMS'), 'transferencia_estado_icms'],
     // É possível adicionar outros se o select falhar, mas a lógica Smart Match abaixo resolve 99%
   ]);
