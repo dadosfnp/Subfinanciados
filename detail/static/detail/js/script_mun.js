@@ -82,8 +82,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const ind = container.querySelector('.ranking-indicator') || container;
       const tip = container.querySelector('.ranking-tooltip');
   
-      ind.classList.remove('quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
-      if (pct <= 20) ind.classList.add('quintil-1');
+      ind.classList.remove('quintil-0','quintil-1','quintil-2','quintil-3','quintil-4','quintil-5');
+      
+      if (pct < 0) ind.classList.add('quintil-1');
+      else if (pct <= 20) ind.classList.add('quintil-1');
       else if (pct <= 40) ind.classList.add('quintil-2');
       else if (pct <= 60) ind.classList.add('quintil-3');
       else if (pct <= 80) ind.classList.add('quintil-4');
@@ -413,11 +415,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     
         const DENSITY_CHILD_KEYS = {
-            imposto: new Map([[normalize('Imposto sobre Serviços'), 'iss'], [normalize("Imposto sobre a Transmissão 'Inter Vivos'"), 'itbi'], [normalize('Imposto sobre a Propriedade Predial e Territorial Urbana'), 'iptu'], [normalize('Imposto de Renda'), 'imposto_renda'], [normalize('Outros Impostos'), 'outros_impostos'], [normalize('Outros'), 'outros_impostos']]),
+            imposto: new Map([[normalize('Imposto sobre Serviços'), 'iss'], [normalize("Imposto sobre a Transmissão 'Inter Vivos'"), 'itbi'], [normalize('Imposto sobre a Propriedade Predial e Territorial Urbana'), 'iptu'], [normalize('Imposto de Renda'), 'imposto_renda'], [normalize('Imposto sobre o ICMS'), 'imposto_icms'], [normalize('Imposto sobre o IPVA'), 'imposto_ipva'], [normalize('Outros Impostos'), 'outros_impostos'], [normalize('Outros'), 'outros_impostos']]),
             taxas: new Map([[normalize('Taxas pelo Exercício do Poder de Polícia'), 'taxa_policia'], [normalize('Taxas pela Prestação de Serviços'), 'taxa_prestacao_servico'], [normalize('Outras Taxas'), 'outras_taxas'], [normalize('Outros'), 'outras_taxas']]),
             contribuicoes_melhoria: new Map([[normalize('Contribuição de Melhoria para Pavimentação e Obras'), 'contribuicao_melhoria_pavimento_obras'], [normalize('Contribuição de Melhoria para Rede de Água e Esgoto'), 'contribuicao_melhoria_agua_potavel'], [normalize('Contribuição de Melhoria para Iluminação Pública'), 'contribuicao_melhoria_iluminacao_publica'], [normalize('Outras Contribuições de Melhoria'), 'outras_contribuicoes_melhoria'], [normalize('Outros'), 'outras_contribuicoes_melhoria']]),
             contribuicoes: new Map([[normalize('Custeio do Serviço de Iluminação Pública'), 'contribuicoes_sociais'], [normalize('Outras Contribuições'), 'outras_contribuicoes'], [normalize('Outros'), 'outras_contribuicoes']]),
-            transferencias_uniao: new Map([[normalize('Cota-Parte do FPM'), 'transferencias_uniao_fpm'], [normalize('Compensação Financeira (Recursos Naturais)'), 'transferencias_uniao_exploracao'], [normalize('Recursos do SUS'), 'transferencias_uniao_sus'], [normalize('Recursos do FNDE'), 'transferencias_uniao_fnde'], [normalize('Recursos do FUNDEB'), 'transferencias_uniao_fundeb'], [normalize('Recursos do FNAS'), 'transferencias_uniao_fnas'], [normalize('Recursos do Fundo Especial'), 'transferencias_uniao_fundo'], [normalize('Outras Transferências da União'), 'outras_transferencias_uniao'], [normalize('Outras'), 'outras_transferencias_uniao']]),
+            transferencias_uniao: new Map([[normalize('Cota-Parte do FPM'), 'transferencias_uniao_fpm'], [normalize('Cota-Parte do FPE'), 'transferencias_uniao_fpe'], [normalize('Compensação Financeira (Recursos Naturais)'), 'transferencias_uniao_exploracao'], [normalize('Recursos do SUS'), 'transferencias_uniao_sus'], [normalize('Recursos do FNDE'), 'transferencias_uniao_fnde'], [normalize('Recursos do FUNDEB'), 'transferencias_uniao_fundeb'], [normalize('Recursos do FNAS'), 'transferencias_uniao_fnas'], [normalize('Recursos do Fundo Especial'), 'transferencias_uniao_fundo'], [normalize('Outras Transferências da União'), 'outras_transferencias_uniao'], [normalize('Outras'), 'outras_transferencias_uniao']]),
             transferencias_estado: new Map([[normalize('Cota-Parte do ICMS'), 'transferencias_estado_icms'], [normalize('Cota-Parte do IPVA'), 'transferencias_estado_ipva'], [normalize('Recursos do SUS'), 'transferencias_estado_sus'], [normalize('Assistência Social'), 'transferencias_estado_assistencia'], [normalize('Compensação Financeira (Recursos Naturais)'), 'transferencias_estado_exploracao'], [normalize('Outras Transferências dos Estados'), 'outras_transferencias_estado'], [normalize('Outras'), 'outras_transferencias_estado']]),
             outras_receitas: new Map([[normalize('Receita Patrimonial'), 'receita_patrimonial'], [normalize('Receita Agropecuária'), 'receita_agropecuaria'], [normalize('Receita Industrial'), 'receita_industrial'], [normalize('Receita de Serviços'), 'receita_servicos'], [normalize('Outras Receitas'), 'outras_receitas_outras'], [normalize('Outras'), 'outras_receitas_outras']])
         };
@@ -737,6 +739,7 @@ function updateTimelineColors(mode) {
         const colorIndicators = document.querySelectorAll('.revenue-color-indicator');
 
         const REVENUE_COLORS = {
+            '0': '#808080',
             '1': '#A81C21',
             '2': '#E47326',
             '3': '#F4D01D',
@@ -783,8 +786,14 @@ function updateTimelineColors(mode) {
 
             if (pct && pct.trim() !== '' && pct !== 'None') {
                 const numPct = parseFloat(pct.replace(',', '.'));
-                const adv = numPct > 50 ? '' : 'apenas ';
-                el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> supera ${adv}${pct}% ${config.sufixo}`;
+
+                if (numPct < 0) {
+                    el.innerHTML = '';
+                } else {
+                    const adv = numPct > 50 ? '' : 'apenas ';
+                    el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> supera ${adv}${pct}% ${config.sufixo}`;
+                }
+
             } else {
                 el.innerHTML = 'Sem dados comparativos';
             }
