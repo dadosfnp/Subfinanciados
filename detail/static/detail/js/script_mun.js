@@ -489,9 +489,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 font: {
-                                    size: 11,
-                                    family: "'Inter', sans-serif"
-                                }
+                                    size: 16,
+                                    family: "'Inter', sans-serif",
+                                    weight: '500'
+                                },
+                                color: '#475569'
                             }
                         }, 
                         tooltip: { 
@@ -757,15 +759,26 @@ timelineBtns.forEach(btn => {
         lblMediaBase.forEach(el => el.textContent = labelNome);
         if (lblMediaBaseChart) lblMediaBaseChart.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
 
+        /* CORREÇÃO SÊNIOR: Mapeia o valor do botão para a chave exata do JSON */
+        const evoKeys = {
+            'nacional': 'nac',
+            'estadual': 'est',
+            'faixa': 'faixa'
+        };
+        const evoKey = evoKeys[base];
+
         if (evolutionData && valMediaRc && valMediaPop) {
-            valMediaRc.textContent = `${evolutionData.receita[base] || 0}%`;
-            valMediaPop.textContent = `${evolutionData.populacao[base] || 0}%`;
+            /* Usa o evoKey para ler 'nac', 'est' ou 'faixa' corretamente */
+            valMediaRc.textContent = `${evolutionData.receita[evoKey] || 0}%`;
+            valMediaPop.textContent = `${evolutionData.populacao[evoKey] || 0}%`;
         }
 
         if (evolutionData && canvasRec && canvasPop) {
             const labelChart = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
-            const dataRec = [parseSafe(evolutionData.receita.mun), parseSafe(evolutionData.receita[base])];
-            const dataPop = [parseSafe(evolutionData.populacao.mun), parseSafe(evolutionData.populacao[base])];
+            
+            /* Usa o evoKey para alimentar o Chart.js */
+            const dataRec = [parseSafe(evolutionData.receita.mun), parseSafe(evolutionData.receita[evoKey])];
+            const dataPop = [parseSafe(evolutionData.populacao.mun), parseSafe(evolutionData.populacao[evoKey])];
 
             if (chartReceitaInstance) chartReceitaInstance.destroy();
             chartReceitaInstance = new Chart(canvasRec.getContext('2d'), {
@@ -899,6 +912,49 @@ timelineBtns.forEach(btn => {
         updateKpiRank('.kpi-pop-rank', 'pop');
         updateKpiRank('.kpi-rev-rank', 'rev');
 
+        // CÁLCULO DE BENCHMARK (F%) - Dinâmico para Receita e População
+
+        const updateBenchmarkBadge = (badgeId, munValue, compValue, labelBase) => {
+            const badge = document.getElementById(badgeId);
+            if (!badge) return;
+            
+            if (compValue > 0) {
+                // Calcula o F% (Quanto o município representa da média)
+                const fPct = Math.round((munValue / compValue) * 100);
+                
+                let colorClasses = '';
+                if (fPct >= 100) {
+                    // Superou a média: Verde
+                    colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                } else if (fPct >= 0) {
+                    // Cresceu, mas abaixo da média: Laranja (Atenção)
+                    colorClasses = 'bg-amber-50 text-amber-700 border-amber-200';
+                } else {
+                    // Caiu (Negativo): Vermelho
+                    colorClasses = 'bg-rose-50 text-rose-700 border-rose-200';
+                }
+                
+                // Injeta classes do Tailwind e o Texto
+                badge.className = `text-[10.5px] font-black px-2 py-0.5 rounded border shadow-sm ${colorClasses}`;
+                badge.textContent = `${fPct}% da ${labelBase}`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        };
+
+        if (evolutionData) {
+            // Puxa os dados seguros (já usamos a evoKey que corrigimos antes)
+            const munRc = parseSafe(evolutionData.receita.mun);
+            const compRc = parseSafe(evolutionData.receita[evoKey]);
+            const munPop = parseSafe(evolutionData.populacao.mun);
+            const compPop = parseSafe(evolutionData.populacao[evoKey]);
+
+            // Dispara a atualização para os dois cards
+            updateBenchmarkBadge('badge-comparativo-rc', munRc, compRc, labelNome);
+            updateBenchmarkBadge('badge-comparativo-pop', munPop, compPop, labelNome);
+        }
+
         // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
         const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
         const kpiRcLabel = document.getElementById('kpi-rc-label');
@@ -927,7 +983,7 @@ timelineBtns.forEach(btn => {
                 });
             });
         }
-        }
+    }
 
     globalBaseBtns.forEach(btn => btn.addEventListener('click', function() { updateGlobalBase(this.dataset.base); }));
 
