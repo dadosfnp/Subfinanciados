@@ -340,3 +340,36 @@
     border-radius: 8px !important; /* Deixa o arredondamento idêntico ao da Agregada (8px) */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important; /* Aplica a mesma sombra suave e neutra */
 }
+
+/* ==========================================================================
+   TABELAS RESPONSIVAS MOBILE (AJUSTES PARA PEQUENAS TELAS)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    /* Reduz o respiro do card para ganhar espaço físico na tela */
+    body .table-card {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Força um container de scroll apenas para a área da tabela*/
+    body .table-card div:has(table) {
+        overflow-x: auto;
+        display: block;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+    }
+
+    /* Garante que os números não fiquem espremidos, mantendo a legibilidade */
+    body .table-card table {
+        min-width: 580px;
+        font-size: 0.85rem;
+    }
+
+    /* Ajusta o título do card para não ocupar espaço excessivo */
+    body .table-card > h5 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
