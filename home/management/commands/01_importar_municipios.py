@@ -86,7 +86,7 @@ class Command(BaseCommand):
                 regiao=row['regiao'],
                 name_muni_uf = row['name_muni_uf'],
                 rc_24_pc = row['receita_pc'],
-                rc_00_pc = row['receita_00_pc'] * 4.26381510960405,
+                rc_00_pc = row['receita_00_pc'],
                 rank_nacional = row['rank_nacional'],
                 total_nacional = row['total_nacional'],
                 rank_estadual = row['rank_estadual'] ,
