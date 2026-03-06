@@ -329,7 +329,7 @@ html, body {
 /* Garante que o fundo da imagem no resumo lateral seja transparente */
 #municipio-badge-img {
     background-color: transparent !important;
-    mix-blend-mode: multiply; /* Tenta remover fundos brancos/claros automaticamente */
+    mix-blend-mode: multiply; 
 }
 
 #municipio-badge-container {
@@ -341,6 +341,142 @@ html, body {
     .map-overlay-container {
         bottom: 10px;
         right: 10px;
-        scale: 0.9; /* Reduz um pouco o tamanho para telas pequenas */
+        scale: 0.9; 
     }
+}
+
+/* Pop-up */
+.ifem-premium-popup .mapboxgl-popup-content {
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    font-family: 'Inter', sans-serif;
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.popup-icon-box {
+    background: #103758;
+    color: white;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.popup-title {
+    margin: 0;
+    font-size: 18px; 
+    font-weight: 900;
+    color: #103758;
+    line-height: 1.1;
+}
+
+.popup-data-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.popup-data-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.popup-data-row svg {
+    width: 18px;
+    height: 18px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.popup-info-content {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: baseline;
+}
+
+.popup-label {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px; 
+}
+
+.popup-value {
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+/* Destaque para a frase de síntese */
+.popup-badge-summary {
+    margin-top: 20px;
+    padding: 16px;
+    border-left: 4px solid #103758;
+    border-radius: 8px;
+    font-size: 14px; 
+    line-height: 1.5;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.popup-btn-details {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: #103758;
+    color: white !important;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    text-decoration: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.popup-btn-details:hover {
+    background: #1e40af;
+    transform: scale(1.02);
+}
+
+.border-status-superior { border-left: 4px solid #10b981 !important; } /* Verde Emerald */
+.border-status-inferior { border-left: 4px solid #e11d48 !important; } /* Vermelho Rose */
+
+.popup-badge-summary strong {
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+
+/* Garante que o STRONG dentro do box também herde a cor correta */
+.popup-badge-summary.text-status-superior strong { color: #059669 !important; }
+.popup-badge-summary.text-status-inferior strong { color: #dc2626 !important; }
+
+.popup-badge-quintil {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #ffffff; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }

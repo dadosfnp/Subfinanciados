@@ -303,20 +303,6 @@
   </div>
 </main>
 
-<!-- JS específicos do mapa -->
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-<script>
-  window.MAPBOX_PUBLIC_TOKEN = "{{ MAPBOX_PUBLIC_TOKEN|escapejs }}";
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
-  window.LOGO_IFEM_URL = "{% static 'global/images/ifem-marca-03.png' %}";
-  window.LOGO_FNP_URL  = "{% static 'global/images/logo-FNP.png' %}";
-</script>
-
-<script src="{% static 'map/js/script.js' %}"></script>
-
-<!-- Modal de busca reutilizável -->
 <div id="search-modal" class="modal fade" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
@@ -331,54 +317,17 @@
   </div>
 </div>
 
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const searchModal = document.getElementById('search-modal');
-    const filtrosOffcanvas = document.getElementById('filtrosOffcanvas');
-    const filtersContainer = document.getElementById('filters');
-    const btnLimpar = document.getElementById('btn-limpar-filtros');
-    
-    // Instância do Offcanvas do Bootstrap
-    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvas);
-
-    // 1. LÓGICA DE MINIMIZAR AO SELECIONAR FILTRO
-    if (filtersContainer) {
-      const allSelects = filtersContainer.querySelectorAll('select');
-      allSelects.forEach(select => {
-        select.addEventListener('change', function() {
-          // Se for mobile, esconde a aba após 400ms 
-          // (tempo suficiente para o usuário ver o clique, mas sem atrapalhar a animação do mapa)
-          if (window.innerWidth < 992) {
-            setTimeout(() => {
-              offcanvasInstance.hide();
-            }, 400); 
-          }
-        });
-      });
-    }
-
-    // 2. MINIMIZAR AO CLICAR EM LIMPAR FILTROS
-    if (btnLimpar) {
-      btnLimpar.addEventListener('click', function() {
-        if (window.innerWidth < 992) {
-          setTimeout(() => {
-            offcanvasInstance.hide();
-          }, 300);
-        }
-      });
-    }
-
-    // 3. INTERAÇÃO COM O MODAL DE BUSCA (A LUPA INTERNA)
-    searchModal.addEventListener('show.bs.modal', function () {
-      offcanvasInstance.hide();
-    });
-
-    searchModal.addEventListener('hidden.bs.modal', function () {
-      if (window.innerWidth < 992) {
-        offcanvasInstance.show();
-      }
-    });
-  });
+  /* Variaveis globais injetadas pelo backend para consumo nos arquivos JS estaticos */
+  window.MAPBOX_PUBLIC_TOKEN = "{{ MAPBOX_PUBLIC_TOKEN|escapejs }}";
+  window.LOGO_IFEM_URL = "{% static 'global/images/ifem-marca-03.png' %}";
+  window.LOGO_FNP_URL  = "{% static 'global/images/logo-FNP.png' %}";
 </script>
+
+<script src="{% static 'map/js/script.js' %}"></script>
+<script src="{% static 'map/js/map-ui.js' %}"></script>
 
 {% endblock content %}
