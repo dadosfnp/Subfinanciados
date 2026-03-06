@@ -436,14 +436,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const idx = pts[0].index;
       const clicked = labels[idx];
 
-      // 1) Categorias Principais → descer um nível (AQUI ainda sincroniza a densidade)
+      // 1) Categorias Principais → descer um nível 
       if (categoryKey === 'main_categories') {
         const nxt = MAIN_CLICK_TO_KEY[clicked] || null;
         if (nxt){ setCategory(nxt); }
         return;
       }
 
-      // 2) Grupo intermediário ITC → filhos (NÃO mexe densidade)
+      // 2) Grupo intermediário ITC → filhos 
       if (categoryKey === 'imposto_taxas_contribuicoes') {
         const n = normalizeLabel(clicked);
         if (n.includes('imposto'))  { rebuildSelectOptions('imposto'); renderChart('imposto', currentChartData); return; }
@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (n.includes('melhoria')) { rebuildSelectOptions('contribuicoes_melhoria'); renderChart('contribuicoes_melhoria', currentChartData); return; }
       }
 
-      // 3) Transferências Correntes → União/Estados (NÃO mexe densidade)
+      // 3) Transferências Correntes → União/Estados 
       if (categoryKey === 'transferencias_correntes') {
         const l = normalizeLabel(clicked);
         if (l.includes('uniao'))  { rebuildSelectOptions('transferencias_uniao');  renderChart('transferencias_uniao', currentChartData);  return; }
@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      // 4) Filhos (qualquer categoria): apenas abre a árvore visual (NÃO notifica densidade)
+      // 4) Filhos (qualquer categoria): apenas abre a árvore visual 
       const path = resolvePath(categoryKey, clicked);
       path ? openByPath(path) : openSectionByLabel(clicked);
     };

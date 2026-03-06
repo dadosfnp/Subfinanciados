@@ -562,75 +562,123 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
   
-  // ========== LINHA DO TEMPO (QUINTIL/DECIL) ==========
-  const timelineBtns = document.querySelectorAll('#timeline-toggle .segmented-option');
-  // CORRECAO DO SELETOR PARA O ALVO DO DOM
-  const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
+/* ========== LINHA DO TEMPO (QUINTIL/DECIL/PERCENTIL) ========== */
+const timelineBtns = document.querySelectorAll('#timeline-toggle .segmented-option');
+const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
 
-  const FNP_RANK_COLORS = {
-      '1': '#A81C21',
-      '2': '#E47326',
-      '3': '#F4D01D',
-      '4': '#6AC074',
-      '5': '#1C9148'
-  };
-
-  const FNP_DECIL_COLORS = {
-    '1': '#960E16',
-    '2': '#CF3026',
-    '3': '#EB6630',
-    '4': '#F8A555',
-    '5': '#FCE182',
-    '6': '#DDEC88',
-    '7': '#9DD57D',
-    '8': '#60BA69',
-    '9': '#2D964D',
-    '10': '#076931'
+const FNP_RANK_COLORS = {
+    '1': '#A81C21', '2': '#E47326', '3': '#F4D01D', '4': '#6AC074', '5': '#1C9148'
 };
 
-  const DECIL_TO_QUINTIL = {
-      '1': '1', '2': '1', '3': '2', '4': '2', '5': '3', 
-      '6': '3', '7': '4', '8': '4', '9': '5', '10': '5'
-  };
+const FNP_DECIL_COLORS = {
+    '1': '#960E16', '2': '#CF3026', '3': '#EB6630', '4': '#F8A555', '5': '#FCE182',
+    '6': '#DDEC88', '7': '#9DD57D', '8': '#60BA69', '9': '#2D964D', '10': '#076931'
+};
 
 function updateTimelineColors(mode) {
     const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
     
     timelineCircles.forEach(circle => {
         const rawValue = circle.getAttribute('data-' + mode) || '-';
-        
-        // Mapeamento exato da classe para evitar conflito com outros spans filhos
-        const dynamicSpan = circle.querySelector('.dynamic-text');
-        
-        if (dynamicSpan) {
-            dynamicSpan.textContent = rawValue;
-        }
+        const labelSpan = circle.querySelector('.dynamic-label');
+        const valueSpan = circle.querySelector('.dynamic-value');
 
+        /* Extrai o valor numerico do atributo de dados para aplicar a regra correta (ex: "Quintil 3" vira "3") */
         const numMatch = rawValue.match(/\d+/);
         const num = numMatch ? numMatch[0] : null;
-        const activePalette = mode === 'decil' ? FNP_DECIL_COLORS : FNP_RANK_COLORS;
-        const hex = num ? activePalette[num] : null;
+
+        let hex = null;
+        let isLightBackground = false;
+
+        if (num) {
+            if (mode === 'percentil') {
+                if (labelSpan) labelSpan.textContent = 'Percentil';
+                if (valueSpan) valueSpan.textContent = num + '%';
+                
+                /* Mapeia o percentil (0-100) para um decil (1-10) a fim de obter a cor de fundo correspondente */
+                const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
+                hex = FNP_DECIL_COLORS[decilVal];
+                isLightBackground = (decilVal === 5 || decilVal === 6);
+            } 
+            else if (mode === 'quintil') {
+                if (labelSpan) labelSpan.textContent = 'Quintil';
+                /* Restaura o indicador ordinal do valor de ranking */
+                if (valueSpan) valueSpan.textContent = num + 'º';
+                
+                hex = FNP_RANK_COLORS[num];
+                isLightBackground = (num === '3');
+            } 
+            else if (mode === 'decil') {
+                if (labelSpan) labelSpan.textContent = 'Decil';
+                /* Restaura o indicador ordinal do valor de ranking */
+                if (valueSpan) valueSpan.textContent = num + 'º';
+                
+                hex = FNP_DECIL_COLORS[num];
+                isLightBackground = (num === '5' || num === '6');
+            }
+        } else {
+            /* Fallback visual caso o valor de data-* nao seja encontrado ou esteja vazio */
+            if (labelSpan) labelSpan.textContent = mode;
+            if (valueSpan) valueSpan.textContent = '-';
+        }
 
         if (hex) {
-            // Aplica background e define cor de contraste da fonte
             circle.style.backgroundColor = hex;
-            const isLightBackground = (mode === 'quintil' && num === '3') || (mode === 'decil' && (num === '5' || num === '6'));
             circle.style.color = isLightBackground ? '#103758' : '#ffffff';
         } else {
-            // Estado neutro caso dados não sejam encontrados
             circle.style.backgroundColor = '#f1f5f9';
             circle.style.color = '#94a3b8';
         }
+
+    /* Logica de atualizacao do texto de sintese dinamica da timeline */
+    const summaryContainer = document.getElementById('timeline-dynamic-summary');
+    if (summaryContainer && timelineCircles.length >= 2) {
+        const muniName = summaryContainer.getAttribute('data-muni-name');
+        
+        const raw00 = timelineCircles[0].getAttribute('data-' + mode);
+        const raw24 = timelineCircles[1].getAttribute('data-' + mode);
+        
+        const num00 = raw00 ? raw00.match(/\d+/) : null;
+        const num24 = raw24 ? raw24.match(/\d+/) : null;
+        
+        if (num00 && num24) {
+            const val00 = parseInt(num00[0]);
+            const val24 = parseInt(num24[0]);
+            
+            if (mode === 'percentil') {
+                /* Define a direcao da evolucao comparando o percentil atual com o base */
+                let evolucaoTexto = '';
+                if (val24 > val00) {
+                    evolucaoTexto = '<span class="text-emerald-600 font-bold">avançou</span>';
+                } else if (val24 < val00) {
+                    evolucaoTexto = '<span class="text-rose-600 font-bold">recuou</span>';
+                } else {
+                    evolucaoTexto = '<span class="text-slate-500 font-bold">manteve-se</span>';
+                }
+                
+                /* Injeta a string formatada especifica para o modo percentil */
+                summaryContainer.innerHTML = `A receita de <strong class="text-slate-700">${muniName}</strong> era maior que a de <span class="font-bold text-[var(--fnp-dark-blue)]">${val00}%</span> do país em 2000, esse cenário ${evolucaoTexto} para <span class="font-bold text-[var(--fnp-dark-blue)]">${val24}%</span> em 2024.`;
+            } else {
+                /* Injeta a string padrao para modos ordinais (Quintil e Decil) */
+                const text00 = `${val00}º ${mode}`;
+                const text24 = `${val24}º ${mode}`;
+                summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">${muniName}</strong> foi do <span class="font-bold text-[var(--fnp-dark-blue)]">${text00}</span> para o <span class="font-bold text-[var(--fnp-dark-blue)]">${text24}</span>.`;
+            }
+        } else {
+            summaryContainer.innerHTML = '';
+        }
+
+    }
     });
 }
 
-  timelineBtns.forEach(btn => {
+timelineBtns.forEach(btn => {
     btn.addEventListener('click', function() {
-      timelineBtns.forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      updateTimelineColors(this.getAttribute('data-mode'));
+        timelineBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        updateTimelineColors(this.getAttribute('data-mode'));
     });
-  });
+});
       
     // ==========================================
     // CONTROLE GLOBAL DE BASE E GRÁFICOS DE EVOLUÇÃO
@@ -678,8 +726,23 @@ function updateTimelineColors(mode) {
             }
         },
         scales: {
-            x: { grid: { display: false }, ticks: { font: { weight: 'bold' }, color: '#475569' } },
-            y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', callback: (val) => val + '%' } }
+            x: { 
+                grid: { display: false }, 
+                ticks: { font: { weight: 'bold' }, color: '#475569' } 
+            },
+            y: { 
+                beginAtZero: true,
+                grace: '5%', /* Adiciona espaço no topo/fundo proporcional ao tamanho da barra */
+                grid: { 
+                    /* Mantém a linha do zero grossa e visível para ancorar o olhar */
+                    color: (context) => context.tick && context.tick.value === 0 ? '#94a3b8' : '#f1f5f9',
+                    lineWidth: (context) => context.tick && context.tick.value === 0 ? 2 : 1
+                }, 
+                ticks: { 
+                    color: '#94a3b8', 
+                    callback: (val) => val + '%' 
+                } 
+            }
         }
     };
 
@@ -784,6 +847,10 @@ function updateTimelineColors(mode) {
             const pct = el.getAttribute(`data-pct-${base}`);
             const muniName = el.getAttribute('data-muni-name');
 
+            /* Captura o elemento do indicador de cor no mesmo nivel hierarquico para uso como referencia de estilo */
+            const indicator = el.closest('.tree-row').querySelector('.revenue-color-indicator');
+            const indicatorColor = indicator ? indicator.style.backgroundColor : 'inherit';
+
             if (pct && pct.trim() !== '' && pct !== 'None') {
                 const numPct = parseFloat(pct.replace(',', '.'));
 
@@ -791,7 +858,8 @@ function updateTimelineColors(mode) {
                     el.innerHTML = '';
                 } else {
                     const adv = numPct > 50 ? '' : 'apenas ';
-                    el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> supera ${adv}${pct}% ${config.sufixo}`;
+                    /* Engloba o texto de acao e o valor numerico do percentil na mesma estilizacao de cor do indicador */
+                    el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> <span style="color: ${indicatorColor}; font-weight: 600;">supera ${adv}${pct}%</span> ${config.sufixo}`;
                 }
 
             } else {
@@ -829,7 +897,7 @@ function updateTimelineColors(mode) {
         updateKpiRank('.kpi-pop-rank', 'pop');
         updateKpiRank('.kpi-rev-rank', 'rev');
 
-        // ------------ Toggle Interno do Card de Receita (Per Capita / Absoluta) ------------
+        // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
         const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
         const kpiRcLabel = document.getElementById('kpi-rc-label');
         const kpiRcValue = document.getElementById('kpi-rc-value');

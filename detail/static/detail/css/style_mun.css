@@ -41,7 +41,7 @@
 /* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */
 /* Garante o fundo branco absoluto e libera a rolagem natural nativa */
 html, body {
-    background-color: #ffffff !important;
+    background-color: #103758 !important;
     height: auto !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -65,7 +65,7 @@ html, body {
 .hero-title {
     font-size: clamp(2rem, 4vw, 3.5rem);
     font-weight: 900;
-    color: var(--fnp-dark-blue);
+    color: #f8fafc;
     letter-spacing: -0.04em;
     line-height: 1.1;
     margin-bottom: 0.5rem;
@@ -80,7 +80,7 @@ html, body {
 .section-heading {
     font-size: 1.25rem;
     font-weight: 800;
-    color: var(--fnp-dark-blue);
+    color: #f8fafc;
     margin-bottom: 1.25rem;
     display: flex;
     flex-direction: column;
@@ -124,12 +124,12 @@ html, body {
 }
 
 .kpi-card.highlight {
-    background: var(--fnp-dark-blue);
-    border-color: var(--fnp-dark-blue);
+    background: #f8fafc;
+    border-color: #f8fafc;
 }
 
 .kpi-label {
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--slate-400);
     text-transform: uppercase;
@@ -152,14 +152,14 @@ html, body {
 .kpi-hero-value {
     font-size: clamp(2rem, 4vw, 3rem); /* Equivalente ao text-5xl/6xl responsivo */
     font-weight: 900;
-    color: var(--fnp-dark-blue, #103758);
+    color: var(--fnp-blue);
     line-height: 1;
     margin-bottom: 0.5rem;
     white-space: nowrap;
 }
 
 .kpi-hero-trend {
-    font-size: 0.75rem;
+    font-size: 1.25rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -173,7 +173,7 @@ html, body {
 .kpi-ranking-highlight {
     font-size: clamp(2.5rem, 5vw, 3.75rem);
     font-weight: 900;
-    color: var(--fnp-dark-blue, #103758);
+    color: #f8fafc;
     line-height: 1;
 }
 
@@ -345,10 +345,10 @@ html, body {
 .tree-row:hover { background-color: var(--slate-50); }
 
 /* Níveis da Árvore (Indentação e Pesos) */
-.tree-row.level-0 { font-weight: 700; color: var(--fnp-dark-blue); }
+.tree-row.level-0 { font-weight: 1000; color: var(--fnp-dark-blue); }
 .tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
-.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 0.95rem; }
-.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 0.9rem; }
+.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 1.25rem; }
+.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 1.25rem; }
 
 @media (min-width: 768px) {
     .tree-row.level-1 { padding-left: 40px; }
@@ -482,6 +482,8 @@ html, body {
 
 /* Segmented Control (Toggle) */
 .segmented {
+    padding: 2px; 
+    width: auto;
     display: inline-flex;
     background: var(--slate-100);
     padding: 6px;
@@ -494,11 +496,18 @@ html, body {
     .segmented { width: auto; }
 }
 
+#timeline-toggle {
+    flex-direction: column;
+    gap: 4px;
+}
+
 .segmented-option {
     flex: 1;
+    flex-direction: column;
+    gap: 4px;
     border: none;
     background: transparent;
-    padding: 10px 24px;
+    padding: 6px 14px;
     font-size: 1rem;
     font-weight: 800;
     color: var(--slate-500);

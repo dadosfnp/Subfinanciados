@@ -21,7 +21,7 @@
             <h1 class="hero-title mb-0">{{ municipio.name_muni_uf }}</h1>
             
             <div class="flex flex-col md:items-end shrink-0">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione a base de cálculo</span>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione a base de comparação</span>
                 
                 <div id="global-base-toggle" class="segmented inline-flex p-1">
                     <button class="segmented-option active text-sm px-6 py-2" type="button" data-base="nacional">Nacional</button>
@@ -44,17 +44,7 @@
 
         <div class="flex flex-col gap-5 mt-auto">
             <div>
-                <span class="kpi-label mb-2">Total Habitantes</span>
-                <div class="kpi-hero-value" title="{{ municipio.populacao24|br_integer }}">{{ municipio.populacao24|br_integer }}</div>
-                <div class="kpi-hero-trend {% if evolucao_historica.delta_populacao > 0 %}positive{% else %}negative{% endif %}">
-                    {% if evolucao_historica.delta_populacao > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_populacao }}% 
-                    <span class="kpi-hero-trend-muted">desde 2000</span>
-                </div>
-            </div>
 
-            <div class="h-px w-full bg-slate-100"></div>
-
-            <div>
                 <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
                 <div class="kpi-pop-rank flex items-baseline"
                      data-pop-nacional="{{ municipio.populacao24_rank_nacional|br_integer }} / {{ municipio.populacao24_total_nacional|br_integer }}"
@@ -63,6 +53,20 @@
                     <span class="kpi-hero-value">{{ municipio.populacao24_rank_nacional|br_integer }}º</span>
                     <span class="kpi-ranking-base">de {{ municipio.populacao24_total_nacional|br_integer }}</span>
                 </div>
+
+            </div>
+
+            <div class="h-px w-full bg-slate-100"></div>
+
+            <div>
+
+                <span class="kpi-label mb-2">Total Habitantes</span>
+                <div class="kpi-hero-value" title="{{ municipio.populacao24|br_integer }}">{{ municipio.populacao24|br_integer }}</div>
+                <div class="kpi-hero-trend {% if evolucao_historica.delta_populacao > 0 %}positive{% else %}negative{% endif %}">
+                    {% if evolucao_historica.delta_populacao > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_populacao }}% 
+                    <span class="kpi-hero-trend-muted">desde 2000</span>
+                </div>
+
             </div>
         </div>
     </article>
@@ -78,13 +82,28 @@
                 <h3 class="kpi-label mb-0 rank-text-icon">Receita</h3>
             </div>
             
-            <div class="bg-slate-100 p-1 rounded-lg flex items-center text-[9px] font-bold uppercase tracking-wider">
-                <button type="button" class="kpi-rc-toggle active px-3 py-1 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
-                <button type="button" class="kpi-rc-toggle px-3 py-1 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Absoluta</button>
+            <div class="bg-slate-100 p-2 rounded-lg flex items-center text-xs font-bold uppercase tracking-wider">
+                <button type="button" class="kpi-rc-toggle active px-3 py-2 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
+                <button type="button" class="kpi-rc-toggle px-3 py-2 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Absoluto</button>
             </div>
+
         </div>
 
         <div class="flex flex-col gap-5 mt-auto">
+            
+            <div>
+                <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
+                <div class="kpi-rev-rank flex items-baseline"
+                     data-rev-nacional="{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}"
+                     data-rev-estadual="{{ municipio.rank_estadual|br_integer }} / {{ municipio.total_estadual|br_integer }}"
+                     data-rev-faixa="{{ municipio.rank_faixa|br_integer }} / {{ municipio.total_faixa|br_integer }}">
+                    <span class="kpi-hero-value">{{ municipio.rank_nacional|br_integer }}º</span>
+                    <span class="kpi-ranking-base">de {{ municipio.total_nacional|br_integer }}</span>
+                </div>
+            </div>
+
+            <div class="h-px w-full bg-slate-100"></div>
+            
             <div>
                 <span class="kpi-label mb-2" id="kpi-rc-label">Valor por Habitante</span>
                 
@@ -100,18 +119,7 @@
                 </div>
             </div>
 
-            <div class="h-px w-full bg-slate-100"></div>
-
-            <div>
-                <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
-                <div class="kpi-rev-rank flex items-baseline"
-                     data-rev-nacional="{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}"
-                     data-rev-estadual="{{ municipio.rank_estadual|br_integer }} / {{ municipio.total_estadual|br_integer }}"
-                     data-rev-faixa="{{ municipio.rank_faixa|br_integer }} / {{ municipio.total_faixa|br_integer }}">
-                    <span class="kpi-hero-value">{{ municipio.rank_nacional|br_integer }}º</span>
-                    <span class="kpi-ranking-base">de {{ municipio.total_nacional|br_integer }}</span>
-                </div>
-            </div>
+            
         </div>
     </article>
     {% endwith %}
@@ -156,7 +164,7 @@
 
             <div class="flex flex-col">
                 <div class="section-heading">
-                    <span>Densidade Fiscal</span>
+                    <span>Densidade Fiscal Nacional</span>
                 </div>
                 <div class="chart-card">
                     <div style="height: 200px; position: relative;">
@@ -169,19 +177,13 @@
 
     <section class="mb-12">
         <div class="section-heading mb-4">
-            <span>Síntese da Evolução (2000 - 2024)</span>
+            <span>Síntese Fiscal e Demográfica (2000 - 2024)</span>
         </div>
 
         {% if evolucao_historica.has_2000_data %}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             <div class="lg:col-span-5 bg-[#f8fafc] rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center gap-3 mb-5">
-                        <div class="p-2 bg-[var(--fnp-dark-blue)] text-white rounded-lg shadow-md">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        </div>
-                        <h3 class="font-bold text-[var(--fnp-dark-blue)] text-sm uppercase tracking-widest">Crescimento Relativo</h3>
-                    </div>
                     
                     <p class="text-slate-600 leading-relaxed text-base mb-8">
                         Entre 2000 e 2024, a receita por habitante de <strong class="text-slate-800">{{ municipio.name_muni }}</strong> 
@@ -195,62 +197,68 @@
                         {% if evolucao_historica.delta_populacao >= 0 %}
                             aumentou <span class="text-emerald-600 font-black">+{{ evolucao_historica.delta_populacao }}%</span>,
                         {% else %}
-                            encolheu <span class="text-rose-600 font-black">{{ evolucao_historica.delta_populacao }}%</span>,
+                            teve queda de <span class="text-rose-600 font-black">{{ evolucao_historica.delta_populacao }}%</span>,
                         {% endif %}
                         ante crescimento da <span class="lbl-media-base">média nacional</span> de <strong class="text-slate-800" id="val-media-pop">{{ media_nacional.delta_populacao|default:"15" }}%</strong>.
                     </p>
 
                     <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
                         <div class="flex items-center justify-between mb-6">
-                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Posição Fiscal</h4>
-                            <div id="timeline-toggle" class="segmented" style="padding: 2px; width: auto;">
-                                <button class="segmented-option active text-[10px] px-3 py-1" type="button" data-mode="quintil">Quintil</button>
-                                <button class="segmented-option text-[10px] px-3 py-1" type="button" data-mode="decil">Decil</button>
-                            </div>
+                            <h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Base para Ranking</h4>
+                                <div id="timeline-toggle" class="segmented" >
+                                    <button class="segmented-option active text-[12px] px-4 py-1.5" type="button" data-mode="percentil">Percentil</button>
+                                    <button class="segmented-option text-[12px] px-4 py-1.5" type="button" data-mode="quintil">Quintil</button>
+                                    <button class="segmented-option text-[12px] px-4 py-1.5" type="button" data-mode="decil">Decil</button>
+                                </div>
                         </div>
 
-<div class="flex items-center justify-center gap-8 py-6">
-    
-    <div class="flex flex-col items-center">
-        <span class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest">Início (2000)</span>
-        
-        <div class="ifem-tooltip-container">
-            <div class="timeline-circle-dynamic w-24 h-24 rounded-full flex flex-col items-center justify-center transition-colors duration-300" 
-                data-quintil="{{ municipio.quintil00|default:'-' }}" 
-                data-decil="{{ municipio.decil00|default:'-' }}">
-                <span class="dynamic-text text-[10px] font-bold uppercase tracking-wider opacity-90 mb-1"></span>
-                <span class="text-xl font-black">{{ municipio.percentil00_n|default:"0" }}%</span>
-            </div>
-            
-            <div class="ifem-tooltip-box">
-                Receita per capita maior que <strong>{{ municipio.percentil00_n|default:'0' }}%</strong> dos municípios brasileiros em 2000.
-            </div>
-        </div>
-    </div>
+                        <div class="flex items-center justify-center gap-8 py-6">
+                    
+                            <div class="flex flex-col items-center">
+                            <span class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-widest text-center">2000</span>                
+                            
+                                <div class="ifem-tooltip-container">
+                                    <div class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
+                                        data-quintil="{{ municipio.quintil00|default:'-' }}" 
+                                        data-decil="{{ municipio.decil00|default:'-' }}"
+                                        data-percentil="{{ municipio.percentil00_n|default:'0' }}">
+                                        <span class="dynamic-label text-xs font-bold uppercase tracking-wider opacity-90 mb-1"></span>
+                                        <span class="dynamic-value text-3xl font-black"></span>
+                                    </div>
+                                    
+                                    <div class="ifem-tooltip-box">
+                                        Receita per capita maior que <strong>{{ municipio.percentil00_n|default:'0' }}%</strong> dos municípios brasileiros em 2000.
+                                    </div>
+                                </div>
+                            </div>
 
-    <div class="text-slate-300 px-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-    </div>
+                            <div class="text-slate-300 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </div>
 
-    <div class="flex flex-col items-center">
-        <span class="text-[10px] font-bold text-[var(--fnp-dark-blue)] uppercase mb-3 tracking-widest">Atual (2024)</span>
-        
-        <div class="ifem-tooltip-container">
-            <div class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
-                data-quintil="{{ municipio.quintil24|default:'-' }}" 
-                data-decil="{{ municipio.decil24|default:'-' }}">
-                <span class="dynamic-text text-xs font-bold uppercase tracking-wider opacity-90 mb-1"></span>
-                <span class="text-3xl font-black">{{ municipio.percentil24_n|default:"0" }}%</span>
-            </div>
+                            <div class="flex flex-col items-center">
+                            <span class="text-sm font-bold text-[var(--fnp-dark-blue)] uppercase mb-3 tracking-widest text-center">2024</span>                
+                                <div class="ifem-tooltip-container">
+                                    <div class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
+                                        data-quintil="{{ municipio.quintil24|default:'-' }}" 
+                                        data-decil="{{ municipio.decil24|default:'-' }}"
+                                        data-percentil="{{ municipio.percentil24_n|default:'0' }}">
+                                        <span class="dynamic-label text-xs font-bold uppercase tracking-wider opacity-90 mb-1"></span>
+                                        <span class="dynamic-value text-3xl font-black"></span>
+                                    </div>
 
-            <div class="ifem-tooltip-box">
-                Receita per capita maior que <strong>{{ municipio.percentil24_n|default:'0' }}%</strong> dos municípios brasileiros em 2024.
-            </div>
-        </div>
-    </div>
+                                    <div class="ifem-tooltip-box">
+                                        Receita per capita maior que <strong>{{ municipio.percentil24_n|default:'0' }}%</strong> dos municípios brasileiros em 2024.
+                                    </div>
+                                </div>
+                            </div>
 
-</div>
+                        </div>
+
+                        <p id="timeline-dynamic-summary" class="text-center text-sm text-slate-500 mt-2 px-4 leading-relaxed" data-muni-name="{{ municipio.name_muni }}"></p>
+
                     </div>
+
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-slate-200">
