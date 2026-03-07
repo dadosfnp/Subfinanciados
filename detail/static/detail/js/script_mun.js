@@ -203,11 +203,13 @@ document.addEventListener('DOMContentLoaded', function () {
           el.textContent = pc ? 'Valor por Habitante' : 'Valor Real';
       });
 
+      $$('.media-block-wrapper').forEach(el => el.classList.toggle('hidden', !pc));
+
       sortAll(pc);
     }
+    
     segmented?.querySelector('[data-mode="pc"]')?.addEventListener('click', ()=>showMode('pc'));
     segmented?.querySelector('[data-mode="vr"]')?.addEventListener('click', ()=>showMode('vr'));
-  
     // ------------ índice de headings (Gráfico -> Árvore) ------------
     let headingIndex = new Map();
     function buildHeadingIndex(scope=document){
@@ -736,9 +738,8 @@ timelineBtns.forEach(btn => {
             },
             y: { 
                 beginAtZero: true,
-                grace: '5%', /* Adiciona espaço no topo/fundo proporcional ao tamanho da barra */
+                grace: '15%',
                 grid: { 
-                    /* Mantém a linha do zero grossa e visível para ancorar o olhar */
                     color: (context) => context.tick && context.tick.value === 0 ? '#94a3b8' : '#f1f5f9',
                     lineWidth: (context) => context.tick && context.tick.value === 0 ? 2 : 1
                 }, 
@@ -747,6 +748,33 @@ timelineBtns.forEach(btn => {
                     callback: (val) => val + '%' 
                 } 
             }
+        }
+    };
+
+    const topLabelsPlugin = {
+        id: 'topLabels',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar, index) => {
+                    const val = dataset.data[index];
+                    if (val === undefined || val === null) return;
+                    
+                    const prefix = val > 0 ? '+' : '';
+                    const text = `${prefix}${val.toFixed(1).replace('.', ',')}%`;
+                    
+                    ctx.save();
+                    ctx.fillStyle = Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[index] : dataset.backgroundColor;
+                    ctx.font = 'bolder 13px "Inter", sans-serif';
+                    ctx.textAlign = 'center';
+                    
+                    const yPos = val >= 0 ? bar.y - 8 : bar.y + 16;
+                    
+                    ctx.fillText(text, bar.x, yPos);
+                    ctx.restore();
+                });
+            });
         }
     };
 
@@ -759,7 +787,6 @@ timelineBtns.forEach(btn => {
         lblMediaBase.forEach(el => el.textContent = labelNome);
         if (lblMediaBaseChart) lblMediaBaseChart.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
 
-        /* CORREÇÃO SÊNIOR: Mapeia o valor do botão para a chave exata do JSON */
         const evoKeys = {
             'nacional': 'nac',
             'estadual': 'est',
@@ -768,7 +795,6 @@ timelineBtns.forEach(btn => {
         const evoKey = evoKeys[base];
 
         if (evolutionData && valMediaRc && valMediaPop) {
-            /* Usa o evoKey para ler 'nac', 'est' ou 'faixa' corretamente */
             valMediaRc.textContent = `${evolutionData.receita[evoKey] || 0}%`;
             valMediaPop.textContent = `${evolutionData.populacao[evoKey] || 0}%`;
         }
@@ -776,7 +802,6 @@ timelineBtns.forEach(btn => {
         if (evolutionData && canvasRec && canvasPop) {
             const labelChart = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
             
-            /* Usa o evoKey para alimentar o Chart.js */
             const dataRec = [parseSafe(evolutionData.receita.mun), parseSafe(evolutionData.receita[evoKey])];
             const dataPop = [parseSafe(evolutionData.populacao.mun), parseSafe(evolutionData.populacao[evoKey])];
 
@@ -787,12 +812,13 @@ timelineBtns.forEach(btn => {
                     labels: [evolutionData.nome_muni || 'Município', labelChart],
                     datasets: [{
                         data: dataRec,
-                        backgroundColor: ['#103758', '#cbd5e1'],
+                        backgroundColor: ['#103758', '#647080'],
                         borderRadius: 6,
                         barPercentage: 0.5
                     }]
                 },
-                options: commonEvoOptions
+                options: commonEvoOptions,
+                plugins: [topLabelsPlugin]
             });
 
             if (chartPopInstance) chartPopInstance.destroy();
@@ -802,12 +828,13 @@ timelineBtns.forEach(btn => {
                     labels: [evolutionData.nome_muni || 'Município', labelChart],
                     datasets: [{
                         data: dataPop,
-                        backgroundColor: ['#EEAF19', '#cbd5e1'],
+                        backgroundColor: ['#EEAF19', '#647080'],
                         borderRadius: 6,
                         barPercentage: 0.5
                     }]
                 },
-                options: commonEvoOptions
+                options: commonEvoOptions,
+                plugins: [topLabelsPlugin]
             });
         }
 
@@ -883,7 +910,7 @@ timelineBtns.forEach(btn => {
         });
 
         // ====================================================================
-        // NOVO: ATUALIZAÇÃO DOS CARDS PRINCIPAIS (POPULAÇÃO E RECEITA)
+        // ATUALIZAÇÃO DOS CARDS PRINCIPAIS (POPULAÇÃO E RECEITA)
         // ====================================================================
         
         // Atualiza os labels "Ranking Nacional", "Ranking Estadual", etc.
@@ -913,46 +940,40 @@ timelineBtns.forEach(btn => {
         updateKpiRank('.kpi-rev-rank', 'rev');
 
         // CÁLCULO DE BENCHMARK (F%) - Dinâmico para Receita e População
+        const updateBenchmarkTrend = (containerId, munValue, compValue, labelBase) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
 
-        const updateBenchmarkBadge = (badgeId, munValue, compValue, labelBase) => {
-            const badge = document.getElementById(badgeId);
-            if (!badge) return;
-            
-            if (compValue > 0) {
-                // Calcula o F% (Quanto o município representa da média)
+            if (compValue !== 0 && !isNaN(compValue)) {
                 const fPct = Math.round((munValue / compValue) * 100);
-                
-                let colorClasses = '';
-                if (fPct >= 100) {
-                    // Superou a média: Verde
-                    colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                } else if (fPct >= 0) {
-                    // Cresceu, mas abaixo da média: Laranja (Atenção)
-                    colorClasses = 'bg-amber-50 text-amber-700 border-amber-200';
-                } else {
-                    // Caiu (Negativo): Vermelho
-                    colorClasses = 'bg-rose-50 text-rose-700 border-rose-200';
-                }
-                
-                // Injeta classes do Tailwind e o Texto
-                badge.className = `text-[10.5px] font-black px-2 py-0.5 rounded border shadow-sm ${colorClasses}`;
-                badge.textContent = `${fPct}% da ${labelBase}`;
-                badge.classList.remove('hidden');
+                const isPositive = munValue >= compValue;
+                const arrow = isPositive ? '▲' : '▼';
+                const statusClass = isPositive ? 'positive' : 'negative';
+                const suffix = isPositive ? 'acima' : 'abaixo';
+
+                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all`;
+                container.innerHTML = `${arrow} ${fPct}% <span class="kpi-hero-trend-muted">${suffix} da ${labelBase}</span>`;
             } else {
-                badge.classList.add('hidden');
+                const isPos = munValue >= 0;
+                const arrow = isPos ? '▲' : '▼';
+                const statusClass = isPos ? 'positive' : 'negative';
+                
+                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all`;
+                container.innerHTML = `${arrow} ${Math.abs(munValue)}% <span class="kpi-hero-trend-muted">desde 2000</span>`;
             }
         };
 
         if (evolutionData) {
-            // Puxa os dados seguros (já usamos a evoKey que corrigimos antes)
+            const evoKeys = { 'nacional': 'nac', 'estadual': 'est', 'faixa': 'faixa' };
+            const evoKey = evoKeys[base];
+            
             const munRc = parseSafe(evolutionData.receita.mun);
             const compRc = parseSafe(evolutionData.receita[evoKey]);
             const munPop = parseSafe(evolutionData.populacao.mun);
             const compPop = parseSafe(evolutionData.populacao[evoKey]);
 
-            // Dispara a atualização para os dois cards
-            updateBenchmarkBadge('badge-comparativo-rc', munRc, compRc, labelNome);
-            updateBenchmarkBadge('badge-comparativo-pop', munPop, compPop, labelNome);
+            updateBenchmarkTrend('trend-comparativo-rc', munRc, compRc, labelNome);
+            updateBenchmarkTrend('trend-comparativo-pop', munPop, compPop, labelNome);
         }
 
         // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
