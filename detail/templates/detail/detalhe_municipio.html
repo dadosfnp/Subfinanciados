@@ -62,10 +62,7 @@
 
                 <span class="kpi-label mb-2">Total Habitantes</span>
                 <div class="kpi-hero-value" title="{{ municipio.populacao24|br_integer }}">{{ municipio.populacao24|br_integer }}</div>
-                <div class="kpi-hero-trend {% if evolucao_historica.delta_populacao > 0 %}positive{% else %}negative{% endif %}">
-                    {% if evolucao_historica.delta_populacao > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_populacao }}% 
-                    <span class="kpi-hero-trend-muted">desde 2000</span>
-                </div>
+                <div id="trend-comparativo-pop" class="kpi-hero-trend mt-1 transition-all"></div>
 
             </div>
         </div>
@@ -113,10 +110,8 @@
                     R$ {{ municipio.rc_24_pc|br_float }}
                 </div>
                 
-                <div class="kpi-hero-trend {% if evolucao_historica.delta_rc_pc > 0 %}positive{% else %}negative{% endif %}">
-                    {% if evolucao_historica.delta_rc_pc > 0 %}▲ +{% else %}▼ {% endif %}{{ evolucao_historica.delta_rc_pc }}% 
-                    <span class="kpi-hero-trend-muted">desde 2000</span>
-                </div>
+                <div id="trend-comparativo-rc" class="kpi-hero-trend mt-1 transition-all"></div>
+            
             </div>
 
             
@@ -325,10 +320,11 @@
         }
         </script>
         {% else %}
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl py-12 text-center text-slate-400 font-medium shadow-sm">
-            Dados base do ano 2000 não encontrados para gerar o histórico comparativo.
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl py-12 px-6 flex flex-col items-center justify-center gap-3 text-center text-slate-400 shadow-sm">
+            <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="font-medium">Dados base do ano 2000 não encontrados para gerar o histórico comparativo.</span>
         </div>
-        {% endif %}
+        {% endif %} 
     </section>
 
 </main>
