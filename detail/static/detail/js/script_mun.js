@@ -652,19 +652,19 @@ function updateTimelineColors(mode) {
                 const displayVal = isInf ? (100 - v) : v;
                 const textoStatus = isInf ? 'inferior a' : 'superior a';
                 const corStatus = isInf ? 'text-rose-600' : 'text-emerald-600';
-                const sufixoGeo = isFull ? ' dos municípios do país' : ' do país';
+                const sufixoGeo = isFull ? ' dos municípios do país' : ' dos municípios do país';
                 return `<span class="${corStatus} font-black">${textoStatus} ${displayVal}%</span>${sufixoGeo}`;
             };
 
             const statusAcao = val24 > val00 ? 'MELHOROU' : 'PIOROU';
             const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
 
-            summaryContainer.innerHTML = `A  receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
+            summaryContainer.innerHTML = `A  receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita relativa por habitante <span class="${statusColor} font-black">${statusAcao}</span>. Atualmente é ${formatPercentilNarrativa(val24, true)}.`;
         } 
         else {
             /* Padrao Premium para Quintil e Decil com destaque no resultado */
             const isMelhor = val24 > val00;
-            const statusAcao = isMelhor ? 'MELHOROU' : 'PIOROU';
+            const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
             const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
             
             const text00 = `${val00}º ${mode}`;
