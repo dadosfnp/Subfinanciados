@@ -922,7 +922,14 @@ timelineBtns.forEach(btn => {
         // ====================================================================
         // ATUALIZAÇÃO DOS CARDS PRINCIPAIS (POPULAÇÃO E RECEITA)
         // ====================================================================
-        
+        /* Define o componente visual do icone de informacao com propriedades de transicao para feedback visual ao hover */
+        const INFO_ICON_SVG = `
+            <svg class="w-3.5 h-3.5 ml-1.5 opacity-50 group-hover:opacity-100 transition-opacity shrink-0" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                </path>
+            </svg>`;
         // Atualiza os labels "Ranking Nacional", "Ranking Estadual", etc.
         document.querySelectorAll('.global-ranking-label').forEach(el => {
             el.textContent = config.kpi;
@@ -932,15 +939,24 @@ timelineBtns.forEach(btn => {
         const updateKpiRank = (selector, dataPrefix) => {
             const kpiEl = document.querySelector(selector);
             if (kpiEl) {
-                // Garante o alinhamento baseline caso o JS monte a div do zero
-                kpiEl.classList.add('flex', 'items-baseline');
+                // Adicionamos 'group' para controlar a opacidade do icone via CSS do pai
+                kpiEl.className = 'flex items-baseline ifem-tooltip-container group cursor-help';
                 
                 const dataStr = kpiEl.getAttribute(`data-${dataPrefix}-${base}`);
+                const totalBaseFixa = "5.479";
+                
                 if (dataStr && dataStr.includes('/')) {
                     const parts = dataStr.split('/');
-                    kpiEl.innerHTML = `<span class="kpi-hero-value">${parts[0].trim()}º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de ${parts[1].trim()}</span>`;
-                } else {
-                    kpiEl.innerHTML = `<span class="kpi-hero-value">--º</span> <span class="text-lg md:text-xl font-bold text-slate-400 ml-2">de --</span>`;
+                    const rank = parts[0].trim();
+
+                    kpiEl.innerHTML = `
+                        <span class="kpi-hero-value">${rank}º</span> 
+                        <span class="text-lg md:text-xl font-bold text-slate-500 ml-2">de ${totalBaseFixa}</span>
+                        ${INFO_ICON_SVG}
+                        <div class="ifem-tooltip-box">
+                            O município ocupa a ${rank}ª posição entre os ${totalBaseFixa} municípios do Brasil com dados disponíveis.
+                        </div>
+                    `;
                 }
             }
         };
@@ -952,53 +968,54 @@ timelineBtns.forEach(btn => {
 
 
         // CÁLCULO DE BENCHMARK E RENDERIZAÇÃO DE TOOLTIP CUSTOMIZADO
-        const updateBenchmarkTrend = (containerId, munValue, compValue, labelBase) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+    const updateBenchmarkTrend = (containerId, munValue, compValue, labelBase) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-            const isPop = containerId.includes('pop');
+    const isPop = containerId.includes('pop');
+    let state = 'neutral';
+    let arrow = '•';
+    let statusClass = 'text-slate-500';
+    let tooltipMsg = "";
 
-            if (isPop) {
-                const isPos = munValue >= 0;
-                const arrow = isPos ? '▲' : '▼';
-                const statusClass = isPos ? 'positive' : 'negative';
-                const verb = isPos ? 'aumentou' : 'diminuiu';
-                const absValue = Math.abs(munValue);
-                
-                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
-                container.innerHTML = `
-                    ${arrow}${absValue}% <span class="kpi-hero-trend-muted">no período de 2000 a 2024</span>
-                    <div class="ifem-tooltip-box">A população absoluta ${verb} ${absValue}% no período de 2000 a 2024</div>
-                `;
-            } else {
-                if (compValue !== 0 && !isNaN(compValue)) {
-                    const fPct = Math.round((munValue / compValue) * 100);
-                    const isPositive = munValue >= compValue;
-                    const arrow = isPositive ? '▲' : '▼';
-                    const statusClass = isPositive ? 'positive' : 'negative';
-                    const suffix = isPositive ? 'acima' : 'abaixo';
-                    const verb = isPositive ? 'aumentou' : 'diminuiu';
-                    
-                    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
-                    container.innerHTML = `
-                        ${arrow}${fPct}% <span class="kpi-hero-trend-muted">${suffix} da ${labelBase} no período de 2000 a 2024</span>
-                        <div class="ifem-tooltip-box">A receita ${verb} ${fPct}% com base na média entre 2000 a 2024</div>
-                    `;
-                } else {
-                    const isPos = munValue >= 0;
-                    const arrow = isPos ? '▲' : '▼';
-                    const statusClass = isPos ? 'positive' : 'negative';
-                    const verb = isPos ? 'aumentou' : 'diminuiu';
-                    const absValue = Math.abs(munValue);
-                    
-                    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
-                    container.innerHTML = `
-                        ${arrow}${absValue}% <span class="kpi-hero-trend-muted">no período de 2000 a 2024</span>
-                        <div class="ifem-tooltip-box">A receita ${verb} ${absValue}% com base na média entre 2000 a 2024</div>
-                    `;
-                }
-            }
-        };
+    /* Logica de comparacao baseada no tipo de indicador (percentual absoluto ou relativo a media) */
+    if (isPop) {
+        const isPos = munValue >= 0;
+        state = isPos ? 'positive' : 'negative';
+        arrow = isPos ? '▲' : '▼';
+        statusClass = isPos ? 'positive' : 'negative';
+        const verb = isPos ? 'aumentou' : 'diminuiu';
+        tooltipMsg = `A população ${verb} ${Math.abs(munValue)}% no período de 2000 a 2024.`;
+    } else {
+        if (compValue !== 0 && !isNaN(compValue)) {
+            const fPct = Math.round((munValue / compValue) * 100);
+            const isPositive = munValue >= compValue;
+            state = isPositive ? 'positive' : 'negative';
+            arrow = isPositive ? '▲' : '▼';
+            statusClass = isPositive ? 'positive' : 'negative';
+            const suffix = isPositive ? 'acima' : 'abaixo';
+            tooltipMsg = `${fPct}% ${suffix} da receita da ${labelBase} no período de 2000 a 2024.`;
+        }
+    }
+
+    if ((isPop && munValue === 0) || (!isPop && munValue === compValue)) {
+        arrow = '•';
+        statusClass = 'text-slate-500 font-bold';
+        tooltipMsg = "O indicador permaneceu estável em relação ao período ou benchmark anterior.";
+    }
+
+    /* Renderiza o container com suporte a tooltip-box para feedback visual ao hover */
+    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container group cursor-help flex items-center`;
+        
+        const valDisplay = containerId.includes('pop') ? Math.abs(munValue) : (compValue !== 0 ? Math.round((munValue / compValue) * 100) : 0);
+        
+        container.innerHTML = `
+            <span class="font-black">${arrow} ${valDisplay}%</span> 
+            <span class="text-slate-600 font-medium ml-1">no período</span>
+            ${INFO_ICON_SVG}
+            <div class="ifem-tooltip-box">${tooltipMsg}</div>
+        `;
+    };
 
         if (evolutionData) {
             const evoKeys = { 'nacional': 'nac', 'estadual': 'est', 'faixa': 'faixa' };

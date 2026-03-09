@@ -34,42 +34,41 @@
     </header>
 
 <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12">
-    <article class="kpi-card relative">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+    <article class="kpi-card relative flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <h3 class="kpi-label mb-0">População</h3>
             </div>
-            <h3 class="kpi-label mb-0">População (2024)</h3>
+            <div class="text-[20px] px-2 py-1 bg-blue-50 text-blue-600 rounded font-bold uppercase tracking-tighter">
+                2024
+            </div>
         </div>
 
         <div class="flex flex-col gap-5 mt-auto">
             <div>
-
                 <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
                 <div class="kpi-pop-rank flex items-baseline"
                      data-pop-nacional="{{ municipio.populacao24_rank_nacional|br_integer }} / {{ municipio.populacao24_total_nacional|br_integer }}"
                      data-pop-estadual="{{ municipio.populacao24_rank_estadual|br_integer }} / {{ municipio.populacao24_total_estadual|br_integer }}"
                      data-pop-faixa="{{ municipio.populacao24_rank_faixa|br_integer }} / {{ municipio.populacao24_total_faixa|br_integer }}">
-                    <span class="kpi-hero-value">{{ municipio.populacao24_rank_nacional|br_integer }}º</span>
-                    <span class="kpi-ranking-base">de {{ municipio.populacao24_total_nacional|br_integer }}</span>
-                </div>
-
+                    </div>
             </div>
 
             <div class="h-px w-full bg-slate-100"></div>
 
             <div>
-
                 <span class="kpi-label mb-2">Total Habitantes</span>
-                <div class="kpi-hero-value" title="{{ municipio.populacao24|br_integer }}">{{ municipio.populacao24|br_integer }}</div>
-                <div id="trend-comparativo-pop" class="kpi-hero-trend mt-1 transition-all"></div>
-
+                <div class="kpi-hero-value">{{ municipio.populacao24|br_integer }}</div>
+                <div id="trend-comparativo-pop" class="kpi-hero-trend mt-1"></div>
             </div>
         </div>
     </article>
 
     {% with p=municipio.percentil24_n %}
-    <article class="kpi-card relative border-b-[5px] {% if p <= 20 %}rank-card-1{% elif p <= 40 %}rank-card-2{% elif p <= 60 %}rank-card-3{% elif p <= 80 %}rank-card-4{% else %}rank-card-5{% endif %}">
+    <article class="kpi-card relative border-b-[5px] flex flex-col {% if p <= 20 %}rank-card-1{% elif p <= 40 %}rank-card-2{% elif p <= 60 %}rank-card-3{% elif p <= 80 %}rank-card-4{% else %}rank-card-5{% endif %}">
         
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -79,42 +78,33 @@
                 <h3 class="kpi-label mb-0 rank-text-icon">Receita</h3>
             </div>
             
-            <div class="bg-slate-100 p-2 rounded-lg flex items-center text-xs font-bold uppercase tracking-wider">
-                <button type="button" class="kpi-rc-toggle active px-3 py-2 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
-                <button type="button" class="kpi-rc-toggle px-3 py-2 rounded-md text-slate-400 hover:text-slate-600 transition-all" data-mode="tot">Valor Total</button>
+            <div class="bg-slate-100 p-1.5 rounded-lg flex items-center text-[10px] font-bold uppercase">
+                <button type="button" class="kpi-rc-toggle active px-3 py-1.5 rounded-md bg-white text-[#103758] shadow-sm transition-all" data-mode="pc">Per Capita</button>
+                <button type="button" class="kpi-rc-toggle px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 transition-all" data-mode="tot">Total</button>
             </div>
-
         </div>
 
         <div class="flex flex-col gap-5 mt-auto">
-            
             <div>
                 <span class="kpi-label global-ranking-label mb-2">Ranking Nacional</span>
                 <div class="kpi-rev-rank flex items-baseline"
                      data-rev-nacional="{{ municipio.rank_nacional|br_integer }} / {{ municipio.total_nacional|br_integer }}"
                      data-rev-estadual="{{ municipio.rank_estadual|br_integer }} / {{ municipio.total_estadual|br_integer }}"
                      data-rev-faixa="{{ municipio.rank_faixa|br_integer }} / {{ municipio.total_faixa|br_integer }}">
-                    <span class="kpi-hero-value">{{ municipio.rank_nacional|br_integer }}º</span>
-                    <span class="kpi-ranking-base">de {{ municipio.total_nacional|br_integer }}</span>
-                </div>
+                    </div>
             </div>
 
             <div class="h-px w-full bg-slate-100"></div>
             
             <div>
                 <span class="kpi-label mb-2" id="kpi-rc-label">Valor por Habitante</span>
-                
                 <div class="kpi-hero-value" id="kpi-rc-value"
                      data-val-pc="R$ {{ municipio.rc_24_pc|br_float }}"
                      data-val-tot="R$ {{ municipio.rc_2024|br_abrev }}">
                     R$ {{ municipio.rc_24_pc|br_float }}
                 </div>
-                
-                <div id="trend-comparativo-rc" class="kpi-hero-trend mt-1 transition-all"></div>
-            
+                <div id="trend-comparativo-rc" class="kpi-hero-trend mt-1"></div>
             </div>
-
-            
         </div>
     </article>
     {% endwith %}
