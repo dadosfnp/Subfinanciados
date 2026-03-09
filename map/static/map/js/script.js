@@ -514,11 +514,12 @@ function abrirPopupDoMunicipioSelecionado(feature) {
   `;
 
 /* Remove instâncias ativas do popup para evitar duplicação de elementos no DOM */
+  /* --- No final da função abrirPopupDoMunicipioSelecionado --- */
+
   if (popupAtivo) {
       popupAtivo.remove();
   }
 
-  /* Instancia o popup ancorado nas coordenadas com bloqueio de salto de foco do navegador */
   popupAtivo = new mapboxgl.Popup({ 
       minWidth: '340px', 
       maxWidth: '420px', 
@@ -531,6 +532,14 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     .setLngLat(coords)
     .setHTML(html)
     .addTo(map);
+
+  // Adiciona a classe sempre (Desktop e Mobile)
+  document.querySelector('.map-page').classList.add('popup-active');
+
+  // Remove a classe quando o popup for fechado (pelo X ou clicando fora)
+  popupAtivo.on('close', () => {
+      document.querySelector('.map-page').classList.remove('popup-active');
+  });
 }
 
 function hideBaseMunicipalityLayers() {

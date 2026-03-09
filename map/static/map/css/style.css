@@ -144,14 +144,6 @@ body .map-page .sidebar label {
 @media (max-width: 991.98px) {
   .map-page { flex-direction: column; }
   
-  /* 1. ESCONDER LEGENDAS: Quando o popup estiver aberto */
-  body .map-page.popup-active .map-overlay-container {
-  opacity: 0;
-    visibility: hidden;
-    pointer-events: none; /* Impede cliques acidentais na legenda oculta */
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-}
-
   /* 2. COMPACTAÇÃO MÁXIMA DO POPUP */
   body .map-page .mapboxgl-popup {
     max-width: 92% !important; /* Exceção técnica: sobrepor estilo inline do Mapbox */
@@ -220,7 +212,7 @@ body .map-page .popup-badge-summary.text-status-inferior strong { color: #dc2626
 
 /* ---------- Overlays (Resumo + Legenda) ---------- */
 .map-overlay-container {
-  position: absolute;
+    position: absolute;
     bottom: 30px;
     right: 10px;
     display: flex;
@@ -229,6 +221,26 @@ body .map-page .popup-badge-summary.text-status-inferior strong { color: #dc2626
     align-items: flex-end;
     z-index: 1;
     transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* ---------- Overlays (Resumo + Legenda) ---------- */
+.map-overlay-container {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-end;
+    z-index: 1;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* REGRA UNIFICADA: Esconde legendas sempre que houver um popup ativo */
+body .map-page.popup-active .map-overlay-container {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Card de Resumo */
@@ -348,7 +360,7 @@ body .map-page .popup-badge-summary.text-status-inferior strong { color: #dc2626
     margin-top: 1rem;
 }
 
-/* 2. Botões de Ação: Print e Baixar Dados (ALTERADO PARA CINZA) */
+/* Botões de Ação: Print e Baixar Dados (ALTERADO PARA CINZA) */
 .map-page .sidebar .btn-download,
 .map-page .sidebar .btn-secondary {
     background-color: #6c757d !important; /* Cinza padrão */
@@ -356,7 +368,7 @@ body .map-page .popup-badge-summary.text-status-inferior strong { color: #dc2626
     color: #fff !important;
 }
 
-/* 3. Botões de Busca / Lupas (Fundo BRANCO com Ícone Azul) */
+/* Botões de Busca / Lupas (Fundo BRANCO com Ícone Azul) */
 .map-page .sidebar .input-group > .btn {
     background-color: #ffffff !important;
     border: 1px solid #194685 !important;
