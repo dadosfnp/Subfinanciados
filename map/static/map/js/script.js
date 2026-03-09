@@ -69,8 +69,17 @@ async function updateDependentFilters() {
   const rmAtual        = filtroRm.value;
   const municipioAtual = filtroMunicipio.value;
 
+  /* Monta os parametros com o estado atual para o backend retornar apenas itens validos */
+  const params = {
+    regiao: regiaoAtual,
+    uf: ufAtual,
+    rm: rmAtual,
+    porte: filtroPorte.value
+  };
+
   try {
-    const response = await fetch('/api/get-dependent-filters/');
+    const url = buildApiUrl('/api/get-dependent-filters/', params);
+    const response = await fetch(url);
     const data = await response.json();
 
     filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
@@ -81,7 +90,7 @@ async function updateDependentFilters() {
     data.rms.forEach(v => filtroRm.add(new Option(v, v)));
     restoreSelectValue(filtroRm, rmAtual);
 
-    filtroUf.innerHTML = '<option value="todos">Todos</option>';
+    filtroUf.innerHTML = '<option value="todos">Todas</option>';
     data.ufs.forEach(v => filtroUf.add(new Option(v, v)));
     restoreSelectValue(filtroUf, ufAtual);
 
@@ -687,12 +696,16 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 });
 
 [filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo]
-  .forEach(sel => sel.addEventListener('change', () => {
-
-    // ✅ FECHA O POPUP SE VOLTAR PRA "TODOS"
+  .forEach(sel => sel.addEventListener('change', async () => {
+    
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
       popupAtivo.remove();
       popupAtivo = null;
+    }
+
+    /* Se a mudanca nao for no municipio ou subgrupo, refaz a cascata antes de atualizar o mapa */
+    if (sel !== filtroMunicipio && sel !== filtroSubgrupo) {
+      await updateDependentFilters();
     }
 
     scheduleAtualizarMapa();
