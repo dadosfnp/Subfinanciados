@@ -113,15 +113,53 @@
   outline: none !important;
 }
 
-/* ==========================================================================
-   CORREÇÃO DOS FILTROS DA SIDEBAR (PADRÃO HÍBRIDO)
-   ========================================================================== */
-
-/* 1. Container da Sidebar (Garante espaçamento) */
+/* 1. Container da Sidebar (Garante espaçamento e largura fixa) */
 .sidebar {
-    /* Garante que o conteúdo não fique colado nas bordas */
+    flex: 0 0 280px; /* Mantém a largura idêntica à das outras páginas */
+    background-color: #ffffff !important;
+    padding: 1.5rem; /* O espaçamento precioso que estava faltando! */
+    border-right: 1px solid #dee2e6;
+    box-shadow: 2px 0 5px rgba(25, 70, 133, 0.12);
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    z-index: 10;
+}
+
+/* Títulos principais (Filtros, Configurações de Visualização, etc.) */
+.sidebar h1, 
+.sidebar h2, 
+.sidebar h3, 
+.sidebar h4, 
+.sidebar h5, 
+.sidebar h6 {
+    color: #103758 !important; 
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 700 !important; 
+}
+
+/* Tamanhos proporcionais */
+.sidebar h4 { font-size: 1.2rem !important; margin-bottom: 0.5rem !important; }
+.sidebar h6 { font-size: 0.95rem !important; margin-bottom: 0.5rem !important; }
+
+/* Nomes dos campos (Faixa Populacional, Região, UF, etc.) */
+.sidebar .form-label,
+.sidebar label {
+    display: block !important;
+    margin: 0 0 0.5rem 0 !important;
+    color: #103758 !important; 
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important; 
+    font-size: 0.9rem !important;
+}
+
+/* Opções dos Radio Buttons */
+.sidebar .form-check-label {
+    display: inline-block !important;
+    color: #334155 !important;
+    font-weight: 400 !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 0 !important;
 }
 
 /* 2. Configuração do Grupo (Input + Botão na mesma linha) */

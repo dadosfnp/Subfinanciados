@@ -310,6 +310,20 @@ map.on("click", (e) => {
     }
 });
 
+/* --- LIMPAR CARD AO DAR ZOOM --- */
+map.on("zoomstart", () => {
+    if (popupAtivo) {
+        popupAtivo.remove();
+        popupAtivo = null;
+        
+        // Remove a etiqueta de card ativo para que as legendas reapareçam
+        const mapPage = document.querySelector('.map-page');
+        if (mapPage) {
+            mapPage.classList.remove('popup-active');
+        }
+    }
+});
+
 
 // ===================== Zoom helpers =====================
 function getGeoJSONBounds(geojson) {
@@ -369,6 +383,18 @@ function abrirPopupDoMunicipioSelecionado(feature) {
 
   const props = feature.properties;
   const coords = feature.geometry.coordinates.slice();
+
+  // --- CENTRALIZAÇÃO ULTRA FLUIDA (DESLIZE PURO) ---
+  if (window.innerWidth < 992) {
+    map.flyTo({
+      center: coords,
+      offset: [0, 180],
+      speed: 0.4,
+      curve: 0.01,
+      essential: true,
+      easing: (t) => t * (2 - t) 
+    });
+  }
 
   /* 1. Recupera a cor do quintil (usada na bolinha do mapa) */
   const corQuintil = map.getPaintProperty('populacao-circulos', 'circle-color');
@@ -471,8 +497,27 @@ function abrirPopupDoMunicipioSelecionado(feature) {
   `;
 
   if (popupAtivo) popupAtivo.remove();
-  popupAtivo = new mapboxgl.Popup({ minWidth: '340px', maxWidth: '420px', className: 'ifem-premium-popup', closeButton: false, offset: 20 })
-    .setLngLat(coords).setHTML(html).addTo(map);
+  
+  popupAtivo = new mapboxgl.Popup({ 
+    minWidth: '300px', // Reduzi a largura mínima
+    maxWidth: '420px', 
+    className: 'ifem-premium-popup', 
+    closeButton: false, 
+    offset: 20 
+  })
+    .setLngLat(coords)
+    .setHTML(html)
+    .addTo(map);
+
+  // Adiciona a classe no mobile para sumir a legenda
+  if (window.innerWidth < 992) {
+    document.querySelector('.map-page').classList.add('popup-active');
+  }
+
+  // Remove a classe quando o popup for fechado
+  popupAtivo.on('close', () => {
+    document.querySelector('.map-page').classList.remove('popup-active');
+  });
 }
 
 function hideBaseMunicipalityLayers() {
