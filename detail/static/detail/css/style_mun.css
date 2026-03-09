@@ -95,6 +95,7 @@ html, body {
         align-items: center;
         justify-content: space-between;
     }
+    
 }
 
 /* --- 4. BENTO CARDS (KPIs) --- */
@@ -660,3 +661,306 @@ html, body {
     width: 100%;
 }
 
+/* ==========================================================================
+   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
+   ========================================================================== */
+
+@media (max-width: 767.98px) {
+    /* 1. Liberar largura total (corrige o corte lateral da image_e80139.png) */
+    .detail-content {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 1.5rem 1rem !important;
+    }
+
+    /* 2. Títulos mais compactos */
+    .hero-title {
+        font-size: 2.2rem !important;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.85rem !important;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
+    .segmented {
+        padding: 4px;
+        gap: 2px;
+        display: flex;
+    }
+    
+    .segmented-option {
+        padding: 8px 4px;
+        font-size: 0.8rem; 
+        flex: 1;
+        text-align: center;
+    }
+
+    /* 4. Grade de cards KPI (Bento Cards) */
+    .kpi-grid {
+        grid-template-columns: 1fr !important; 
+        gap: 1rem;
+    }
+
+    .kpi-card {
+        padding: 1.25rem;
+    }
+
+    .kpi-hero-value {
+        font-size: 2.4rem !important;
+    }
+
+    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
+    .tree-row {
+        padding: 12px 8px !important;
+    }
+    
+    .tree-row h4 {
+        font-size: 14px !important;
+        max-width: 180px; 
+    }
+
+    .tree-value {
+        min-width: 90px;
+    }
+}
+
+    /* ==========================================================================
+       MOBILE: TÍTULOS DE SEÇÃO (Densidade Fiscal e Síntese)
+       ========================================================================== */
+    body main.detail-content .section-heading {
+        font-size: 1.4rem; 
+        line-height: 1.25; 
+        margin-bottom: 0.75rem;
+        height: auto;
+        min-height: auto;
+    }
+
+    body main.detail-content .section-heading span {
+        white-space: normal; 
+        word-break: normal; 
+    }
+
+    /* Ajuste para o texto de explicação abaixo do título não ficar espremido */
+    body main.detail-content .section-heading + div {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        align-items: flex-start;
+    }
+    
+    body main.detail-content .section-heading + div svg {
+        margin-top: 3px; 
+        flex-shrink: 0;
+    }
+
+/* ==========================================================================
+   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    
+    /* 1. Liberar largura total (vencendo o max-width: 80% pela especificidade da tag) */
+    body main.detail-content {
+        max-width: 100%;
+        width: 100%;
+        padding: 1.5rem 1rem;
+    }
+
+    /* 2. Títulos mais compactos */
+    body main.detail-content .hero-title {
+        font-size: 2.2rem;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+    }
+    
+    body main.detail-content .hero-subtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
+    body main.detail-content .segmented {
+        padding: 4px;
+        gap: 2px;
+        display: flex;
+    }
+    
+    body main.detail-content .segmented-option {
+        padding: 8px 4px;
+        font-size: 0.8rem; 
+        flex: 1;
+        text-align: center;
+    }
+
+    /* 4. Grade de cards KPI (Bento Cards) */
+    body main.detail-content .kpi-grid {
+        grid-template-columns: 1fr; 
+        gap: 1rem;
+    }
+    
+    body main.detail-content .kpi-card {
+        padding: 1.25rem;
+    }
+    
+    body main.detail-content .kpi-hero-value {
+        font-size: 2.4rem;
+    }
+
+    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
+    body main.detail-content .dna-tree-wrapper {
+        border-radius: 12px; /* Restaura a borda arredondada padrão do sistema */
+        border: 1px solid #e2e8f0; /* Devolve a bordinha cinza em toda a volta */
+        overflow: hidden; /* Garante que as linhas de dentro não vazem pela curva */
+    }
+    
+    body main.detail-content .tree-row {
+        padding: 12px 10px;
+    }
+    
+    body main.detail-content .tree-row h4 {
+        font-size: 15px;
+        max-width: 180px; 
+    }
+    
+    body main.detail-content .tree-row.level-1 { padding-left: 12px; border-left-width: 2px; }
+    body main.detail-content .tree-row.level-2 { padding-left: 18px; }
+    body main.detail-content .tree-row.level-3 { padding-left: 24px; }
+
+    /* ==========================================================================
+       MOBILE: CARDS DE VALORES (ESTRUTURA DE RECEITAS)
+       ========================================================================== */
+    body main.detail-content .revenue-item-wrapper .tree-value {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 0;
+        margin-top: 12px;
+        width: 100%;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value > div {
+        flex: 1 1 45%;
+        min-width: 120px;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        text-align: left;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[20px]"],
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[18px]"] {
+        font-size: 15px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[15px]"] {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+    }
+
+    body main.detail-content .revenue-item-wrapper .revenue-dynamic-phrase {
+        font-size: 13px;
+        line-height: 1.3;
+        padding-left: 0;
+        margin-top: 2px;
+        margin-bottom: 8px;
+    }
+
+    /* ==========================================================================
+       MOBILE: BOLHAS DE EVOLUÇÃO DO RANKING (2000 VS 2024)
+       ========================================================================== */
+    body main.detail-content div.bg-white .timeline-circle-dynamic {
+        width: 85px;
+        height: 85px;
+        min-width: 85px;
+        min-height: 85px;
+        padding: 5px;
+    }
+
+    body main.detail-content div.bg-white .timeline-circle-dynamic .dynamic-label {
+        font-size: 10px;
+        margin-bottom: 0;
+        line-height: 1;
+    }
+
+    body main.detail-content div.bg-white .timeline-circle-dynamic .dynamic-value {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    body main.detail-content div.bg-white > .flex.items-center.justify-center.gap-8 {
+        gap: 12px; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    /* ==========================================================================
+       MOBILE: CARDS PRINCIPAIS (População e Receita)
+       ========================================================================== */
+    
+    /* 1. Reduz o número gigante levemente para ele não espremer as bordas */
+    body main.detail-content .kpi-card .kpi-hero-value {
+        font-size: 1.9rem; /* Reduzido de 2.4rem */
+        line-height: 1.1;
+        white-space: normal; 
+        word-break: break-word;
+    }
+
+    /* 2. Remove o Flexbox da tendência para a frase fluir naturalmente */
+    body main.detail-content .kpi-card .kpi-hero-trend {
+        display: block; 
+        font-size: 1.05rem;
+        line-height: 1.4;
+        margin-top: 8px;
+    }
+
+    /* 3. Ajusta o texto cinza explicativo para continuar na mesma linha da seta */
+    body main.detail-content .kpi-card .kpi-hero-trend-muted {
+        font-size: 0.85rem;
+        display: inline;
+        margin-left: 2px;
+    }
+    
+    /* 4. Suaviza o tamanho do "de 5.570" no ranking */
+    body main.detail-content .kpi-card .kpi-ranking-base {
+        font-size: 1rem;
+    }
+
+    /* ==========================================================================
+       MOBILE: BOTÕES TOGGLE (Per Capita / Valor Total) NO CARD DE RECEITA
+       ========================================================================== */
+    
+    /* 1. Muda o cabeçalho do card de "lado a lado" para "empilhado" */
+    body main.detail-content .kpi-card > .flex.items-center.justify-between {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    /* 2. O fundo cinza dos botões passa a ocupar 100% da largura disponível */
+    body main.detail-content .kpi-card .bg-slate-100.p-2.rounded-lg {
+        width: 100%;
+        display: flex;
+        padding: 4px; /* Fica mais delicado no mobile */
+    }
+
+    /* 3. Os botões dividem o espaço 50/50 e proíbe a quebra de linha do texto */
+    body main.detail-content .kpi-card .kpi-rc-toggle {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap; /* Impede que vire "Per \n Capita" */
+        font-size: 0.75rem;
+        padding: 8px 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+}
