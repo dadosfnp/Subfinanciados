@@ -1,11 +1,23 @@
 {% load currency_filters %}
 {% with has_children=item.children %}
+
+<style>
+    @keyframes fadeInRow {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-row {
+        animation: fadeInRow 0.5s ease-out forwards;
+    }
+</style>
+
 <div class="revenue-item-wrapper">
     
-    <div class="tree-row transition-colors hover:bg-slate-50 border-b border-slate-100 last:border-0 level-{{ level }} {% if level == 0 %}p-4{% else %}py-3 pr-2{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
+    <div class="tree-row transition-colors hover:bg-slate-50 border-b border-slate-100 last:border-0 level-{{ level }} py-3 pr-4 {% if level == 0 %}pl-4{% else %}border-l-[3px] border-l-slate-300 pl-[13px] bg-slate-50/40{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
          {% if has_children %}data-target="{{ item.target_id }}"{% endif %}
          data-field-base="{{ item.field_base }}" 
          style="cursor: pointer;">
+
          
         <div class="flex flex-col w-full">
             
@@ -54,7 +66,7 @@
     </div>
 
     {% if has_children %}
-    <div id="{{ item.target_id }}" class="hidden pl-3 border-l-2 border-slate-100 ml-4 mt-1 mb-1">
+    <div id="{{ item.target_id }}" class="hidden mt-1 mb-1 animate-fade-in-row">
         {% for child in item.children %}
             {% include "detail/_revenue_item_aggregate.html" with item=child level=level|add:1 %}
         {% endfor %}
