@@ -38,9 +38,9 @@
             
           <div class="pl-[18px] flex items-center gap-12 sm:gap-16 tree-value">
                 <div>
-                    <span class="block text-[13px] sm:text-[15px] font-semibold text-slate-400 mb-0.5 lbl-tipo-valor">Valor por Habitante</span>
-                    <span class="block text-[18px] sm:text-[20px] font-black text-[#103758] break-all">
-                        <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_float }}</span>
+                    <span class="block text-[15px] font-semibold text-slate-400 mb-0.5 lbl-tipo-valor">Valor por Habitante</span>
+                    <span class="block text-[20px] font-black text-[#103758]">
+                        <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
                         <span class="valor-per-capita">R$ {{ item.value_pc|br_float }}</span>
                     </span>
                 </div>
@@ -53,6 +53,15 @@
                           data-val-estadual="{% if item.media_estadual %}R$ {{ item.media_estadual|floatformat:2 }}{% endif %}"
                           data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|floatformat:2 }}{% endif %}">
                     </span>
+                </div>
+                <div>
+                    <span class="revenue-dynamic-mediana-label block text-[15px] font-semibold text-slate-400 mb-0.5">Mediana Nacional</span>
+                    
+                    <span class="revenue-dynamic-mediana-value block text-[20px] font-black text-slate-500"
+                          data-val-nacional="{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|floatformat:2 }}{% endif %}"
+                          data-val-estadual="{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|floatformat:2 }}{% endif %}"
+                          data-val-faixa="{% if item.mediana_faixa %}R$ {{ item.mediana_faixa|floatformat:2 }}{% endif %}">
+                          </span>
                 </div>
             </div>
         </div>

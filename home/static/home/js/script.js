@@ -1,4 +1,4 @@
-// >>> HOME filters: lista completa SEMPRE (espelhando o Mapa) <<<
+// >>> HOME filters: lista em cascata e atualização de dados <<<
 
 // Variáveis globais para elementos DOM e instância do gráfico
 let filtroRegiao;
@@ -40,21 +40,6 @@ function restoreSelectValue(selectEl, value) {
 }
 
 /**
- * (Opcional) Lê JSON de uma <script type="application/json" id="...">
- */
-function getJsonData(id) {
-    const element = document.getElementById(id);
-    if (element && element.textContent) {
-        try { return JSON.parse(element.textContent); }
-        catch (e) {
-            console.error(`Erro ao processar JSON do elemento #${id}:`, e);
-            return null;
-        }
-    }
-    return null;
-}
-
-/**
  * Pinta o número da Diferença % (verde/verm.) conforme sinal.
  * Espera valor EM PORCENTO (ex.: 24.1, -3.5).
  */
@@ -69,40 +54,48 @@ function applyDiffColor(percentValue) {
 }
 
 /**
- * Atualiza os filtros SEM RESTRIÇÃO (lista completa da API, sem parâmetros).
- * Mantém o valor selecionado quando possível; caso contrário, define 'todos'.
+ * Constrói os parâmetros de URL com base nos selects atuais da Home.
+ */
+function buildHomeParams() {
+    const p = new URLSearchParams();
+    p.set('porte', filtroPorte?.value || 'todos');
+    p.set('rm', filtroRm?.value || 'todos');
+    p.set('regiao', filtroRegiao?.value || 'todos');
+    p.set('uf', filtroUf?.value || 'todos');
+    return p;
+}
+
+/**
+ * Atualiza os filtros DEPENDENTES (em cascata) enviando o estado atual para a API.
  */
 async function updateDependentFilters(initial = false) {
+    if (!filtroRegiao || !filtroUf || !filtroRm) return;
+
     const regiaoAtual = filtroRegiao.value;
     const ufAtual     = filtroUf.value;
     const rmAtual     = filtroRm.value;
 
     try {
-        // Busca SEM parâmetros → servidor devolve listas completas
-        const resp = await fetch('/api/get-dependent-filters/');
+        const resp = await fetch(`/api/get-dependent-filters/?${buildHomeParams().toString()}`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
 
-        // Regiões (label "Todas")
         filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
         (data.regioes || []).forEach(v => filtroRegiao.add(new Option(v, v)));
         restoreSelectValue(filtroRegiao, regiaoAtual);
 
-        // RM (label "Todos")
         filtroRm.innerHTML = '<option value="todos">Todos</option>';
         (data.rms || []).forEach(v => filtroRm.add(new Option(v, v)));
         restoreSelectValue(filtroRm, rmAtual);
 
-        // UF (label "Todas")
         filtroUf.innerHTML = '<option value="todos">Todas</option>';
         (data.ufs || []).forEach(v => filtroUf.add(new Option(v, v)));
         restoreSelectValue(filtroUf, ufAtual);
 
     } catch (error) {
-        console.error('Erro ao atualizar filtros (listas completas):', error);
+        console.error('Erro ao atualizar filtros dependentes na Home:', error);
     }
 
-    // Igual ao mapa: não repovoa a cada mudança; só atualiza dados
     if (!initial) await atualizarFiltros();
 }
 
@@ -177,7 +170,7 @@ async function atualizarFiltros() {
                 { style: 'currency', currency: 'BRL' }
             );
 
-        const diffNational = data.summaryCards.diffMediaNacional; // valor em %
+        const diffNational = data.summaryCards.diffMediaNacional; 
         const diffValueEl = document.getElementById('summary-diff-nacional');
         diffValueEl.textContent = `${diffNational.toFixed(1)}%`;
 
@@ -188,21 +181,15 @@ async function atualizarFiltros() {
         diffTrendElement.className =
             `sub-value ${diffNational < 0 ? 'negative' : ''} ${diffNational > 0 ? 'positive' : ''}`;
 
-        // pinta o número conforme sinal
         applyDiffColor(diffNational);
-
         document.getElementById('summary-gini').textContent = data.summaryCards.giniIndex;
 
         // ==== Gráfico ====
         populacaoQuintilChart.data.labels = data.chartData.labels;
         populacaoQuintilChart.data.datasets = [];
 
-        // ==== Gráfico ====
-        populacaoQuintilChart.data.labels = data.chartData.labels;
-        populacaoQuintilChart.data.datasets = [];
-
         // =====================================================
-        // PALETAS DE CORES: Quintis e Decis (Sincronizado com o Mapa)
+        // PALETA E RENDERIZAÇÃO DE DADOS NO GRÁFICO
         // =====================================================
         const QUINTIL_PALETTE = [
             '#A33242', // 1º Quintil
@@ -232,30 +219,22 @@ async function atualizarFiltros() {
         };
 
         if (data.chartData.datasets?.length > 0) {
-
-            // 1. Função Auxiliar para criar a Hachura (Fundo Colorido + Listras Brancas)
             const createDiagonalPattern = (color) => {
                 const shape = document.createElement('canvas');
                 shape.width = 10;
                 shape.height = 10;
                 const c = shape.getContext('2d');
-                
-                // Fundo Colorido (Cor do Quintil)
                 c.fillStyle = color;
                 c.fillRect(0, 0, 10, 10);
-                
-                // Linha Diagonal BRANCA
                 c.strokeStyle = '#ffffff';
                 c.lineWidth = 2; 
                 c.beginPath();
                 c.moveTo(0, 10);
                 c.lineTo(10, 0);
                 c.stroke();
-                
                 return populacaoQuintilChart.ctx.createPattern(shape, 'repeat');
             };
 
-            // 2. Ordena para garantir que 2000 venha antes (Visualmente melhor)
             if (data.chartData.datasets.length === 2) {
                 data.chartData.datasets.sort((a, b) => {
                     if (a.label.includes('2000')) return -1;
@@ -265,44 +244,31 @@ async function atualizarFiltros() {
             }
 
             data.chartData.datasets.forEach((dataset) => {
-                // Pega as cores base do Quintil
                 const barColors = getColors(dataset.data.length);
-                
-                // Identifica se é 2024
                 const is2024 = dataset.label.toString().includes('2024');
 
-                // Lógica de Fundo:
-                // Se for 2024: Usa a Cor Sólida normal (color)
-                // Se for 2000 (else): Usa a Hachura (Fundo colorido + listra branca)
                 const backgroundColors = barColors.map(color => 
                     is2024 ? color : createDiagonalPattern(color) 
                 );
 
-                // Lógica de Borda
-                const borderColors = barColors; 
-
                 populacaoQuintilChart.data.datasets.push({
-                label: dataset.label,
-                data: dataset.data,
-                backgroundColor: backgroundColors,
-                borderColor: borderColors, 
-                borderWidth: 2,
-                fill: true,
-                // --- VALORES AJUSTADOS PARA REDUZIR EM 1/3 ---
-                barPercentage: 0.6,      
-                categoryPercentage: 0.6, 
-                // --------------------------------------------
-                grouped: true
-            });
+                    label: dataset.label,
+                    data: dataset.data,
+                    backgroundColor: backgroundColors,
+                    borderColor: barColors, 
+                    borderWidth: 2,
+                    fill: true,
+                    barPercentage: 0.6,      
+                    categoryPercentage: 0.6, 
+                    grouped: true
+                });
             });
 
         } else {
             console.warn('A API não retornou dados para o gráfico.');
         }
 
-        // populacaoQuintilChart.options.scales.x.title.text = data.chartData.xAxisTitle; \\
         populacaoQuintilChart.options.scales.y.title.text = data.chartData.yAxisTitle;
-
         populacaoQuintilChart.options.scales.y.ticks.callback = function (value) {
             return formatPorcentagemRadio.checked
                 ? value.toFixed(0) + '%'
@@ -312,21 +278,24 @@ async function atualizarFiltros() {
         populacaoQuintilChart.update();
 
         // ==== Tabelas ====
-        renderTable(table2024Head, table2024Body, data.tableHeaders24, data.tableData24);
-        tableCard2024.classList.remove('d-none');
+        if (data.tableData24 && tableCard2024) {
+            tableCard2024.classList.remove('d-none');
+            renderTable(table2024Head, table2024Body, data.tableHeaders24, data.tableData24);
+        } else if (tableCard2024) {
+            tableCard2024.classList.add('d-none');
+        }
 
-        if (include2000Data && data.tableData00 && data.tableHeaders00) {
-            renderTable(table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
+        if (include2000Data && data.tableData00 && data.tableHeaders00 && tableCard2000) {
             tableCard2000.classList.remove('d-none');
-        } else {
+            renderTable(table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
+        } else if (tableCard2000) {
             tableCard2000.classList.add('d-none');
         }
 
-        // Hover sincronizado
         enableSynchronizedHover('#table-2024', '#table-2000');
 
     } catch (error) {
-        console.error('Erro ao carregar dados do dashboard:', error);
+        console.error('Erro ao atualizar filtros:', error);
         alert('Ocorreu um erro ao carregar os dados do dashboard. Por favor, tente novamente.');
     }
 }
@@ -359,70 +328,52 @@ document.addEventListener('DOMContentLoaded', () => {
     table2000Head = document.querySelector('#table-2000 thead');
     table2000Body = document.querySelector('#table-2000 tbody');
 
-    populacaoQuintilCtx = document
-        .getElementById('populacaoQuintilChart')
-        .getContext('2d');
+    populacaoQuintilCtx = document.getElementById('populacaoQuintilChart').getContext('2d');
 
+    // Inicialização da instância base do Chart.js
     populacaoQuintilChart = new Chart(populacaoQuintilCtx, {
         type: 'bar',
         data: { labels: [], datasets: [] },
-options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { 
-    display: true, 
-    position: 'top',
-    labels: {
-        usePointStyle: false, // Mantém retangular
-        boxWidth: 40,
-        padding: 20,
-        
-        generateLabels: function(chart) {
-            // Gera os labels originais
-            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    display: true, 
+                    position: 'top',
+                    labels: {
+                        usePointStyle: false, 
+                        boxWidth: 40,
+                        padding: 20,
+                        generateLabels: function(chart) {
+                            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            original.forEach(label => {
+                                label.strokeStyle = '#000000';
+                                label.lineWidth = 1;
 
-            original.forEach(label => {
-                // 1. Configuração Base (Borda Preta para todos)
-                label.strokeStyle = '#000000';
-                label.lineWidth = 1;
-
-                // 2. Lógica de Preenchimento da Legenda
-                if (label.text.includes('2000')) {
-                    // === ANO 2000: HACHURA BRANCA SOBRE FUNDO PRETO ===
-                    const patternCanvas = document.createElement('canvas');
-                    patternCanvas.width = 10;
-                    patternCanvas.height = 10;
-                    const ctx = patternCanvas.getContext('2d');
-
-                    // Fundo Preto
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, 10, 10);
-
-                    // Linha Diagonal BRANCA
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(0, 10);
-                    ctx.lineTo(10, 0);
-                    ctx.stroke();
-
-                    // Aplica padrão
-                    const pattern = chart.ctx.createPattern(patternCanvas, 'repeat');
-                    label.fillStyle = pattern;
-                    
-                } else {
-                    // === ANO 2024: PRETO SÓLIDO ===
-                    label.fillStyle = '#000000'; 
-                }
-            });
-
-            return original;
-        }
-    }
-},
-
-                // 3. DATALABELS (Mantido - Negrito)
+                                if (label.text.includes('2000')) {
+                                    const patternCanvas = document.createElement('canvas');
+                                    patternCanvas.width = 10;
+                                    patternCanvas.height = 10;
+                                    const ctx = patternCanvas.getContext('2d');
+                                    ctx.fillStyle = '#000000';
+                                    ctx.fillRect(0, 0, 10, 10);
+                                    ctx.strokeStyle = '#ffffff';
+                                    ctx.lineWidth = 2;
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, 10);
+                                    ctx.lineTo(10, 0);
+                                    ctx.stroke();
+                                    const pattern = chart.ctx.createPattern(patternCanvas, 'repeat');
+                                    label.fillStyle = pattern;
+                                } else {
+                                    label.fillStyle = '#000000'; 
+                                }
+                            });
+                            return original;
+                        }
+                    }
+                },
                 datalabels: {
                     anchor: 'end',
                     align: 'top',
@@ -449,21 +400,12 @@ options: {
                     }
                 },
                 x: {
-                    // --- 2. REMOVE O TÍTULO DUPLICADO ---
-                    title: { 
-                        display: false, // <--- Isso garante que o título "Quintil" não apareça solto
-                        text: '' 
-                    },
-
-                    categoryPercentage: 0.6, // Reduz a largura do grupo de barras
-                    barPercentage: 0.8,      // Reduz a largura da barra individual dentro do grupo
-                    // --- 3. NEGRITO NOS RÓTULOS DE BAIXO (1º Quintil, etc) ---
+                    title: { display: false, text: '' },
+                    categoryPercentage: 0.6, 
+                    barPercentage: 0.8,      
                     ticks: {
-                        color: '#333', // Cor do texto
-                        font: {
-                            size: 12,
-                            weight: 'bold' // <--- Força negrito no eixo X
-                        }
+                        color: '#333', 
+                        font: { size: 12, weight: 'bold' } 
                     }
                 }
             }
@@ -471,53 +413,57 @@ options: {
         plugins: [ChartDataLabels]
     });
 
-    // Carrega listas completas e depois pinta a tela
+    // Orquestrador de eventos para garantir a cascata na Home
+    async function handleHomeFilterChange() {
+        await updateDependentFilters(false);
+    }
+
+    // Apenas os selects estruturais disparam a cascata inteira
+    [filtroRegiao, filtroUf, filtroRm, filtroPorte].forEach(select => {
+        if (select) select.addEventListener('change', handleHomeFilterChange);
+    });
+
+    // Filtros visuais/cálculo afetam apenas os dados (não a estrutura dos selects)
+    [quantilQuintilRadio, quantilDecilRadio, formatNumeroRadio, formatPorcentagemRadio, calcModeTotalRadio, calcModeFilteredRadio].forEach(radio => {
+        if (radio) radio.addEventListener('change', atualizarFiltros);
+    });
+
+    if (toggle2024) {
+        toggle2024.addEventListener('click', () => {
+            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            toggle2024.classList.add('active');
+            atualizarFiltros();
+        });
+    }
+
+    if (toggle2000e2024) {
+        toggle2000e2024.addEventListener('click', () => {
+            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            toggle2000e2024.classList.add('active');
+            atualizarFiltros();
+        });
+    }
+
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', () => {
+            if (filtroRegiao) filtroRegiao.value = 'todos';
+            if (filtroUf) filtroUf.value = 'todos';
+            if (filtroRm) filtroRm.value = 'todos';
+            if (filtroPorte) filtroPorte.value = 'todos';
+
+            if (quantilQuintilRadio) quantilQuintilRadio.checked = true;
+            if (formatNumeroRadio) formatNumeroRadio.checked = true;
+            if (calcModeTotalRadio) calcModeTotalRadio.checked = true;
+
+            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            if (toggle2024) toggle2024.classList.add('active');
+
+            updateDependentFilters(true).then(atualizarFiltros);
+        });
+    }
+
+    // Chamada inicial
     updateDependentFilters(true).then(atualizarFiltros);
-
-    // Em cada mudança, NÃO repopular selects — só atualiza os dados
-    filtroRegiao.addEventListener('change', atualizarFiltros);
-    filtroUf.addEventListener('change', atualizarFiltros);
-    filtroRm.addEventListener('change', atualizarFiltros);
-    if (filtroPorte) filtroPorte.addEventListener('change', atualizarFiltros);
-
-    quantilQuintilRadio.addEventListener('change', atualizarFiltros);
-    quantilDecilRadio.addEventListener('change', atualizarFiltros);
-    formatNumeroRadio.addEventListener('change', atualizarFiltros);
-    formatPorcentagemRadio.addEventListener('change', atualizarFiltros);
-    calcModeTotalRadio.addEventListener('change', atualizarFiltros);
-    calcModeFilteredRadio.addEventListener('change', atualizarFiltros);
-
-    toggle2024.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-option')
-            .forEach(opt => opt.classList.remove('active'));
-        toggle2024.classList.add('active');
-        atualizarFiltros();
-    });
-
-    toggle2000e2024.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-option')
-            .forEach(opt => opt.classList.remove('active'));
-        toggle2000e2024.classList.add('active');
-        atualizarFiltros();
-    });
-
-    btnLimpar.addEventListener('click', () => {
-        filtroRegiao.value = 'todos';
-        filtroUf.value = 'todos';
-        filtroRm.value = 'todos';
-        if (filtroPorte) filtroPorte.value = 'todos';
-
-        quantilQuintilRadio.checked = true;
-        formatNumeroRadio.checked = true;
-        calcModeTotalRadio.checked = true;
-
-        document.querySelectorAll('.toggle-option')
-            .forEach(opt => opt.classList.remove('active'));
-        toggle2024.classList.add('active');
-
-        // Repovoa com listas completas e atualiza a tela
-        updateDependentFilters(true).then(atualizarFiltros);
-    });
 });
 
 // Hover sincronizado entre tabelas 2024 e 2000

@@ -69,8 +69,17 @@ async function updateDependentFilters() {
   const rmAtual        = filtroRm.value;
   const municipioAtual = filtroMunicipio.value;
 
+  /* Monta os parametros com o estado atual para o backend retornar apenas itens validos */
+  const params = {
+    regiao: regiaoAtual,
+    uf: ufAtual,
+    rm: rmAtual,
+    porte: filtroPorte.value
+  };
+
   try {
-    const response = await fetch('/api/get-dependent-filters/');
+    const url = buildApiUrl('/api/get-dependent-filters/', params);
+    const response = await fetch(url);
     const data = await response.json();
 
     filtroRegiao.innerHTML = '<option value="todos">Todas</option>';
@@ -81,7 +90,7 @@ async function updateDependentFilters() {
     data.rms.forEach(v => filtroRm.add(new Option(v, v)));
     restoreSelectValue(filtroRm, rmAtual);
 
-    filtroUf.innerHTML = '<option value="todos">Todos</option>';
+    filtroUf.innerHTML = '<option value="todos">Todas</option>';
     data.ufs.forEach(v => filtroUf.add(new Option(v, v)));
     restoreSelectValue(filtroUf, ufAtual);
 
@@ -293,11 +302,20 @@ map.on("load", async () => {
 });
 
 /* ===================== Popup de Clique no Mapa ===================== */
-map.on("click", "populacao-circulos", (e) => {
+  map.on("click", "populacao-circulos", (e) => {
     if (e.features.length === 0) return;
     
-    /* Extrai a feature clicada e delega a renderizacao para a funcao padronizada */
     const feature = e.features[0];
+    const coords = feature.geometry.coordinates.slice();
+    
+    /* Centraliza o mapa na coordenada clicada preservando o zoom atual */
+    map.flyTo({ 
+        center: coords,
+        offset: [0, 150],
+        speed: 0.8, 
+        curve: 1.3 
+    });
+    
     abrirPopupDoMunicipioSelecionado(feature);
 });
 
@@ -438,12 +456,11 @@ function abrirPopupDoMunicipioSelecionado(feature) {
 
   const html = `
     <div class="popup-wrapper">
-      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 pe-4">
         <div class="d-flex align-items-center gap-3">
-          <div class="popup-icon-box"><i class="fa-solid fa-city"></i></div>
-          <h4 class="popup-title">${props.name_muni_uf}</h4>
+          <h4 class="popup-title m-0">${props.name_muni_uf}</h4>
         </div>
-        <span class="popup-badge-quintil" style="background-color: ${corDaTag}">${quintilValue}º ${tipoLabel}</span>
+        <span class="popup-badge-quintil me-3" style="background-color: ${corDaTag}">${quintilValue}º ${tipoLabel}</span>
       </div>
       
       <div class="popup-data-grid">
@@ -496,28 +513,24 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     </div>
   `;
 
-  if (popupAtivo) popupAtivo.remove();
-  
+/* Remove instâncias ativas do popup para evitar duplicação de elementos no DOM */
+  if (popupAtivo) {
+      popupAtivo.remove();
+  }
+
+  /* Instancia o popup ancorado nas coordenadas com bloqueio de salto de foco do navegador */
   popupAtivo = new mapboxgl.Popup({ 
-    minWidth: '300px', // Reduzi a largura mínima
-    maxWidth: '420px', 
-    className: 'ifem-premium-popup', 
-    closeButton: false, 
-    offset: 20 
+      minWidth: '340px', 
+      maxWidth: '420px', 
+      className: 'ifem-premium-popup', 
+      closeButton: true, 
+      offset: 20,
+      anchor: 'bottom',
+      focusAfterOpen: false 
   })
     .setLngLat(coords)
     .setHTML(html)
     .addTo(map);
-
-  // Adiciona a classe no mobile para sumir a legenda
-  if (window.innerWidth < 992) {
-    document.querySelector('.map-page').classList.add('popup-active');
-  }
-
-  // Remove a classe quando o popup for fechado
-  popupAtivo.on('close', () => {
-    document.querySelector('.map-page').classList.remove('popup-active');
-  });
 }
 
 function hideBaseMunicipalityLayers() {
@@ -709,12 +722,16 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 });
 
 [filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo]
-  .forEach(sel => sel.addEventListener('change', () => {
-
-    // ✅ FECHA O POPUP SE VOLTAR PRA "TODOS"
+  .forEach(sel => sel.addEventListener('change', async () => {
+    
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
       popupAtivo.remove();
       popupAtivo = null;
+    }
+
+    /* Se a mudanca nao for no municipio ou subgrupo, refaz a cascata antes de atualizar o mapa */
+    if (sel !== filtroMunicipio && sel !== filtroSubgrupo) {
+      await updateDependentFilters();
     }
 
     scheduleAtualizarMapa();

@@ -659,7 +659,7 @@ function updateTimelineColors(mode) {
             const statusAcao = val24 > val00 ? 'MELHOROU' : 'PIOROU';
             const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
 
-            summaryContainer.innerHTML = `A situação da receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
+            summaryContainer.innerHTML = `A  receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
         } 
         else {
             /* Padrao Premium para Quintil e Decil com destaque no resultado */
@@ -866,9 +866,9 @@ timelineBtns.forEach(btn => {
 
         // DICIONÁRIO DE RÓTULOS E SUFIXOS PARA AS FRASES DINÂMICAS
         const baseLabels = {
-            'nacional': { media: 'Média Nacional', sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
-            'estadual': { media: 'Média Estadual', sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
-            'faixa': { media: 'Média da Faixa', sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
+            'nacional': { media: 'Média Nacional', mediana: "Mediana Nacional", sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
+            'estadual': { media: 'Média Estadual', mediana: "Mediana Estadual", sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
+            'faixa': { media: 'Média da Faixa', mediana: "Mediana da Faixa", sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
         };
 
         const config = baseLabels[base];
@@ -878,8 +878,18 @@ timelineBtns.forEach(btn => {
             el.textContent = config.media;
         });
 
+        document.querySelectorAll('.revenue-dynamic-mediana-label').forEach(el => {
+            el.textContent = config.mediana;
+        });
+
         // 2. ATUALIZA OS VALORES DA MÉDIA (Ex: R$ 6.000 -> R$ 5.000)
         document.querySelectorAll('.revenue-dynamic-media-value').forEach(el => {
+            const val = el.getAttribute(`data-val-${base}`);
+            el.textContent = (val && val.trim() !== '') ? val : 'R$ --,--';
+        });
+
+        document.querySelectorAll('.revenue-dynamic-mediana-value').forEach(el => {
+            // Atenção ao nome do atributo no seu HTML. Aqui usei data-mediana-${base}
             const val = el.getAttribute(`data-val-${base}`);
             el.textContent = (val && val.trim() !== '') ? val : 'R$ --,--';
         });
@@ -939,27 +949,54 @@ timelineBtns.forEach(btn => {
         updateKpiRank('.kpi-pop-rank', 'pop');
         updateKpiRank('.kpi-rev-rank', 'rev');
 
-        // CÁLCULO DE BENCHMARK (F%) - Dinâmico para Receita e População
+
+
+        // CÁLCULO DE BENCHMARK E RENDERIZAÇÃO DE TOOLTIP CUSTOMIZADO
         const updateBenchmarkTrend = (containerId, munValue, compValue, labelBase) => {
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            if (compValue !== 0 && !isNaN(compValue)) {
-                const fPct = Math.round((munValue / compValue) * 100);
-                const isPositive = munValue >= compValue;
-                const arrow = isPositive ? '▲' : '▼';
-                const statusClass = isPositive ? 'positive' : 'negative';
-                const suffix = isPositive ? 'acima' : 'abaixo';
+            const isPop = containerId.includes('pop');
 
-                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all`;
-                container.innerHTML = `${arrow} ${fPct}% <span class="kpi-hero-trend-muted">${suffix} da ${labelBase}</span>`;
-            } else {
+            if (isPop) {
                 const isPos = munValue >= 0;
                 const arrow = isPos ? '▲' : '▼';
                 const statusClass = isPos ? 'positive' : 'negative';
+                const verb = isPos ? 'aumentou' : 'diminuiu';
+                const absValue = Math.abs(munValue);
                 
-                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all`;
-                container.innerHTML = `${arrow} ${Math.abs(munValue)}% <span class="kpi-hero-trend-muted">desde 2000</span>`;
+                container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
+                container.innerHTML = `
+                    ${arrow}${absValue}% <span class="kpi-hero-trend-muted">no período de 2000 a 2024</span>
+                    <div class="ifem-tooltip-box">A população absoluta ${verb} ${absValue}% no período de 2000 a 2024</div>
+                `;
+            } else {
+                if (compValue !== 0 && !isNaN(compValue)) {
+                    const fPct = Math.round((munValue / compValue) * 100);
+                    const isPositive = munValue >= compValue;
+                    const arrow = isPositive ? '▲' : '▼';
+                    const statusClass = isPositive ? 'positive' : 'negative';
+                    const suffix = isPositive ? 'acima' : 'abaixo';
+                    const verb = isPositive ? 'aumentou' : 'diminuiu';
+                    
+                    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
+                    container.innerHTML = `
+                        ${arrow}${fPct}% <span class="kpi-hero-trend-muted">${suffix} da ${labelBase} no período de 2000 a 2024</span>
+                        <div class="ifem-tooltip-box">A receita ${verb} ${fPct}% com base na média entre 2000 a 2024</div>
+                    `;
+                } else {
+                    const isPos = munValue >= 0;
+                    const arrow = isPos ? '▲' : '▼';
+                    const statusClass = isPos ? 'positive' : 'negative';
+                    const verb = isPos ? 'aumentou' : 'diminuiu';
+                    const absValue = Math.abs(munValue);
+                    
+                    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container`;
+                    container.innerHTML = `
+                        ${arrow}${absValue}% <span class="kpi-hero-trend-muted">no período de 2000 a 2024</span>
+                        <div class="ifem-tooltip-box">A receita ${verb} ${absValue}% com base na média entre 2000 a 2024</div>
+                    `;
+                }
             }
         };
 
