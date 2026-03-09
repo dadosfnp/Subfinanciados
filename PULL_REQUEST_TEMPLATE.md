@@ -4,22 +4,20 @@
 Explique de forma clara e objetiva o que foi desenvolvido neste Pull Request.
 
 Exemplo:
-- Implementado zoom automático no mapa ao selecionar município
-- Ajustado comportamento do popup para abrir automaticamente
-- Corrigido bug de reset de filtros
+- Implementado zoom automático no mapa ao selecionar município;
+- Ajustado comportamento do popup para abrir automaticamente;
+- Corrigido bug de reset de filtros;
 
 ---
 
 ## 🧩 Tipo de Alteração
-Marque com um `x` o que se aplica:
 
-- [ ] feat — Nova funcionalidade
-- [ ] fix — Correção de bug
-- [ ] refactor — Refatoração sem alterar comportamento
-- [ ] style — Ajuste visual / formatação
-- [ ] docs — Documentação
-- [ ] test — Testes
-- [ ] chore — Configurações / dependências
+- [ ] feat — Nova funcionalidade;
+- [ ] fix — Correção de bug;
+- [ ] refactor — Refatoração sem alterar comportamento;
+- [ ] style — Ajuste visual / formatação;
+- [ ] docs — Documentação;
+- [ ] chore — Configurações / dependências;
 
 ---
 
@@ -32,7 +30,7 @@ Marque o(s) módulo(s) impactado(s):
 - [ ] base_templates
 - [ ] static
 - [ ] backend / API
-- [ ] outro: _______________________
+- [ ] outro: ___________
 
 ---
 
@@ -52,39 +50,32 @@ Cole prints, gifs ou vídeos que comprovem o funcionamento.
 ---
 
 ## ⚠️ Impactos e Riscos
-Este PR:
-- [ ] Não altera regras de negócio
-- [ ] Não afeta produção diretamente
-- [ ] Possui impacto apenas visual
-- [ ] Possui impacto em filtros, cálculos ou métricas
-- [ ] Necessita atenção especial após deploy
 
-Se sim, explique:
+Este PR:
+- [ ] Não afeta produção diretamente;
+- [ ] Possui impacto apenas visual;
+- [ ] Possui impacto em filtros, cálculos ou métricas;
 
 ---
 
 ## 🔁 Testes Realizados
 Marque todos os testes feitos:
 
-- [ ] Testado localmente
-- [ ] Testado em ambiente de desenvolvimento
-- [ ] Testado no mapa interativo
-- [ ] Testado com múltiplos filtros
-- [ ] Testado reset de filtros
-- [ ] Testado popup
-- [ ] Testado print do mapa
+- [ ] Testado localmente;
+- [ ] Testado em ambiente de desenvolvimento;
+- [ ] Testado no mapa interativo;
+- [ ] Testado com múltiplos filtros;
+- [ ] Testado reset de filtros;
+- [ ] Testado popup;
+- [ ] Testado print do mapa;
 
 ---
 
 ## ✅ Checklist Final
 
-- [ ] Código segue o padrão do projeto
-- [ ] Sem alterações diretas na `main`
-- [ ] Commits seguem o padrão Conventional Commits
-- [ ] Feature criada a partir da `main` atualizada
-- [ ] Fork sincronizado corretamente
-- [ ] PR revisado antes de abrir
-- [ ] Sem arquivos desnecessários no commit
+- [ ] Código testado localmente;
+- [ ] Sem conflitos com `main`;
+- [ ] PR revisado antes de ser aberto;
 
 ---
 
@@ -92,10 +83,3 @@ Marque todos os testes feitos:
 
 - **Origem (fork):** `pedrofnp/IFEM:feature/nome-da-feature`
 - **Destino (produção):** `dadosfnp/Subfinanciados:main`
-
----
-
-✍️ **Autor do PR:**  
-📅 **Data:**  
-🧑‍💻 **Responsável pela revisão:**  
-
