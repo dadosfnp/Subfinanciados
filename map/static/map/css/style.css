@@ -48,13 +48,29 @@ html, body {
 }
 
 /* ---------- Filtros (layout geral) ---------- */
-.map-page .sidebar .filter-group{ margin:0 0 1.25rem 0; }
+.map-page .sidebar .filter-group { margin: 0 0 1.25rem 0; }
 
-.map-page .sidebar .form-label{
-  display:block;
-  margin:0 0 .5rem .125rem;
-  color:#194685;
-  font-weight:500;
+/* Padronização de Títulos da Sidebar (Azul FNP Escuro) */
+body .map-page .sidebar h1, 
+body .map-page .sidebar h2, 
+body .map-page .sidebar h3, 
+body .map-page .sidebar h4, 
+body .map-page .sidebar h5, 
+body .map-page .sidebar h6 {
+    color: #103758;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+}
+
+/* Padronização das Labels dos Filtros (Faixa Populacional, Região, etc) */
+body .map-page .sidebar .form-label,
+body .map-page .sidebar label {
+    display: block;
+    margin: 0 0 0.5rem 0;
+    color: #103758;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* Inputs padrão da sidebar */
@@ -124,27 +140,95 @@ html, body {
 }
 .map-page .sidebar .btn-download svg{ display:inline-block; line-height:0; }
 
-/* ---------- Responsivo ---------- */
-@media (max-width: 767.98px){
-  .map-page{ flex-direction:column; }
-  .map-page > .sidebar{
-    width:100%;
-    max-height:50vh;
-    border-right:none;
-    border-bottom:1px solid var(--bs-border-color);
+/* ---------- Responsivo (Ajuste Raiz de Enquadramento) ---------- */
+@media (max-width: 991.98px) {
+  .map-page { flex-direction: column; }
+  
+  /* 1. ESCONDER LEGENDAS: Quando o popup estiver aberto */
+  body .map-page.popup-active .map-overlay-container {
+  opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Impede cliques acidentais na legenda oculta */
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+  /* 2. COMPACTAÇÃO MÁXIMA DO POPUP */
+  body .map-page .mapboxgl-popup {
+    max-width: 92% !important; /* Exceção técnica: sobrepor estilo inline do Mapbox */
+    min-width: 280px;
+  }
+
+  body .map-page .ifem-premium-popup .mapboxgl-popup-content {
+    padding: 10px 14px; /* Respiro lateral reduzido */
+    border-radius: 14px;
+  }
+
+  /* 3. CABEÇALHO MAIS BAIXO */
+  body .map-page .popup-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    gap: 10px;
+  }
+
+  body .map-page .popup-icon-box {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  body .map-page .popup-title {
+    font-size: 15px;
+    max-width: 140px; /* Impede que o nome da cidade empurre o quintil */
+  }
+
+  /* 4. DADOS MAIS JUNTOS (Ganhando área vertical) */
+  body .map-page .popup-data-grid { gap: 2px; } /* Quase colados */
+  body .map-page .popup-data-row { gap: 8px; }
+  body .map-page .popup-label { font-size: 11px; }
+  body .map-page .popup-value { font-size: 12px; }
+  
+  /* Receita per capita em destaque mas sem margens gigantes */
+  body .map-page .popup-value[style*="font-size:18px"] {
+    font-size: 16px !important;
+  }
+
+  /* 5. RESUMO E BOTÃO */
+  body .map-page .popup-badge-summary {
+    margin-top: 6px;
+    padding: 8px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  body .map-page .popup-btn-details {
+    margin-top: 6px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 900;
   }
 }
 
+/* ============ LIMPEZA DE !IMPORTANT (RESOLVIDO NA ESPECIFICIDADE) ============ */
+
+/* Bordas de Status */
+body .map-page .border-status-superior { border-left: 4px solid #10b981; } 
+body .map-page .border-status-inferior { border-left: 4px solid #e11d48; } 
+
+/* Cores do Texto Strong */
+body .map-page .popup-badge-summary.text-status-superior strong { color: #059669; }
+body .map-page .popup-badge-summary.text-status-inferior strong { color: #dc2626; }
+
 /* ---------- Overlays (Resumo + Legenda) ---------- */
-.map-overlay-container{
-  position:absolute;
-  bottom:30px;
-  right:10px;
-  display:flex;
-  flex-direction:column;
-  gap:15px;
-  align-items:flex-end;
-  z-index:1;
+.map-overlay-container {
+  position: absolute;
+    bottom: 30px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-end;
+    z-index: 1;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 /* Card de Resumo */

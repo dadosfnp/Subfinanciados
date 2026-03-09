@@ -319,6 +319,20 @@ map.on("click", (e) => {
     }
 });
 
+/* --- LIMPAR CARD AO DAR ZOOM --- */
+map.on("zoomstart", () => {
+    if (popupAtivo) {
+        popupAtivo.remove();
+        popupAtivo = null;
+        
+        // Remove a etiqueta de card ativo para que as legendas reapareçam
+        const mapPage = document.querySelector('.map-page');
+        if (mapPage) {
+            mapPage.classList.remove('popup-active');
+        }
+    }
+});
+
 
 // ===================== Zoom helpers =====================
 function getGeoJSONBounds(geojson) {
@@ -378,6 +392,18 @@ function abrirPopupDoMunicipioSelecionado(feature) {
 
   const props = feature.properties;
   const coords = feature.geometry.coordinates.slice();
+
+  // --- CENTRALIZAÇÃO ULTRA FLUIDA (DESLIZE PURO) ---
+  if (window.innerWidth < 992) {
+    map.flyTo({
+      center: coords,
+      offset: [0, 180],
+      speed: 0.4,
+      curve: 0.01,
+      essential: true,
+      easing: (t) => t * (2 - t) 
+    });
+  }
 
   /* 1. Recupera a cor do quintil (usada na bolinha do mapa) */
   const corQuintil = map.getPaintProperty('populacao-circulos', 'circle-color');
