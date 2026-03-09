@@ -54,6 +54,15 @@
                           data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|floatformat:2 }}{% endif %}">
                     </span>
                 </div>
+                <div>
+                    <span class="revenue-dynamic-mediana-label block text-[15px] font-semibold text-slate-400 mb-0.5">Mediana Nacional</span>
+                    
+                    <span class="revenue-dynamic-mediana-value block text-[20px] font-black text-slate-500"
+                          data-val-nacional="{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|floatformat:2 }}{% endif %}"
+                          data-val-estadual="{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|floatformat:2 }}{% endif %}"
+                          data-val-faixa="{% if item.mediana_faixa %}R$ {{ item.mediana_faixa|floatformat:2 }}{% endif %}">
+                          </span>
+                </div>
             </div>
         </div>
     </div>

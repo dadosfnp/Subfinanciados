@@ -866,9 +866,9 @@ timelineBtns.forEach(btn => {
 
         // DICIONÁRIO DE RÓTULOS E SUFIXOS PARA AS FRASES DINÂMICAS
         const baseLabels = {
-            'nacional': { media: 'Média Nacional', sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
-            'estadual': { media: 'Média Estadual', sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
-            'faixa': { media: 'Média da Faixa', sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
+            'nacional': { media: 'Média Nacional', mediana: "Mediana Nacional", sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
+            'estadual': { media: 'Média Estadual', mediana: "Mediana Estadual", sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
+            'faixa': { media: 'Média da Faixa', mediana: "Mediana da Faixa", sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
         };
 
         const config = baseLabels[base];
@@ -878,8 +878,18 @@ timelineBtns.forEach(btn => {
             el.textContent = config.media;
         });
 
+        document.querySelectorAll('.revenue-dynamic-mediana-label').forEach(el => {
+            el.textContent = config.mediana;
+        });
+
         // 2. ATUALIZA OS VALORES DA MÉDIA (Ex: R$ 6.000 -> R$ 5.000)
         document.querySelectorAll('.revenue-dynamic-media-value').forEach(el => {
+            const val = el.getAttribute(`data-val-${base}`);
+            el.textContent = (val && val.trim() !== '') ? val : 'R$ --,--';
+        });
+
+        document.querySelectorAll('.revenue-dynamic-mediana-value').forEach(el => {
+            // Atenção ao nome do atributo no seu HTML. Aqui usei data-mediana-${base}
             const val = el.getAttribute(`data-val-${base}`);
             el.textContent = (val && val.trim() !== '') ? val : 'R$ --,--';
         });
