@@ -55,3 +55,33 @@ def br_float(value):
     final_value = formatted_value.replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
 
     return f"{final_value}"
+
+
+@register.filter(name='br_abrev')
+def br_abrev(value):
+    """
+    Abrevia números grandes no padrão brasileiro.
+    Ex:
+    1500 -> 1,5 mil
+    2500000 -> 2,5 mi
+    3200000000 -> 3,2 bi
+    """
+    try:
+        value = float(value)
+    except (ValueError, TypeError):
+        return value
+
+    if abs(value) >= 1_000_000_000:
+        num = value / 1_000_000_000
+        sufixo = " bi"
+    elif abs(value) >= 1_000_000:
+        num = value / 1_000_000
+        sufixo = " mi"
+    elif abs(value) >= 1_000:
+        num = value / 1_000
+        sufixo = " mil"
+    else:
+        return f"{value:.0f}"
+
+    formatted = f"{num:.1f}".replace('.', ',')
+    return f"{formatted}{sufixo}"
