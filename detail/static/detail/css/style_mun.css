@@ -50,9 +50,10 @@ html, body {
 }
 
 .detail-content {
-    max-width: 1200px;
+    max-width: 80%;
     margin: 0 auto;
     padding: 2rem 1rem;
+    width: 95% !important;
 }
 
 @media (min-width: 768px) {
@@ -78,7 +79,7 @@ html, body {
 }
 
 .section-heading {
-    font-size: 1.25rem;
+    font-size: 1.85rem;
     font-weight: 800;
     color: #f8fafc;
     margin-bottom: 1.25rem;
@@ -504,6 +505,7 @@ html, body {
 .segmented-option {
     flex: 1;
     flex-direction: column;
+    white-space: nowrap;
     gap: 4px;
     border: none;
     background: transparent;
@@ -636,3 +638,24 @@ html, body {
     font-size: 13px;
 }
 
+.popup-badge-summary {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center; 
+    display: block;
+    width: 100%;
+}
+
+#timeline-dynamic-summary {
+    text-align: center;
+    margin-top: 15px;
+    padding: 0 10px;
+    line-height: 1.6;
+    display: block;
+    width: 100%;
+}

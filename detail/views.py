@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
-from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita
+from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita, MediaUfReceita, MediaPorteReceita, CrescimentoMedioUf, CrescimentoMedioPorte
 from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
@@ -15,7 +15,7 @@ def selecionar_municipio_view(request):
     """
     return render(request, 'detail/selecionar_municipio.html')
 
-def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, media_nacional_obj=None, is_collapsible=False):
+def _prepare_revenue_item(name, field_base, model_instance, model_instance_percentile, media_nacional_obj=None, media_estadual_obj=None, media_faixa_obj=None, is_collapsible=False):
     """
     Estrutura os dados de uma rubrica especifica para renderizacao recursiva.
     Extrai valores absolutos, per capita, percentis e a media nacional correspondente.
@@ -37,6 +37,8 @@ def _prepare_revenue_item(name, field_base, model_instance, model_instance_perce
 
     # EXTRACAO DINAMICA DA MEDIA NACIONAL VIA ATRIBUTO DO OBJETO
     media_nac_val = getattr(media_nacional_obj, field_base, None) if media_nacional_obj else None
+    media_uf_val = getattr(media_estadual_obj, field_base, None) if media_estadual_obj else None
+    media_faixa_val = getattr(media_faixa_obj, field_base, None) if media_faixa_obj else None
 
     item = {
         'name': name, 
@@ -45,6 +47,8 @@ def _prepare_revenue_item(name, field_base, model_instance, model_instance_perce
         'value_pc': value_pc, 
         'percentiles': percentiles, 
         'media_nacional': media_nac_val,
+        'media_estadual': media_uf_val,
+        'media_faixa': media_faixa_val,
         'children': [],
     }
 
@@ -69,6 +73,23 @@ def municipio_detalhe_view(request, municipio_id):
     elif pop < 500000: filtro_faixa = {'populacao24__gte': 200000, 'populacao24__lt': 500000}
     else: filtro_faixa = {'populacao24__gte': 500000}
 
+    if pop < 5000:
+        faixa = "Até 5 mil"
+    elif pop < 10000:
+        faixa = "5 mil a 10 mil"
+    elif pop < 20000:
+        faixa = "10 mil a 20 mil"
+    elif pop < 50000:
+        faixa = "20 mil a 50 mil"
+    elif pop < 100000:
+        faixa = "50 mil a 100 mil"
+    elif pop < 200000:
+        faixa = "100 mil a 200 mil"
+    elif pop < 500000:
+        faixa = "200 mil a 500 mil"
+    else:
+        faixa = "Acima de 500 mil"
+
     # 2. FUNÇÃO PARA CALCULAR A MÉDIA PER CAPITA NO BANCO
     def avg_pc(campo):
         return Avg(ExpressionWrapper(F(campo) / F('populacao24'), output_field=FloatField()))
@@ -89,6 +110,8 @@ def municipio_detalhe_view(request, municipio_id):
 
     # RECUPERACAO DA INSTANCIA DE MEDIAS NACIONAIS (TABELA NOVA)
     media_nac = MediaNacionalReceita.objects.filter(ano_referencia=2024).first()
+    media_estadual = MediaUfReceita.objects.filter(ano_referencia=2024, uf=municipio.uf).first()
+    media_faixa = MediaPorteReceita.objects.filter(ano_referencia=2024, porte=faixa).first()
 
     cd = municipio.conta_detalhada
     cs = municipio.conta_especifica
@@ -101,93 +124,93 @@ def municipio_detalhe_view(request, municipio_id):
     revenue_tree = []
 
     # 1. Impostos, Taxas e Contribuições (ITC)
-    itc_item = _prepare_revenue_item("Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes", cd, cdp, media_nac, is_collapsible=True)
+    itc_item = _prepare_revenue_item("Impostos, Taxas e Contribuições de Melhoria", "imposto_taxas_contribuicoes", cd, cdp, media_nac, media_estadual, media_faixa, is_collapsible=True)
     if itc_item:
-        imposto_item = _prepare_revenue_item("Impostos", "imposto", cs, csp, media_nac, is_collapsible=True)
+        imposto_item = _prepare_revenue_item("Impostos", "imposto", cs, csp, media_nac, media_estadual, media_faixa, is_collapsible=True)
         if imposto_item:
             imposto_item['children'].extend(filter(None, [
-                _prepare_revenue_item("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", cme, cmep, media_nac),
-                _prepare_revenue_item("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", cme, cmep, media_nac),
-                _prepare_revenue_item("Imposto sobre Serviços", "iss", cme, cmep, media_nac),
-                _prepare_revenue_item("Imposto de Renda", "imposto_renda", cme, cmep, media_nac),
-                _prepare_revenue_item("ICMS", "imposto_icms", cme, cmep, media_nac),
-                _prepare_revenue_item("IPVA", "imposto_ipva", cme, cmep, media_nac),
-                _prepare_revenue_item("Outros Impostos", "outros_impostos", cme, cmep, media_nac),
+                _prepare_revenue_item("Imposto sobre a Propriedade Predial e Territorial Urbana", "iptu", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Imposto sobre a Transmissão 'Inter Vivos'", "itbi", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Imposto sobre Serviços", "iss", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Imposto de Renda", "imposto_renda", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("ICMS", "imposto_icms", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("IPVA", "imposto_ipva", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Outros Impostos", "outros_impostos", cme, cmep, media_nac, media_estadual, media_faixa),
             ]))
             itc_item['children'].append(imposto_item)
 
-        taxas_item = _prepare_revenue_item("Taxas", "taxas", cs, csp, media_nac, is_collapsible=True)
+        taxas_item = _prepare_revenue_item("Taxas", "taxas", cs, csp, media_nac, media_estadual, media_faixa, is_collapsible=True)
         if taxas_item:
             taxas_item['children'].extend(filter(None, [
-                _prepare_revenue_item("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", cme, cmep, media_nac),
-                _prepare_revenue_item("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", cme, cmep, media_nac),
-                _prepare_revenue_item("Outras Taxas", "outras_taxas", cme, cmep, media_nac),
+                _prepare_revenue_item("Taxas pelo Exercício do Poder de Polícia", "taxa_policia", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Taxas pela Prestação de Serviços", "taxa_prestacao_servico", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Outras Taxas", "outras_taxas", cme, cmep, media_nac, media_estadual, media_faixa),
             ]))
             itc_item['children'].append(taxas_item)
 
-        cm_item = _prepare_revenue_item("Contribuições de Melhoria", "contribuicoes_melhoria", cs, csp, media_nac, is_collapsible=True)
+        cm_item = _prepare_revenue_item("Contribuições de Melhoria", "contribuicoes_melhoria", cs, csp, media_nac, media_estadual, media_faixa, is_collapsible=True)
         if cm_item:
             cm_item['children'].extend(filter(None, [
-                _prepare_revenue_item("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", cme, cmep, media_nac),
-                _prepare_revenue_item("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", cme, cmep, media_nac),
-                _prepare_revenue_item("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", cme, cmep, media_nac),
-                _prepare_revenue_item("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", cme, cmep, media_nac),
+                _prepare_revenue_item("Contribuição de Melhoria para Pavimentação e Obras", "contribuicao_melhoria_pavimento_obras", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Contribuição de Melhoria para Rede de Água e Esgoto", "contribuicao_melhoria_agua_potavel", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Contribuição de Melhoria para Iluminação Pública", "contribuicao_melhoria_iluminacao_publica", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Outras Contribuições de Melhoria", "outras_contribuicoes_melhoria", cme, cmep, media_nac, media_estadual, media_faixa),
             ]))
             itc_item['children'].append(cm_item)
 
         revenue_tree.append(itc_item)
 
     # 2. Contribuições
-    contribuicoes_item = _prepare_revenue_item("Contribuições", "contribuicoes", cd, cdp, media_nac, is_collapsible=True)
+    contribuicoes_item = _prepare_revenue_item("Contribuições", "contribuicoes", cd, cdp, media_nac, media_estadual, media_faixa, is_collapsible=True)
     if contribuicoes_item:
         contribuicoes_item['children'].extend(filter(None, [
-            _prepare_revenue_item("Contribuições Sociais", "contribuicoes_sociais", cs, csp, media_nac),
-            _prepare_revenue_item("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", cs, csp, media_nac),
-            _prepare_revenue_item("Outras Contribuições", "outras_contribuicoes", cs, csp, media_nac),
+            _prepare_revenue_item("Contribuições Sociais", "contribuicoes_sociais", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Custeio do Serviço de Iluminação Pública", "contribuicoes_iluminacao_publica", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Outras Contribuições", "outras_contribuicoes", cs, csp, media_nac, media_estadual, media_faixa),
         ]))
         revenue_tree.append(contribuicoes_item)
 
     # 3. Transferências Correntes
-    transferencias_item = _prepare_revenue_item("Transferências Correntes", "transferencias_correntes", cd, cdp, media_nac, is_collapsible=True)
+    transferencias_item = _prepare_revenue_item("Transferências Correntes", "transferencias_correntes", cd, cdp, media_nac, media_estadual, media_faixa, is_collapsible=True)
     if transferencias_item:
-        uniao = _prepare_revenue_item("Transferências da União", "tranferencias_uniao", cs, csp, media_nac, is_collapsible=True)
+        uniao = _prepare_revenue_item("Transferências da União", "tranferencias_uniao", cs, csp, media_nac, media_estadual, media_faixa, is_collapsible=True)
         if uniao:
             uniao['children'].extend(filter(None, [
-                _prepare_revenue_item("Cota-Parte do FPM", "transferencia_uniao_fpm", cme, cmep, media_nac),
-                _prepare_revenue_item("Cota-Parte do FPE", "transferencia_uniao_fpe", cme, cmep, media_nac),
-                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", cme, cmep, media_nac),
-                _prepare_revenue_item("Recursos do SUS", "transferencia_uniao_sus", cme, cmep, media_nac),
-                _prepare_revenue_item("Recursos do FNDE", "transferencia_uniao_fnde", cme, cmep, media_nac),
-                _prepare_revenue_item("Recursos do FUNDEB", "transferencia_uniao_fundeb", cme, cmep, media_nac),
-                _prepare_revenue_item("Recursos do FNAS", "transferencia_uniao_fnas", cme, cmep, media_nac),
-                _prepare_revenue_item("Outras Transferências da União", "outras_transferencias_uniao", cme, cmep, media_nac),
+                _prepare_revenue_item("Cota-Parte do FPM", "transferencia_uniao_fpm", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Cota-Parte do FPE", "transferencia_uniao_fpe", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_uniao_exploracao", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Recursos do SUS", "transferencia_uniao_sus", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Recursos do FNDE", "transferencia_uniao_fnde", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Recursos do FUNDEB", "transferencia_uniao_fundeb", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Recursos do FNAS", "transferencia_uniao_fnas", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Outras Transferências da União", "outras_transferencias_uniao", cme, cmep, media_nac, media_estadual, media_faixa),
             ]))
             transferencias_item['children'].append(uniao)
 
-        estados = _prepare_revenue_item("Transferências dos Estados", "tranferencias_estados", cs, csp, media_nac, is_collapsible=True)
+        estados = _prepare_revenue_item("Transferências dos Estados", "tranferencias_estados", cs, csp, media_nac, media_estadual, media_faixa, is_collapsible=True)
         if estados:
             estados['children'].extend(filter(None, [
-                _prepare_revenue_item("Cota-Parte do ICMS", "transferencia_estado_icms", cme, cmep, media_nac),
-                _prepare_revenue_item("Cota-Parte do IPVA", "transferencia_estado_ipva", cme, cmep, media_nac),
-                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", cme, cmep, media_nac),
-                _prepare_revenue_item("Recursos do SUS", "transferencia_estado_sus", cme, cmep, media_nac),
-                _prepare_revenue_item("Assistência Social", "transferencia_estado_assistencia", cme, cmep, media_nac),
-                _prepare_revenue_item("Outras Transferências dos Estados", "outras_transferencias_estado", cme, cmep, media_nac),
+                _prepare_revenue_item("Cota-Parte do ICMS", "transferencia_estado_icms", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Cota-Parte do IPVA", "transferencia_estado_ipva", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Compensação Financeira (Recursos Naturais)", "transferencia_estado_exploracao", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Recursos do SUS", "transferencia_estado_sus", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Assistência Social", "transferencia_estado_assistencia", cme, cmep, media_nac, media_estadual, media_faixa),
+                _prepare_revenue_item("Outras Transferências dos Estados", "outras_transferencias_estado", cme, cmep, media_nac, media_estadual, media_faixa),
             ]))
             transferencias_item['children'].append(estados)
 
-        transferencias_item['children'].append(_prepare_revenue_item("Outras Transferências", "outras_tranferencias", cs, csp, media_nac))
+        transferencias_item['children'].append(_prepare_revenue_item("Outras Transferências", "outras_tranferencias", cs, csp, media_nac, media_estadual, media_faixa))
         revenue_tree.append(transferencias_item)
     
     # 4. Outras Receitas Correntes
-    outras_receitas_item = _prepare_revenue_item("Outras Receitas Correntes", "outras_receita", cd, cdp, media_nac, is_collapsible=True)
+    outras_receitas_item = _prepare_revenue_item("Outras Receitas Correntes", "outras_receita", cd, cdp, media_nac, media_estadual, media_faixa, is_collapsible=True)
     if outras_receitas_item:
         outras_receitas_item['children'].extend(filter(None, [
-            _prepare_revenue_item("Receita Patrimonial", "receita_patrimonial", cs, csp, media_nac),
-            _prepare_revenue_item("Receita Agropecuária", "receita_agropecuaria", cs, csp, media_nac),
-            _prepare_revenue_item("Receita Industrial", "receita_industrial", cs, csp, media_nac),
-            _prepare_revenue_item("Receita de Serviços", "receita_servicos", cs, csp, media_nac),
-            _prepare_revenue_item("Outras Receitas", "outras_receitas", cs, csp, media_nac),
+            _prepare_revenue_item("Receita Patrimonial", "receita_patrimonial", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Receita Agropecuária", "receita_agropecuaria", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Receita Industrial", "receita_industrial", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Receita de Serviços", "receita_servicos", cs, csp, media_nac, media_estadual, media_faixa),
+            _prepare_revenue_item("Outras Receitas", "outras_receitas", cs, csp, media_nac, media_estadual, media_faixa),
         ]))
         revenue_tree.append(outras_receitas_item)
 
@@ -378,11 +401,11 @@ def municipio_detalhe_view(request, municipio_id):
     # Calcula a variacao percentual da populacao e da receita corrente per capita
     delta_populacao = 0.0
     if municipio.populacao00 and municipio.populacao24 and municipio.populacao00 > 0:
-        delta_populacao = ((municipio.populacao24 - municipio.populacao00) / municipio.populacao00) * 100
+        delta_populacao = ((municipio.populacao24 / municipio.populacao00) - 1)  * 100
 
     delta_rc_pc = 0.0
     if municipio.rc_00_pc and municipio.rc_24_pc and municipio.rc_00_pc > 0:
-        delta_rc_pc = ((municipio.rc_24_pc - municipio.rc_00_pc) / municipio.rc_00_pc) * 100
+        delta_rc_pc = ((municipio.rc_24_pc / municipio.rc_00_pc) - 1)  * 100
 
     evolucao_historica = {
         'delta_populacao': round(delta_populacao, 2),
@@ -390,6 +413,13 @@ def municipio_detalhe_view(request, municipio_id):
         'has_2000_data': bool(municipio.populacao00 or municipio.rc_00_pc)
     }
 
+    media_nacional_rc_pc = 316.7372  # Valor fixo da média nacional para 2024
+    media_nacional_pop = 16.04228
+
+
+    media_estadual = CrescimentoMedioUf.objects.filter(uf=municipio.uf).first()
+    media_porte = CrescimentoMedioPorte.objects.filter(porte=faixa).first()
+    
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
@@ -397,6 +427,14 @@ def municipio_detalhe_view(request, municipio_id):
         'percentile_data_json': json.dumps(percentile_data),
         'data': data,
         'evolucao_historica': evolucao_historica, 
+
+        'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
+        'media_estadual_rc_pc': round(media_estadual.receita, 2) if media_estadual else None,
+        'media_faixa_rc_pc': round(media_porte.receita, 2) if media_porte else None,
+
+        'media_nacional_pop': round(media_nacional_pop, 2),
+        'media_estadual_pop': round(media_estadual.populacao, 2) if media_estadual else None,
+        'media_faixa_pop': round(media_porte.populacao, 2) if media_porte else None,
     }
 
     return render(request, 'detail/detalhe_municipio.html', context)

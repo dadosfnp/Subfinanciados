@@ -510,7 +510,7 @@ class MediaNacionalReceita(models.Model):
     Entidade de registro unico para armazenamento das medias nacionais pre-calculadas.
     Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
     """
-    ano_referencia = models.IntegerField(unique=True)
+    ano_referencia = models.IntegerField(unique=False)
     
     # Metricas de Nivel 1 - Conta Detalhada
     imposto_taxas_contribuicoes = models.FloatField(null=True, blank=True)
@@ -568,3 +568,156 @@ class MediaNacionalReceita(models.Model):
     def __str__(self):
         return f"Médias Nacionais - Ano {self.ano_referencia}"
     
+
+class MediaUfReceita(models.Model):
+    """
+    Entidade de registro unico para armazenamento das medias nacionais pre-calculadas.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    uf = models.CharField(max_length=2)
+    
+    # Metricas de Nivel 1 - Conta Detalhada
+    imposto_taxas_contribuicoes = models.FloatField(null=True, blank=True)
+    contribuicoes = models.FloatField(null=True, blank=True)
+    transferencias_correntes = models.FloatField(null=True, blank=True)
+    outras_receita = models.FloatField(null=True, blank=True)
+
+    # Metricas de Nivel 2 - Conta Especifica
+    imposto = models.FloatField(null=True, blank=True)
+    taxas = models.FloatField(null=True, blank=True)
+    contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    contribuicoes_sociais = models.FloatField(null=True, blank=True)
+    contribuicoes_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes = models.FloatField(null=True, blank=True)
+    tranferencias_uniao = models.FloatField(null=True, blank=True)
+    tranferencias_estados = models.FloatField(null=True, blank=True)
+    outras_tranferencias = models.FloatField(null=True, blank=True)
+    receita_patrimonial = models.FloatField(null=True, blank=True)
+    receita_agropecuaria = models.FloatField(null=True, blank=True)
+    receita_industrial = models.FloatField(null=True, blank=True)
+    receita_servicos = models.FloatField(null=True, blank=True)
+    outras_receitas = models.FloatField(null=True, blank=True)
+    
+    # Metricas de Nivel 3 - Conta Mais Especifica
+    iptu = models.FloatField(null=True, blank=True)
+    itbi = models.FloatField(null=True, blank=True)
+    iss = models.FloatField(null=True, blank=True)
+    imposto_renda = models.FloatField(null=True, blank=True)
+    outros_impostos = models.FloatField(null=True, blank=True)
+    taxa_policia = models.FloatField(null=True, blank=True)
+    taxa_prestacao_servico = models.FloatField(null=True, blank=True)
+    outras_taxas = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_pavimento_obras = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_agua_potavel = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fpm = models.FloatField(null=True, blank=True)
+    transferencia_uniao_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_uniao_sus = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnde = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fundeb = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnas = models.FloatField(null=True, blank=True)
+    outras_transferencias_uniao = models.FloatField(null=True, blank=True)
+    transferencia_estado_icms = models.FloatField(null=True, blank=True)
+    transferencia_estado_ipva = models.FloatField(null=True, blank=True)
+    transferencia_estado_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_estado_sus = models.FloatField(null=True, blank=True)
+    transferencia_estado_assistencia = models.FloatField(null=True, blank=True)
+    outras_transferencias_estado = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Média UF de Receita"
+        verbose_name_plural = "Médias UF de Receitas"
+
+    def __str__(self):
+        return f"Médias {self.uf} - Ano {self.ano_referencia}"
+    
+class MediaPorteReceita(models.Model):
+    """
+    Entidade de registro unico para armazenamento das medias nacionais pre-calculadas.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    porte = models.CharField(max_length=50000)
+    
+    # Metricas de Nivel 1 - Conta Detalhada
+    imposto_taxas_contribuicoes = models.FloatField(null=True, blank=True)
+    contribuicoes = models.FloatField(null=True, blank=True)
+    transferencias_correntes = models.FloatField(null=True, blank=True)
+    outras_receita = models.FloatField(null=True, blank=True)
+
+    # Metricas de Nivel 2 - Conta Especifica
+    imposto = models.FloatField(null=True, blank=True)
+    taxas = models.FloatField(null=True, blank=True)
+    contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    contribuicoes_sociais = models.FloatField(null=True, blank=True)
+    contribuicoes_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes = models.FloatField(null=True, blank=True)
+    tranferencias_uniao = models.FloatField(null=True, blank=True)
+    tranferencias_estados = models.FloatField(null=True, blank=True)
+    outras_tranferencias = models.FloatField(null=True, blank=True)
+    receita_patrimonial = models.FloatField(null=True, blank=True)
+    receita_agropecuaria = models.FloatField(null=True, blank=True)
+    receita_industrial = models.FloatField(null=True, blank=True)
+    receita_servicos = models.FloatField(null=True, blank=True)
+    outras_receitas = models.FloatField(null=True, blank=True)
+    
+    # Metricas de Nivel 3 - Conta Mais Especifica
+    iptu = models.FloatField(null=True, blank=True)
+    itbi = models.FloatField(null=True, blank=True)
+    iss = models.FloatField(null=True, blank=True)
+    imposto_renda = models.FloatField(null=True, blank=True)
+    outros_impostos = models.FloatField(null=True, blank=True)
+    taxa_policia = models.FloatField(null=True, blank=True)
+    taxa_prestacao_servico = models.FloatField(null=True, blank=True)
+    outras_taxas = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_pavimento_obras = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_agua_potavel = models.FloatField(null=True, blank=True)
+    contribuicao_melhoria_iluminacao_publica = models.FloatField(null=True, blank=True)
+    outras_contribuicoes_melhoria = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fpm = models.FloatField(null=True, blank=True)
+    transferencia_uniao_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_uniao_sus = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnde = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fundeb = models.FloatField(null=True, blank=True)
+    transferencia_uniao_fnas = models.FloatField(null=True, blank=True)
+    outras_transferencias_uniao = models.FloatField(null=True, blank=True)
+    transferencia_estado_icms = models.FloatField(null=True, blank=True)
+    transferencia_estado_ipva = models.FloatField(null=True, blank=True)
+    transferencia_estado_exploracao = models.FloatField(null=True, blank=True)
+    transferencia_estado_sus = models.FloatField(null=True, blank=True)
+    transferencia_estado_assistencia = models.FloatField(null=True, blank=True)
+    outras_transferencias_estado = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Média Porte de Receita"
+        verbose_name_plural = "Médias Porte de Receitas"
+
+    def __str__(self):
+        return f"Médias {self.porte} - Ano {self.ano_referencia}"
+    
+class CrescimentoMedioUf(models.Model):
+    """
+    Entidade de registro unico para armazenamento dos crescimentos médios pre-calculados.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    uf = models.CharField(max_length=2)
+    
+    # Metricas de Nivel 1 - Conta Detalhada
+    receita = models.FloatField(null=True, blank=True)
+    populacao = models.FloatField(null=True, blank=True)
+
+
+class CrescimentoMedioPorte(models.Model):
+    """
+    Entidade de registro unico para armazenamento dos crescimentos médios pre-calculados.
+    Estrutura projetada para centralizar metricas agregadas e reduzir processamento em tempo de execucao.
+    """
+    ano_referencia = models.IntegerField(unique=False)
+    porte = models.CharField(max_length=50000)
+
+    # Metricas de Nivel 1 - Conta Detalhada
+    receita = models.FloatField(null=True, blank=True)
+    populacao = models.FloatField(null=True, blank=True)
