@@ -26,8 +26,10 @@
 
 <div class="pl-[22px] mb-3">
 
-            <p class="revenue-dynamic-phrase text-[13px] text-slate-500 font-medium truncate"> {% if item.diff.pc >= 50 %} O conjunto tem a média {{ item.diff.pc }}% maior que a nacional 
-                                                                                                   {% elif item.diff.pc < 50 %} O conjunto tem a média {{ item.diff.pc }}% menor que a nacional {% endif %} </p>
+            <p class="revenue-dynamic-phrase text-[13px] text-slate-500 font-medium truncate"> 
+                {% if item.diff.pc == 0 %} O conjunto tem a média igual a média nacional  
+                {% elif item.diff.pc >= 50 %} O conjunto tem a média {{ item.diff.pc }}% maior que a nacional 
+                {% elif item.diff.pc < 50 %} O conjunto tem a média {{ item.diff.pc }}% menor que a nacional {% endif %} </p>
             </div>
             
             <div class="pl-[22px] flex items-center gap-12 sm:gap-16 tree-value">

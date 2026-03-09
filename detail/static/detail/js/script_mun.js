@@ -659,7 +659,7 @@ function updateTimelineColors(mode) {
             const statusAcao = val24 > val00 ? 'MELHOROU' : 'PIOROU';
             const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
 
-            summaryContainer.innerHTML = `A situação da receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
+            summaryContainer.innerHTML = `A  receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita por habitante <span class="${statusColor} font-black">${statusAcao}</span> para ${formatPercentilNarrativa(val24, true)}.`;
         } 
         else {
             /* Padrao Premium para Quintil e Decil com destaque no resultado */
