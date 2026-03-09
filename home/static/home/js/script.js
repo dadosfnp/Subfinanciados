@@ -199,9 +199,23 @@ async function atualizarFiltros() {
             '#2D8A4E'  // 5º Quintil
         ];
 
+        const DECIL_PALETTE = [
+            '#a50026', // 1º Decil
+            '#d73027', // 2º Decil
+            '#f46d43', // 3º Decil
+            '#fdae61', // 4º Decil
+            '#fee08b', // 5º Decil
+            '#d9ef8b', // 6º Decil
+            '#a6d96a', // 7º Decil
+            '#66bd63', // 8º Decil
+            '#1a9850', // 9º Decil
+            '#006837'  // 10º Decil
+        ];
+
+        /* Retorna a paleta correta baseada no número de grupos (5 para Quintil, 10 para Decil) */
         const getColors = (count) => {
-            if (count <= 5) return QUINTIL_PALETTE;
-            return QUINTIL_PALETTE.concat(QUINTIL_PALETTE); 
+            if (count > 5) return DECIL_PALETTE; // Se houver mais de 5 barras, usa a escala de 10 cores
+            return QUINTIL_PALETTE;
         };
 
         if (data.chartData.datasets?.length > 0) {
