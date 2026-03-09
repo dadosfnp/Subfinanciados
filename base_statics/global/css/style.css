@@ -11,22 +11,20 @@
   --card-radius: 8px;
 }
 
-/* ============== 2. RESET & LAYOUT BASE ============== */
-html {
-  height: 100%;
+/* ============== 2. RESET & LAYOUT BASE (CORRIGIDO) ============== */
+html, body, * {
+    box-sizing: border-box; /* Garante que padding não estique o quadro */
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background-color: var(--bs-body-bg);
-  color: #111827;
-  
-  min-height: 100%;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  overflow-y: auto; /* Rolagem vertical nativa liberada */
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background-color: var(--bs-body-bg);
+    color: #111827;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
 }
 
 /* ============== 3. CABEÇALHO ============== */
@@ -56,7 +54,7 @@ body {
     width: auto; 
     max-height: 60px; 
     margin-right: 12px; 
-    flex-shrink: 0; /* Impede que a logo da FNP seja esmagada */
+    flex-shrink: 0; 
 }
 
 .page-header .logo-ifem { 
@@ -79,7 +77,7 @@ body {
     list-style: none; 
     margin: 0; 
     padding: 0; 
-    white-space: nowrap; /* Impede que o texto dos botões quebre em duas linhas */
+    white-space: nowrap; 
 }
 
 .page-header .nav-link {
@@ -117,7 +115,7 @@ body {
 
 @media (max-width: 992px) {
     .page-header .logo-ifem {
-        transform: scale(1); /* Remove o scale em telas apertadas */
+        transform: scale(1); 
         margin-right: 10px;
         margin-left: -10px;
     }
@@ -128,35 +126,58 @@ body {
         font-size: 0.85rem;
         padding: 6px 8px;
     }
+
+/* 1. Força o fundo do menu suspenso a ser branco absoluto */
+.page-header .dropdown-menu {
+    background-color: #ffffff !important;
+    border: 1px solid var(--bs-border-color) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* ============== 4. ESTRUTURA DO DASHBOARD (Opcional) ============== */
-/* Estas classes só afetam as páginas internas do sistema. */
+/* 2. Padroniza a cor dos itens normais */
+.page-header .dropdown-item {
+    color: #334155 !important;
+    background-color: transparent !important;
+}
 
+/* 3. Estilo ao passar o mouse (Hover) */
+.page-header .dropdown-item:hover {
+    color: var(--fnp-blue) !important;
+    background-color: #f1f5f9 !important; /* Cinza bem leve */
+}
+
+/* 4. Estilo do item ATIVO (Análise Município) - Letra Azul FNP e Negrito */
+.page-header .dropdown-item.active {
+    color: var(--fnp-blue) !important; 
+    font-weight: 800 !important;
+    background-color: transparent !important; /* Remove o fundo azul/cinza padrão */
+}
+
+}
+
+/* ============== 4. ESTRUTURA DO DASHBOARD (AUTOMÁTICA) ============== */
 .content-wrapper,
 .detail-wrapper {
-  display: flex;
-  flex: 1;
-  height: calc(100vh - 100px); /* Trava a altura */
-  overflow: hidden; /* Remove rolagem da janela */
+    display: flex;
+    flex: 1;
+    width: 100%;
+}
+
+@media (min-width: 992px) {
+    .content-wrapper,
+    .detail-wrapper {
+        height: calc(100vh - 100px);
+        overflow: hidden;
+    }
 }
 
 .dashboard-content,
-.detail-content,
-.main-content {
-  flex: 1;
-  padding: 1.5rem;
-  overflow-y: auto; /* Cria rolagem interna apenas no conteúdo */
-}
-
-.sidebar, .filters-sidebar {
-  width: 280px; 
-  flex-shrink: 0; 
-  padding: 1.5rem;
-  background: #fff; 
-  border-right: 1px solid var(--bs-border-color);
-  overflow-y: auto; 
-  box-shadow: 2px 0 5px rgba(25,70,133,.12);
+.detail-content {
+    flex: 1;
+    width: 100%;
+    max-width: 100vw;
+    padding: 1rem;
+    overflow-x: hidden;
 }
 
 /* ============== 5. COMPONENTES UI ============== */
@@ -186,3 +207,4 @@ body .btn-primary:hover {
   .content-wrapper, .detail-wrapper { flex-direction: column; height: auto; overflow: visible; }
   .sidebar, .filters-sidebar { width: 100%; max-height: none; }
 }
+
