@@ -137,29 +137,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // =============== Filtros / KPIs / Detalhes ===============
   function restoreSelectValue(sel, val){ const has=[...sel.options].some(o=>o.value===val); sel.value = has?val:'todos'; }
-  async function updateDependentFilters(){
-    if(!filtroRegiao || !filtroUf || !filtroRm) return;
-    const r=filtroRegiao.value,u=filtroUf.value,m=filtroRm.value;
-    try{
-      const resp=await fetch('/api/get-dependent-filters/?regiao=todos&uf=todos&rm=todos');
-      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data=await resp.json();
-      filtroRegiao.innerHTML='<option value="todos">Todas</option>';
-      (data.regioes||[]).forEach(x=>filtroRegiao.add(new Option(x,x))); restoreSelectValue(filtroRegiao,r);
-      filtroRm.innerHTML   ='<option value="todos">Todos</option>';
-      (data.rms||[]).forEach(x=>filtroRm.add(new Option(x,x)));        restoreSelectValue(filtroRm,m);
-      filtroUf.innerHTML   ='<option value="todos">Todas</option>';
-      (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        restoreSelectValue(filtroUf,u);
-    }catch(e){ console.error('[filtros] erro',e); }
-  }
+
   const buildParams = () => {
-    const p=new URLSearchParams();
-    p.set('porte',filtroPorte?.value||'todos');
-    p.set('rm',filtroRm?.value||'todos');
-    p.set('regiao',filtroRegiao?.value||'todos');
-    p.set('uf',filtroUf?.value||'todos');
+    const p = new URLSearchParams();
+    p.set('porte', filtroPorte?.value || 'todos');
+    p.set('rm', filtroRm?.value || 'todos');
+    p.set('regiao', filtroRegiao?.value || 'todos');
+    p.set('uf', filtroUf?.value || 'todos');
     return p;
   };
+
+  async function updateDependentFilters(){
+    if(!filtroRegiao || !filtroUf || !filtroRm) return;
+    
+    const r = filtroRegiao.value;
+    const u = filtroUf.value;
+    const m = filtroRm.value;
+    
+    try{
+      const resp = await fetch(`/api/get-dependent-filters/?${buildParams().toString()}`);
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      
+      filtroRegiao.innerHTML='<option value="todos">Todas</option>';
+      (data.regioes||[]).forEach(x=>filtroRegiao.add(new Option(x,x))); 
+      restoreSelectValue(filtroRegiao,r);
+      
+      filtroRm.innerHTML ='<option value="todos">Todos</option>';
+      (data.rms||[]).forEach(x=>filtroRm.add(new Option(x,x)));        
+      restoreSelectValue(filtroRm,m);
+      
+      filtroUf.innerHTML ='<option value="todos">Todas</option>';
+      (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        
+      restoreSelectValue(filtroUf,u);
+    } catch(e) { 
+      console.error('[filtros] erro', e); 
+    }
+  }
+
   async function updateKPIs(){
     try{
       const r = await fetch(`/api/dados-detalhados/?${buildParams()}`);
@@ -186,18 +201,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function updateFiscalDetails(){
     try{
-      const resp=await fetch(`/api/fiscal-details/?${buildParams()}`);
+      const resp = await fetch(`/api/fiscal-details/?${buildParams()}`);
       if(!resp.ok) throw new Error('Falha ao buscar detalhes fiscais.');
-      const data=await resp.json();
-      const cont=document.getElementById('main-revenue-details-container');
-      cont.innerHTML=data.html;
+      const data = await resp.json();
+      
+      const cont = document.getElementById('main-revenue-details-container');
+      cont.innerHTML = data.html;
+      
       initializeToggleListeners(cont);
       sortAllRevenueSections(isShowingPerCapita);
       buildHeadingIndex(document);
-    }catch(e){
-      console.error('[detalhes] erro',e);
-      const c=document.getElementById('main-revenue-details-container');
-      if(c) c.innerHTML='<p class="text-red-500 text-center py-4">Erro ao carregar os dados.</p>';
+    } catch(e) {
+      console.error('[detalhes] erro', e);
+      const c = document.getElementById('main-revenue-details-container');
+      if(c) c.innerHTML = '<p class="text-red-500 text-center py-4">Erro ao carregar os dados.</p>';
     }
   }
 
@@ -474,11 +491,15 @@ document.addEventListener('DOMContentLoaded', function () {
   notifyDensity(initialKey); // sincroniza densidade com a categoria inicial
 
   // =============== APLICAÇÃO / EVENTOS ===============
-  async function applyFilters(){ await Promise.all([updateKPIs(), updateFiscalDetails(), updateChart()]); }
-  if(filtroRegiao) filtroRegiao.addEventListener('change', applyFilters);
-  if(filtroUf)     filtroUf.addEventListener('change',     applyFilters);
-  if(filtroRm)     filtroRm.addEventListener('change',     applyFilters);
-  if(filtroPorte)  filtroPorte.addEventListener('change',  applyFilters);
+  async function applyFiltersAndData(){ 
+    await updateDependentFilters();
+    await Promise.all([updateKPIs(), updateFiscalDetails(), updateChart()]); 
+  }
+
+  if(filtroRegiao) filtroRegiao.addEventListener('change', applyFiltersAndData);
+  if(filtroUf)     filtroUf.addEventListener('change',     applyFiltersAndData);
+  if(filtroRm)     filtroRm.addEventListener('change',     applyFiltersAndData);
+  if(filtroPorte)  filtroPorte.addEventListener('change',  applyFiltersAndData);
 
   const btnLimpar=document.getElementById('btn-limpar-filtros');
   if(btnLimpar){
@@ -487,13 +508,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if(filtroRm)     filtroRm.value='todos';
       if(filtroUf)     filtroUf.value='todos';
       if(filtroPorte)  filtroPorte.value='todos';
-      updateDependentFilters();
-      applyFilters();
+      applyFiltersAndData();
     });
   }
 
-  updateDependentFilters();
-  applyFilters();
+  applyFiltersAndData();
   buildHeadingIndex(document);
 });
 
