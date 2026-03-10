@@ -475,53 +475,29 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         
             if (chart) chart.destroy();
-            // DETECTA SE É MOBILE PARA AJUSTAR A FONTE E A QUEBRA DA LEGENDA
-            const isMobile = window.innerWidth < 768;
-
             chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: { labels, datasets: [dataset] },
                 options: {
                     responsive: true, 
                     maintainAspectRatio: false,
+                    // CONFIGURACAO DE ESTILO E POSICIONAMENTO DA LEGENDA
                     plugins: { 
                         legend: { 
                             display: true,
                             position: 'bottom',
-                            align: 'center',
                             labels: {
-                                padding: isMobile ? 12 : 20, 
+                                padding: 20,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
-                                boxWidth: isMobile ? 8 : 12,
                                 font: {
-                                    // 10px é o tamanho exato para caber frases muito longas no mobile sem cortar
-                                    size: isMobile ? 10 : 14, 
+                                    size: 16,
                                     family: "'Inter', sans-serif",
-                                    weight: '600'
+                                    weight: '500'
                                 },
-                                color: '#475569',
-                                generateLabels: function(chart) {
-                                    const data = chart.data;
-                                    if (data.labels.length && data.datasets.length) {
-                                        return data.labels.map((label, i) => {
-                                            const meta = chart.getDatasetMeta(0);
-                                            const style = meta.controller.getStyle(i);
-
-                                            return {
-                                                text: label, // <-- TEXTO PURO E INTEIRO (Removemos o Array que causava a quebra)
-                                                fillStyle: style.backgroundColor,
-                                                strokeStyle: style.borderColor,
-                                                lineWidth: style.borderWidth,
-                                                hidden: isNaN(dataset.data[i]) || meta.data[i].hidden,
-                                                index: i
-                                            };
-                                        });
-                                    }
-                                    return [];
-                                }
+                                color: '#475569'
                             }
-                        },
+                        }, 
                         tooltip: { 
                             callbacks: { 
                                 label: (ct) => { 
