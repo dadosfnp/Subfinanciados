@@ -579,6 +579,79 @@ const FNP_DECIL_COLORS = {
     '6': '#DDEC88', '7': '#9DD57D', '8': '#60BA69', '9': '#2D964D', '10': '#076931'
 };
 
+/* ==========================================================================
+   RENDERIZACAO DA REGUA DINAMICA (PERCENTIL, QUINTIL E DECIL)
+   ========================================================================== */
+function renderTimelineRuler(mode, val00, val24) {
+    const container = document.getElementById('timeline-ruler-container');
+    if (!container) return;
+
+    container.classList.remove('hidden');
+
+    let trackHTML = '';
+    let pos00 = 0;
+    let pos24 = 0;
+    let color24 = '#103758';
+    let txt00 = '';
+    let txt24 = '';
+    let scaleMarkers = '';
+
+    if (mode === 'percentil') {
+        trackHTML = `<div class="w-full h-2.5 rounded-full" style="background: linear-gradient(to right, #A81C21, #E47326, #F4D01D, #6AC074, #1C9148);"></div>`;
+        pos00 = val00;
+        pos24 = val24;
+        
+        txt00 = `${val00}% <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
+        txt24 = `${val24}% <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        
+        scaleMarkers = `
+            <span class="absolute -left-7 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">0%</span>
+            <span class="absolute -right-9 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">100%</span>
+        `;
+        
+        const decilIndex = Math.max(1, Math.ceil(val24 / 10));
+        color24 = FNP_DECIL_COLORS[decilIndex] || '#1C9148';
+        
+    } else if (mode === 'quintil') {
+        trackHTML = `<div class="w-full h-2.5 flex rounded-full overflow-hidden gap-0.5">
+            ${[1, 2, 3, 4, 5].map(q => `<div class="flex-1" style="background-color: ${FNP_RANK_COLORS[q]}"></div>`).join('')}
+        </div>`;
+        pos00 = (val00 - 0.5) * 20; 
+        pos24 = (val24 - 0.5) * 20;
+        txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
+        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        color24 = FNP_RANK_COLORS[val24];
+        
+    } else if (mode === 'decil') {
+        trackHTML = `<div class="w-full h-2.5 flex rounded-full overflow-hidden gap-[1px]">
+            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(d => `<div class="flex-1" style="background-color: ${FNP_DECIL_COLORS[d]}"></div>`).join('')}
+        </div>`;
+        pos00 = (val00 - 0.5) * 10;
+        pos24 = (val24 - 0.5) * 10;
+        txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
+        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        color24 = FNP_DECIL_COLORS[val24];
+    }
+
+    container.innerHTML = `
+            <div class="relative w-full flex items-center mt-6 mb-6">
+                ${scaleMarkers}
+                
+                <div class="absolute flex flex-col items-center transition-all duration-500 ease-in-out whitespace-nowrap" style="left: ${pos00}%; bottom: 100%; transform: translateX(-50%);">
+                    <span class="text-[13px] font-bold text-slate-400 leading-none mb-1">${txt00}</span>
+                    <div class="w-0.5 h-2.5 bg-slate-300 rounded-full"></div>
+                </div>
+
+                ${trackHTML}
+
+                <div class="absolute flex flex-col items-center transition-all duration-500 ease-in-out z-10 whitespace-nowrap" style="left: ${pos24}%; top: 100%; transform: translateX(-50%);">
+                    <div class="w-0.5 h-2.5 rounded-full" style="background-color: ${color24}"></div>
+                    <span class="text-[14px] font-black leading-none mt-1" style="color: ${color24}">${txt24}</span>
+                </div>
+            </div>
+        `;
+}
+
 function updateTimelineColors(mode) {
     const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
     const summaryContainer = document.getElementById('timeline-dynamic-summary');
@@ -672,8 +745,14 @@ function updateTimelineColors(mode) {
 
             summaryContainer.innerHTML = `Entre 2000 e 2024, a posição da receita per capita de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
         }
-        } else {
+            
+        renderTimelineRuler(mode, val00, val24);
+            
+    } else {
             summaryContainer.innerHTML = '';
+            /* OCULTAÇÃO DA RÉGUA CASO FALTEM DADOS NO EIXO TEMPORAL */
+            const rulerContainer = document.getElementById('timeline-ruler-container');
+            if (rulerContainer) rulerContainer.classList.add('hidden');
         }
     }
 }
@@ -936,32 +1015,36 @@ timelineBtns.forEach(btn => {
         });
 
         // Função auxiliar para atualizar o número no card 
+/* * Atualiza dinamicamente os valores de ranking e o tooltip de contexto.
+         * Utiliza classList.add para preservar as classes identificadoras (.kpi-pop-rank, .kpi-rev-rank).
+         * Extrai o valor total do atributo de dados para suportar mudancas de escopo (nacional/estadual).
+         */
         const updateKpiRank = (selector, dataPrefix) => {
             const kpiEl = document.querySelector(selector);
             if (kpiEl) {
-                // Adicionamos 'group' para controlar a opacidade do icone via CSS do pai
-                kpiEl.className = 'flex items-baseline ifem-tooltip-container group cursor-help';
+                kpiEl.classList.add('ifem-tooltip-container', 'group', 'cursor-help');
                 
                 const dataStr = kpiEl.getAttribute(`data-${dataPrefix}-${base}`);
-                const totalBaseFixa = "5.479";
                 
                 if (dataStr && dataStr.includes('/')) {
                     const parts = dataStr.split('/');
                     const rank = parts[0].trim();
+                    const total = parts[1] ? parts[1].trim() : "0";
+                    
+                    const scopeText = base === 'nacional' ? 'do Brasil' : base === 'estadual' ? 'do estado' : 'da mesma faixa populacional';
 
                     kpiEl.innerHTML = `
                         <span class="kpi-hero-value">${rank}º</span> 
-                        <span class="text-lg md:text-xl font-bold text-slate-500 ml-2">de ${totalBaseFixa}</span>
+                        <span class="text-lg md:text-xl font-bold text-slate-500 ml-2">de ${total}</span>
                         ${INFO_ICON_SVG}
                         <div class="ifem-tooltip-box">
-                            O município ocupa a ${rank}ª posição entre os ${totalBaseFixa} municípios do Brasil com dados disponíveis.
+                            O município ocupa a ${rank}ª posição entre os ${total} municípios ${scopeText} com dados disponíveis.
                         </div>
                     `;
                 }
             }
         };
 
-        // Aplica a atualização nos dois cards
         updateKpiRank('.kpi-pop-rank', 'pop');
         updateKpiRank('.kpi-rev-rank', 'rev');
 

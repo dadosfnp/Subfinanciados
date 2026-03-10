@@ -47,7 +47,7 @@ async function drawDensityPlot(dataKey) {
 
         // b) Extrair o vetor de dados usando a CHAVE DINÂMICA (dataKey)
         const receitas = dados
-            .map(d => Number(d[dataKey])) // <-- MUDANÇA PRINCIPAL AQUI
+            .map(d => Number(d[dataKey])) //
             .filter(v => Number.isFinite(v));
 
         if (!receitas.length) {
@@ -66,10 +66,9 @@ async function drawDensityPlot(dataKey) {
         }
         
         // Extrai o valor de referência usando a CHAVE DINÂMICA
-        const xRef = Number(municipio[dataKey]); // <-- MUDANÇA PRINCIPAL AQUI
+        const xRef = Number(municipio[dataKey]);
         if (!Number.isFinite(xRef)) {
             console.warn(`Valor de referência inválido para '${dataKey}' no município ${cod_ibge}.`);
-            // Você pode optar por desenhar o gráfico sem a linha de referência ou não desenhar nada
         }
 
 
