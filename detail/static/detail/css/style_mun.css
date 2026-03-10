@@ -955,7 +955,7 @@ html, body {
     body main.detail-content .kpi-card .kpi-rc-toggle {
         flex: 1;
         text-align: center;
-        white-space: nowrap; /* Impede que vire "Per \n Capita" */
+        white-space: nowrap;
         font-size: 0.75rem;
         padding: 8px 4px;
         display: flex;
