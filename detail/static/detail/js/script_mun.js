@@ -1012,14 +1012,14 @@ timelineBtns.forEach(btn => {
         tooltipMsg = `A população ${verb} ${Math.abs(munValue)}% no período de 2000 a 2024.`;
     } else {
         if (compValue !== 0 && !isNaN(compValue)) {
-            const fPct = Math.round((munValue / compValue) * 100);
-            const isPositive = munValue >= compValue;
+            const fPct = Math.round((munValue / compValue - 1) * 100);
+            const isPositive = fPct >= 0;
+            const direcao = isPositive ? "acima" : "abaixo";
             state = isPositive ? 'positive' : 'negative';
             arrow = isPositive ? '▲' : '▼';
             statusClass = isPositive ? 'positive' : 'negative';
             const suffix = isPositive ? 'acima' : 'abaixo';
-            tooltipMsg = `${fPct}% ${suffix} da receita da ${labelBase} no período de 2000 a 2024.`;
-        }
+            tooltipMsg = `A receita do município cresceu ${Math.abs(fPct)}% ${suffix} ${direcao} da receita da ${labelBase} no período de 2000 a 2024.`;        }
     }
 
     if ((isPop && munValue === 0) || (!isPop && munValue === compValue)) {
@@ -1031,7 +1031,7 @@ timelineBtns.forEach(btn => {
     /* Renderiza o container com suporte a tooltip-box para feedback visual ao hover */
     container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container group cursor-help flex items-center`;
         
-        const valDisplay = containerId.includes('pop') ? Math.abs(munValue) : (compValue !== 0 ? Math.round((munValue / compValue) * 100) : 0);
+        const valDisplay = containerId.includes('pop') ? Math.abs(munValue) : (compValue !== 0 ? Math.round((munValue / compValue - 1) * 100) : 0);
         
         container.innerHTML = `
             <span class="font-black">${arrow} ${valDisplay}%</span> 
