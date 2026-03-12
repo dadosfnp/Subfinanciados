@@ -1,0 +1,965 @@
+/* ==========================================================================
+   IFEM: DETALHE DO MUNICÍPIO (EDITORIAL DATA STYLE)
+   ========================================================================== */
+
+/* --- 1. VARIÁVEIS LOCAIS (Design System IFEM) --- */
+:root {
+    --fnp-dark-blue: #103758;
+    --fnp-blue: #194685;
+    --fnp-yellow: #eeaf19;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-800: #1e293b;
+    --card-radius: 12px;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+/* --- CORES DE TEXTO PARA OS QUINTIS (Ranking) --- */
+.text-quintil-1 { color: #d73027 !important; }
+.text-quintil-2 { color: #fc8d59 !important; }
+.text-quintil-3 { color: #fee08b !important; } /* Amarelo pode ficar claro no branco, ajuste se precisar */
+.text-quintil-4 { color: #91cf60 !important; }
+.text-quintil-5 { color: #1a9850 !important; }
+
+.ranking-header-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-width: 220px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    text-align: right;
+}
+.select-right {
+    text-align: right;
+    text-align-last: right;
+}
+
+/* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */
+/* Garante o fundo branco absoluto e libera a rolagem natural nativa */
+html, body {
+    background-color: #103758 !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    font-family: 'Inter', sans-serif;
+    color: var(--slate-800);
+}
+
+.detail-content {
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    width: 95% !important;
+}
+
+@media (min-width: 768px) {
+    .detail-content {
+        padding: 3rem 1.5rem;
+    }
+}
+
+/* --- 3. TIPOGRAFIA EDITORIAL --- */
+.hero-title {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    color: #f8fafc;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+}
+
+.hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 500;
+    color: var(--slate-500);
+}
+
+.section-heading {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 40px;
+}
+
+@media (min-width: 768px) {
+    .section-heading {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+/* --- 4. BENTO CARDS (KPIs) --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+    align-items: stretch;
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card.highlight {
+    background: #f8fafc;
+    border-color: #f8fafc;
+}
+
+.kpi-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.kpi-card.highlight .kpi-label { color: #cbd5e1; }
+
+.kpi-value {
+    font-size: clamp(1.75rem, 3vw, 2rem);
+    font-weight: 900;
+    color: var(--fnp-blue);
+    line-height: 1;
+    margin-top: 0.5rem;
+}
+
+.kpi-card.highlight .kpi-value { color: #ffffff; }
+
+/* --- Modificadores para os Cards Hero Principais --- */
+.kpi-hero-value {
+    font-size: clamp(2rem, 4vw, 3rem); /* Equivalente ao text-5xl/6xl responsivo */
+    font-weight: 900;
+    color: var(--fnp-blue);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+}
+
+.kpi-hero-trend {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kpi-hero-trend.positive { color: #059669; }
+.kpi-hero-trend.negative { color: #e11d48; }
+.kpi-hero-trend-muted { color: #94a3b8; font-weight: 500; }
+
+.kpi-ranking-highlight {
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-weight: 900;
+    color: #f8fafc;
+    line-height: 1;
+}
+
+.kpi-ranking-base {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--slate-400);
+    margin-left: 0.5rem;
+}
+
+/* --- 5. TIMELINE STORYTELLING (Banner de Evolução) --- */
+.story-banner {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .story-banner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2rem;
+    }
+}
+
+/* Container flexível para a linha do tempo */
+.timeline-visual {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Mobile: empilhado */
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .timeline-visual {
+        flex-direction: row; /* Desktop: lado a lado */
+        gap: 0;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+}
+
+.timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.timeline-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 900;
+    background: #ffffff;
+    border: 3px solid var(--slate-200);
+    color: var(--slate-400);
+    transition: all 0.3s ease;
+}
+
+.timeline-circle.active {
+    background: var(--fnp-blue);
+    border-color: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(25, 70, 133, 0.2);
+    transform: scale(1.1);
+}
+
+/* Trava absoluta do SVG da seta para não estourar */
+.timeline-arrow {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px;
+    min-height: 32px;
+    color: var(--slate-200);
+    flex-shrink: 0;
+    transform: rotate(90deg); /* Mobile: aponta para baixo */
+}
+
+.timeline-arrow svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .timeline-arrow {
+        transform: rotate(0deg); /* Desktop: aponta para a direita */
+        margin: 0 1rem;
+    }
+}
+
+.impact-panel {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-100);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 180px;
+    text-align: center;
+}
+
+@media (min-width: 1024px) {
+    .impact-panel { text-align: left; }
+}
+
+/* --- 6. DNA FINANCEIRO (Árvore e Gráficos) --- */
+.dashboard-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-split {
+        grid-template-columns: 1.2fr 1fr;
+    }
+}
+
+/* Árvore de Receitas */
+.dna-tree-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.revenue-item-wrapper {
+    border-bottom: 1px solid var(--slate-100);
+}
+
+.revenue-item-wrapper:last-child {
+    border-bottom: none;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+    .tree-row { padding: 14px 20px; }
+}
+
+.tree-row:hover { background-color: var(--slate-50); }
+
+/* Níveis da Árvore (Indentação e Pesos) */
+.tree-row.level-0 { font-weight: 1000; color: var(--fnp-dark-blue); }
+.tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
+.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 1.25rem; }
+.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 1.25rem; }
+
+@media (min-width: 768px) {
+    .tree-row.level-1 { padding-left: 40px; }
+    .tree-row.level-2 { padding-left: 60px; }
+    .tree-row.level-3 { padding-left: 80px; }
+}
+
+/* Seta Animada do Accordion */
+.tree-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--slate-400);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.tree-row.open .tree-chevron {
+    transform: rotate(90deg);
+    color: var(--fnp-dark-blue);
+}
+
+.tree-value {
+    text-align: right;
+    min-width: 70px;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+/* --- 7. INDICADORES DE RANKING E TOOLTIPS --- */
+.ranking-indicator-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+}
+
+.ranking-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+/* Paleta Quintis IFEM */
+.quintil-0 { background-color: grey; }
+.quintil-1 { background-color: #d73027; }
+.quintil-2 { background-color: #fc8d59; }
+.quintil-3 { background-color: #fee08b; }
+.quintil-4 { background-color: #91cf60; }
+.quintil-5 { background-color: #1a9850; }
+
+.ranking-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--slate-800);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--slate-800) transparent transparent transparent;
+}
+
+/* Ajuste do Tooltip para mobile (evita vazar da tela) */
+@media (max-width: 768px) {
+    .ranking-tooltip {
+        left: 0;
+        transform: translateX(0) translateY(10px);
+    }
+    .ranking-tooltip::after {
+        left: 10px;
+    }
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(0) translateY(-6px);
+    }
+}
+
+@media (min-width: 769px) {
+    .ranking-indicator-container:hover .ranking-tooltip {
+        transform: translateX(-50%) translateY(-6px);
+    }
+}
+
+/* --- 8. GRÁFICOS E CONTROLES --- */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--card-radius);
+    padding: 1.25rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.select-clean {
+    width: 100%;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fnp-dark-blue);
+    background-color: var(--slate-50);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select-clean:focus {
+    border-color: var(--fnp-blue);
+}
+
+/* Segmented Control (Toggle) */
+.segmented {
+    padding: 2px; 
+    width: auto;
+    display: inline-flex;
+    background: var(--slate-100);
+    padding: 6px;
+    border-radius: 14px;
+    width: 100%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+@media (min-width: 768px) {
+    .segmented { width: auto; }
+}
+
+#timeline-toggle {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.segmented-option {
+    flex: 1;
+    flex-direction: column;
+    white-space: nowrap;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--slate-500);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.segmented-option:hover:not(.active) {
+    color: var(--fnp-blue);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.segmented-option.active {
+    background: var(--fnp-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(25, 70, 133, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --- AJUSTES DE POSICIONAMENTO DO RANKING --- */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-top-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    text-align: right;
+}
+
+.rank-display-bold {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--fnp-dark-blue);
+    line-height: 1;
+    margin-top: 0.25rem;
+}
+
+.rank-display-total {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    font-weight: 700;
+}
+
+.rank-card-1 { border-bottom-color: #A81C21; }
+.rank-card-1 .rank-bg-icon { background-color: #A81C2120; }
+.rank-card-1 .rank-text-icon { color: #A81C21; }
+
+.rank-card-2 { border-bottom-color: #E47326; }
+.rank-card-2 .rank-bg-icon { background-color: #E4732620; }
+.rank-card-2 .rank-text-icon { color: #E47326; }
+
+.rank-card-3 { border-bottom-color: #F4D01D; }
+.rank-card-3 .rank-bg-icon { background-color: #F4D01D20; }
+.rank-card-3 .rank-text-icon { color: #F4D01D; }
+
+.rank-card-4 { border-bottom-color: #6AC074; }
+.rank-card-4 .rank-bg-icon { background-color: #6AC07420; }
+.rank-card-4 .rank-text-icon { color: #6AC074; }
+
+.rank-card-5 { border-bottom-color: #1C9148; }
+.rank-card-5 .rank-bg-icon { background-color: #1C914820; }
+.rank-card-5 .rank-text-icon { color: #1C9148; }
+
+
+/* --- TOOLTIP CUSTOMIZADO IFEM (EVOLUÇÃO) --- */
+.ifem-tooltip-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    cursor: help;
+}
+
+.ifem-tooltip-box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Posição inicial para a animação */
+    margin-bottom: 12px;
+    width: 220px;
+    background-color: var(--fnp-dark-blue);
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(16, 55, 88, 0.3);
+    
+    /* Escondido por padrão, à prova de bugs */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* Animação suave */
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+/* Setinha do balão */
+.ifem-tooltip-box::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--fnp-dark-blue) transparent transparent transparent;
+}
+
+/* O gatilho do hover */
+.ifem-tooltip-container:hover .ifem-tooltip-box {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -8px); /* Sobe suavemente */
+}
+
+.ifem-tooltip-box strong {
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.popup-badge-summary {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center; 
+    display: block;
+    width: 100%;
+}
+
+#timeline-dynamic-summary {
+    text-align: center;
+    margin-top: 15px;
+    padding: 0 10px;
+    line-height: 1.6;
+    display: block;
+    width: 100%;
+}
+
+/* ==========================================================================
+   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
+   ========================================================================== */
+
+@media (max-width: 767.98px) {
+    /* 1. Liberar largura total (corrige o corte lateral da image_e80139.png) */
+    .detail-content {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 1.5rem 1rem !important;
+    }
+
+    /* 2. Títulos mais compactos */
+    .hero-title {
+        font-size: 2.2rem !important;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.85rem !important;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
+    .segmented {
+        padding: 4px;
+        gap: 2px;
+        display: flex;
+    }
+    
+    .segmented-option {
+        padding: 8px 4px;
+        font-size: 0.8rem; 
+        flex: 1;
+        text-align: center;
+    }
+
+    /* 4. Grade de cards KPI (Bento Cards) */
+    .kpi-grid {
+        grid-template-columns: 1fr !important; 
+        gap: 1rem;
+    }
+
+    .kpi-card {
+        padding: 1.25rem;
+    }
+
+    .kpi-hero-value {
+        font-size: 2.4rem !important;
+    }
+
+    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
+    .tree-row {
+        padding: 12px 8px !important;
+    }
+    
+    .tree-row h4 {
+        font-size: 14px !important;
+        max-width: 180px; 
+    }
+
+    .tree-value {
+        min-width: 90px;
+    }
+}
+
+    /* ==========================================================================
+       MOBILE: TÍTULOS DE SEÇÃO (Densidade Fiscal e Síntese)
+       ========================================================================== */
+    body main.detail-content .section-heading {
+        font-size: 1.4rem; 
+        line-height: 1.25; 
+        margin-bottom: 0.75rem;
+        height: auto;
+        min-height: auto;
+    }
+
+    body main.detail-content .section-heading span {
+        white-space: normal; 
+        word-break: normal; 
+    }
+
+    /* Ajuste para o texto de explicação abaixo do título não ficar espremido */
+    body main.detail-content .section-heading + div {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        align-items: flex-start;
+    }
+    
+    body main.detail-content .section-heading + div svg {
+        margin-top: 3px; 
+        flex-shrink: 0;
+    }
+
+/* ==========================================================================
+   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    
+    /* 1. Liberar largura total (vencendo o max-width: 80% pela especificidade da tag) */
+    body main.detail-content {
+        max-width: 100%;
+        width: 100%;
+        padding: 1.5rem 1rem;
+    }
+
+    /* 2. Títulos mais compactos */
+    body main.detail-content .hero-title {
+        font-size: 2.2rem;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+    }
+    
+    body main.detail-content .hero-subtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
+    body main.detail-content .segmented {
+        padding: 4px;
+        gap: 2px;
+        display: flex;
+    }
+    
+    body main.detail-content .segmented-option {
+        padding: 8px 4px;
+        font-size: 0.8rem; 
+        flex: 1;
+        text-align: center;
+    }
+
+    /* 4. Grade de cards KPI (Bento Cards) */
+    body main.detail-content .kpi-grid {
+        grid-template-columns: 1fr; 
+        gap: 1rem;
+    }
+    
+    body main.detail-content .kpi-card {
+        padding: 1.25rem;
+    }
+    
+    body main.detail-content .kpi-hero-value {
+        font-size: 2.4rem;
+    }
+
+    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
+    body main.detail-content .dna-tree-wrapper {
+        border-radius: 12px; /* Restaura a borda arredondada padrão do sistema */
+        border: 1px solid #e2e8f0; /* Devolve a bordinha cinza em toda a volta */
+        overflow: hidden; /* Garante que as linhas de dentro não vazem pela curva */
+    }
+    
+    body main.detail-content .tree-row {
+        padding: 12px 10px;
+    }
+    
+    body main.detail-content .tree-row h4 {
+        font-size: 15px;
+        max-width: 180px; 
+    }
+    
+    body main.detail-content .tree-row.level-1 { padding-left: 12px; border-left-width: 2px; }
+    body main.detail-content .tree-row.level-2 { padding-left: 18px; }
+    body main.detail-content .tree-row.level-3 { padding-left: 24px; }
+
+    /* ==========================================================================
+       MOBILE: CARDS DE VALORES (ESTRUTURA DE RECEITAS)
+       ========================================================================== */
+    body main.detail-content .revenue-item-wrapper .tree-value {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 0;
+        margin-top: 12px;
+        width: 100%;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value > div {
+        flex: 1 1 45%;
+        min-width: 120px;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        text-align: left;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[20px]"],
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[18px]"] {
+        font-size: 15px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+
+    body main.detail-content .revenue-item-wrapper .tree-value span[class*="text-[15px]"] {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+    }
+
+    body main.detail-content .revenue-item-wrapper .revenue-dynamic-phrase {
+        font-size: 13px;
+        line-height: 1.3;
+        padding-left: 0;
+        margin-top: 2px;
+        margin-bottom: 8px;
+    }
+
+    /* ==========================================================================
+       MOBILE: BOLHAS DE EVOLUÇÃO DO RANKING (2000 VS 2024)
+       ========================================================================== */
+    body main.detail-content div.bg-white .timeline-circle-dynamic {
+        width: 85px;
+        height: 85px;
+        min-width: 85px;
+        min-height: 85px;
+        padding: 5px;
+    }
+
+    body main.detail-content div.bg-white .timeline-circle-dynamic .dynamic-label {
+        font-size: 10px;
+        margin-bottom: 0;
+        line-height: 1;
+    }
+
+    body main.detail-content div.bg-white .timeline-circle-dynamic .dynamic-value {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    body main.detail-content div.bg-white > .flex.items-center.justify-center.gap-8 {
+        gap: 12px; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    /* ==========================================================================
+       MOBILE: CARDS PRINCIPAIS (População e Receita)
+       ========================================================================== */
+    
+    /* 1. Reduz o número gigante levemente para ele não espremer as bordas */
+    body main.detail-content .kpi-card .kpi-hero-value {
+        font-size: 1.9rem; /* Reduzido de 2.4rem */
+        line-height: 1.1;
+        white-space: normal; 
+        word-break: break-word;
+    }
+
+    /* 2. Remove o Flexbox da tendência para a frase fluir naturalmente */
+    body main.detail-content .kpi-card .kpi-hero-trend {
+        display: block; 
+        font-size: 1.05rem;
+        line-height: 1.4;
+        margin-top: 8px;
+    }
+
+    /* 3. Ajusta o texto cinza explicativo para continuar na mesma linha da seta */
+    body main.detail-content .kpi-card .kpi-hero-trend-muted {
+        font-size: 0.85rem;
+        display: inline;
+        margin-left: 2px;
+    }
+    
+    /* 4. Suaviza o tamanho do "de 5.570" no ranking */
+    body main.detail-content .kpi-card .kpi-ranking-base {
+        font-size: 1rem;
+    }
+
+    /* ==========================================================================
+       MOBILE: BOTÕES TOGGLE (Per Capita / Valor Total) NO CARD DE RECEITA
+       ========================================================================== */
+    
+    /* 1. Muda o cabeçalho do card de "lado a lado" para "empilhado" */
+    body main.detail-content .kpi-card > .flex.items-center.justify-between {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    /* 2. O fundo cinza dos botões passa a ocupar 100% da largura disponível */
+    body main.detail-content .kpi-card .bg-slate-100.p-2.rounded-lg {
+        width: 100%;
+        display: flex;
+        padding: 4px; /* Fica mais delicado no mobile */
+    }
+
+    /* 3. Os botões dividem o espaço 50/50 e proíbe a quebra de linha do texto */
+    body main.detail-content .kpi-card .kpi-rc-toggle {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        font-size: 0.75rem;
+        padding: 8px 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+}

@@ -1077,8 +1077,7 @@ timelineBtns.forEach(btn => {
             state = isPositive ? 'positive' : 'negative';
             arrow = isPositive ? '▲' : '▼';
             statusClass = isPositive ? 'positive' : 'negative';
-            const suffix = isPositive ? 'acima' : 'abaixo';
-            tooltipMsg = `A receita do município cresceu ${Math.abs(fPct)}% ${suffix} ${direcao} da receita da ${labelBase} no período de 2000 a 2024.`;        }
+            tooltipMsg = `A receita do município cresceu ${Math.abs(fPct)}% ${direcao} da receita da ${labelBase} no período de 2000 a 2024.`;        }
     }
 
     if ((isPop && munValue === 0) || (!isPop && munValue === compValue)) {
@@ -1157,5 +1156,44 @@ timelineBtns.forEach(btn => {
     // Dispara a visualização global padrão
     updateGlobalBase('nacional');
 
+    // ==========================================================================
+    // LÓGICA DO STICKY HEADER (CONTROLE DE SCROLL E SINCRONIZAÇÃO)
+    // ==========================================================================
+    const stickyHeader = document.getElementById('sticky-header');
+    const stickyBaseBtns = document.querySelectorAll('#sticky-base-toggle .segmented-option');
+    const mainBaseBtns = document.querySelectorAll('#global-base-toggle .segmented-option');
+
+    // 1. Controle de exibição no Scroll
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            stickyHeader.classList.add('visible');
+        } else {
+            stickyHeader.classList.remove('visible');
+        }
+    });
+
+    // 2. Sincronização dos Filtros (Sticky -> Global)
+    stickyBaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedBase = this.dataset.base;
+            
+            // Atualiza o estado visual do próprio sticky
+            stickyBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === selectedBase));
+            
+            // Dispara a atualização global (que já sincroniza o seletor principal)
+            updateGlobalBase(selectedBase);
+            
+            // Sincroniza visualmente o seletor principal caso ele mude
+            mainBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === selectedBase));
+        });
+    });
+
+    // 3. Sincronização Inversa (Global -> Sticky)
+    mainBaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedBase = this.dataset.base;
+            stickyBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === selectedBase));
+        });
+    });
 
 }); //fechamento DOM
