@@ -261,17 +261,30 @@
     <section class="summary-cards-row">
       <div class="summary-card kpi-card"><div><h6>População</h6><div class="value" id="kpi-populacao">0</div></div></div>
       <div class="summary-card kpi-card"><div><h6>Quantidade de Municípios</h6><div class="value" id="kpi-quantidade">0</div></div></div>
-      <div class="summary-card kpi-card position-relative">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 id="kpi-rc-label" class="mb-0">Receita por Habitante</h6>
-          <div class="segmented kpi-segmented" style="padding: 2px;">
-            <button type="button" class="segmented-option active text-[10px]" data-mode="pc">Per Capita</button>
-            <button type="button" class="segmented-option text-[10px]" data-mode="tot">Total</button>
-          </div>
-        </div>
-        <div class="value" id="kpi-receita-per-capita" data-val-pc="0" data-val-tot="0">0</div>
-      </div>
+      <div class="summary-card kpi-card"><div><h6>Receita per capita</h6><div class="value" id="kpi-receita-per-capita">0</div></div></div>
       <div class="summary-card kpi-card"><div><h6>Diferença da média Nacional</h6><div class="value" id="kpi-diferenca-media">0</div></div></div>
+    </section>
+
+    <section class="metric-card">
+      <h5>
+        Detalhamento da Receita Corrente
+        <!--
+        <div id="valor-toggle" class="segmented">
+          <button id="btn-per-capita" class="segmented-option active" type="button">Per Capita</button>
+          <button id="btn-valores-reais" class="segmented-option" type="button">Valores Reais</button>
+        </div>
+        -->
+      </h5>
+
+      <div id="main-revenue-details-container">
+        {% if revenue_tree %}
+          {% for item in revenue_tree %}
+            {% include "detail/_revenue_item_aggregate.html" with item=item level=0 %}
+          {% endfor %}
+        {% else %}
+          <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
+        {% endif %}
+      </div>
     </section>
 
     <section id="chart-card" class="metric-card">
@@ -302,110 +315,6 @@
       </div>
 
     </section>
-
-    <!-- NOVA SEÇÃO: SÍNTESE FISCAL E DEMOGRÁFICA (2000 - 2024) -->
-    <section class="metric-card mt-4">
-        <div class="mb-4">
-            <div class="section-heading-minimal mb-1">
-                <span class="fs-5 fw-bold text-slate-700">Síntese Fiscal e Demográfica (2000 - 2024)</span>
-            </div>
-            <div class="text-[14px] font-medium text-slate-400 mt-1">
-                <i class="fa-solid fa-circle-info opacity-70"></i>
-                <small>* Valores financeiros corrigidos pela inflação para 2024</small>
-            </div>
-        </div>
-
-        {% if evolucao_historica.has_2000_data %}
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <div class="lg:col-span-12 bg-[#f8fafc] rounded-2xl p-6 border border-slate-200 shadow-sm">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="flex items-start gap-4 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-money-bill-trend-up text-emerald-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-slate-600 leading-relaxed mb-0">
-                                    A <strong class="text-slate-800">Receita por Habitante</strong> 
-                                    <span id="text-delta-rc-pc">
-                                        {% if evolucao_historica.delta_rc_pc >= 0 %}
-                                            cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+{{ evolucao_historica.delta_rc_pc }}%</span>
-                                        {% else %}
-                                            caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_rc_pc }}%</span>
-                                        {% endif %}
-                                    </span>
-                                    entre 2000 e 2024.
-                                    <br>
-                                    <span class="text-[0.8rem] opacity-80">No mesmo período, a média nacional variou <strong class="text-slate-700">316%</strong>.</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#103758]/10 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-users text-[#103758]"></i>
-                            </div>
-                            <div>
-                                <p class="text-slate-600 leading-relaxed mb-0">
-                                    A <strong class="text-slate-800">População</strong> do conjunto 
-                                    <span id="text-delta-pop">
-                                        {% if evolucao_historica.delta_populacao >= 0 %}
-                                            aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+{{ evolucao_historica.delta_populacao }}%</span>
-                                        {% else %}
-                                            teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_populacao }}%</span>
-                                        {% endif %}
-                                    </span>
-                                    neste intervalo de tempo.
-                                    <br>
-                                    <span class="text-[0.8rem] opacity-80">Enquanto o crescimento populacional médio no Brasil foi de <strong class="text-slate-700">15%</strong>.</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm h-100">
-                                    <h6 class="text-[10px] font-bold text-slate-400 uppercase mb-3">Variação da Receita por Habitante (2000-2024)</h6>
-                                    <div style="height: 150px; position: relative;">
-                                        <canvas id="chartReceitaEvo"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm h-100">
-                                    <h6 class="text-[10px] font-bold text-slate-400 uppercase mb-3">Variação da População (2000-2024)</h6>
-                                    <div style="height: 150px; position: relative;">
-                                        <canvas id="chartPopEvo"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script id="evolution-compare-data" type="application/json">
-        {
-            "receita": {
-                "group": "{{ evolucao_historica.delta_rc_pc|default:'0' }}",
-                "nac": "{{ media_nacional_rc_pc|default:'316.74' }}"
-            },
-            "populacao": {
-                "group": "{{ evolucao_historica.delta_populacao|default:'0' }}",
-                "nac": "{{ media_nacional_pop|default:'16.04' }}"
-            }
-        }
-        </script>
-        {% else %}
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl py-8 px-6 text-center text-slate-400 shadow-sm">
-            <i class="fa-solid fa-circle-info fs-4 opacity-50 mb-2"></i>
-            <p class="mb-0">Dados históricos (2000) insuficientes para este conjunto de municípios.</p>
-        </div>
-        {% endif %}
-    </section>
   </main>
 </div>
 
@@ -428,7 +337,6 @@
 {{ data_json|json_script:"mun-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
 {{ data_f_json|json_script:"mun-data-f" }}
-{{ hist_data|json_script:"hist-data" }}
 <script src="{% static 'detail/js/script.js' %}"></script>
 <script src="{% static 'detail/js/script_density.js' %}"></script>
 

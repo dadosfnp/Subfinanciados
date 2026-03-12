@@ -127,24 +127,10 @@ document.addEventListener('DOMContentLoaded', function () {
     isShowingPerCapita = (mode==='percapita');
     perCapitaBtn?.classList.toggle('active',isShowingPerCapita);
     reaisBtn?.classList.toggle('active',!isShowingPerCapita);
-    
-    // Aplica visibilidade aos itens atuais (árvore)
-    applyVisibilityToTree();
-    sortAllRevenueSections(isShowingPerCapita);
-  }
-
-  function applyVisibilityToTree() {
     document.querySelectorAll('.valor-absoluto').forEach(el=>el.classList.toggle('hidden',isShowingPerCapita));
     document.querySelectorAll('.valor-per-capita').forEach(el=>el.classList.toggle('hidden',!isShowingPerCapita));
-    
-    document.querySelectorAll('.lbl-tipo-valor').forEach(el => {
-      el.textContent = isShowingPerCapita ? 'Valor por Habitante' : 'Valor Real';
-    });
-    document.querySelectorAll('.media-block-wrapper').forEach(el => {
-      el.classList.toggle('hidden', !isShowingPerCapita);
-    });
+    sortAllRevenueSections(isShowingPerCapita);
   }
-
   perCapitaBtn?.addEventListener('click',()=>setValorMode('percapita'));
   reaisBtn?.addEventListener('click',()=>setValorMode('real'));
   setValorMode('percapita');
@@ -189,47 +175,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // =============== Toggle KPI Receita Corrente ===============
-  let isKpiPc = true;
-  const kpiRcLabel = document.getElementById('kpi-rc-label');
-  const kpiRcValue = document.getElementById('kpi-receita-per-capita');
-  const kpiBtns = document.querySelectorAll('.kpi-segmented button');
-
-  function formatAbrevBR(value) {
-      if (!value) return "R$ 0";
-      if (value >= 1e9) {
-          return "R$ " + (value / 1e9).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " Bi";
-      } else if (value >= 1e6) {
-          return "R$ " + (value / 1e6).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " Mi";
-      } else {
-          return "R$ " + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-  }
-
-  function updateKpiReceitaDisplay() {
-    if(!kpiRcValue) return;
-    const pc = Number(kpiRcValue.dataset.valPc || 0);
-    const tot = Number(kpiRcValue.dataset.valTot || 0);
-    
-    if (isKpiPc) {
-      if(kpiRcLabel) kpiRcLabel.textContent = 'Receita por Habitante';
-      kpiRcValue.textContent = pc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    } else {
-      if(kpiRcLabel) kpiRcLabel.textContent = 'Receita Total';
-      kpiRcValue.textContent = formatAbrevBR(tot);
-    }
-  }
-
-  kpiBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      kpiBtns.forEach(b => b.classList.remove('active'));
-      const target = e.currentTarget;
-      target.classList.add('active');
-      isKpiPc = target.dataset.mode === 'pc';
-      updateKpiReceitaDisplay();
-    });
-  });
-
   async function updateKPIs(){
     try{
       const r = await fetch(`/api/dados-detalhados/?${buildParams()}`);
@@ -241,150 +186,17 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('kpi-quantidade').textContent =
         (d.kpis?.quantidade || 0).toLocaleString('pt-BR');
 
-      if (kpiRcValue) {
-        kpiRcValue.dataset.valPc = (d.kpis?.receita_per_capita || 0);
-        kpiRcValue.dataset.valTot = (d.kpis?.receita_corrente || 0);
-        updateKpiReceitaDisplay();
-      }
+      document.getElementById('kpi-receita-per-capita').textContent =
+        (d.kpis?.receita_per_capita || 0)
+          .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       const diff = Number(d.kpis?.diferenca_media ?? 0);
       const elDiff = document.getElementById('kpi-diferenca-media');
       elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
       colorizeDiffKpi(diff);
-
-      // Nova lógica: Síntese Histórica
-      updateHistoricalSynthesis(d.kpis);
-
     } catch(e) {
       console.error('[kpis] erro', e);
     }
-  }
-
-  // =============== EVOLUÇÃO HISTÓRICA (SÍNTESE) ===============
-  let chartReceitaEvo = null;
-  let chartPopEvo = null;
-
-  const topLabelsPlugin = {
-    id: 'topLabels',
-    afterDatasetsDraw(chart) {
-      const { ctx } = chart;
-      chart.data.datasets.forEach((dataset, i) => {
-        const meta = chart.getDatasetMeta(i);
-        meta.data.forEach((bar, index) => {
-          const val = dataset.data[index];
-          if (val === undefined || val === null) return;
-          const prefix = val > 0 ? '+' : '';
-          const text = `${prefix}${Number(val).toFixed(1).replace('.', ',')}%`;
-          ctx.save();
-          ctx.fillStyle = Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[index] : dataset.backgroundColor;
-          ctx.font = 'bold 12px "Inter", sans-serif';
-          ctx.textAlign = 'center';
-          const yPos = val >= 0 ? bar.y - 8 : bar.y + 16;
-          ctx.fillText(text, bar.x, yPos);
-          ctx.restore();
-        });
-      });
-    }
-  };
-
-  function renderEvolutionCharts(evoData) {
-    if (!evoData) return;
-
-    const canvasRec = document.getElementById('chartReceitaEvo');
-    const canvasPop = document.getElementById('chartPopEvo');
-
-    if (canvasRec) {
-      const ctxRec = canvasRec.getContext('2d');
-      if (chartReceitaEvo) chartReceitaEvo.destroy();
-      chartReceitaEvo = new Chart(ctxRec, {
-        type: 'bar',
-        data: {
-          labels: ['Este Conjunto', 'Média Nacional'],
-          datasets: [{
-            data: [parsePossiblyMultiSerialized(evoData.receita.group), parsePossiblyMultiSerialized(evoData.receita.nac)],
-            backgroundColor: ['#103758', '#cbd5e1'],
-            borderRadius: 6,
-            barPercentage: 0.5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: {
-              beginAtZero: true,
-              grace: '15%',
-              ticks: { callback: v => v + '%' }
-            }
-          }
-        },
-        plugins: [topLabelsPlugin]
-      });
-    }
-
-    if (canvasPop) {
-      const ctxPop = canvasPop.getContext('2d');
-      if (chartPopEvo) chartPopEvo.destroy();
-      chartPopEvo = new Chart(ctxPop, {
-        type: 'bar',
-        data: {
-          labels: ['Este Conjunto', 'Média Nacional'],
-          datasets: [{
-            data: [parsePossiblyMultiSerialized(evoData.populacao.group), parsePossiblyMultiSerialized(evoData.populacao.nac)],
-            backgroundColor: ['#EEAF19', '#cbd5e1'],
-            borderRadius: 6,
-            barPercentage: 0.5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: {
-              beginAtZero: true,
-              grace: '15%',
-              ticks: { callback: v => v + '%' }
-            }
-          }
-        },
-        plugins: [topLabelsPlugin]
-      });
-    }
-  function updateHistoricalSynthesis(kpis) {
-    if (!kpis) return;
-    log('[evo] atualizando síntese', kpis);
-    
-    // Suporta tanto kpis (da API de detalhes) quanto hist_data (da API fiscal)
-    const deltaRc = Number(kpis.delta_rc_pc ?? 0);
-    const deltaPop = Number(kpis.delta_pop ?? 0);
-
-    const txtRc = document.getElementById('text-delta-rc-pc');
-    const txtPop = document.getElementById('text-delta-pop');
-
-    if (txtRc) {
-      const isPos = deltaRc >= 0;
-      txtRc.innerHTML = isPos 
-        ? `cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+${deltaRc.toFixed(2)}%</span>`
-        : `caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${deltaRc.toFixed(2)}%</span>`;
-    }
-
-    if (txtPop) {
-      const isPos = deltaPop >= 0;
-      txtPop.innerHTML = isPos
-        ? `aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+${deltaPop.toFixed(2)}%</span>`
-        : `teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${deltaPop.toFixed(2)}%</span>`;
-    }
-
-    // Mesmo sem o container de data inicial, podemos renderizar se os canvas existirem
-    const currentEvo = {
-      receita: { group: deltaRc, nac: kpis.media_nacional_rc_pc || 316.74 },
-      populacao: { group: deltaPop, nac: kpis.media_nacional_pop || 16.04 }
-    };
-    renderEvolutionCharts(currentEvo);
   }
 
   async function updateFiscalDetails(){
@@ -394,27 +206,15 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await resp.json();
       
       const cont = document.getElementById('main-revenue-details-container');
-      if (!cont) return;
       cont.innerHTML = data.html;
-
-      if(data.hist_data) updateHistoricalSynthesis(data.hist_data);
       
       initializeToggleListeners(cont);
-      applyVisibilityToTree();
       sortAllRevenueSections(isShowingPerCapita);
       buildHeadingIndex(document);
     } catch(e) {
       console.error('[detalhes] erro', e);
       const c = document.getElementById('main-revenue-details-container');
-      if(c) {
-        c.innerHTML = `
-          <div class="p-8 text-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg">
-            <i class="fa-solid fa-triangle-exclamation mb-2 fs-4"></i>
-            <p class="mb-0 font-medium">Erro ao carregar detalhes fiscais.</p>
-            <small class="opacity-70">${e.message}</small>
-          </div>
-        `;
-      }
+      if(c) c.innerHTML = '<p class="text-red-500 text-center py-4">Erro ao carregar os dados.</p>';
     }
   }
 
@@ -660,18 +460,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      // 2.5) Grupo intermediário ITC → filhos 
+      // 2) Grupo intermediário ITC → filhos 
       if (categoryKey === 'imposto_taxas_contribuicoes') {
         const n = normalizeLabel(clicked);
-        if (n.includes('imposto'))  { setCategory('imposto'); return; }
-        if (n.includes('taxa'))     { setCategory('taxas'); return; }
-        if (n.includes('melhoria')) { setCategory('contribuicoes_melhoria'); return; }
-      }
-
-      // 2.6) Contribuições -> embora já mostre o detalhe, garantimos o select
-      if (categoryKey === 'main_categories' && clicked === 'Contribuições') {
-        setCategory('contribuicoes');
-        return;
+        if (n.includes('imposto'))  { rebuildSelectOptions('imposto'); renderChart('imposto', currentChartData); return; }
+        if (n.includes('taxa'))     { rebuildSelectOptions('taxas'); renderChart('taxas', currentChartData); return; }
+        if (n.includes('melhoria')) { rebuildSelectOptions('contribuicoes_melhoria'); renderChart('contribuicoes_melhoria', currentChartData); return; }
       }
 
       // 3) Transferências Correntes → União/Estados 
@@ -716,15 +510,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if(filtroPorte)  filtroPorte.value='todos';
       applyFiltersAndData();
     });
-  }
-
-  // Inicialização Gráficos Evolução
-  const initialEvoEl = document.getElementById('evolution-compare-data');
-  if (initialEvoEl) {
-    try {
-      const initialEvo = JSON.parse(initialEvoEl.textContent);
-      renderEvolutionCharts(initialEvo);
-    } catch(e) { console.error('[evo] falha json inicial', e); }
   }
 
   applyFiltersAndData();

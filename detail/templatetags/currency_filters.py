@@ -85,3 +85,12 @@ def br_abrev(value):
 
     formatted = f"{num:.1f}".replace('.', ',')
     return f"{formatted}{sufixo}"
+
+
+@register.filter(name='abs')
+def abs_value(value):
+    """Retorna o valor absoluto de um número."""
+    try:
+        return abs(float(value))
+    except (ValueError, TypeError):
+        return value
