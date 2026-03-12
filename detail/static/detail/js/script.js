@@ -354,13 +354,13 @@ document.addEventListener('DOMContentLoaded', function () {
         plugins: [topLabelsPlugin]
       });
     }
-  }
-
   function updateHistoricalSynthesis(kpis) {
     if (!kpis) return;
+    log('[evo] atualizando síntese', kpis);
     
-    const deltaRc = Number(kpis.delta_rc_pc || 0);
-    const deltaPop = Number(kpis.delta_pop || 0);
+    // Suporta tanto kpis (da API de detalhes) quanto hist_data (da API fiscal)
+    const deltaRc = Number(kpis.delta_rc_pc ?? 0);
+    const deltaPop = Number(kpis.delta_pop ?? 0);
 
     const txtRc = document.getElementById('text-delta-rc-pc');
     const txtPop = document.getElementById('text-delta-pop');
@@ -379,15 +379,12 @@ document.addEventListener('DOMContentLoaded', function () {
         : `teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${deltaPop.toFixed(2)}%</span>`;
     }
 
-    // Atualiza dados dos gráficos
-    const evoContainer = document.getElementById('evolution-compare-data');
-    if (evoContainer) {
-      const currentEvo = {
-        receita: { group: deltaRc, nac: kpis.media_nacional_rc_pc || 316.74 },
-        populacao: { group: deltaPop, nac: kpis.media_nacional_pop || 16.04 }
-      };
-      renderEvolutionCharts(currentEvo);
-    }
+    // Mesmo sem o container de data inicial, podemos renderizar se os canvas existirem
+    const currentEvo = {
+      receita: { group: deltaRc, nac: kpis.media_nacional_rc_pc || 316.74 },
+      populacao: { group: deltaPop, nac: kpis.media_nacional_pop || 16.04 }
+    };
+    renderEvolutionCharts(currentEvo);
   }
 
   async function updateFiscalDetails(){
@@ -399,8 +396,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const cont = document.getElementById('main-revenue-details-container');
       cont.innerHTML = data.html;
 
-      // Sincroniza Síntese Histórica se vierem kpis na resposta
-      if(data.kpis) updateHistoricalSynthesis(data.kpis);
+      // Sincroniza Síntese Histórica (pela chave hist_data que vem dessa API)
+      if(data.hist_data) updateHistoricalSynthesis(data.hist_data);
       
       initializeToggleListeners(cont);
       applyVisibilityToTree();

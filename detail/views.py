@@ -524,6 +524,21 @@ def municipio_details_api(request):
         total_receita_2000=Sum('rc_2000'),
     )
 
+    pop24 = aggregated_data['total_populacao'] or 0
+    pop00 = aggregated_data['total_populacao_00'] or 0
+    rc24 = aggregated_data['total_receita_corrente'] or 0
+    rc00 = aggregated_data['total_receita_2000'] or 0
+
+    delta_pop = 0
+    if pop00 > 0:
+        delta_pop = round(((pop24 / pop00) - 1) * 100, 2)
+
+    delta_rc_pc = 0
+    rc_pc_24 = rc24 / pop24 if pop24 > 0 else 0
+    rc_pc_00 = rc00 / pop00 if pop00 > 0 else 0
+    if rc_pc_00 > 0:
+        delta_rc_pc = round(((rc_pc_24 / rc_pc_00) - 1) * 100, 2)
+
     # Get the count of municipalities in the filtered queryset
     quantidade_municipios = queryset.count()
     
@@ -535,9 +550,13 @@ def municipio_details_api(request):
             "receita_corrente": aggregated_data['total_receita_corrente'],
             "receita_per_capita": aggregated_data['avg_receita_per_capita'],
             "diferenca_media": ((aggregated_data['avg_receita_per_capita'] or 0) - national_avg_rc) / national_avg_rc  if national_avg_rc != 0 else 0,
+            "delta_rc_pc": delta_rc_pc,
+            "delta_pop": delta_pop,
+            "media_nacional_rc_pc": 316.74,
+            "media_nacional_pop": 16.04,
             "hist_data": {
-                "pop00": aggregated_data['total_populacao_00'] or 0,
-                "rc00": aggregated_data['total_receita_2000'] or 0,
+                "pop00": pop00,
+                "rc00": rc00,
             }
         }
     }
