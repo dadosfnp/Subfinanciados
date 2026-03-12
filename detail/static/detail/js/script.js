@@ -394,9 +394,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await resp.json();
       
       const cont = document.getElementById('main-revenue-details-container');
+      if (!cont) return;
       cont.innerHTML = data.html;
 
-      // Sincroniza Síntese Histórica (pela chave hist_data que vem dessa API)
       if(data.hist_data) updateHistoricalSynthesis(data.hist_data);
       
       initializeToggleListeners(cont);
@@ -406,7 +406,15 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch(e) {
       console.error('[detalhes] erro', e);
       const c = document.getElementById('main-revenue-details-container');
-      if(c) c.innerHTML = '<p class="text-red-500 text-center py-4">Erro ao carregar os dados.</p>';
+      if(c) {
+        c.innerHTML = `
+          <div class="p-8 text-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg">
+            <i class="fa-solid fa-triangle-exclamation mb-2 fs-4"></i>
+            <p class="mb-0 font-medium">Erro ao carregar detalhes fiscais.</p>
+            <small class="opacity-70">${e.message}</small>
+          </div>
+        `;
+      }
     }
   }
 
@@ -652,12 +660,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      // 2) Grupo intermediário ITC → filhos 
+      // 2.5) Grupo intermediário ITC → filhos 
       if (categoryKey === 'imposto_taxas_contribuicoes') {
         const n = normalizeLabel(clicked);
-        if (n.includes('imposto'))  { rebuildSelectOptions('imposto'); renderChart('imposto', currentChartData); return; }
-        if (n.includes('taxa'))     { rebuildSelectOptions('taxas'); renderChart('taxas', currentChartData); return; }
-        if (n.includes('melhoria')) { rebuildSelectOptions('contribuicoes_melhoria'); renderChart('contribuicoes_melhoria', currentChartData); return; }
+        if (n.includes('imposto'))  { setCategory('imposto'); return; }
+        if (n.includes('taxa'))     { setCategory('taxas'); return; }
+        if (n.includes('melhoria')) { setCategory('contribuicoes_melhoria'); return; }
+      }
+
+      // 2.6) Contribuições -> embora já mostre o detalhe, garantimos o select
+      if (categoryKey === 'main_categories' && clicked === 'Contribuições') {
+        setCategory('contribuicoes');
+        return;
       }
 
       // 3) Transferências Correntes → União/Estados 
