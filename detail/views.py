@@ -1587,7 +1587,14 @@ def conjunto_detalhe_view(request):
             'rc00_pc': rc_00_pc_agregado,
             'delta_rc_pc': delta_rc_pc,
             'delta_pop': delta_pop,
-        }
+        },
+        'evolucao_historica': {
+            'delta_populacao': round(delta_pop, 2),
+            'delta_rc_pc': round(delta_rc_pc, 2),
+            'has_2000_data': bool(pop00 > 0 or rc00 > 0)
+        },
+        'media_nacional_rc_pc': 316.74,
+        'media_nacional_pop': 16.04,
     }
 
     print(revenue_tree)
@@ -2251,6 +2258,8 @@ def conjunto_fiscal_api(request):
             'rc00_pc': rc_00_pc_agregado,
             'delta_rc_pc': delta_rc_pc,
             'delta_pop': delta_pop,
+            'media_nacional_rc_pc': 316.74,
+            'media_nacional_pop': 16.04,
         }
     })
 
