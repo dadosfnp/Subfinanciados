@@ -1,8 +1,6 @@
-/* ==========================================================================
-   IFEM: DETALHE DO MUNICÍPIO (EDITORIAL DATA STYLE)
-   ========================================================================== */
+/* Estilos Principais: Tela de Detalhes do Município */
 
-/* --- 1. VARIÁVEIS LOCAIS (Design System IFEM) --- */
+/* Variáveis de design (cores e sombras) */
 :root {
     --fnp-dark-blue: #103758;
     --fnp-blue: #194685;
@@ -13,11 +11,12 @@
     --slate-400: #94a3b8;
     --slate-500: #64748b;
     --slate-800: #1e293b;
-    --card-radius: 12px;
-    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    --card-radius: 16px; /* Updated from 12px for softer look */
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* Softer, layered shadow */
+    --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05); /* Premium depth on hover */
 }
 
-/* --- CORES DE TEXTO PARA OS QUINTIS (Ranking) --- */
+/* Cores de texto das classificações (Quintil) */
 .text-quintil-1 { color: #d73027 !important; }
 .text-quintil-2 { color: #fc8d59 !important; }
 .text-quintil-3 { color: #fee08b !important; } /* Amarelo pode ficar claro no branco, ajuste se precisar */
@@ -38,8 +37,7 @@
     text-align-last: right;
 }
 
-/* --- 2. RESET E INTEGRAÇÃO GLOBAL --- */
-/* Garante o fundo branco absoluto e libera a rolagem natural nativa */
+/* Reset de propriedades e fundo da página */
 html, body {
     background-color: #103758 !important;
     height: auto !important;
@@ -62,7 +60,7 @@ html, body {
     }
 }
 
-/* --- 3. TIPOGRAFIA EDITORIAL --- */
+/* Tipografia dos textos principais (Hero e Headings) */
 .hero-title {
     font-size: clamp(2rem, 4vw, 3.5rem);
     font-weight: 900;
@@ -97,7 +95,7 @@ html, body {
     }
 }
 
-/* --- 4. BENTO CARDS (KPIs) --- */
+/* Layout dos cards de métricas (KPIs) */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -116,12 +114,12 @@ html, body {
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .kpi-card.highlight {
@@ -149,9 +147,9 @@ html, body {
 
 .kpi-card.highlight .kpi-value { color: #ffffff; }
 
-/* --- Modificadores para os Cards Hero Principais --- */
+/* Estilos específicos para os valores em destaque (Cards Hero) */
 .kpi-hero-value {
-    font-size: clamp(2rem, 4vw, 3rem); /* Equivalente ao text-5xl/6xl responsivo */
+    font-size: clamp(2rem, 4vw, 3rem); 
     font-weight: 900;
     color: var(--fnp-blue);
     line-height: 1;
@@ -186,7 +184,7 @@ html, body {
     margin-left: 0.5rem;
 }
 
-/* --- 5. TIMELINE STORYTELLING (Banner de Evolução) --- */
+/* Estilos do banner de linha do tempo */
 .story-banner {
     background: #ffffff;
     border: 1px solid var(--slate-200);
@@ -208,11 +206,11 @@ html, body {
     }
 }
 
-/* Container flexível para a linha do tempo */
+/* Container da linha do tempo */
 .timeline-visual {
     flex: 1;
     display: flex;
-    flex-direction: column; /* Mobile: empilhado */
+    flex-direction: column; /* Layout em coluna para telas pequenas */
     align-items: center;
     justify-content: center;
     gap: 1rem;
@@ -221,7 +219,7 @@ html, body {
 
 @media (min-width: 768px) {
     .timeline-visual {
-        flex-direction: row; /* Desktop: lado a lado */
+        flex-direction: row; /* Layout em linha para telas grandes */
         gap: 0;
         max-width: 450px;
         margin: 0 auto;
@@ -258,7 +256,7 @@ html, body {
     transform: scale(1.1);
 }
 
-/* Trava absoluta do SVG da seta para não estourar */
+/* Dimensionamento fixo da seta da timeline */
 .timeline-arrow {
     width: 32px !important;
     height: 32px !important;
@@ -266,7 +264,7 @@ html, body {
     min-height: 32px;
     color: var(--slate-200);
     flex-shrink: 0;
-    transform: rotate(90deg); /* Mobile: aponta para baixo */
+    transform: rotate(90deg); /* Rotação da seta para baixo em telas pequenas */
 }
 
 .timeline-arrow svg {
@@ -277,7 +275,7 @@ html, body {
 
 @media (min-width: 768px) {
     .timeline-arrow {
-        transform: rotate(0deg); /* Desktop: aponta para a direita */
+        transform: rotate(0deg); /* Rotação da seta para a direita em telas grandes */
         margin: 0 1rem;
     }
 }
@@ -298,7 +296,7 @@ html, body {
     .impact-panel { text-align: left; }
 }
 
-/* --- 6. DNA FINANCEIRO (Árvore e Gráficos) --- */
+/* Componentes da árvore de receitas financeiras */
 .dashboard-split {
     display: grid;
     grid-template-columns: 1fr;
@@ -312,7 +310,6 @@ html, body {
     }
 }
 
-/* Árvore de Receitas */
 .dna-tree-wrapper {
     background: #ffffff;
     border: 1px solid var(--slate-200);
@@ -336,7 +333,7 @@ html, body {
     padding: 14px 16px;
     background: #ffffff;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 768px) {
@@ -344,8 +341,9 @@ html, body {
 }
 
 .tree-row:hover { background-color: var(--slate-50); }
+.tree-row:active { transform: scale(0.995); }
 
-/* Níveis da Árvore (Indentação e Pesos) */
+/* Indentação conforme o nível da árvore */
 .tree-row.level-0 { font-weight: 1000; color: var(--fnp-dark-blue); }
 .tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
 .tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 1.25rem; }
@@ -357,7 +355,7 @@ html, body {
     .tree-row.level-3 { padding-left: 80px; }
 }
 
-/* Seta Animada do Accordion */
+/* Animação do ícone de expansão (Accordion) */
 .tree-chevron {
     width: 18px;
     height: 18px;
@@ -378,7 +376,7 @@ html, body {
     white-space: nowrap;
 }
 
-/* --- 7. INDICADORES DE RANKING E TOOLTIPS --- */
+/* Estilos das bolhas de ranking e tooltips */
 .ranking-indicator-container {
     position: relative;
     display: inline-flex;
@@ -394,7 +392,7 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Paleta Quintis IFEM */
+/* Cores de fundo para cada quintil */
 .quintil-0 { background-color: grey; }
 .quintil-1 { background-color: #d73027; }
 .quintil-2 { background-color: #fc8d59; }
@@ -433,7 +431,7 @@ html, body {
     border-color: var(--slate-800) transparent transparent transparent;
 }
 
-/* Ajuste do Tooltip para mobile (evita vazar da tela) */
+/* Comportamento responsivo do tooltip */
 @media (max-width: 768px) {
     .ranking-tooltip {
         left: 0;
@@ -453,7 +451,7 @@ html, body {
     }
 }
 
-/* --- 8. GRÁFICOS E CONTROLES --- */
+/* Contêineres de gráficos e seletores */
 .chart-card {
     background: #ffffff;
     border: 1px solid var(--slate-200);
@@ -461,6 +459,11 @@ html, body {
     padding: 1.25rem;
     box-shadow: var(--card-shadow);
     margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chart-card:hover {
+    box-shadow: var(--card-shadow-hover);
 }
 
 .select-clean {
@@ -481,7 +484,7 @@ html, body {
     border-color: var(--fnp-blue);
 }
 
-/* Segmented Control (Toggle) */
+/* Botões de alternância (Toggle) */
 .segmented {
     padding: 2px; 
     width: auto;
@@ -531,7 +534,11 @@ html, body {
     transform: translateY(-1px);
 }
 
-/* --- AJUSTES DE POSICIONAMENTO DO RANKING --- */
+.segmented-option:active {
+    transform: scale(0.96);
+}
+
+/* Fixadores absolutos das tags de ranking */
 .kpi-card {
     position: relative;
     overflow: hidden;
@@ -578,8 +585,7 @@ html, body {
 .rank-card-5 .rank-bg-icon { background-color: #1C914820; }
 .rank-card-5 .rank-text-icon { color: #1C9148; }
 
-
-/* --- TOOLTIP CUSTOMIZADO IFEM (EVOLUÇÃO) --- */
+/* Tooltip específico de linha de evolução */
 .ifem-tooltip-container {
     position: relative;
     display: flex;
@@ -591,7 +597,7 @@ html, body {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    transform: translate(-50%, 0); /* Posição inicial para a animação */
+    transform: translate(-50%, 0); /* Offset da animação inicial */
     margin-bottom: 12px;
     width: 220px;
     background-color: var(--fnp-dark-blue);
@@ -604,17 +610,17 @@ html, body {
     line-height: 1.4;
     box-shadow: 0 10px 25px rgba(16, 55, 88, 0.3);
     
-    /* Escondido por padrão, à prova de bugs */
+    /* Estado padrão oculto */
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
     z-index: 9999;
     
-    /* Animação suave */
+    /* Duração global da animação */
     transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
 }
 
-/* Setinha do balão */
+/* Ponto direcional do tooltip */
 .ifem-tooltip-box::after {
     content: "";
     position: absolute;
@@ -626,11 +632,11 @@ html, body {
     border-color: var(--fnp-dark-blue) transparent transparent transparent;
 }
 
-/* O gatilho do hover */
+/* Transição ativada via mouse */
 .ifem-tooltip-container:hover .ifem-tooltip-box {
     visibility: visible;
     opacity: 1;
-    transform: translate(-50%, -8px); /* Sobe suavemente */
+    transform: translate(-50%, -8px); /* Elevação do tooltip ao exibir */
 }
 
 .ifem-tooltip-box strong {
@@ -660,76 +666,7 @@ html, body {
     width: 100%;
 }
 
-/* ==========================================================================
-   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
-   ========================================================================== */
-
-@media (max-width: 767.98px) {
-    /* 1. Liberar largura total (corrige o corte lateral da image_e80139.png) */
-    .detail-content {
-        max-width: 100% !important;
-        width: 100% !important;
-        padding: 1.5rem 1rem !important;
-    }
-
-    /* 2. Títulos mais compactos */
-    .hero-title {
-        font-size: 2.2rem !important;
-        line-height: 1.1;
-        margin-bottom: 0.25rem;
-    }
-    
-    .hero-subtitle {
-        font-size: 0.85rem !important;
-        margin-bottom: 1.5rem;
-    }
-
-    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
-    .segmented {
-        padding: 4px;
-        gap: 2px;
-        display: flex;
-    }
-    
-    .segmented-option {
-        padding: 8px 4px;
-        font-size: 0.8rem; 
-        flex: 1;
-        text-align: center;
-    }
-
-    /* 4. Grade de cards KPI (Bento Cards) */
-    .kpi-grid {
-        grid-template-columns: 1fr !important; 
-        gap: 1rem;
-    }
-
-    .kpi-card {
-        padding: 1.25rem;
-    }
-
-    .kpi-hero-value {
-        font-size: 2.4rem !important;
-    }
-
-    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
-    .tree-row {
-        padding: 12px 8px !important;
-    }
-    
-    .tree-row h4 {
-        font-size: 14px !important;
-        max-width: 180px; 
-    }
-
-    .tree-value {
-        min-width: 90px;
-    }
-}
-
-    /* ==========================================================================
-       MOBILE: TÍTULOS DE SEÇÃO (Densidade Fiscal e Síntese)
-       ========================================================================== */
+/* Redução de cabeçalhos das sub-seções */
     body main.detail-content .section-heading {
         font-size: 1.4rem; 
         line-height: 1.25; 
@@ -743,7 +680,7 @@ html, body {
         word-break: normal; 
     }
 
-    /* Ajuste para o texto de explicação abaixo do título não ficar espremido */
+    /* Espaçamento do subtítulo */
     body main.detail-content .section-heading + div {
         font-size: 0.85rem;
         line-height: 1.4;
@@ -755,19 +692,17 @@ html, body {
         flex-shrink: 0;
     }
 
-/* ==========================================================================
-   AJUSTES MOBILE: DETALHAMENTO DO MUNICÍPIO (MOBILE FIRST)
-   ========================================================================== */
+/* Regras Responsivas: Dispositivos Móveis */
 @media (max-width: 767.98px) {
     
-    /* 1. Liberar largura total (vencendo o max-width: 80% pela especificidade da tag) */
+    /* Ocupação total da tela iterado */
     body main.detail-content {
         max-width: 100%;
         width: 100%;
         padding: 1.5rem 1rem;
     }
 
-    /* 2. Títulos mais compactos */
+    /* Redução de fonte para mobile */
     body main.detail-content .hero-title {
         font-size: 2.2rem;
         line-height: 1.1;
@@ -779,7 +714,7 @@ html, body {
         margin-bottom: 1.5rem;
     }
 
-    /* 3. Ajuste do seletor (Nacional / Estadual / Por Faixa) */
+    /* Componentes de filtro para touch */
     body main.detail-content .segmented {
         padding: 4px;
         gap: 2px;
@@ -793,7 +728,7 @@ html, body {
         text-align: center;
     }
 
-    /* 4. Grade de cards KPI (Bento Cards) */
+    /* Empilhamento de cards */
     body main.detail-content .kpi-grid {
         grid-template-columns: 1fr; 
         gap: 1rem;
@@ -807,11 +742,11 @@ html, body {
         font-size: 2.4rem;
     }
 
-    /* 5. Ajuste da Árvore de Receitas (DNA Financeiro) */
+    /* Simplificação da tabela expansível */
     body main.detail-content .dna-tree-wrapper {
-        border-radius: 12px; /* Restaura a borda arredondada padrão do sistema */
-        border: 1px solid #e2e8f0; /* Devolve a bordinha cinza em toda a volta */
-        overflow: hidden; /* Garante que as linhas de dentro não vazem pela curva */
+        border-radius: 12px; 
+        border: 1px solid #e2e8f0; 
+        overflow: hidden; 
     }
     
     body main.detail-content .tree-row {
@@ -827,9 +762,7 @@ html, body {
     body main.detail-content .tree-row.level-2 { padding-left: 18px; }
     body main.detail-content .tree-row.level-3 { padding-left: 24px; }
 
-    /* ==========================================================================
-       MOBILE: CARDS DE VALORES (ESTRUTURA DE RECEITAS)
-       ========================================================================== */
+    /* Alinhamento de tabelas financeiras em mobile */
     body main.detail-content .revenue-item-wrapper .tree-value {
         display: flex;
         flex-wrap: wrap;
@@ -872,9 +805,7 @@ html, body {
         margin-bottom: 8px;
     }
 
-    /* ==========================================================================
-       MOBILE: BOLHAS DE EVOLUÇÃO DO RANKING (2000 VS 2024)
-       ========================================================================== */
+    /* Ajustes dimensionais das bolhas de evolução */
     body main.detail-content div.bg-white .timeline-circle-dynamic {
         width: 85px;
         height: 85px;
@@ -900,19 +831,17 @@ html, body {
         padding-bottom: 10px;
     }
 
-    /* ==========================================================================
-       MOBILE: CARDS PRINCIPAIS (População e Receita)
-       ========================================================================== */
+    /* Compactação dos números grandes */
     
-    /* 1. Reduz o número gigante levemente para ele não espremer as bordas */
+    /* Redução do destaque numérico */
     body main.detail-content .kpi-card .kpi-hero-value {
-        font-size: 1.9rem; /* Reduzido de 2.4rem */
+        font-size: 1.9rem; 
         line-height: 1.1;
         white-space: normal; 
         word-break: break-word;
     }
 
-    /* 2. Remove o Flexbox da tendência para a frase fluir naturalmente */
+    /* Quebra natural de texto para setas de tendência */
     body main.detail-content .kpi-card .kpi-hero-trend {
         display: block; 
         font-size: 1.05rem;
@@ -920,40 +849,42 @@ html, body {
         margin-top: 8px;
     }
 
-    /* 3. Ajusta o texto cinza explicativo para continuar na mesma linha da seta */
+    /* Fluxo linear da ajuda visual */
     body main.detail-content .kpi-card .kpi-hero-trend-muted {
         font-size: 0.85rem;
         display: inline;
         margin-left: 2px;
     }
     
-    /* 4. Suaviza o tamanho do "de 5.570" no ranking */
+    /* Redução do comparativo */
     body main.detail-content .kpi-card .kpi-ranking-base {
         font-size: 1rem;
     }
 
-    /* ==========================================================================
-       MOBILE: BOTÕES TOGGLE (Per Capita / Valor Total) NO CARD DE RECEITA
-       ========================================================================== */
+    /* Layout dos botões de troca no top card */
     
-    /* 1. Muda o cabeçalho do card de "lado a lado" para "empilhado" */
+    /* Organização em uma coluna */
     body main.detail-content .kpi-card > .flex.items-center.justify-between {
         flex-direction: column;
         align-items: stretch;
         gap: 16px;
     }
 
-    /* 2. O fundo cinza dos botões passa a ocupar 100% da largura disponível */
+    /* Esticamento do contêiner do botão */
     body main.detail-content .kpi-card .bg-slate-100.p-2.rounded-lg {
         width: 100%;
         display: flex;
-        padding: 4px; /* Fica mais delicado no mobile */
+        padding: 4px; /* Espaçamento reduzido */
     }
 
-    /* 3. Os botões dividem o espaço 50/50 e proíbe a quebra de linha do texto */
-/* ==========================================================================
-   STICKY HEADER (MANTÉM NOME E FILTROS NO TOPO)
-   ========================================================================== */
+    /* Rateio uniforme entre botões */
+    body main.detail-content .kpi-rc-toggle {
+        flex: 1;
+        white-space: nowrap;
+    }
+}
+
+/* Efeitos do Cabeçalho Fixo (Sticky) */
 .sticky-header {
     position: fixed;
     top: 0;

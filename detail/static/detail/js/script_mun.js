@@ -666,6 +666,7 @@ function updateTimelineColors(mode) {
 
         let hex = null;
         let isLightBackground = false;
+        let explanationText = '';
 
         if (num) {
             if (mode === 'percentil') {
@@ -674,22 +675,27 @@ function updateTimelineColors(mode) {
                 const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
                 hex = FNP_DECIL_COLORS[decilVal];
                 isLightBackground = (decilVal === 5 || decilVal === 6);
+                explanationText = `Maior que <strong class="text-slate-800">${num}%</strong> dos munícipios`;
             } 
             else if (mode === 'quintil') {
                 if (labelSpan) labelSpan.textContent = 'Quintil';
                 if (valueSpan) valueSpan.textContent = num + 'º';
                 hex = FNP_RANK_COLORS[num];
                 isLightBackground = (num === '3');
+                const quintilWords = {'5': '20% mais ricos', '4': '40% a 20% mais ricos', '3': 'Intermediário', '2': 'Abaixo da Média', '1': '20% mais pobres'};
+                explanationText = `<strong class="text-slate-800">${quintilWords[num] || ''}</strong> do país`;
             } 
             else if (mode === 'decil') {
                 if (labelSpan) labelSpan.textContent = 'Decil';
                 if (valueSpan) valueSpan.textContent = num + 'º';
                 hex = FNP_DECIL_COLORS[num];
                 isLightBackground = (num === '5' || num === '6');
+                explanationText = `Grupo <strong class="text-slate-800">${num}</strong> de 10 do país`;
             }
         } else {
             if (labelSpan) labelSpan.textContent = mode;
             if (valueSpan) valueSpan.textContent = '-';
+            explanationText = 'Dado Indisponível';
         }
 
         if (hex) {
@@ -698,6 +704,11 @@ function updateTimelineColors(mode) {
         } else {
             circle.style.backgroundColor = '#f1f5f9';
             circle.style.color = '#94a3b8';
+        }
+        
+        const explanationSpan = circle.nextElementSibling;
+        if (explanationSpan && explanationSpan.classList.contains('dynamic-explanation')) {
+            explanationSpan.innerHTML = explanationText;
         }
     }); // Fim do loop dos círculos
 
@@ -715,27 +726,15 @@ function updateTimelineColors(mode) {
             const val24 = parseInt(num24[0]);
             
         if (val24 === val00) {
-            /* Tratamento de estabilidade unificado para todos os modos */
-            summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição se manteve</strong>.`;
+            summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
         } 
         else if (mode === 'percentil') {
-            /* Helper para narrativa de percentil com inversao de lógica < 50% */
-            const formatPercentilNarrativa = (v, isFull) => {
-                const isInf = v < 50;
-                const displayVal = isInf ? (100 - v) : v;
-                const textoStatus = isInf ? 'inferior a' : 'superior a';
-                const corStatus = isInf ? 'text-rose-600' : 'text-emerald-600';
-                const sufixoGeo = isFull ? ' dos municípios do país' : ' dos municípios do país';
-                return `<span class="${corStatus} font-black">${textoStatus} ${displayVal}%</span>${sufixoGeo}`;
-            };
-
-            const statusAcao = val24 > val00 ? 'MELHOROU' : 'PIOROU';
+            const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
             const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
 
-            summaryContainer.innerHTML = `A  receita per capita de <strong class="text-slate-700">${muniName}</strong>, em 2000, era ${formatPercentilNarrativa(val00, false)}. <br>Em 2024 a receita relativa por habitante <span class="${statusColor} font-black">${statusAcao}</span>. Atualmente é ${formatPercentilNarrativa(val24, true)}.`;
+            summaryContainer.innerHTML = `Nestas duas décadas, a receita por habitante de <strong class="text-slate-700">${muniName}</strong> <span class="${statusColor} font-black">${statusAcao}</span> no ranking nacional, indo do percentil <span class="font-bold text-slate-400">${val00}%</span> para o <span class="${statusColor} font-black">${val24}%</span>.`;
         } 
         else {
-            /* Padrao Premium para Quintil e Decil com destaque no resultado */
             const isMelhor = val24 > val00;
             const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
             const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
@@ -743,7 +742,7 @@ function updateTimelineColors(mode) {
             const text00 = `${val00}º ${mode}`;
             const text24 = `${val24}º ${mode}`;
 
-            summaryContainer.innerHTML = `Entre 2000 e 2024, a posição da receita per capita de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
+            summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
         }
             
         renderTimelineRuler(mode, val00, val24);
@@ -1022,7 +1021,8 @@ timelineBtns.forEach(btn => {
         const updateKpiRank = (selector, dataPrefix) => {
             const kpiEl = document.querySelector(selector);
             if (kpiEl) {
-                kpiEl.classList.add('ifem-tooltip-container', 'group', 'cursor-help');
+                kpiEl.classList.remove('ifem-tooltip-container', 'group', 'cursor-help');
+                kpiEl.classList.add('flex', 'flex-col');
                 
                 const dataStr = kpiEl.getAttribute(`data-${dataPrefix}-${base}`);
                 
@@ -1031,14 +1031,15 @@ timelineBtns.forEach(btn => {
                     const rank = parts[0].trim();
                     const total = parts[1] ? parts[1].trim() : "0";
                     
-                    const scopeText = base === 'nacional' ? 'do Brasil' : base === 'estadual' ? 'do estado' : 'da mesma faixa populacional';
+                    const scopeText = base === 'nacional' ? 'no Brasil' : base === 'estadual' ? 'neste Estado' : 'nesta faixa populacional';
 
                     kpiEl.innerHTML = `
-                        <span class="kpi-hero-value">${rank}º</span> 
-                        <span class="text-lg md:text-xl font-bold text-slate-500 ml-2">de ${total}</span>
-                        ${INFO_ICON_SVG}
-                        <div class="ifem-tooltip-box">
-                            O município ocupa a ${rank}ª posição entre os ${total} municípios ${scopeText} com dados disponíveis.
+                        <div class="flex items-baseline">
+                            <span class="kpi-hero-value">${rank}º</span> 
+                            <span class="text-lg md:text-xl font-bold text-slate-500 ml-2">de ${total}</span>
+                        </div>
+                        <div class="text-[11px] font-medium text-slate-400 mt-1 leading-tight">
+                            Posição do município ${scopeText}.
                         </div>
                     `;
                 }
@@ -1056,46 +1057,45 @@ timelineBtns.forEach(btn => {
     if (!container) return;
 
     const isPop = containerId.includes('pop');
-    let state = 'neutral';
     let arrow = '•';
     let statusClass = 'text-slate-500';
-    let tooltipMsg = "";
+    let valDisplay = 0;
+    
+    let shortMsg = "";
 
-    /* Logica de comparacao baseada no tipo de indicador (percentual absoluto ou relativo a media) */
     if (isPop) {
+        valDisplay = Math.abs(munValue);
         const isPos = munValue >= 0;
-        state = isPos ? 'positive' : 'negative';
         arrow = isPos ? '▲' : '▼';
         statusClass = isPos ? 'positive' : 'negative';
-        const verb = isPos ? 'aumentou' : 'diminuiu';
-        tooltipMsg = `A população ${verb} ${Math.abs(munValue)}% no período de 2000 a 2024.`;
+        shortMsg = "Evolução populacional 2000-2024.";
     } else {
         if (compValue !== 0 && !isNaN(compValue)) {
             const fPct = Math.round((munValue / compValue - 1) * 100);
+            valDisplay = Math.abs(fPct);
             const isPositive = fPct >= 0;
             const direcao = isPositive ? "acima" : "abaixo";
-            state = isPositive ? 'positive' : 'negative';
             arrow = isPositive ? '▲' : '▼';
             statusClass = isPositive ? 'positive' : 'negative';
-            tooltipMsg = `A receita do município cresceu ${Math.abs(fPct)}% ${direcao} da receita da ${labelBase} no período de 2000 a 2024.`;        }
+            shortMsg = `${fPct === 0 ? 'Igual à' : Math.abs(fPct) + '% ' + direcao + ' da'} média ${labelBase}`;
+        } else {
+            shortMsg = "Dado comparativo indisponível.";
+        }
     }
 
     if ((isPop && munValue === 0) || (!isPop && munValue === compValue)) {
         arrow = '•';
         statusClass = 'text-slate-500 font-bold';
-        tooltipMsg = "O indicador permaneceu estável em relação ao período ou benchmark anterior.";
+        if (!isPop) shortMsg = `Igual à receita média ${labelBase}.`;
     }
 
-    /* Renderiza o container com suporte a tooltip-box para feedback visual ao hover */
-    container.className = `kpi-hero-trend ${statusClass} mt-1 transition-all ifem-tooltip-container group cursor-help flex items-center`;
-        
-        const valDisplay = containerId.includes('pop') ? Math.abs(munValue) : (compValue !== 0 ? Math.round((munValue / compValue - 1) * 100) : 0);
+    container.className = `mt-1 flex flex-col`;
         
         container.innerHTML = `
-            <span class="font-black">${arrow} ${valDisplay}%</span> 
-            <span class="text-slate-600 font-medium ml-1">no período</span>
-            ${INFO_ICON_SVG}
-            <div class="ifem-tooltip-box">${tooltipMsg}</div>
+            <div class="flex items-center">
+                <span class="kpi-hero-trend ${statusClass} font-black">${arrow} ${valDisplay}%</span> 
+            </div>
+            <div class="text-[11px] font-medium text-slate-400 mt-1 leading-tight">${shortMsg}</div>
         `;
     };
 

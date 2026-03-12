@@ -27,12 +27,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cf7d=i4d^itec4*8!wad0f%oo%qiu5xej8fgnbwm%r_$oxh#5u'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wad0f%oo%qiu5xej8fgnbwm%r_$oxh#5u')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ["*"]
+_allowed_hosts = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = _allowed_hosts.split(',') if _allowed_hosts else []
 
 
 # Application definition
@@ -160,3 +161,32 @@ STORAGES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ==========================================
+# SECURITY HARDENING (PRODUCTION)
+# ==========================================
+if not DEBUG:
+    # Redireciona HTTP para HTTPS (Pode ser desativado no .env caso servidor local não suporte SSL)
+    # Por padrão agora é False para não quebrar setups como Render Free Tier internos ou localhost sem certificado
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
+    
+    # IMPORTANTE: Só ativa cookies seguros e HSTS se o SECURE_SSL_REDIRECT de fato for verdadeiro!
+    # Se o Dev estiver rodando DEBUG=False na própria máquina pra testar Whitenoise ele não perderá acesso ao backend.
+    if SECURE_SSL_REDIRECT:
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+        # HSTS - Apenas ligar ativamente se tiver HTTPS funcional, senao enjaula o proprio dev
+        SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 31536000))
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
+    else:
+        # Força valor 0 caso o navegador tenha cached o HSTS na porta 8000
+        SECURE_HSTS_SECONDS = 0 
+        SESSION_COOKIE_SECURE = False
+        CSRF_COOKIE_SECURE = False
+
+    # Headers contra exploits web e Sniffing 
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'

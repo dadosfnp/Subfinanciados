@@ -127,10 +127,24 @@ document.addEventListener('DOMContentLoaded', function () {
     isShowingPerCapita = (mode==='percapita');
     perCapitaBtn?.classList.toggle('active',isShowingPerCapita);
     reaisBtn?.classList.toggle('active',!isShowingPerCapita);
-    document.querySelectorAll('.valor-absoluto').forEach(el=>el.classList.toggle('hidden',isShowingPerCapita));
-    document.querySelectorAll('.valor-per-capita').forEach(el=>el.classList.toggle('hidden',!isShowingPerCapita));
+    
+    // Aplica visibilidade aos itens atuais (árvore)
+    applyVisibilityToTree();
     sortAllRevenueSections(isShowingPerCapita);
   }
+
+  function applyVisibilityToTree() {
+    document.querySelectorAll('.valor-absoluto').forEach(el=>el.classList.toggle('hidden',isShowingPerCapita));
+    document.querySelectorAll('.valor-per-capita').forEach(el=>el.classList.toggle('hidden',!isShowingPerCapita));
+    
+    document.querySelectorAll('.lbl-tipo-valor').forEach(el => {
+      el.textContent = isShowingPerCapita ? 'Valor por Habitante' : 'Valor Real';
+    });
+    document.querySelectorAll('.media-block-wrapper').forEach(el => {
+      el.classList.toggle('hidden', !isShowingPerCapita);
+    });
+  }
+
   perCapitaBtn?.addEventListener('click',()=>setValorMode('percapita'));
   reaisBtn?.addEventListener('click',()=>setValorMode('real'));
   setValorMode('percapita');
@@ -175,6 +189,47 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // =============== Toggle KPI Receita Corrente ===============
+  let isKpiPc = true;
+  const kpiRcLabel = document.getElementById('kpi-rc-label');
+  const kpiRcValue = document.getElementById('kpi-receita-per-capita');
+  const kpiBtns = document.querySelectorAll('.kpi-segmented button');
+
+  function formatAbrevBR(value) {
+      if (!value) return "R$ 0";
+      if (value >= 1e9) {
+          return "R$ " + (value / 1e9).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " Bi";
+      } else if (value >= 1e6) {
+          return "R$ " + (value / 1e6).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " Mi";
+      } else {
+          return "R$ " + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+  }
+
+  function updateKpiReceitaDisplay() {
+    if(!kpiRcValue) return;
+    const pc = Number(kpiRcValue.dataset.valPc || 0);
+    const tot = Number(kpiRcValue.dataset.valTot || 0);
+    
+    if (isKpiPc) {
+      if(kpiRcLabel) kpiRcLabel.textContent = 'Receita por Habitante';
+      kpiRcValue.textContent = pc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    } else {
+      if(kpiRcLabel) kpiRcLabel.textContent = 'Receita Total';
+      kpiRcValue.textContent = formatAbrevBR(tot);
+    }
+  }
+
+  kpiBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      kpiBtns.forEach(b => b.classList.remove('active'));
+      const target = e.currentTarget;
+      target.classList.add('active');
+      isKpiPc = target.dataset.mode === 'pc';
+      updateKpiReceitaDisplay();
+    });
+  });
+
   async function updateKPIs(){
     try{
       const r = await fetch(`/api/dados-detalhados/?${buildParams()}`);
@@ -186,16 +241,55 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('kpi-quantidade').textContent =
         (d.kpis?.quantidade || 0).toLocaleString('pt-BR');
 
-      document.getElementById('kpi-receita-per-capita').textContent =
-        (d.kpis?.receita_per_capita || 0)
-          .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      if (kpiRcValue) {
+        kpiRcValue.dataset.valPc = (d.kpis?.receita_per_capita || 0);
+        kpiRcValue.dataset.valTot = (d.kpis?.receita_corrente || 0);
+        updateKpiReceitaDisplay();
+      }
 
       const diff = Number(d.kpis?.diferenca_media ?? 0);
       const elDiff = document.getElementById('kpi-diferenca-media');
       elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
       colorizeDiffKpi(diff);
+
+      // Nova lógica: Atualização Histórica
+      updateHistoricalKpis(d.kpis?.hist_data);
+
     } catch(e) {
       console.error('[kpis] erro', e);
+    }
+  }
+
+  function updateHistoricalKpis(hist) {
+    if (!hist) return;
+    const pop00 = Number(hist.pop00 || 0);
+    const rc00 = Number(hist.rc00 || 0);
+    const pop24 = Number(document.getElementById('kpi-populacao')?.textContent.replace(/\./g,'') || 0);
+    const rc24 = Number(document.getElementById('kpi-receita-per-capita')?.dataset.valTot || 0);
+
+    const elPop00 = document.getElementById('kpi-pop-00');
+    const elDeltaPop = document.getElementById('delta-pop');
+    const elRcPc00 = document.getElementById('kpi-rc-pc-00');
+    const elDeltaRcPc = document.getElementById('delta-rc-pc');
+    const elRcTot00 = document.getElementById('kpi-rc-tot-00');
+
+    if(elPop00) elPop00.textContent = pop00.toLocaleString('pt-BR');
+    if(elRcTot00) elRcTot00.textContent = formatAbrevBR(rc00);
+
+    const rcPc00 = pop00 > 0 ? rc00 / pop00 : 0;
+    const rcPc24 = pop24 > 0 ? rc24 / pop24 : 0;
+
+    if(elRcPc00) elRcPc00.textContent = rcPc00.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    if(elDeltaPop) {
+      const dPop = pop00 > 0 ? ((pop24 / pop00) - 1) * 100 : 0;
+      elDeltaPop.textContent = `Var: ${dPop.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+      elDeltaPop.className = dPop < 0 ? 'text-danger' : 'text-success';
+    }
+    if(elDeltaRcPc) {
+      const dRcPc = rcPc00 > 0 ? ((rcPc24 / rcPc00) - 1) * 100 : 0;
+      elDeltaRcPc.textContent = `Var: ${dRcPc.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+      elDeltaRcPc.className = dRcPc < 0 ? 'text-danger' : 'text-success';
     }
   }
 
@@ -207,8 +301,12 @@ document.addEventListener('DOMContentLoaded', function () {
       
       const cont = document.getElementById('main-revenue-details-container');
       cont.innerHTML = data.html;
+
+      // Sincroniza KPIs históricos se vierem na resposta da tabela
+      if(data.hist_data) updateHistoricalKpis(data.hist_data);
       
       initializeToggleListeners(cont);
+      applyVisibilityToTree();
       sortAllRevenueSections(isShowingPerCapita);
       buildHeadingIndex(document);
     } catch(e) {
