@@ -261,19 +261,50 @@
     <section class="summary-cards-row">
       <div class="summary-card kpi-card"><div><h6>População</h6><div class="value" id="kpi-populacao">0</div></div></div>
       <div class="summary-card kpi-card"><div><h6>Quantidade de Municípios</h6><div class="value" id="kpi-quantidade">0</div></div></div>
-      <div class="summary-card kpi-card"><div><h6>Receita per capita</h6><div class="value" id="kpi-receita-per-capita">0</div></div></div>
+      <div class="summary-card kpi-card position-relative">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 id="kpi-rc-label" class="mb-0">Receita por Habitante</h6>
+          <div class="segmented kpi-segmented" style="padding: 2px;">
+            <button type="button" class="segmented-option active text-[10px]" data-mode="pc">Per Capita</button>
+            <button type="button" class="segmented-option text-[10px]" data-mode="tot">Total</button>
+          </div>
+        </div>
+        <div class="value" id="kpi-receita-per-capita" data-val-pc="0" data-val-tot="0">0</div>
+      </div>
       <div class="summary-card kpi-card"><div><h6>Diferença da média Nacional</h6><div class="value" id="kpi-diferenca-media">0</div></div></div>
+    </section>
+
+    <!-- NOVA SEÇÃO: EVOLUÇÃO HISTÓRICA -->
+    <section class="summary-cards-row mt-4">
+      <div class="summary-card kpi-card" style="border-top: 4px solid #103758;">
+        <div>
+          <h6>População (2000)</h6>
+          <div class="value" id="kpi-pop-00">0</div>
+          <small class="text-muted" id="delta-pop">Var: 0%</small>
+        </div>
+      </div>
+      <div class="summary-card kpi-card" style="border-top: 4px solid #103758;">
+        <div>
+          <h6>Receita habitante (2000)</h6>
+          <div class="value" id="kpi-rc-pc-00">R$ 0,00</div>
+          <small class="text-muted" id="delta-rc-pc">Var: 0%</small>
+        </div>
+      </div>
+      <div class="summary-card kpi-card" style="border-top: 4px solid #103758;">
+        <div>
+          <h6>Receita Total (2000 - Nominal)</h6>
+          <div class="value" id="kpi-rc-tot-00">R$ 0,00</div>
+        </div>
+      </div>
     </section>
 
     <section class="metric-card">
       <h5>
         Detalhamento da Receita Corrente
-        <!--
         <div id="valor-toggle" class="segmented">
           <button id="btn-per-capita" class="segmented-option active" type="button">Per Capita</button>
           <button id="btn-valores-reais" class="segmented-option" type="button">Valores Reais</button>
         </div>
-        -->
       </h5>
 
       <div id="main-revenue-details-container">
@@ -337,6 +368,7 @@
 {{ data_json|json_script:"mun-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
 {{ data_f_json|json_script:"mun-data-f" }}
+{{ hist_data|json_script:"hist-data" }}
 <script src="{% static 'detail/js/script.js' %}"></script>
 <script src="{% static 'detail/js/script_density.js' %}"></script>
 

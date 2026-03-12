@@ -2,6 +2,9 @@
 import pandas as pd
 from home.models import Municipio, ContaEspecifica, ContaEspecificaPercentil
 
+ContaEspecifica.objects.all().delete()  # Limpa os dados antigos
+ContaEspecificaPercentil.objects.all().delete()  # Limpa os dados antigos
+
 df = pd.read_excel("base_datas/receitas_correntes_detalhamento_n1.xlsx")
 # Substitui todos os valores vazios/NaN por 0 nas colunas de receita.
 

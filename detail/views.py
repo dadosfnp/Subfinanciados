@@ -520,6 +520,8 @@ def municipio_details_api(request):
         total_populacao=Sum('populacao24'),
         total_receita_corrente=Sum('rc_2024'),
         avg_receita_per_capita=Avg('rc_24_pc'),
+        total_populacao_00=Sum('populacao00'),
+        total_receita_2000=Sum('rc_2000'),
     )
 
     # Get the count of municipalities in the filtered queryset
@@ -533,6 +535,10 @@ def municipio_details_api(request):
             "receita_corrente": aggregated_data['total_receita_corrente'],
             "receita_per_capita": aggregated_data['avg_receita_per_capita'],
             "diferenca_media": ((aggregated_data['avg_receita_per_capita'] or 0) - national_avg_rc) / national_avg_rc  if national_avg_rc != 0 else 0,
+            "hist_data": {
+                "pop00": aggregated_data['total_populacao_00'] or 0,
+                "rc00": aggregated_data['total_receita_2000'] or 0,
+            }
         }
     }
     
@@ -604,7 +610,7 @@ def _prepare_revenue_item_aggregated(
     field_base: str,      # ex: "imposto_taxas_contribuicoes" (pra casar com total_* no aggregated_data)
     field_path,           # str OU list[str]/tuple[str]
     aggregated_data: dict,
-    queryset,
+    total_population: float, # <--- Recebe a população total em vez do queryset
     value_pc_nac: float,
     is_collapsible: bool = False,
 ):
@@ -613,23 +619,11 @@ def _prepare_revenue_item_aggregated(
     # aceita 1 ou vários paths
     field_paths = [field_path] if isinstance(field_path, str) else list(field_path)
 
-    # soma campos (NULL vira 0)
-    expr_total = reduce(operator.add, [Coalesce(F(p), 0.0) for p in field_paths])
-
-    qs_pc = (
-        queryset
-        .filter(populacao24__gt=0)
-        .annotate(total=expr_total)
-        .filter(total__gt=0)  # tira zeros (e nulos viram 0 por causa do Coalesce)
-        .annotate(
-            pc=ExpressionWrapper(
-                F("total") / F("populacao24"),
-                output_field=FloatField(),
-            )
-        )
-    )
-
-    value_pc = qs_pc.aggregate(avg=Avg("pc"))["avg"] or 0
+    # Nova lógica: calcula pc com base nos valores totais já obtidos na agregação global 
+    # value_abs = total da receita, total_population = tota da pop do grupo filtrado
+    value_pc = 0.0
+    if value_abs and value_abs > 0 and total_population and total_population > 0:
+        value_pc = value_abs / total_population
 
     if value_abs == 0 and value_pc == 0:
         return None
@@ -682,73 +676,121 @@ def nacional_pc_media(fields):
 def conjunto_detalhe_view(request):
     queryset = Municipio.objects.all()
 
-     # Calcular a média nacional de receita per capita para comparação
-    # ITC
-    nacional_med_itc_pc = nacional_pc_media('conta_detalhada__imposto_taxas_contribuicoes')
+    # Calcular a média nacional de receita per capita para comparação usando uma única query
+    
+    # 1. Helper para construir a expressão per capita
+    # A consulta anterior tinha que filtrar por > 0, mas aqui como vamos calcular a média geral
+    # usaremos diretamente as funções Avg() como o Django recomenda para consolidar de uma vez:
+    def avg_pc(campo):
+        return Avg(ExpressionWrapper(F(campo) / F('populacao24'), output_field=FloatField()), filter=Q(**{f'{campo}__gt': 0, 'populacao24__gt': 0}))
 
-    # ITC_IMP
-    nacional_med_imp_pc = nacional_pc_media('conta_especifica__imposto')
+    # 2. Executa UMA ÚNICA query de agregação para pegar todas as médias nacionais
+    medias_nac = Municipio.objects.aggregate(
+        itc_pc = avg_pc('conta_detalhada__imposto_taxas_contribuicoes'),
+        imp_pc = avg_pc('conta_especifica__imposto'),
+        iss_pc = avg_pc('conta_mais_especifica__iss'),
+        iptu_pc = avg_pc('conta_mais_especifica__iptu'),
+        itbi_pc = avg_pc('conta_mais_especifica__itbi'),
+        renda_pc = avg_pc('conta_mais_especifica__imposto_renda'),
+        # Para outros impostos formados por multiplas colunas, a abordagem correta seria somar as colunas no aggregate, 
+        # mas como estamos otimizando as queries e elas dependem do populacao, vamos fazer a expressao completa.
+        outros_impostos_pc = Avg(
+            ExpressionWrapper(
+                (Coalesce(F('conta_mais_especifica__outros_impostos'), 0.0) + 
+                 Coalesce(F('conta_mais_especifica__imposto_icms'), 0.0) + 
+                 Coalesce(F('conta_mais_especifica__imposto_ipva'), 0.0)) / F('populacao24'),
+                output_field=FloatField()
+            ),
+            filter=Q(populacao24__gt=0)
+        ),
+        taxas_pc = avg_pc('conta_especifica__taxas'),
+        taxa_policia_pc = avg_pc('conta_mais_especifica__taxa_policia'),
+        taxa_prestacao_servico_pc = avg_pc('conta_mais_especifica__taxa_prestacao_servico'),
+        outras_taxas_pc = avg_pc('conta_mais_especifica__outras_taxas'),
+        
+        contribuicoes_melhoria_pc = avg_pc('conta_especifica__contribuicoes_melhoria'),
+        contribuicao_melhoria_pavimento_obras_pc = avg_pc('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'),
+        contribuicao_melhoria_agua_potavel_pc = avg_pc('conta_mais_especifica__contribuicao_melhoria_agua_potavel'),
+        contribuicao_melhoria_iluminacao_publica_pc = avg_pc('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
+        outras_contribuicoes_melhoria_pc = avg_pc('conta_mais_especifica__outras_contribuicoes_melhoria'),
 
-    # impostos (mais específico)
-    nacional_med_iss = nacional_pc_media('conta_mais_especifica__iss')
-    nacional_med_iptu = nacional_pc_media('conta_mais_especifica__iptu')
-    nacional_med_itbi = nacional_pc_media('conta_mais_especifica__itbi')
-    nacional_med_renda = nacional_pc_media('conta_mais_especifica__imposto_renda')
+        contribuicoes_pc = avg_pc('conta_detalhada__contribuicoes'),
+        contribuicoes_sociais_pc = avg_pc('conta_especifica__contribuicoes_sociais'),
+        contribuicoes_iluminacao_publica_pc = avg_pc('conta_especifica__contribuicoes_iluminacao_publica'),
+        outras_contribuicoes_pc = avg_pc('conta_especifica__outras_contribuicoes'),
 
-    nacional_med_outros_impostos = nacional_pc_media(['conta_mais_especifica__outros_impostos', 'conta_mais_especifica__imposto_icms', 'conta_mais_especifica__imposto_ipva'])
+        trasnsferencias_correntes_pc = avg_pc('conta_detalhada__transferencias_correntes'),
+        tranferencias_uniao_pc = avg_pc('conta_especifica__tranferencias_uniao'),
+        tranferencias_uniao_fpm_pc = avg_pc('conta_mais_especifica__transferencia_uniao_fpm'),
+        tranferencias_uniao_exploracao_pc = avg_pc('conta_mais_especifica__transferencia_uniao_exploracao'),
+        tranferencias_uniao_sus_pc = avg_pc('conta_mais_especifica__transferencia_uniao_sus'),
+        tranferencias_uniao_fnde_pc = avg_pc('conta_mais_especifica__transferencia_uniao_fnde'),
+        tranferencias_uniao_fundeb_pc = avg_pc('conta_mais_especifica__transferencia_uniao_fundeb'),
+        tranferencias_uniao_fnas_pc = avg_pc('conta_mais_especifica__transferencia_uniao_fnas'),
+        outras_tranferencias_uniao_pc = avg_pc('conta_mais_especifica__outras_transferencias_uniao'),
 
-    # ITC_TAX
-    nacional_med_taxas_pc = nacional_pc_media('conta_especifica__taxas')
-    nacional_med_taxa_policia_pc = nacional_pc_media('conta_mais_especifica__taxa_policia')
-    nacional_med_taxa_prestacao_servico_pc = nacional_pc_media('conta_mais_especifica__taxa_prestacao_servico')
-    nacional_med_outras_taxas_pc = nacional_pc_media('conta_mais_especifica__outras_taxas')
+        tranferencias_estados_pc = avg_pc('conta_especifica__tranferencias_estados'),
+        transferencias_estado_icms_pc = avg_pc('conta_mais_especifica__transferencia_estado_icms'),
+        transferencias_estado_ipva_pc = avg_pc('conta_mais_especifica__transferencia_estado_ipva'),
+        transferencias_estado_exploracao_pc = avg_pc('conta_mais_especifica__transferencia_estado_exploracao'),
+        transferencias_estado_sus_pc = avg_pc('conta_mais_especifica__transferencia_estado_sus'),
+        transferencias_estado_assistencia_pc = avg_pc('conta_mais_especifica__transferencia_estado_assistencia'),
+        outras_transferencias_estado_pc = avg_pc('conta_mais_especifica__outras_transferencias_estado'),
 
-    # ITC_CON
-    nacional_med_contribuicoes_melhoria_pc = nacional_pc_media('conta_especifica__contribuicoes_melhoria')
-    nacional_med_contribuicao_melhoria_pavimento_obras_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')
-    nacional_med_contribuicao_melhoria_agua_potavel_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_agua_potavel')
-    nacional_med_contribuicao_melhoria_iluminacao_publica_pc = nacional_pc_media('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')
-    nacional_med_outras_contribuicoes_melhoria_pc = nacional_pc_media('conta_mais_especifica__outras_contribuicoes_melhoria')
+        outras_tranferencias_pc = avg_pc('conta_especifica__outras_tranferencias'),
 
-    # CON
-    nacional_med_contribuicoes_pc = nacional_pc_media('conta_detalhada__contribuicoes')
-    nacional_med_contribuicoes_sociais_pc = nacional_pc_media('conta_especifica__contribuicoes_sociais')
-    nacional_med_contribuicoes_iluminacao_publica_pc = nacional_pc_media('conta_especifica__contribuicoes_iluminacao_publica')
-    nacional_med_outras_contribuicoes_pc = nacional_pc_media('conta_especifica__outras_contribuicoes')
+        outras_receitas_pc = avg_pc('conta_detalhada__outras_receita'),
+        receita_patrimonial_pc = avg_pc('conta_especifica__receita_patrimonial'),
+        receita_agropecuaria_pc = avg_pc('conta_especifica__receita_agropecuaria'),
+        receita_industrial_pc = avg_pc('conta_especifica__receita_industrial'),
+        receita_servicos_pc = avg_pc('conta_especifica__receita_servicos'),
+        outras_receitas_outras_pc = avg_pc('conta_especifica__outras_receitas'),
+    )
 
-    # TRF
-    nacional_med_trasnsferencias_correntes_pc = nacional_pc_media('conta_detalhada__transferencias_correntes')
-
-    # TRF_UNI
-    nacional_med_tranferencias_uniao_pc = nacional_pc_media('conta_especifica__tranferencias_uniao')
-    nacional_med_tranferencias_uniao_fpm_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpm')
-    #nacional_med_tranferencias_uniao_fpe_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fpe')
-    nacional_med_tranferencias_uniao_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_exploracao')
-    nacional_med_tranferencias_uniao_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_sus')
-    nacional_med_tranferencias_uniao_fnde_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnde')
-    nacional_med_tranferencias_uniao_fundeb_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fundeb')
-    nacional_med_tranferencias_uniao_fnas_pc = nacional_pc_media('conta_mais_especifica__transferencia_uniao_fnas')
-    nacional_med_outras_tranferencias_uniao_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_uniao')
-
-    # TRF_EST
-    nacional_med_tranferencias_estados_pc = nacional_pc_media('conta_especifica__tranferencias_estados')
-    nacional_med_transferencias_estado_icms_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_icms')
-    nacional_med_transferencias_estado_ipva_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_ipva')
-    nacional_med_transferencias_estado_exploracao_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_exploracao')
-    nacional_med_transferencias_estado_sus_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_sus')
-    nacional_med_transferencias_estado_assistencia_pc = nacional_pc_media('conta_mais_especifica__transferencia_estado_assistencia')
-    nacional_med_outras_transferencias_estado_pc = nacional_pc_media('conta_mais_especifica__outras_transferencias_estado')
-
-    # TRF_OUR
-    nacional_med_outras_tranferencias_pc = nacional_pc_media('conta_especifica__outras_tranferencias')
-
-    # OUR
-    nacional_med_outras_receitas_pc = nacional_pc_media('conta_detalhada__outras_receita')
-    nacional_med_receita_patrimonial_pc = nacional_pc_media('conta_especifica__receita_patrimonial')
-    nacional_med_receita_agropecuaria_pc = nacional_pc_media('conta_especifica__receita_agropecuaria')
-    nacional_med_receita_industrial_pc = nacional_pc_media('conta_especifica__receita_industrial')
-    nacional_med_receita_servicos_pc = nacional_pc_media('conta_especifica__receita_servicos')
-    nacional_med_outras_receitas_outras_pc = nacional_pc_media('conta_especifica__outras_receitas')
+    # 3. Desempacotando o dicionario nas variaveis originais (fallback com 0)
+    nacional_med_itc_pc = medias_nac['itc_pc'] or 0
+    nacional_med_imp_pc = medias_nac['imp_pc'] or 0
+    nacional_med_iss = medias_nac['iss_pc'] or 0
+    nacional_med_iptu = medias_nac['iptu_pc'] or 0
+    nacional_med_itbi = medias_nac['itbi_pc'] or 0
+    nacional_med_renda = medias_nac['renda_pc'] or 0
+    nacional_med_outros_impostos = medias_nac['outros_impostos_pc'] or 0
+    nacional_med_taxas_pc = medias_nac['taxas_pc'] or 0
+    nacional_med_taxa_policia_pc = medias_nac['taxa_policia_pc'] or 0
+    nacional_med_taxa_prestacao_servico_pc = medias_nac['taxa_prestacao_servico_pc'] or 0
+    nacional_med_outras_taxas_pc = medias_nac['outras_taxas_pc'] or 0
+    nacional_med_contribuicoes_melhoria_pc = medias_nac['contribuicoes_melhoria_pc'] or 0
+    nacional_med_contribuicao_melhoria_pavimento_obras_pc = medias_nac['contribuicao_melhoria_pavimento_obras_pc'] or 0
+    nacional_med_contribuicao_melhoria_agua_potavel_pc = medias_nac['contribuicao_melhoria_agua_potavel_pc'] or 0
+    nacional_med_contribuicao_melhoria_iluminacao_publica_pc = medias_nac['contribuicao_melhoria_iluminacao_publica_pc'] or 0
+    nacional_med_outras_contribuicoes_melhoria_pc = medias_nac['outras_contribuicoes_melhoria_pc'] or 0
+    nacional_med_contribuicoes_pc = medias_nac['contribuicoes_pc'] or 0
+    nacional_med_contribuicoes_sociais_pc = medias_nac['contribuicoes_sociais_pc'] or 0
+    nacional_med_contribuicoes_iluminacao_publica_pc = medias_nac['contribuicoes_iluminacao_publica_pc'] or 0
+    nacional_med_outras_contribuicoes_pc = medias_nac['outras_contribuicoes_pc'] or 0
+    nacional_med_trasnsferencias_correntes_pc = medias_nac['trasnsferencias_correntes_pc'] or 0
+    nacional_med_tranferencias_uniao_pc = medias_nac['tranferencias_uniao_pc'] or 0
+    nacional_med_tranferencias_uniao_fpm_pc = medias_nac['tranferencias_uniao_fpm_pc'] or 0
+    nacional_med_tranferencias_uniao_exploracao_pc = medias_nac['tranferencias_uniao_exploracao_pc'] or 0
+    nacional_med_tranferencias_uniao_sus_pc = medias_nac['tranferencias_uniao_sus_pc'] or 0
+    nacional_med_tranferencias_uniao_fnde_pc = medias_nac['tranferencias_uniao_fnde_pc'] or 0
+    nacional_med_tranferencias_uniao_fundeb_pc = medias_nac['tranferencias_uniao_fundeb_pc'] or 0
+    nacional_med_tranferencias_uniao_fnas_pc = medias_nac['tranferencias_uniao_fnas_pc'] or 0
+    nacional_med_outras_tranferencias_uniao_pc = medias_nac['outras_tranferencias_uniao_pc'] or 0
+    nacional_med_tranferencias_estados_pc = medias_nac['tranferencias_estados_pc'] or 0
+    nacional_med_transferencias_estado_icms_pc = medias_nac['transferencias_estado_icms_pc'] or 0
+    nacional_med_transferencias_estado_ipva_pc = medias_nac['transferencias_estado_ipva_pc'] or 0
+    nacional_med_transferencias_estado_exploracao_pc = medias_nac['transferencias_estado_exploracao_pc'] or 0
+    nacional_med_transferencias_estado_sus_pc = medias_nac['transferencias_estado_sus_pc'] or 0
+    nacional_med_transferencias_estado_assistencia_pc = medias_nac['transferencias_estado_assistencia_pc'] or 0
+    nacional_med_outras_transferencias_estado_pc = medias_nac['outras_transferencias_estado_pc'] or 0
+    nacional_med_outras_tranferencias_pc = medias_nac['outras_tranferencias_pc'] or 0
+    nacional_med_outras_receitas_pc = medias_nac['outras_receitas_pc'] or 0
+    nacional_med_receita_patrimonial_pc = medias_nac['receita_patrimonial_pc'] or 0
+    nacional_med_receita_agropecuaria_pc = medias_nac['receita_agropecuaria_pc'] or 0
+    nacional_med_receita_industrial_pc = medias_nac['receita_industrial_pc'] or 0
+    nacional_med_receita_servicos_pc = medias_nac['receita_servicos_pc'] or 0
+    nacional_med_outras_receitas_outras_pc = medias_nac['outras_receitas_outras_pc'] or 0
 
     # --- filtros ---
     uf_filtro = request.GET.get('uf')
@@ -800,6 +842,9 @@ def conjunto_detalhe_view(request):
     # --- agregações ---
     aggregated_data = queryset.aggregate(
         total_receita_corrente=Sum('rc_2024'),
+        total_receita_2000=Sum('rc_2000'),
+        total_populacao_24=Sum('populacao24'),
+        total_populacao_00=Sum('populacao00'),
 
         total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
         total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
@@ -862,7 +907,15 @@ def conjunto_detalhe_view(request):
 
     # ------- revenue_tree (mantive sua lógica original) -------
     revenue_tree = []
-    population = queryset.aggregate(total_populacao=Sum('populacao24'))['total_populacao'] or 0
+    population = aggregated_data['total_populacao_24'] or 0
+    pop00 = aggregated_data['total_populacao_00'] or 0
+    rc24 = aggregated_data['total_receita_corrente'] or 0
+    rc00 = aggregated_data['total_receita_2000'] or 0
+
+    rc_24_pc_agregado = rc24 / population if population > 0 else 0
+    rc_00_pc_agregado = rc00 / pop00 if pop00 > 0 else 0
+    delta_rc_pc = ((rc_24_pc_agregado / rc_00_pc_agregado) - 1) * 100 if rc_00_pc_agregado > 0 else 0
+    delta_pop = ((population / pop00) - 1) * 100 if pop00 > 0 else 0
 
     # ---------------------------
     # ITC (Impostos, Taxas e Contribuições de Melhoria)
@@ -872,7 +925,7 @@ def conjunto_detalhe_view(request):
         "imposto_taxas_contribuicoes",
         "conta_detalhada__imposto_taxas_contribuicoes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_itc_pc,
         is_collapsible=True,
     )
@@ -886,7 +939,7 @@ def conjunto_detalhe_view(request):
             "imposto",
             "conta_especifica__imposto",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_imp_pc,
             is_collapsible=True,
         )
@@ -901,7 +954,7 @@ def conjunto_detalhe_view(request):
                             "iptu",
                             "conta_mais_especifica__iptu",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_iptu,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -909,7 +962,7 @@ def conjunto_detalhe_view(request):
                             "itbi",
                             "conta_mais_especifica__itbi",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_itbi,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -917,7 +970,7 @@ def conjunto_detalhe_view(request):
                             "iss",
                             "conta_mais_especifica__iss",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_iss,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -925,7 +978,7 @@ def conjunto_detalhe_view(request):
                             "imposto_renda",
                             "conta_mais_especifica__imposto_renda",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_renda,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -933,7 +986,7 @@ def conjunto_detalhe_view(request):
                             "outros_impostos",
                             ["conta_mais_especifica__outros_impostos", "conta_mais_especifica__imposto_icms", "conta_mais_especifica__imposto_ipva"],
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outros_impostos,
                         ),
                     ],
@@ -949,7 +1002,7 @@ def conjunto_detalhe_view(request):
             "taxas",
             "conta_especifica__taxas",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_taxas_pc,
             is_collapsible=True,
         )
@@ -964,7 +1017,7 @@ def conjunto_detalhe_view(request):
                             "taxa_policia",
                             "conta_mais_especifica__taxa_policia",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_taxa_policia_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -972,7 +1025,7 @@ def conjunto_detalhe_view(request):
                             "taxa_prestacao_servico",
                             "conta_mais_especifica__taxa_prestacao_servico",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_taxa_prestacao_servico_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -980,7 +1033,7 @@ def conjunto_detalhe_view(request):
                             "outras_taxas",
                             "conta_mais_especifica__outras_taxas",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_taxas_pc,
                         ),
                     ],
@@ -996,7 +1049,7 @@ def conjunto_detalhe_view(request):
             "contribuicoes_melhoria",
             "conta_especifica__contribuicoes_melhoria",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_contribuicoes_melhoria_pc,
             is_collapsible=True,
         )
@@ -1011,7 +1064,7 @@ def conjunto_detalhe_view(request):
                             "contribuicao_melhoria_pavimento_obras",
                             "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_pavimento_obras_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1019,7 +1072,7 @@ def conjunto_detalhe_view(request):
                             "contribuicao_melhoria_agua_potavel",
                             "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_agua_potavel_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1027,7 +1080,7 @@ def conjunto_detalhe_view(request):
                             "contribuicao_melhoria_iluminacao_publica",
                             "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_iluminacao_publica_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1035,7 +1088,7 @@ def conjunto_detalhe_view(request):
                             "outras_contribuicoes_melhoria",
                             "conta_mais_especifica__outras_contribuicoes_melhoria",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_contribuicoes_melhoria_pc,
                         ),
                     ],
@@ -1053,7 +1106,7 @@ def conjunto_detalhe_view(request):
         "contribuicoes",
         "conta_detalhada__contribuicoes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_contribuicoes_pc,
         is_collapsible=True,
     )
@@ -1068,7 +1121,7 @@ def conjunto_detalhe_view(request):
                         "contribuicoes_sociais",
                         "conta_especifica__contribuicoes_sociais",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_contribuicoes_sociais_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1076,7 +1129,7 @@ def conjunto_detalhe_view(request):
                         "contribuicoes_iluminacao_publica",
                         "conta_especifica__contribuicoes_iluminacao_publica",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_contribuicoes_iluminacao_publica_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1084,7 +1137,7 @@ def conjunto_detalhe_view(request):
                         "outras_contribuicoes",
                         "conta_especifica__outras_contribuicoes",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_outras_contribuicoes_pc,
                     ),
                 ],
@@ -1100,7 +1153,7 @@ def conjunto_detalhe_view(request):
         "transferencias_correntes",
         "conta_detalhada__transferencias_correntes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_trasnsferencias_correntes_pc,
         is_collapsible=True,
     )
@@ -1114,7 +1167,7 @@ def conjunto_detalhe_view(request):
             "tranferencias_uniao",
             "conta_especifica__tranferencias_uniao",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_tranferencias_uniao_pc,
             is_collapsible=True,
         )
@@ -1129,7 +1182,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_fpm",
                             "conta_mais_especifica__transferencia_uniao_fpm",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fpm_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1137,7 +1190,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_exploracao",
                             "conta_mais_especifica__transferencia_uniao_exploracao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_exploracao_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1145,7 +1198,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_sus",
                             "conta_mais_especifica__transferencia_uniao_sus",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_sus_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1153,7 +1206,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_fnde",
                             "conta_mais_especifica__transferencia_uniao_fnde",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fnde_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1161,7 +1214,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_fundeb",
                             "conta_mais_especifica__transferencia_uniao_fundeb",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fundeb_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1169,7 +1222,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_uniao_fnas",
                             "conta_mais_especifica__transferencia_uniao_fnas",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fnas_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1177,7 +1230,7 @@ def conjunto_detalhe_view(request):
                             "outras_transferencias_uniao",
                             "conta_mais_especifica__outras_transferencias_uniao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_tranferencias_uniao_pc,
                         ),
                     ],
@@ -1193,7 +1246,7 @@ def conjunto_detalhe_view(request):
             "tranferencias_estados",
             "conta_especifica__tranferencias_estados",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_tranferencias_estados_pc,
             is_collapsible=True,
         )
@@ -1208,7 +1261,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_estado_icms",
                             "conta_mais_especifica__transferencia_estado_icms",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_icms_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1216,7 +1269,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_estado_ipva",
                             "conta_mais_especifica__transferencia_estado_ipva",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_ipva_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1224,7 +1277,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_estado_exploracao",
                             "conta_mais_especifica__transferencia_estado_exploracao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_exploracao_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1232,7 +1285,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_estado_sus",
                             "conta_mais_especifica__transferencia_estado_sus",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_sus_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1240,7 +1293,7 @@ def conjunto_detalhe_view(request):
                             "transferencia_estado_assistencia",
                             "conta_mais_especifica__transferencia_estado_assistencia",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_assistencia_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1248,7 +1301,7 @@ def conjunto_detalhe_view(request):
                             "outras_transferencias_estado",
                             "conta_mais_especifica__outras_transferencias_estado",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_transferencias_estado_pc,
                         ),
                     ],
@@ -1261,7 +1314,7 @@ def conjunto_detalhe_view(request):
             "outras_tranferencias",
             "conta_especifica__outras_tranferencias",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_outras_tranferencias_pc,
         )
         if outras_trf:
@@ -1277,7 +1330,7 @@ def conjunto_detalhe_view(request):
         "outras_receita",
         "conta_detalhada__outras_receita",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_outras_receitas_pc,
         is_collapsible=True,
     )
@@ -1292,7 +1345,7 @@ def conjunto_detalhe_view(request):
                         "receita_patrimonial",
                         "conta_especifica__receita_patrimonial",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_patrimonial_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1300,7 +1353,7 @@ def conjunto_detalhe_view(request):
                         "receita_agropecuaria",
                         "conta_especifica__receita_agropecuaria",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_agropecuaria_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1308,7 +1361,7 @@ def conjunto_detalhe_view(request):
                         "receita_industrial",
                         "conta_especifica__receita_industrial",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_industrial_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1316,7 +1369,7 @@ def conjunto_detalhe_view(request):
                         "receita_servicos",
                         "conta_especifica__receita_servicos",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_servicos_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1324,7 +1377,7 @@ def conjunto_detalhe_view(request):
                         "outras_receitas",
                         "conta_especifica__outras_receitas",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_outras_receitas_outras_pc,
                     ),
                 ],
@@ -1525,6 +1578,16 @@ def conjunto_detalhe_view(request):
         'chart_data_json': chart_data,
         'data_json': data,
         'data_f_json': data_f,
+        'hist_data': {
+            'pop24': population,
+            'pop00': pop00,
+            'rc24': rc24,
+            'rc00': rc00,
+            'rc24_pc': rc_24_pc_agregado,
+            'rc00_pc': rc_00_pc_agregado,
+            'delta_rc_pc': delta_rc_pc,
+            'delta_pop': delta_pop,
+        }
     }
 
     print(revenue_tree)
@@ -1645,6 +1708,9 @@ def conjunto_fiscal_api(request):
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
         total_receita_corrente=Sum('rc_2024'),
+        total_receita_2000=Sum('rc_2000'),
+        total_populacao_24=Sum('populacao24'),
+        total_populacao_00=Sum('populacao00'),
         total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
         total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
         total_transferencias_correntes=Sum('conta_detalhada__transferencias_correntes'),
@@ -1690,7 +1756,15 @@ def conjunto_fiscal_api(request):
         total_outras_transferencias_estado=Sum('conta_mais_especifica__outras_transferencias_estado'),
     )
 
-    population = queryset.aggregate(total_populacao=Sum('populacao24'))['total_populacao'] or 0
+    population = aggregated_data['total_populacao_24'] or 0
+    pop00 = aggregated_data['total_populacao_00'] or 0
+    rc24 = aggregated_data['total_receita_corrente'] or 0
+    rc00 = aggregated_data['total_receita_2000'] or 0
+
+    rc_24_pc_agregado = rc24 / population if population > 0 else 0
+    rc_00_pc_agregado = rc00 / pop00 if pop00 > 0 else 0
+    delta_rc_pc = ((rc_24_pc_agregado / rc_00_pc_agregado) - 1) * 100 if rc_00_pc_agregado > 0 else 0
+    delta_pop = ((population / pop00) - 1) * 100 if pop00 > 0 else 0
 
 
     revenue_tree = []
@@ -1703,7 +1777,7 @@ def conjunto_fiscal_api(request):
         "imposto_taxas_contribuicoes",
         "conta_detalhada__imposto_taxas_contribuicoes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_itc_pc,
         is_collapsible=True,
     )
@@ -1717,7 +1791,7 @@ def conjunto_fiscal_api(request):
             "imposto",
             "conta_especifica__imposto",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_imp_pc,
             is_collapsible=True,
         )
@@ -1732,7 +1806,7 @@ def conjunto_fiscal_api(request):
                             "iptu",
                             "conta_mais_especifica__iptu",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_iptu,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1740,7 +1814,7 @@ def conjunto_fiscal_api(request):
                             "itbi",
                             "conta_mais_especifica__itbi",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_itbi,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1748,7 +1822,7 @@ def conjunto_fiscal_api(request):
                             "iss",
                             "conta_mais_especifica__iss",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_iss,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1756,7 +1830,7 @@ def conjunto_fiscal_api(request):
                             "imposto_renda",
                             "conta_mais_especifica__imposto_renda",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_renda,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1764,7 +1838,7 @@ def conjunto_fiscal_api(request):
                             "outros_impostos",
                             ["conta_mais_especifica__outros_impostos", "conta_mais_especifica__imposto_icms", "conta_mais_especifica__imposto_ipva"],
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outros_impostos,
                         ),
                     ],
@@ -1780,7 +1854,7 @@ def conjunto_fiscal_api(request):
             "taxas",
             "conta_especifica__taxas",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_taxas_pc,
             is_collapsible=True,
         )
@@ -1795,7 +1869,7 @@ def conjunto_fiscal_api(request):
                             "taxa_policia",
                             "conta_mais_especifica__taxa_policia",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_taxa_policia_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1803,7 +1877,7 @@ def conjunto_fiscal_api(request):
                             "taxa_prestacao_servico",
                             "conta_mais_especifica__taxa_prestacao_servico",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_taxa_prestacao_servico_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1811,7 +1885,7 @@ def conjunto_fiscal_api(request):
                             "outras_taxas",
                             "conta_mais_especifica__outras_taxas",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_taxas_pc,
                         ),
                     ],
@@ -1827,7 +1901,7 @@ def conjunto_fiscal_api(request):
             "contribuicoes_melhoria",
             "conta_especifica__contribuicoes_melhoria",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_contribuicoes_melhoria_pc,
             is_collapsible=True,
         )
@@ -1842,7 +1916,7 @@ def conjunto_fiscal_api(request):
                             "contribuicao_melhoria_pavimento_obras",
                             "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_pavimento_obras_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1850,7 +1924,7 @@ def conjunto_fiscal_api(request):
                             "contribuicao_melhoria_agua_potavel",
                             "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_agua_potavel_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1858,7 +1932,7 @@ def conjunto_fiscal_api(request):
                             "contribuicao_melhoria_iluminacao_publica",
                             "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_contribuicao_melhoria_iluminacao_publica_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1866,7 +1940,7 @@ def conjunto_fiscal_api(request):
                             "outras_contribuicoes_melhoria",
                             "conta_mais_especifica__outras_contribuicoes_melhoria",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_contribuicoes_melhoria_pc,
                         ),
                     ],
@@ -1884,7 +1958,7 @@ def conjunto_fiscal_api(request):
         "contribuicoes",
         "conta_detalhada__contribuicoes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_contribuicoes_pc,
         is_collapsible=True,
     )
@@ -1899,7 +1973,7 @@ def conjunto_fiscal_api(request):
                         "contribuicoes_sociais",
                         "conta_especifica__contribuicoes_sociais",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_contribuicoes_sociais_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1907,7 +1981,7 @@ def conjunto_fiscal_api(request):
                         "contribuicoes_iluminacao_publica",
                         "conta_especifica__contribuicoes_iluminacao_publica",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_contribuicoes_iluminacao_publica_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -1915,7 +1989,7 @@ def conjunto_fiscal_api(request):
                         "outras_contribuicoes",
                         "conta_especifica__outras_contribuicoes",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_outras_contribuicoes_pc,
                     ),
                 ],
@@ -1931,7 +2005,7 @@ def conjunto_fiscal_api(request):
         "transferencias_correntes",
         "conta_detalhada__transferencias_correntes",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_trasnsferencias_correntes_pc,
         is_collapsible=True,
     )
@@ -1945,7 +2019,7 @@ def conjunto_fiscal_api(request):
             "tranferencias_uniao",
             "conta_especifica__tranferencias_uniao",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_tranferencias_uniao_pc,
             is_collapsible=True,
         )
@@ -1960,7 +2034,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_fpm",
                             "conta_mais_especifica__transferencia_uniao_fpm",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fpm_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1968,7 +2042,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_exploracao",
                             "conta_mais_especifica__transferencia_uniao_exploracao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_exploracao_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1976,7 +2050,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_sus",
                             "conta_mais_especifica__transferencia_uniao_sus",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_sus_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1984,7 +2058,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_fnde",
                             "conta_mais_especifica__transferencia_uniao_fnde",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fnde_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -1992,7 +2066,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_fundeb",
                             "conta_mais_especifica__transferencia_uniao_fundeb",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fundeb_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2000,7 +2074,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_uniao_fnas",
                             "conta_mais_especifica__transferencia_uniao_fnas",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_tranferencias_uniao_fnas_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2008,7 +2082,7 @@ def conjunto_fiscal_api(request):
                             "outras_transferencias_uniao",
                             "conta_mais_especifica__outras_transferencias_uniao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_tranferencias_uniao_pc,
                         ),
                     ],
@@ -2024,7 +2098,7 @@ def conjunto_fiscal_api(request):
             "tranferencias_estados",
             "conta_especifica__tranferencias_estados",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_tranferencias_estados_pc,
             is_collapsible=True,
         )
@@ -2039,7 +2113,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_estado_icms",
                             "conta_mais_especifica__transferencia_estado_icms",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_icms_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2047,7 +2121,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_estado_ipva",
                             "conta_mais_especifica__transferencia_estado_ipva",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_ipva_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2055,7 +2129,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_estado_exploracao",
                             "conta_mais_especifica__transferencia_estado_exploracao",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_exploracao_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2063,7 +2137,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_estado_sus",
                             "conta_mais_especifica__transferencia_estado_sus",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_sus_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2071,7 +2145,7 @@ def conjunto_fiscal_api(request):
                             "transferencia_estado_assistencia",
                             "conta_mais_especifica__transferencia_estado_assistencia",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_transferencias_estado_assistencia_pc,
                         ),
                         _prepare_revenue_item_aggregated(
@@ -2079,7 +2153,7 @@ def conjunto_fiscal_api(request):
                             "outras_transferencias_estado",
                             "conta_mais_especifica__outras_transferencias_estado",
                             aggregated_data,
-                            queryset,
+                            population,
                             nacional_med_outras_transferencias_estado_pc,
                         ),
                     ],
@@ -2092,7 +2166,7 @@ def conjunto_fiscal_api(request):
             "outras_tranferencias",
             "conta_especifica__outras_tranferencias",
             aggregated_data,
-            queryset,
+                            population,
             nacional_med_outras_tranferencias_pc,
         )
         if outras_trf:
@@ -2108,7 +2182,7 @@ def conjunto_fiscal_api(request):
         "outras_receita",
         "conta_detalhada__outras_receita",
         aggregated_data,
-        queryset,
+                            population,
         nacional_med_outras_receitas_pc,
         is_collapsible=True,
     )
@@ -2123,7 +2197,7 @@ def conjunto_fiscal_api(request):
                         "receita_patrimonial",
                         "conta_especifica__receita_patrimonial",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_patrimonial_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -2131,7 +2205,7 @@ def conjunto_fiscal_api(request):
                         "receita_agropecuaria",
                         "conta_especifica__receita_agropecuaria",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_agropecuaria_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -2139,7 +2213,7 @@ def conjunto_fiscal_api(request):
                         "receita_industrial",
                         "conta_especifica__receita_industrial",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_industrial_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -2147,7 +2221,7 @@ def conjunto_fiscal_api(request):
                         "receita_servicos",
                         "conta_especifica__receita_servicos",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_receita_servicos_pc,
                     ),
                     _prepare_revenue_item_aggregated(
@@ -2155,7 +2229,7 @@ def conjunto_fiscal_api(request):
                         "outras_receitas",
                         "conta_especifica__outras_receitas",
                         aggregated_data,
-                        queryset,
+                            population,
                         nacional_med_outras_receitas_outras_pc,
                     ),
                 ],
@@ -2166,7 +2240,19 @@ def conjunto_fiscal_api(request):
     # Renderiza o template parcial e retorna como JSON
     rendered_html = render_to_string('detail/partials/_fiscal_details.html', {'revenue_tree': revenue_tree, 'level': 0})
     
-    return JsonResponse({'html': rendered_html})
+    return JsonResponse({
+        'html': rendered_html,
+        'hist_data': {
+            'pop24': population,
+            'pop00': pop00,
+            'rc24': rc24,
+            'rc00': rc00,
+            'rc24_pc': rc_24_pc_agregado,
+            'rc00_pc': rc_00_pc_agregado,
+            'delta_rc_pc': delta_rc_pc,
+            'delta_pop': delta_pop,
+        }
+    })
 
 
 def conjunto_chart_api(request):
