@@ -1,275 +1,82 @@
 # 📊 Subfinanciados
 
-Sistema Django para **análise de dados financeiros municipais**, com visualização detalhada e mapa interativo, voltado para identificar e analisar municípios subfinanciados a partir de dados contábeis e estatísticos.
+> **Inteligência Fiscal e Populacional para Municípios Brasileiros.**
+
+O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para análise, processamento e visualização de dados fiscais dos municípios brasileiros. O sistema transforma planilhas complexas em dashboards interativos, permitindo identificar disparidades de receita, calcular percentis nacionais e visualizar a saúde financeira municipal por meio de mapas geográficos.
 
 ---
 
-## 🚀 Funcionalidades Principais
+## ✨ Destaques do Sistema
 
-- **📥 Importação de dados** a partir de planilhas Excel (`base_datas/`) para o banco de dados SQLite.
-- **🏠 Página inicial (`home`)** com visão geral e filtros de busca.
-- **📄 Página de detalhes (`detail`)** com informações financeiras de cada município.
-- **🗺 Mapa interativo (`map`)** para visualização geográfica dos municípios.
-- **📊 Cálculo de percentis e métricas** a partir de dados importados.
-- **🛠 Comandos customizados do Django** para processar e carregar dados automaticamente.
-
----
-
-## 🗂 Estrutura do Projeto
-
-```
-Subfinanciados/
- ├── base_datas/                # Planilhas Excel usadas para importação de dados
- ├── base_statics/              # CSS e arquivos estáticos globais
- ├── base_templates/            # Templates HTML globais
- ├── config/                    # Configuração principal do Django
- ├── home/                      # App inicial + importação de dados
- ├── detail/                    # App para exibir detalhes dos municípios
- ├── map/                       # App para exibir o mapa interativo
- ├── db.sqlite3                 # Banco de dados SQLite
- ├── manage.py                  # Comando principal Django
- └── requirements.txt           # Dependências do projeto
-```
-
-### 📁 Pastas importantes
-
-- **`base_datas/`** → Contém os arquivos de entrada no formato `.xls` ou `.xlsx`:
-  - `Composicao_RM_2023.xls`
-  - `conta_especifica_detalhada.xlsx`
-  - `conta_gerais_detalhada.xlsx`
-  - `conta_mais_especifica_detalhada.xlsx`
-  - `percentis_especificos_detalhado.xlsx`
-  - `percentis_gerais_detalhado.xlsx`
-  - `percentis_mais_especificos_detalhado.xlsx`
-  - `rc_23.xlsx`
-  - `receitas_contas.xlsx`
-
-- **`home/management/commands/`** → Scripts de importação de dados, executados via:
-  ```bash
-  python manage.py nome_do_comando
-  ```
-
-- **`templates/`** → Contém os templates HTML de cada app.
-- **`static/`** → Contém arquivos CSS e JavaScript.
+*   **⚡ DNA Financeiro:** Árvore de receitas interativa que detalha cada rubrica contábil com comparativos de média e mediana nacional.
+*   **🗺️ Análise Geográfica:** Integração com Mapbox para visualização espacial dos dados fiscais e populacionais.
+*   **📊 Insights Agregados:** Ferramentas para análise de conjuntos de municípios (por região ou porte), com suporte a valores *Per Capita* e absolutos.
+*   **⚙️ Data Engine:** Pipeline automatizado de importação e processamento de dados (`.xlsx`/`.xls`) com validação de integridade.
+*   **🎨 Design Premium:** Interface inspirada em sistemas modernos (iOS/MacOS), com Bento Cards, micro-interações e suporte a WhiteNoise.
 
 ---
 
-## 📥 Importando Dados
+## 🛠️ Stack Tecnológica
 
-Os dados são importados via **comandos customizados**:
-
-```bash
-python manage.py import_accounts                   # Contas gerais
-python manage.py import_detail_accounts            # Contas detalhadas
-python manage.py import_rm                         # Composição regional
-python manage.py import_specific_accounts          # Contas específicas
-python manage.py import_specific_detailed_accounts # Contas específicas detalhadas
-```
-
-> ⚠ **Importante:** Antes de rodar, coloque todos os arquivos de entrada corretos em `base_datas/`.
+![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Mapbox](https://img.shields.io/badge/Mapbox-000000?style=for-the-badge&logo=mapbox&logoColor=white)
 
 ---
 
-## 💻 Como Rodar o Projeto
+## 🚀 Como Começar
 
-1. **Clonar o repositório**
-```bash
-git clone <url-do-repo>
-cd Subfinanciados
-```
+### Pré-requisitos
+*   Python 3.10+
+*   Ambiente virtual (venv)
 
-2. **Criar e ativar o ambiente virtual**
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate   # Windows
-```
-
-3. **Instalar dependências**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Aplicar migrações**
-```bash
-python manage.py migrate
-```
-
-5. **Rodar o servidor**
-```bash
-python manage.py runserver
-```
-
-6. **Acessar o sistema**
-```
-http://127.0.0.1:8000/
-```
+### Instalação Rápida
+1.  **Clone o projeto e entre na pasta:**
+    ```bash
+    git clone <url-do-repo>
+    cd Subfinanciados
+    ```
+2.  **Configure o ambiente:**
+    ```bash
+    python -m venv venv
+    ./venv/Scripts/activate  # Windows
+    pip install -r requirements.txt
+    ```
+3.  **Prepare o Banco e Estáticos:**
+    ```bash
+    python manage.py migrate
+    python manage.py collectstatic
+    ```
+4.  **Inicie o Servidor:**
+    ```bash
+    python manage.py runserver
+    ```
 
 ---
 
-## 🗺 Uso do Mapa
+## 📈 Processamento de Dados
 
-O módulo `map/` permite visualizar no mapa:
-- Localização geográfica dos municípios
-- Status de financiamento
-- Dados resumidos ao clicar em um ponto
+O sistema utiliza comandos customizados para digerir as planilhas localizadas em `base_datas/`.
 
-O mapa é alimentado pelos dados importados e pode ser customizado para exibir filtros.
-
----
-
-## 🔍 Uso da Página de Detalhes
-
-O módulo `detail/` exibe:
-- Receita por conta
-- Percentis por município
-- Evolução histórica
-- Comparações com outros municípios
-
-A URL segue o formato:
-```
-/detail/<id_municipio>/
-```
+| Comando | Descrição |
+| :--- | :--- |
+| `import_accounts` | Importação das contas gerais e estruturais. |
+| `import_detail_accounts` | Dados detalhados de receitas por município. |
+| `import_rm` | Composição das Regiões Metropolitanas. |
+| `calculate_percentiles` | Processamento estatístico de rankings nacionais. |
 
 ---
 
-## 📌 Tecnologias Utilizadas
+## 🤝 Desenvolvimento e Contribuição
 
-- **Django** → Backend e gerenciamento do projeto
-- **SQLite** → Banco de dados local
-- **Bootstrap** → Layout responsivo
-- **JavaScript** → Interatividade no mapa e gráficos
-- **Pandas** → Leitura e manipulação de planilhas Excel
-- **Leaflet.js** (ou similar) → Mapa interativo
+Para manter a integridade e uniformidade do projeto, seguimos padrões rigorosos de desenvolvimento.
+
+*   **Commits:** Seguimos o padrão [Conventional Commits](https://www.conventionalcommits.org/).
+*   **Branching:** Nunca trabalhe diretamente na branch principal. Use `feat/` ou `fix/`.
+*   **Fluxo Multi-Agente:** Consulte o arquivo [GEMINI.md](./GEMINI.md) para diretrizes específicas de coordenação entre agentes e regras de branch por tarefa.
 
 ---
 
-## 👨‍💻 Comandos Úteis para Desenvolvimento
-
-- Criar superusuário:
-```bash
-python manage.py createsuperuser
-```
-- Listar comandos disponíveis:
-```bash
-python manage.py help
-```
-- Executar servidor:
-```bash
-python manage.py runserver
-```
-
-## 👨‍💻 Comandos GIT para Desenvolvimento
-- Verificar status da branch e logs:
-```bash
-git status                # Mostra mudanças não commitadas e estado atual
-git log                   # Histórico completo de commits 
-```
-- Trabalhando com alterações:
-```bash
-git add arquivo.ext       # Adiciona arquivo específico à área de staging
-git add .                 # Adiciona todas as mudanças
-git commit -m "Mensagem"  # Faz commit com mensagem
-git commit --amend        # Edita o último commit (ex: corrigir mensagem)
-```
-- Branches (ramificações):
-```bash
-git branch                # Lista branches locais
-git branch nome-branch    # Cria nova branch
-git checkout nome-branch  # Vai para uma branch existente
-git checkout -b nova      # Cria e troca para nova branch
-```
-- Sincronização com remoto:
-```bash
-git fetch                    # Busca mudanças do remoto (sem aplicar)
-git pull                     # Atualiza branch local com remoto
-git push                     # Envia commits para o remoto
-git push -u origin main      # Primeira vez para setar upstream
-git push origin nome-branch  # Envia branch específica
-```
----
-
-## 🔁 Fluxo de Trabalho (Fork + Branch + Pull Request)
-
-Este projeto utiliza um **fluxo profissional baseado em Fork**, garantindo que o ambiente de **produção permaneça sempre estável**, enquanto as melhorias são desenvolvidas de forma isolada.
-
-### 🏗 Estrutura de Repositórios
-
-- **Produção oficial:**  
-  `dadosfnp/Subfinanciados` → branch `main`
-
-- **Ambiente de Desenvolvimento (Fork):**  
-  `pedrofnp/IFEM` → branch `next`
-
-Toda **nova funcionalidade ou melhoria é desenvolvida no fork**, nunca diretamente na `main` de produção.
-
-
-## 🔁 Ciclo Completo de Desenvolvimento (Fork + Branch + PR)
-
-- 1) Sincronizar a main do fork com a produção
-```bash
-git checkout main
-git pull upstream main
-git push origin main
-```
-
-- 2) Criar nova branch de feature a partir da main do fork
-```bash
-git checkout -b feature/nome-da-feature
-```
-- 3) Desenvolver normalmente
-```bash
-git status
-git add .
-git commit -m "feat: descricao da feature"
-```
-- 4) Enviar a branch para o fork
-```bash
-git push -u origin feature/nome-da-feature
-```
-- 5) Abrir Pull Request no GitHub
- Base:     dadosfnp/Subfinanciados -> main
- Compare:  pedrofnp/IFEM           -> feature/nome-da-feature
-
-- 6) Depois que o PR for aprovado e mergeado na produção
-```bash
-git checkout main
-git pull upstream main
-git push origin main
-```
-
-## 📝 Convenção de Commits
-
-Utilizamos uma convenção baseada no **Conventional Commits**, adaptada para o projeto.  
-O formato geral é:
-
-### 🔑 Tipos aceitos
-
-- **feat** → nova funcionalidade  
-  - `feat(map): adiciona lupa ao filtro de municípios`
-- **fix** → correção de bug  
-  - `fix(detail): corrige alinhamento do botão de busca`
-- **docs** → alterações apenas em documentação  
-  - `docs(readme): adiciona seção de boas práticas`
-- **style** → ajustes visuais (CSS, HTML, formatação, sem alterar lógica)  
-  - `style(home): ajusta espaçamento dos cards`
-- **refactor** → refatoração de código sem mudar comportamento  
-  - `refactor(map): simplifica função de atualização dos filtros`
-- **test** → adição ou ajuste em testes  
-  - `test(detail): adiciona teste para cálculo de percentis`
-- **chore** → tarefas gerais (build, dependências, configs)  
-  - `chore: atualiza requirements.txt`
-
-
-### ✅ Boas práticas
-
-- **Descrição curta** (máx. 72 caracteres) → explique o que foi feito.  
-- **Escopo** (opcional) → indique onde foi feita a mudança (`home`, `map`, `detail`, `readme`, etc.).  
-- Use o **imperativo**: “adiciona”, “corrige”, “refatora”, em vez de “adicionado”, “corrigido”.  
-
-
-
-✍ **Autor:** FNP  
-📅 **Ano:** 2025  
-📄 **Licença:** Uso interno / restrito
- 
+✍️ **Desenvolvido por:** FNP | 📄 **Licença:** Uso Interno / Restrito
