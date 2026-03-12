@@ -2,11 +2,77 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q
+from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q, Value
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita, MediaUfReceita, MediaPorteReceita, CrescimentoMedioUf, CrescimentoMedioPorte, MedianaNacionalReceita, MedianaUfReceita, MedianaPorteReceita
 from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
+
+def _get_filtered_municipios(request):
+    """
+    Helper centralizado para aplicar os filtros geográficos e populacionais 
+    às consultas de análise agregada.
+    """
+    queryset = Municipio.objects.all()
+    
+    uf_filtro = request.GET.get('uf')
+    regiao_filtro = request.GET.get('regiao')
+    municipio_filtro = request.GET.get('municipio')
+    porte_filtro = request.GET.get('porte')
+    rm_filtro = request.GET.get('rm')
+    classification_filter = request.GET.get('classification', 'quintil')
+    subgroup_filter = request.GET.get('subgrupo')
+
+    filtros_ativos = any([
+        uf_filtro and uf_filtro != 'todos',
+        regiao_filtro and regiao_filtro != 'todos',
+        municipio_filtro and municipio_filtro != 'todos',
+        porte_filtro and porte_filtro != 'todos',
+        rm_filtro and rm_filtro != 'todos',
+        subgroup_filter and subgroup_filter != 'todos'
+    ])
+
+    if not filtros_ativos:
+        return queryset.none(), False
+
+    if regiao_filtro and regiao_filtro != 'todos':
+        queryset = queryset.filter(regiao=regiao_filtro)
+    if uf_filtro and uf_filtro != 'todos':
+        queryset = queryset.filter(uf=uf_filtro)
+    if municipio_filtro and municipio_filtro != 'todos':
+        queryset = queryset.filter(name_muni_uf=municipio_filtro)
+    if rm_filtro and rm_filtro != 'todos':
+        queryset = queryset.filter(rm__nome=rm_filtro)
+
+    if porte_filtro and porte_filtro != 'todos':
+        if porte_filtro == 'Até 5 mil':
+            queryset = queryset.filter(populacao24__lt=5000)
+        elif porte_filtro == '5 mil a 10 mil':
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+        elif porte_filtro == '10 mil a 20 mil':
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+        elif porte_filtro == '20 mil a 50 mil':
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+        elif porte_filtro == '50 mil a 100 mil':
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+        elif porte_filtro == '100 mil a 200 mil':
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+        elif porte_filtro == '200 mil a 500 mil':
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+        elif porte_filtro == 'Acima de 500 mil':
+            queryset = queryset.filter(populacao24__gte=500000)
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
+
+    if subgroup_filter and subgroup_filter != "todos":
+        if classification_filter == 'quintil':
+            queryset = queryset.filter(quintil24=subgroup_filter)
+        elif classification_filter == 'decil':
+            queryset = queryset.filter(decil24=subgroup_filter)
+
+    return queryset, True
 
 def selecionar_municipio_view(request):
     """
@@ -469,59 +535,33 @@ def municipio_detalhe_view(request, municipio_id):
 
 
 def municipio_details_api(request):
-    queryset = Municipio.objects.all()
-    # Recupera os parâmetros de filtro da requisição
-    uf_filtro = request.GET.get('uf')
-    regiao_filtro = request.GET.get('regiao')
-    municipio_filtro = request.GET.get('municipio')
-    porte_filtro = request.GET.get('porte')
-    rm_filtro = request.GET.get('rm')
+    queryset, filtros_ativos = _get_filtered_municipios(request)
     
-    # Aplica filtros geográficos e administrativos gerais
-    if regiao_filtro and regiao_filtro != 'todos':
-        queryset = queryset.filter(regiao=regiao_filtro)
+    if not filtros_ativos:
+        return JsonResponse({
+            "kpis": {
+                "populacao": 0,
+                "quantidade": 0,
+                "receita_corrente": 0,
+                "receita_per_capita": 0,
+                "diferenca_media": 0,
+                "delta_rc_pc": 0,
+                "delta_pop": 0,
+                "media_nacional_rc_pc": 316.74,
+                "media_nacional_pop": 16.04,
+                "hist_data": {"pop00": 0, "rc00": 0}
+            }
+        })
 
-    if uf_filtro and uf_filtro != 'todos':
-        queryset = queryset.filter(uf=uf_filtro)
-
-    if municipio_filtro and municipio_filtro != 'todos':
-        queryset = queryset.filter(name_muni_uf=municipio_filtro)
-
-    if rm_filtro and rm_filtro != 'todos':
-        queryset = queryset.filter(rm__nome=rm_filtro)
-
-    # Aplica filtro de porte populacional
-    if porte_filtro and porte_filtro != 'todos':
-        if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
-        elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
-        elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
-        elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
-    
     national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_24_pc'))['avg_rc'] or 0
 
     # Aggregate data from the filtered queryset
     aggregated_data = queryset.aggregate(
-        total_populacao=Sum('populacao24'),
-        total_receita_corrente=Sum('rc_2024'),
+        total_populacao=Coalesce(Sum('populacao24'), Value(0)),
+        total_receita_corrente=Coalesce(Sum('rc_2024'), Value(0.0)),
         avg_receita_per_capita=Avg('rc_24_pc'),
-        total_populacao_00=Sum('populacao00'),
-        total_receita_2000=Sum('rc_2000'),
+        total_populacao_00=Coalesce(Sum('populacao00'), Value(0)),
+        total_receita_2000=Coalesce(Sum('rc_2000'), Value(0.0)),
     )
 
     pop24 = aggregated_data['total_populacao'] or 0
@@ -529,15 +569,10 @@ def municipio_details_api(request):
     rc24 = aggregated_data['total_receita_corrente'] or 0
     rc00 = aggregated_data['total_receita_2000'] or 0
 
-    delta_pop = 0
-    if pop00 > 0:
-        delta_pop = round(((pop24 / pop00) - 1) * 100, 2)
-
-    delta_rc_pc = 0
+    delta_pop = round(((pop24 / pop00) - 1) * 100, 2) if pop00 > 0 else 0
     rc_pc_24 = rc24 / pop24 if pop24 > 0 else 0
     rc_pc_00 = rc00 / pop00 if pop00 > 0 else 0
-    if rc_pc_00 > 0:
-        delta_rc_pc = round(((rc_pc_24 / rc_pc_00) - 1) * 100, 2)
+    delta_rc_pc = round(((rc_pc_24 / rc_pc_00) - 1) * 100, 2) if rc_pc_00 > 0 else 0
 
     # Get the count of municipalities in the filtered queryset
     quantidade_municipios = queryset.count()
@@ -618,6 +653,58 @@ def municipio_details_api(request):
 
     # Incluir os dados agregados na resposta final
     response_data['fiscal_aggregation'] = fiscal_aggregation
+
+    def get_chart_series(labels, values):
+        series = [(label, value) for label, value in zip(labels, values) if value and value > 0]
+        if not series:
+            return {"labels": [], "values": []}
+        unzipped_series = list(zip(*series))
+        return {"labels": list(unzipped_series[0]), "values": list(unzipped_series[1])}
+
+    # Prepara os dados do gráfico para a API agregada (usando os valores totais agregados)
+    fa = fiscal_aggregation
+    response_data["chart_data"] = {
+        "main_categories": get_chart_series(
+            ["Impostos, Taxas e Contribuições de Melhoria", "Contribuições", "Transf. Correntes", "Outras"],
+            [fa['total_imposto_taxas_contribuicoes'], fa['total_contribuicoes'], fa['total_transferencias_correntes'], fa['total_outras_receita']]
+        ),
+        "imposto_taxas_contribuicoes": get_chart_series(
+            ["Impostos", "Taxas", "Contrib. Melhoria"],
+            [fa['total_imposto'], fa['total_taxas'], fa['total_contribuicoes_melhoria']]
+        ),
+        "imposto": get_chart_series(
+            ["IPTU", "ITBI", "ISS", "Imposto de Renda", "ICMS", "IPVA", "Outros"],
+            [fa['total_iptu'], fa['total_itbi'], fa['total_iss'], fa['total_imposto_renda'], fa['total_imposto_icms'], fa['total_imposto_ipva'], fa['total_outros_impostos']]
+        ),
+        "taxas": get_chart_series(
+            ["Poder de Polícia", "Prestação de Serviços", "Outras"],
+            [fa['total_taxa_policia'], fa['total_taxa_prestacao_servico'], fa['total_outras_taxas']]
+        ),
+        "contribuicoes_melhoria": get_chart_series(
+            ["Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
+            [fa['total_contribuicao_melhoria_pavimento_obras'], fa['total_contribuicao_melhoria_agua_potavel'], fa['total_contribuicao_melhoria_iluminacao_publica'], fa['total_outras_contribuicoes_melhoria']]
+        ),
+        "contribuicoes": get_chart_series(
+            ["Sociais", "Iluminação Pública", "Outras"],
+            [fa['total_contribuicoes_sociais'], fa['total_contribuicoes_iluminacao_publica'], fa['total_outras_contribuicoes']]
+        ),
+        "transferencias_correntes": get_chart_series(
+            ["União", "Estados", "Outras"],
+            [fa['total_tranferencias_uniao'], fa['total_tranferencias_estados'], fa['total_outras_tranferencias']]
+        ),
+        "transferencias_uniao": get_chart_series(
+            ["FPM", "FPE", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
+            [fa['total_transferencia_uniao_fpm'], fa['total_transferencia_uniao_fpe'], fa['total_transferencia_uniao_exploracao'], fa['total_transferencia_uniao_sus'], fa['total_transferencia_uniao_fnde'], fa['total_transferencia_uniao_fundeb'], fa['total_transferencia_uniao_fnas'], fa['total_outras_transferencias_uniao']]
+        ),
+        "transferencias_estado": get_chart_series(
+            ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
+            [fa['total_transferencia_estado_icms'], fa['total_transferencia_estado_ipva'], fa['total_transferencia_estado_exploracao'], fa['total_transferencia_estado_sus'], fa['total_transferencia_estado_assistencia'], fa['total_outras_transferencias_estado']]
+        ),
+        "outras_receitas": get_chart_series(
+            ["Patrimonial", "Agropecuária", "Industrial", "Serviços", "Outras"],
+            [fa['total_receita_patrimonial'], fa['total_receita_agropecuaria'], fa['total_receita_industrial'], fa['total_receita_servicos'], fa['total_outras_receitas']]
+        ),
+    }
     
     return JsonResponse(response_data)
 
@@ -626,26 +713,19 @@ def municipio_details_api(request):
 
 def _prepare_revenue_item_aggregated(
     name: str,
-    field_base: str,      # ex: "imposto_taxas_contribuicoes" (pra casar com total_* no aggregated_data)
-    field_path,           # str OU list[str]/tuple[str]
+    field_base: str,      
+    field_path,           
     aggregated_data: dict,
-    total_population: float, # <--- Recebe a população total em vez do queryset
+    total_population: float,
     value_pc_nac: float,
     is_collapsible: bool = False,
 ):
+    """Auxiliar para preparar item de receita na análise agregada."""
     value_abs = aggregated_data.get(f"total_{field_base}", 0) or 0
-
-    # aceita 1 ou vários paths
-    field_paths = [field_path] if isinstance(field_path, str) else list(field_path)
-
-    # Nova lógica: calcula pc com base nos valores totais já obtidos na agregação global 
-    # value_abs = total da receita, total_population = tota da pop do grupo filtrado
+    
     value_pc = 0.0
-    if value_abs and value_abs > 0 and total_population and total_population > 0:
+    if total_population > 0:
         value_pc = value_abs / total_population
-
-    if value_abs == 0 and value_pc == 0:
-        return None
 
     diff = {
         "pc": round(((value_pc - value_pc_nac) / value_pc_nac * 100), 2) if value_pc_nac else 0
@@ -659,8 +739,6 @@ def _prepare_revenue_item_aggregated(
         "diff": diff,
         "media_nacional": value_pc_nac,
         "children": [],
-        # opcional: guardar quais campos compõem o item (ajuda debug)
-        "field_path": field_paths,
     }
 
     if is_collapsible:
@@ -1693,83 +1771,57 @@ def conjunto_fiscal_api(request):
     nacional_med_receita_servicos_pc = nacional_pc_media('conta_especifica__receita_servicos')
     nacional_med_outras_receitas_outras_pc = nacional_pc_media('conta_especifica__outras_receitas')
 
-    uf_filtro = request.GET.get('uf')
-    regiao_filtro = request.GET.get('regiao')
-    municipio_filtro = request.GET.get('municipio')
-    porte_filtro = request.GET.get('porte')
-    rm_filtro = request.GET.get('rm')
+    queryset, filtros_ativos = _get_filtered_municipios(request)
 
-    if regiao_filtro and regiao_filtro != 'todos':
-        queryset = queryset.filter(regiao=regiao_filtro)
-    if uf_filtro and uf_filtro != 'todos':
-        queryset = queryset.filter(uf=uf_filtro)
-    if municipio_filtro and municipio_filtro != 'todos':
-        queryset = queryset.filter(name_muni_uf=municipio_filtro)
-    if rm_filtro and rm_filtro != 'todos':
-        queryset = queryset.filter(rm__nome=rm_filtro)
-
-    if porte_filtro and porte_filtro != 'todos':
-        if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
-        elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
-        # Novas regras adicionadas:
-        elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
-        elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
+    if not filtros_ativos:
+        return JsonResponse({
+            'html': '<div class="p-8 text-center text-slate-500 border border-slate-200 rounded-lg">Selecione filtros para visualizar a análise agregada.</div>',
+            'hist_data': {
+                'pop24': 0, 'pop00': 0, 'rc24': 0, 'rc00': 0,
+                'rc24_pc': 0, 'rc00_pc': 0, 'delta_rc_pc': 0, 'delta_pop': 0,
+                'media_nacional_rc_pc': 316.74, 'media_nacional_pop': 16.04,
+            }
+        })
 
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
-        total_receita_corrente=Sum('rc_2024'),
-        total_receita_2000=Sum('rc_2000'),
-        total_populacao_24=Sum('populacao24'),
-        total_populacao_00=Sum('populacao00'),
-        total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
-        total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
-        total_transferencias_correntes=Sum('conta_detalhada__transferencias_correntes'),
-        total_outras_receita=Sum('conta_detalhada__outras_receita'),
-        total_imposto=Sum('conta_especifica__imposto'),
-        total_taxas=Sum('conta_especifica__taxas'),
-        total_contribuicoes_melhoria=Sum('conta_especifica__contribuicoes_melhoria'),
-        total_contribuicoes_sociais=Sum('conta_especifica__contribuicoes_sociais'),
-        total_contribuicoes_iluminacao_publica=Sum('conta_especifica__contribuicoes_iluminacao_publica'),
-        total_outras_contribuicoes=Sum('conta_especifica__outras_contribuicoes'),
-        total_tranferencias_uniao=Sum('conta_especifica__tranferencias_uniao'),
-        total_tranferencias_estados=Sum('conta_especifica__tranferencias_estados'),
-        total_outras_tranferencias=Sum('conta_especifica__outras_tranferencias'),
-        total_receita_patrimonial=Sum('conta_especifica__receita_patrimonial'),
-        total_receita_agropecuaria=Sum('conta_especifica__receita_agropecuaria'),
-        total_receita_industrial=Sum('conta_especifica__receita_industrial'),
-        total_receita_servicos=Sum('conta_especifica__receita_servicos'),
-        total_outras_receitas=Sum('conta_especifica__outras_receitas'),
-        total_iptu=Sum('conta_mais_especifica__iptu'),
-        total_itbi=Sum('conta_mais_especifica__itbi'),
-        total_iss=Sum('conta_mais_especifica__iss'),
-        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'),
-        total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
-        total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
-        total_outras_taxas=Sum('conta_mais_especifica__outras_taxas'),
-        total_contribuicao_melhoria_pavimento_obras=Sum('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'),
-        total_contribuicao_melhoria_agua_potavel=Sum('conta_mais_especifica__contribuicao_melhoria_agua_potavel'),
-        total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
-        total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
-        total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
-        total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
-        total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
+        total_receita_corrente=Coalesce(Sum('rc_2024'), Value(0.0)),
+        total_receita_2000=Coalesce(Sum('rc_2000'), Value(0.0)),
+        total_populacao_24=Coalesce(Sum('populacao24'), Value(1)), # Avoid div by zero
+        total_populacao_00=Coalesce(Sum('populacao00'), Value(0)),
+        total_imposto_taxas_contribuicoes=Coalesce(Sum('conta_detalhada__imposto_taxas_contribuicoes'), Value(0.0)),
+        total_contribuicoes=Coalesce(Sum('conta_detalhada__contribuicoes'), Value(0.0)),
+        total_transferencias_correntes=Coalesce(Sum('conta_detalhada__transferencias_correntes'), Value(0.0)),
+        total_outras_receita=Coalesce(Sum('conta_detalhada__outras_receita'), Value(0.0)),
+        total_imposto=Coalesce(Sum('conta_especifica__imposto'), Value(0.0)),
+        total_taxas=Coalesce(Sum('conta_especifica__taxas'), Value(0.0)),
+        total_contribuicoes_melhoria=Coalesce(Sum('conta_especifica__contribuicoes_melhoria'), Value(0.0)),
+        total_contribuicoes_sociais=Coalesce(Sum('conta_especifica__contribuicoes_sociais'), Value(0.0)),
+        total_contribuicoes_iluminacao_publica=Coalesce(Sum('conta_especifica__contribuicoes_iluminacao_publica'), Value(0.0)),
+        total_outras_contribuicoes=Coalesce(Sum('conta_especifica__outras_contribuicoes'), Value(0.0)),
+        total_tranferencias_uniao=Coalesce(Sum('conta_especifica__tranferencias_uniao'), Value(0.0)),
+        total_tranferencias_estados=Coalesce(Sum('conta_especifica__tranferencias_estados'), Value(0.0)),
+        total_outras_tranferencias=Coalesce(Sum('conta_especifica__outras_tranferencias'), Value(0.0)),
+        total_receita_patrimonial=Coalesce(Sum('conta_especifica__receita_patrimonial'), Value(0.0)),
+        total_receita_agropecuaria=Coalesce(Sum('conta_especifica__receita_agropecuaria'), Value(0.0)),
+        total_receita_industrial=Coalesce(Sum('conta_especifica__receita_industrial'), Value(0.0)),
+        total_receita_servicos=Coalesce(Sum('conta_especifica__receita_servicos'), Value(0.0)),
+        total_outras_receitas=Coalesce(Sum('conta_especifica__outras_receitas'), Value(0.0)),
+        total_iptu=Coalesce(Sum('conta_mais_especifica__iptu'), Value(0.0)),
+        total_itbi=Coalesce(Sum('conta_mais_especifica__itbi'), Value(0.0)),
+        total_iss=Coalesce(Sum('conta_mais_especifica__iss'), Value(0.0)),
+        total_imposto_renda=Coalesce(Sum('conta_mais_especifica__imposto_renda'), Value(0.0)),
+        total_outros_impostos=Coalesce(Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'), Value(0.0)),
+        total_taxa_policia=Coalesce(Sum('conta_mais_especifica__taxa_policia'), Value(0.0)),
+        total_taxa_prestacao_servico=Coalesce(Sum('conta_mais_especifica__taxa_prestacao_servico'), Value(0.0)),
+        total_outras_taxas=Coalesce(Sum('conta_mais_especifica__outras_taxas'), Value(0.0)),
+        total_contribuicao_melhoria_pavimento_obras=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'), Value(0.0)),
+        total_contribuicao_melhoria_agua_potavel=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_agua_potavel'), Value(0.0)),
+        total_contribuicao_melhoria_iluminacao_publica=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'), Value(0.0)),
+        total_outras_contribuicoes_melhoria=Coalesce(Sum('conta_mais_especifica__outras_contribuicoes_melhoria'), Value(0.0)),
+        total_transferencia_uniao_fpm=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_fpm'), Value(0.0)),
+        total_transferencia_uniao_exploracao=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_exploracao'), Value(0.0)),
+        total_transferencia_uniao_sus=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_sus'), Value(0.0)),
         total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
         total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
         total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
@@ -2284,98 +2336,65 @@ def conjunto_fiscal_api(request):
 
 
 def conjunto_chart_api(request):
-    queryset = Municipio.objects.all()
+    queryset, filtros_ativos = _get_filtered_municipios(request)
 
-    # --- filtros (copiado da sua view existente) ---
-    uf_filtro = request.GET.get('uf')
-    regiao_filtro = request.GET.get('regiao')
-    municipio_filtro = request.GET.get('municipio')
-    porte_filtro = request.GET.get('porte')
-    rm_filtro = request.GET.get('rm')
-
-    if regiao_filtro and regiao_filtro != 'todos':
-        queryset = queryset.filter(regiao=regiao_filtro)
-    if uf_filtro and uf_filtro != 'todos':
-        queryset = queryset.filter(uf=uf_filtro)
-    if municipio_filtro and municipio_filtro != 'todos':
-        queryset = queryset.filter(name_muni_uf=municipio_filtro)
-    if rm_filtro and rm_filtro != 'todos':
-        queryset = queryset.filter(rm__nome=rm_filtro)
-
-    # --- faixas de porte (copiado da sua view existente) ---
-    if porte_filtro and porte_filtro != 'todos':
-        if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
-        elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
-        # Novas regras adicionadas:
-        elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
-        elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
+    if not filtros_ativos:
+        return JsonResponse({})
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
         # Nível Detalhado
-        total_imposto_taxas_contribuicoes=Sum('conta_detalhada__imposto_taxas_contribuicoes'),
-        total_contribuicoes=Sum('conta_detalhada__contribuicoes'),
-        total_transferencias_correntes=Sum('conta_detalhada__transferencias_correntes'),
-        total_outras_receita=Sum('conta_detalhada__outras_receita'),
+        total_imposto_taxas_contribuicoes=Coalesce(Sum('conta_detalhada__imposto_taxas_contribuicoes'), Value(0.0)),
+        total_contribuicoes=Coalesce(Sum('conta_detalhada__contribuicoes'), Value(0.0)),
+        total_transferencias_correntes=Coalesce(Sum('conta_detalhada__transferencias_correntes'), Value(0.0)),
+        total_outras_receita=Coalesce(Sum('conta_detalhada__outras_receita'), Value(0.0)),
 
         # Nível Específico
-        total_imposto=Sum('conta_especifica__imposto'),
-        total_taxas=Sum('conta_especifica__taxas'),
-        total_contribuicoes_melhoria=Sum('conta_especifica__contribuicoes_melhoria'),
-        total_contribuicoes_sociais=Sum('conta_especifica__contribuicoes_sociais'),
-        total_contribuicoes_iluminacao_publica=Sum('conta_especifica__contribuicoes_iluminacao_publica'),
-        total_outras_contribuicoes=Sum('conta_especifica__outras_contribuicoes'),
-        total_tranferencias_uniao=Sum('conta_especifica__tranferencias_uniao'),
-        total_tranferencias_estados=Sum('conta_especifica__tranferencias_estados'),
-        total_outras_tranferencias=Sum('conta_especifica__outras_tranferencias'),
-        total_receita_patrimonial=Sum('conta_especifica__receita_patrimonial'),
-        total_receita_agropecuaria=Sum('conta_especifica__receita_agropecuaria'),
-        total_receita_industrial=Sum('conta_especifica__receita_industrial'),
-        total_receita_servicos=Sum('conta_especifica__receita_servicos'),
-        total_outras_receitas=Sum('conta_especifica__outras_receitas'),
+        total_imposto=Coalesce(Sum('conta_especifica__imposto'), Value(0.0)),
+        total_taxas=Coalesce(Sum('conta_especifica__taxas'), Value(0.0)),
+        total_contribuicoes_melhoria=Coalesce(Sum('conta_especifica__contribuicoes_melhoria'), Value(0.0)),
+        total_contribuicoes_sociais=Coalesce(Sum('conta_especifica__contribuicoes_sociais'), Value(0.0)),
+        total_contribuicoes_iluminacao_publica=Coalesce(Sum('conta_especifica__contribuicoes_iluminacao_publica'), Value(0.0)),
+        total_outras_contribuicoes=Coalesce(Sum('conta_especifica__outras_contribuicoes'), Value(0.0)),
+        total_tranferencias_uniao=Coalesce(Sum('conta_especifica__tranferencias_uniao'), Value(0.0)),
+        total_tranferencias_estados=Coalesce(Sum('conta_especifica__tranferencias_estados'), Value(0.0)),
+        total_outras_tranferencias=Coalesce(Sum('conta_especifica__outras_tranferencias'), Value(0.0)),
+        total_receita_patrimonial=Coalesce(Sum('conta_especifica__receita_patrimonial'), Value(0.0)),
+        total_receita_agropecuaria=Coalesce(Sum('conta_especifica__receita_agropecuaria'), Value(0.0)),
+        total_receita_industrial=Coalesce(Sum('conta_especifica__receita_industrial'), Value(0.0)),
+        total_receita_servicos=Coalesce(Sum('conta_especifica__receita_servicos'), Value(0.0)),
+        total_outras_receitas=Coalesce(Sum('conta_especifica__outras_receitas'), Value(0.0)),
 
         # Nível Mais Específico
-        total_iptu=Sum('conta_mais_especifica__iptu'),
-        total_itbi=Sum('conta_mais_especifica__itbi'),
-        total_iss=Sum('conta_mais_especifica__iss'),
-        total_imposto_renda=Sum('conta_mais_especifica__imposto_renda'),
-        total_outros_impostos=Sum('conta_mais_especifica__outros_impostos') + Sum('conta_mais_especifica__imposto_icms') + Sum('conta_mais_especifica__imposto_ipva'),
-        total_taxa_policia=Sum('conta_mais_especifica__taxa_policia'),
-        total_taxa_prestacao_servico=Sum('conta_mais_especifica__taxa_prestacao_servico'),
-        total_outras_taxas=Sum('conta_mais_especifica__outras_taxas'),
-        total_contribuicao_melhoria_pavimento_obras=Sum('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'),
-        total_contribuicao_melhoria_agua_potavel=Sum('conta_mais_especifica__contribuicao_melhoria_agua_potavel'),
-        total_contribuicao_melhoria_iluminacao_publica=Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'),
-        total_outras_contribuicoes_melhoria=Sum('conta_mais_especifica__outras_contribuicoes_melhoria'),
-        total_transferencia_uniao_fpm=Sum('conta_mais_especifica__transferencia_uniao_fpm'),
-        total_transferencia_uniao_exploracao=Sum('conta_mais_especifica__transferencia_uniao_exploracao'),
-        total_transferencia_uniao_sus=Sum('conta_mais_especifica__transferencia_uniao_sus'),
-        total_transferencia_uniao_fnde=Sum('conta_mais_especifica__transferencia_uniao_fnde'),
-        total_transferencia_uniao_fundeb=Sum('conta_mais_especifica__transferencia_uniao_fundeb'),
-        total_transferencia_uniao_fnas=Sum('conta_mais_especifica__transferencia_uniao_fnas'),
-        total_outras_transferencias_uniao=Sum('conta_mais_especifica__outras_transferencias_uniao'),
-        total_transferencia_estado_icms=Sum('conta_mais_especifica__transferencia_estado_icms'),
-        total_transferencia_estado_ipva=Sum('conta_mais_especifica__transferencia_estado_ipva'),
-        total_transferencia_estado_exploracao=Sum('conta_mais_especifica__transferencia_estado_exploracao'),
-        total_transferencia_estado_sus=Sum('conta_mais_especifica__transferencia_estado_sus'),
-        total_transferencia_estado_assistencia=Sum('conta_mais_especifica__transferencia_estado_assistencia'),
-        total_outras_transferencias_estado=Sum('conta_mais_especifica__outras_transferencias_estado'),
+        total_iptu=Coalesce(Sum('conta_mais_especifica__iptu'), Value(0.0)),
+        total_itbi=Coalesce(Sum('conta_mais_especifica__itbi'), Value(0.0)),
+        total_iss=Coalesce(Sum('conta_mais_especifica__iss'), Value(0.0)),
+        total_imposto_renda=Coalesce(Sum('conta_mais_especifica__imposto_renda'), Value(0.0)),
+        total_outros_impostos=Coalesce(Sum('conta_mais_especifica__outros_impostos'), Value(0.0)),
+        total_imposto_icms=Coalesce(Sum('conta_mais_especifica__imposto_icms'), Value(0.0)),
+        total_imposto_ipva=Coalesce(Sum('conta_mais_especifica__imposto_ipva'), Value(0.0)),
+        
+        total_taxa_policia=Coalesce(Sum('conta_mais_especifica__taxa_policia'), Value(0.0)),
+        total_taxa_prestacao_servico=Coalesce(Sum('conta_mais_especifica__taxa_prestacao_servico'), Value(0.0)),
+        total_outras_taxas=Coalesce(Sum('conta_mais_especifica__outras_taxas'), Value(0.0)),
+        total_contribuicao_melhoria_pavimento_obras=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_pavimento_obras'), Value(0.0)),
+        total_contribuicao_melhoria_agua_potavel=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_agua_potavel'), Value(0.0)),
+        total_contribuicao_melhoria_iluminacao_publica=Coalesce(Sum('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica'), Value(0.0)),
+        total_outras_contribuicoes_melhoria=Coalesce(Sum('conta_mais_especifica__outras_contribuicoes_melhoria'), Value(0.0)),
+        total_transferencia_uniao_fpm=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_fpm'), Value(0.0)),
+        total_transferencia_uniao_exploracao=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_exploracao'), Value(0.0)),
+        total_transferencia_uniao_sus=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_sus'), Value(0.0)),
+        total_transferencia_uniao_fnde=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_fnde'), Value(0.0)),
+        total_transferencia_uniao_fundeb=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_fundeb'), Value(0.0)),
+        total_transferencia_uniao_fnas=Coalesce(Sum('conta_mais_especifica__transferencia_uniao_fnas'), Value(0.0)),
+        total_outras_transferencias_uniao=Coalesce(Sum('conta_mais_especifica__outras_transferencias_uniao'), Value(0.0)),
+        total_transferencia_estado_icms=Coalesce(Sum('conta_mais_especifica__transferencia_estado_icms'), Value(0.0)),
+        total_transferencia_estado_ipva=Coalesce(Sum('conta_mais_especifica__transferencia_estado_ipva'), Value(0.0)),
+        total_transferencia_estado_exploracao=Coalesce(Sum('conta_mais_especifica__transferencia_estado_exploracao'), Value(0.0)),
+        total_transferencia_estado_sus=Coalesce(Sum('conta_mais_especifica__transferencia_estado_sus'), Value(0.0)),
+        total_transferencia_estado_assistencia=Coalesce(Sum('conta_mais_especifica__transferencia_estado_assistencia'), Value(0.0)),
+        total_outras_transferencias_estado=Coalesce(Sum('conta_mais_especifica__outras_transferencias_estado'), Value(0.0)),
+    )
     )
 
     def v(key):
@@ -2476,44 +2495,10 @@ def conjunto_chart_api(request):
 
 
 def conjunto_data_api(request):
-    # --- Lógica de filtragem (copiada de outra view) ---
-    queryset = Municipio.objects.all()
-    uf_filtro = request.GET.get('uf')
-    regiao_filtro = request.GET.get('regiao')
-    porte_filtro = request.GET.get('porte')
-    rm_filtro = request.GET.get('rm')
-    classification_filter = request.GET.get('classification', 'quintil')
-    subgroup_filter = request.GET.get('subgrupo')
+    queryset, filtros_ativos = _get_filtered_municipios(request)
 
-    if porte_filtro and porte_filtro != 'todos':
-        if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
-        elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
-        # Novas regras adicionadas:
-        elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
-        elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
-
-
-    if subgroup_filter and subgroup_filter != "todos":
-        if classification_filter == 'quintil':
-            queryset = queryset.filter(quintil24=subgroup_filter)
-        elif classification_filter == 'decil':
-            queryset = queryset.filter(decil24=subgroup_filter)
+    if not filtros_ativos:
+        return JsonResponse({"data": []})
 
     # --- Anotação e seleção de valores (a mesma da view `conjunto_detalhe_view`) ---
     qs = (
