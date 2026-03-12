@@ -9,9 +9,28 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     
     <link rel="stylesheet" href="{% static 'detail/css/style_mun.css' %}">
+    <link rel="stylesheet" href="{% static 'detail/css/sticky_header.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
+<!-- Sticky Header -->
+<div id="sticky-header" class="sticky-header">
+    <div class="sticky-header-container">
+        <div class="sticky-header-info">
+            <span class="sticky-header-label">Município em Análise</span>
+            <h2 class="sticky-header-title">{{ municipio.name_muni_uf }}</h2>
+        </div>
+        <div class="sticky-header-controls">
+            <span class="sticky-header-label">Base de Comparação</span>
+            <div id="sticky-base-toggle" class="segmented">
+                <button class="segmented-option active" type="button" data-base="nacional">Nacional</button>
+                {% if municipio.cod_ibge != '5300108'%} <button class="segmented-option" type="button" data-base="estadual">Estadual</button> {% endif %}   
+                <button class="segmented-option" type="button" data-base="faixa">Porte</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <main class="detail-content">
     <header class="mb-12">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Análise do Município</span>
