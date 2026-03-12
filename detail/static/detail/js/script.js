@@ -252,44 +252,141 @@ document.addEventListener('DOMContentLoaded', function () {
       elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
       colorizeDiffKpi(diff);
 
-      // Nova lógica: Atualização Histórica
-      updateHistoricalKpis(d.kpis?.hist_data);
+      // Nova lógica: Síntese Histórica
+      updateHistoricalSynthesis(d.kpis);
 
     } catch(e) {
       console.error('[kpis] erro', e);
     }
   }
 
-  function updateHistoricalKpis(hist) {
-    if (!hist) return;
-    const pop00 = Number(hist.pop00 || 0);
-    const rc00 = Number(hist.rc00 || 0);
-    const pop24 = Number(document.getElementById('kpi-populacao')?.textContent.replace(/\./g,'') || 0);
-    const rc24 = Number(document.getElementById('kpi-receita-per-capita')?.dataset.valTot || 0);
+  // =============== EVOLUÇÃO HISTÓRICA (SÍNTESE) ===============
+  let chartReceitaEvo = null;
+  let chartPopEvo = null;
 
-    const elPop00 = document.getElementById('kpi-pop-00');
-    const elDeltaPop = document.getElementById('delta-pop');
-    const elRcPc00 = document.getElementById('kpi-rc-pc-00');
-    const elDeltaRcPc = document.getElementById('delta-rc-pc');
-    const elRcTot00 = document.getElementById('kpi-rc-tot-00');
-
-    if(elPop00) elPop00.textContent = pop00.toLocaleString('pt-BR');
-    if(elRcTot00) elRcTot00.textContent = formatAbrevBR(rc00);
-
-    const rcPc00 = pop00 > 0 ? rc00 / pop00 : 0;
-    const rcPc24 = pop24 > 0 ? rc24 / pop24 : 0;
-
-    if(elRcPc00) elRcPc00.textContent = rcPc00.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    if(elDeltaPop) {
-      const dPop = pop00 > 0 ? ((pop24 / pop00) - 1) * 100 : 0;
-      elDeltaPop.textContent = `Var: ${dPop.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
-      elDeltaPop.className = dPop < 0 ? 'text-danger' : 'text-success';
+  const topLabelsPlugin = {
+    id: 'topLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      chart.data.datasets.forEach((dataset, i) => {
+        const meta = chart.getDatasetMeta(i);
+        meta.data.forEach((bar, index) => {
+          const val = dataset.data[index];
+          if (val === undefined || val === null) return;
+          const prefix = val > 0 ? '+' : '';
+          const text = `${prefix}${Number(val).toFixed(1).replace('.', ',')}%`;
+          ctx.save();
+          ctx.fillStyle = Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[index] : dataset.backgroundColor;
+          ctx.font = 'bold 12px "Inter", sans-serif';
+          ctx.textAlign = 'center';
+          const yPos = val >= 0 ? bar.y - 8 : bar.y + 16;
+          ctx.fillText(text, bar.x, yPos);
+          ctx.restore();
+        });
+      });
     }
-    if(elDeltaRcPc) {
-      const dRcPc = rcPc00 > 0 ? ((rcPc24 / rcPc00) - 1) * 100 : 0;
-      elDeltaRcPc.textContent = `Var: ${dRcPc.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
-      elDeltaRcPc.className = dRcPc < 0 ? 'text-danger' : 'text-success';
+  };
+
+  function renderEvolutionCharts(evoData) {
+    if (!evoData) return;
+
+    const canvasRec = document.getElementById('chartReceitaEvo');
+    const canvasPop = document.getElementById('chartPopEvo');
+
+    if (canvasRec) {
+      const ctxRec = canvasRec.getContext('2d');
+      if (chartReceitaEvo) chartReceitaEvo.destroy();
+      chartReceitaEvo = new Chart(ctxRec, {
+        type: 'bar',
+        data: {
+          labels: ['Este Conjunto', 'Média Nacional'],
+          datasets: [{
+            data: [parsePossiblyMultiSerialized(evoData.receita.group), parsePossiblyMultiSerialized(evoData.receita.nac)],
+            backgroundColor: ['#103758', '#cbd5e1'],
+            borderRadius: 6,
+            barPercentage: 0.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              grace: '15%',
+              ticks: { callback: v => v + '%' }
+            }
+          }
+        },
+        plugins: [topLabelsPlugin]
+      });
+    }
+
+    if (canvasPop) {
+      const ctxPop = canvasPop.getContext('2d');
+      if (chartPopEvo) chartPopEvo.destroy();
+      chartPopEvo = new Chart(ctxPop, {
+        type: 'bar',
+        data: {
+          labels: ['Este Conjunto', 'Média Nacional'],
+          datasets: [{
+            data: [parsePossiblyMultiSerialized(evoData.populacao.group), parsePossiblyMultiSerialized(evoData.populacao.nac)],
+            backgroundColor: ['#EEAF19', '#cbd5e1'],
+            borderRadius: 6,
+            barPercentage: 0.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              grace: '15%',
+              ticks: { callback: v => v + '%' }
+            }
+          }
+        },
+        plugins: [topLabelsPlugin]
+      });
+    }
+  }
+
+  function updateHistoricalSynthesis(kpis) {
+    if (!kpis) return;
+    
+    const deltaRc = Number(kpis.delta_rc_pc || 0);
+    const deltaPop = Number(kpis.delta_pop || 0);
+
+    const txtRc = document.getElementById('text-delta-rc-pc');
+    const txtPop = document.getElementById('text-delta-pop');
+
+    if (txtRc) {
+      const isPos = deltaRc >= 0;
+      txtRc.innerHTML = isPos 
+        ? `cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+${deltaRc.toFixed(2)}%</span>`
+        : `caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${deltaRc.toFixed(2)}%</span>`;
+    }
+
+    if (txtPop) {
+      const isPos = deltaPop >= 0;
+      txtPop.innerHTML = isPos
+        ? `aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+${deltaPop.toFixed(2)}%</span>`
+        : `teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${deltaPop.toFixed(2)}%</span>`;
+    }
+
+    // Atualiza dados dos gráficos
+    const evoContainer = document.getElementById('evolution-compare-data');
+    if (evoContainer) {
+      const currentEvo = {
+        receita: { group: deltaRc, nac: kpis.media_nacional_rc_pc || 316.74 },
+        populacao: { group: deltaPop, nac: kpis.media_nacional_pop || 16.04 }
+      };
+      renderEvolutionCharts(currentEvo);
     }
   }
 
@@ -302,8 +399,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const cont = document.getElementById('main-revenue-details-container');
       cont.innerHTML = data.html;
 
-      // Sincroniza KPIs históricos se vierem na resposta da tabela
-      if(data.hist_data) updateHistoricalKpis(data.hist_data);
+      // Sincroniza Síntese Histórica se vierem kpis na resposta
+      if(data.kpis) updateHistoricalSynthesis(data.kpis);
       
       initializeToggleListeners(cont);
       applyVisibilityToTree();
@@ -608,6 +705,15 @@ document.addEventListener('DOMContentLoaded', function () {
       if(filtroPorte)  filtroPorte.value='todos';
       applyFiltersAndData();
     });
+  }
+
+  // Inicialização Gráficos Evolução
+  const initialEvoEl = document.getElementById('evolution-compare-data');
+  if (initialEvoEl) {
+    try {
+      const initialEvo = JSON.parse(initialEvoEl.textContent);
+      renderEvolutionCharts(initialEvo);
+    } catch(e) { console.error('[evo] falha json inicial', e); }
   }
 
   applyFiltersAndData();
