@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 
 from home import views as home_views
 from detail import views as detail_views
@@ -10,6 +11,7 @@ from ifem import views as ifem_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin', RedirectView.as_view(url='/admin/', permanent=True)),
 
 
     # --- PÁGINAS PRINCIPAIS ---
