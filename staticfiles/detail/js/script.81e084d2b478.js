@@ -411,16 +411,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (elMedRc && hist.media_nacional_rc_pc) elMedRc.textContent = Number(hist.media_nacional_rc_pc).toFixed(2) + '%';
     if (elMedPop && hist.media_nacional_pop) elMedPop.textContent = Number(hist.media_nacional_pop).toFixed(2) + '%';
 
-    const filterText = getActiveFilterText();
-    const filterLabel = getActiveFilterLabel();
-    const txtFiltroRc = document.getElementById('text-filtro-nome-rc');
-    const txtFiltroPop = document.getElementById('text-filtro-nome-pop');
-    const txtLegendCjt = document.getElementById('text-legend-cjt');
-    
-    if (txtFiltroRc) txtFiltroRc.textContent = filterText;
-    if (txtFiltroPop) txtFiltroPop.textContent = filterText;
-    if (txtLegendCjt) txtLegendCjt.textContent = `${filterLabel.toUpperCase()} (EVOLUÇÃO)`;
-
     const p00 = hist.percentil00 || 0;
     const p24 = hist.percentil24 || 0;
     const d00 = Math.max(1, Math.ceil(p00 / 10));
@@ -458,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function () {
       chartReceitaEvoInstance = new Chart(canvasRc.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: [filterLabel, 'Média Nacional'],
+          labels: ['Conjunto Selecionado', 'Média Nacional'],
           datasets: [{
             data: [deltaRc, Number(hist.media_nacional_rc_pc) || 0],
             backgroundColor: ['#103758', '#cbd5e1'],
@@ -477,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
       chartPopEvoInstance = new Chart(canvasPop.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: [filterLabel, 'Média Nacional'],
+          labels: ['Conjunto Selecionado', 'Média Nacional'],
           datasets: [{
             data: [deltaPop, Number(hist.media_nacional_pop) || 0],
             backgroundColor: ['#EEAF19', '#cbd5e1'],
@@ -594,61 +584,12 @@ document.addEventListener('DOMContentLoaded', function () {
   let chartInstance=null;
   let currentChartData = initialChartData;
 
-  function getActiveFilterLabel() {
-    const regiao = document.getElementById('filtro-regiao')?.value;
-    const uf = document.getElementById('filtro-uf')?.value;
-    const rm = document.getElementById('filtro-rm')?.value;
-    const porte = document.getElementById('filtro-porte')?.value;
-    
-    if (rm && rm !== 'todos') {
-      const sel = document.getElementById('filtro-rm');
-      return `${sel.options[sel.selectedIndex].text}`;
-    }
-    if (uf && uf !== 'todos') return `UF: ${uf}`;
-    if (regiao && regiao !== 'todos') return `Região ${regiao}`;
-    if (porte && porte !== 'todos') return `Porte: ${porte}`;
-    return 'Todos os Municípios';
-  }
-
-  function getActiveFilterText() {
-    const regiao = document.getElementById('filtro-regiao')?.value;
-    const uf = document.getElementById('filtro-uf')?.value;
-    const rm = document.getElementById('filtro-rm')?.value;
-    const porte = document.getElementById('filtro-porte')?.value;
-    
-    if (rm && rm !== 'todos') {
-      const sel = document.getElementById('filtro-rm');
-      return `da ${sel.options[sel.selectedIndex].text}`;
-    }
-    if (uf && uf !== 'todos') {
-      return `de ${uf}`;
-    }
-    if (regiao && regiao !== 'todos') {
-      return `da região ${regiao}`;
-    }
-    if (porte && porte !== 'todos') {
-      return `dos municípios de porte ${porte}`;
-    }
-    return 'de todo o Brasil';
-  }
-
   async function updateChart(){
     try{
       const r=await fetch(`/api/conjunto-chart-data/?${buildParams()}`);
       if(!r.ok) throw new Error('Falha ao buscar dados do gráfico.');
       currentChartData=await r.json();
-      
-      const chartSection = document.getElementById('chart-section');
-      const emptyState = document.getElementById('chart-empty-state');
-      
-      if (Object.keys(currentChartData).length === 0) {
-          if (chartSection) chartSection.style.display = 'none';
-          if (emptyState) emptyState.style.display = 'block';
-      } else {
-          if (chartSection) chartSection.style.display = 'flex';
-          if (emptyState) emptyState.style.display = 'none';
-          renderChart(selectEl.value,currentChartData);
-      }
+      renderChart(selectEl.value,currentChartData);
     }catch(e){ console.error('[chart] erro',e); }
   }
 
@@ -878,10 +819,3 @@ function colorizeDiffKpi(value){
   el.classList.remove('neg','pos','neu');
   el.classList.add(value < 0 ? 'neg' : value > 0 ? 'pos' : 'neu');
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-});

@@ -878,10 +878,3 @@ function colorizeDiffKpi(value){
   el.classList.remove('neg','pos','neu');
   el.classList.add(value < 0 ? 'neg' : value > 0 ? 'pos' : 'neu');
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-});

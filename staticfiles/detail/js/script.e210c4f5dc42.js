@@ -412,14 +412,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (elMedPop && hist.media_nacional_pop) elMedPop.textContent = Number(hist.media_nacional_pop).toFixed(2) + '%';
 
     const filterText = getActiveFilterText();
-    const filterLabel = getActiveFilterLabel();
     const txtFiltroRc = document.getElementById('text-filtro-nome-rc');
     const txtFiltroPop = document.getElementById('text-filtro-nome-pop');
-    const txtLegendCjt = document.getElementById('text-legend-cjt');
-    
     if (txtFiltroRc) txtFiltroRc.textContent = filterText;
     if (txtFiltroPop) txtFiltroPop.textContent = filterText;
-    if (txtLegendCjt) txtLegendCjt.textContent = `${filterLabel.toUpperCase()} (EVOLUÇÃO)`;
 
     const p00 = hist.percentil00 || 0;
     const p24 = hist.percentil24 || 0;
@@ -458,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
       chartReceitaEvoInstance = new Chart(canvasRc.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: [filterLabel, 'Média Nacional'],
+          labels: ['Conjunto Selecionado', 'Média Nacional'],
           datasets: [{
             data: [deltaRc, Number(hist.media_nacional_rc_pc) || 0],
             backgroundColor: ['#103758', '#cbd5e1'],
@@ -477,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
       chartPopEvoInstance = new Chart(canvasPop.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: [filterLabel, 'Média Nacional'],
+          labels: ['Conjunto Selecionado', 'Média Nacional'],
           datasets: [{
             data: [deltaPop, Number(hist.media_nacional_pop) || 0],
             backgroundColor: ['#EEAF19', '#cbd5e1'],
@@ -594,22 +590,6 @@ document.addEventListener('DOMContentLoaded', function () {
   let chartInstance=null;
   let currentChartData = initialChartData;
 
-  function getActiveFilterLabel() {
-    const regiao = document.getElementById('filtro-regiao')?.value;
-    const uf = document.getElementById('filtro-uf')?.value;
-    const rm = document.getElementById('filtro-rm')?.value;
-    const porte = document.getElementById('filtro-porte')?.value;
-    
-    if (rm && rm !== 'todos') {
-      const sel = document.getElementById('filtro-rm');
-      return `${sel.options[sel.selectedIndex].text}`;
-    }
-    if (uf && uf !== 'todos') return `UF: ${uf}`;
-    if (regiao && regiao !== 'todos') return `Região ${regiao}`;
-    if (porte && porte !== 'todos') return `Porte: ${porte}`;
-    return 'Todos os Municípios';
-  }
-
   function getActiveFilterText() {
     const regiao = document.getElementById('filtro-regiao')?.value;
     const uf = document.getElementById('filtro-uf')?.value;
@@ -629,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (porte && porte !== 'todos') {
       return `dos municípios de porte ${porte}`;
     }
-    return 'de todo o Brasil';
+    return 'do conjunto';
   }
 
   async function updateChart(){
@@ -878,10 +858,3 @@ function colorizeDiffKpi(value){
   el.classList.remove('neg','pos','neu');
   el.classList.add(value < 0 ? 'neg' : value > 0 ? 'pos' : 'neu');
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-});

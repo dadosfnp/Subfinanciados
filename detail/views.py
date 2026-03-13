@@ -33,7 +33,7 @@ def _get_filtered_municipios(request):
     ])
 
     if not filtros_ativos:
-        return queryset.none(), False
+        return queryset, False
 
     if regiao_filtro and regiao_filtro != 'todos':
         queryset = queryset.filter(regiao=regiao_filtro)
@@ -537,22 +537,6 @@ def municipio_detalhe_view(request, municipio_id):
 def municipio_details_api(request):
     queryset, filtros_ativos = _get_filtered_municipios(request)
     
-    if not filtros_ativos:
-        return JsonResponse({
-            "kpis": {
-                "populacao": 0,
-                "quantidade": 0,
-                "receita_corrente": 0,
-                "receita_per_capita": 0,
-                "diferenca_media": 0,
-                "delta_rc_pc": 0,
-                "delta_pop": 0,
-                "media_nacional_rc_pc": 316.74,
-                "media_nacional_pop": 16.04,
-                "hist_data": {"pop00": 0, "rc00": 0}
-            }
-        })
-
     national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_24_pc'))['avg_rc'] or 0
 
     # Aggregate data from the filtered queryset
@@ -569,10 +553,21 @@ def municipio_details_api(request):
     rc24 = aggregated_data['total_receita_corrente'] or 0
     rc00 = aggregated_data['total_receita_2000'] or 0
 
-    delta_pop = round(((pop24 / pop00) - 1) * 100, 2) if pop00 > 0 else 0
-    rc_pc_24 = rc24 / pop24 if pop24 > 0 else 0
-    rc_pc_00 = rc00 / pop00 if pop00 > 0 else 0
-    delta_rc_pc = round(((rc_pc_24 / rc_pc_00) - 1) * 100, 2) if rc_pc_00 > 0 else 0
+    delta_pop_agg = queryset.filter(populacao00__gt=0).annotate(
+        dp=(F('populacao24') * 1.0 / F('populacao00') - 1) * 100
+    ).aggregate(avg_dp=Avg('dp'))
+    delta_pop = round(delta_pop_agg['avg_dp'], 2) if delta_pop_agg['avg_dp'] is not None else 0
+    
+    avg_rc_24 = _group_pc_media(queryset, 'rc_2024')
+    avg_rc_00 = _group_pc_media(queryset, 'rc_2000')
+
+    rc_pc_24 = avg_rc_24
+    rc_pc_00 = avg_rc_00
+    
+    delta_rc_pc_agg = queryset.filter(rc_24_pc__gt=0, rc_00_pc__gt=0).annotate(
+        d=(F('rc_24_pc') / F('rc_00_pc') - 1) * 100
+    ).aggregate(avg_d=Avg('d'))
+    delta_rc_pc = round(delta_rc_pc_agg['avg_d'], 2) if delta_rc_pc_agg['avg_d'] is not None else 0
 
     # Get the count of municipalities in the filtered queryset
     quantidade_municipios = queryset.count()
@@ -583,8 +578,8 @@ def municipio_details_api(request):
             "populacao": aggregated_data['total_populacao'],
             "quantidade": quantidade_municipios,
             "receita_corrente": aggregated_data['total_receita_corrente'],
-            "receita_per_capita": aggregated_data['avg_receita_per_capita'],
-            "diferenca_media": ((aggregated_data['avg_receita_per_capita'] or 0) - national_avg_rc) / national_avg_rc  if national_avg_rc != 0 else 0,
+            "receita_per_capita": rc_pc_24,
+            "diferenca_media": (rc_pc_24 - national_avg_rc) / national_avg_rc if national_avg_rc != 0 else 0,
             "delta_rc_pc": delta_rc_pc,
             "delta_pop": delta_pop,
             "media_nacional_rc_pc": 316.74,
@@ -723,9 +718,13 @@ def _prepare_revenue_item_aggregated(
     """Auxiliar para preparar item de receita na análise agregada."""
     value_abs = aggregated_data.get(f"total_{field_base}", 0) or 0
     
-    value_pc = 0.0
-    if total_population > 0:
-        value_pc = value_abs / total_population
+    avg_key = f"avg_{field_base}"
+    value_pc = aggregated_data.get(avg_key)
+    if value_pc is None:
+        if total_population > 0:
+            value_pc = value_abs / total_population
+        else:
+            value_pc = 0.0
 
     diff = {
         "pc": round(((value_pc - value_pc_nac) / value_pc_nac * 100), 2) if value_pc_nac else 0
@@ -747,7 +746,6 @@ def _prepare_revenue_item_aggregated(
 
 
 def nacional_pc_media(fields):
-
     if isinstance(fields, str):
         expr = F(fields)
     else:
@@ -760,6 +758,29 @@ def nacional_pc_media(fields):
         .filter(populacao24__gt=0)
         .annotate(total=expr)          # cria a soma primeiro
         .filter(total__gt=0)           # remove os zeros
+        .annotate(
+            pc=ExpressionWrapper(
+                F('total') / F('populacao24'),
+                output_field=FloatField()
+            )
+        )
+    )
+
+    return qs.aggregate(avg=Avg('pc'))['avg'] or 0
+
+def _group_pc_media(queryset, fields):
+    if isinstance(fields, str):
+        expr = F(fields)
+    else:
+        expr = None
+        for f in fields:
+            expr = F(f) if expr is None else expr + F(f)
+
+    qs = (
+        queryset
+        .filter(populacao24__gt=0)
+        .annotate(total=expr)
+        .filter(total__gt=0)
         .annotate(
             pc=ExpressionWrapper(
                 F('total') / F('populacao24'),
@@ -1009,10 +1030,18 @@ def conjunto_detalhe_view(request):
     rc24 = aggregated_data['total_receita_corrente'] or 0
     rc00 = aggregated_data['total_receita_2000'] or 0
 
-    rc_24_pc_agregado = rc24 / population if population > 0 else 0
-    rc_00_pc_agregado = rc00 / pop00 if pop00 > 0 else 0
-    delta_rc_pc = ((rc_24_pc_agregado / rc_00_pc_agregado) - 1) * 100 if rc_00_pc_agregado > 0 else 0
-    delta_pop = ((population / pop00) - 1) * 100 if pop00 > 0 else 0
+    rc_24_pc_agregado = _group_pc_media(queryset, 'rc_2024')
+    rc_00_pc_agregado = _group_pc_media(queryset, 'rc_2000')
+
+    delta_rc_pc_agg = queryset.filter(rc_24_pc__gt=0, rc_00_pc__gt=0).annotate(
+        d=(F('rc_24_pc') / F('rc_00_pc') - 1) * 100
+    ).aggregate(avg_d=Avg('d'))
+    delta_rc_pc = delta_rc_pc_agg['avg_d'] if delta_rc_pc_agg['avg_d'] is not None else 0
+
+    delta_pop_agg = queryset.filter(populacao00__gt=0).annotate(
+        dp=(F('populacao24') * 1.0 / F('populacao00') - 1) * 100
+    ).aggregate(avg_dp=Avg('dp'))
+    delta_pop = delta_pop_agg['avg_dp'] if delta_pop_agg['avg_dp'] is not None else 0
 
     # ---------------------------
     # ITC (Impostos, Taxas e Contribuições de Melhoria)
@@ -1773,16 +1802,6 @@ def conjunto_fiscal_api(request):
 
     queryset, filtros_ativos = _get_filtered_municipios(request)
 
-    if not filtros_ativos:
-        return JsonResponse({
-            'html': '<div class="p-8 text-center text-slate-500 border border-slate-200 rounded-lg">Selecione filtros para visualizar a análise agregada.</div>',
-            'hist_data': {
-                'pop24': 0, 'pop00': 0, 'rc24': 0, 'rc00': 0,
-                'rc24_pc': 0, 'rc00_pc': 0, 'delta_rc_pc': 0, 'delta_pop': 0,
-                'media_nacional_rc_pc': 316.74, 'media_nacional_pop': 16.04,
-            }
-        })
-
     # Perform the aggregation
     aggregated_data = queryset.aggregate(
         total_receita_corrente=Coalesce(Sum('rc_2024'), Value(0.0)),
@@ -1839,10 +1858,73 @@ def conjunto_fiscal_api(request):
     rc24 = aggregated_data['total_receita_corrente'] or 0
     rc00 = aggregated_data['total_receita_2000'] or 0
 
-    rc_24_pc_agregado = rc24 / population if population > 0 else 0
-    rc_00_pc_agregado = rc00 / pop00 if pop00 > 0 else 0
-    delta_rc_pc = ((rc_24_pc_agregado / rc_00_pc_agregado) - 1) * 100 if rc_00_pc_agregado > 0 else 0
-    delta_pop = ((population / pop00) - 1) * 100 if pop00 > 0 else 0
+    aggregated_data['avg_rc_24'] = _group_pc_media(queryset, 'rc_2024')
+    aggregated_data['avg_rc_00'] = _group_pc_media(queryset, 'rc_2000')
+
+    rc_24_pc_agregado = aggregated_data['avg_rc_24']
+    rc_00_pc_agregado = aggregated_data['avg_rc_00']
+    
+    delta_rc_pc_agg = queryset.filter(rc_24_pc__gt=0, rc_00_pc__gt=0).annotate(
+        d=(F('rc_24_pc') / F('rc_00_pc') - 1) * 100
+    ).aggregate(avg_d=Avg('d'))
+    delta_rc_pc = round(delta_rc_pc_agg['avg_d'], 2) if delta_rc_pc_agg['avg_d'] is not None else 0
+
+    delta_pop_agg = queryset.filter(populacao00__gt=0).annotate(
+        dp=(F('populacao24') * 1.0 / F('populacao00') - 1) * 100
+    ).aggregate(avg_dp=Avg('dp'))
+    delta_pop = round(delta_pop_agg['avg_dp'], 2) if delta_pop_agg['avg_dp'] is not None else 0
+
+    total_mun_24 = Municipio.objects.filter(rc_24_pc__gt=0).count()
+    mun_menor_24 = Municipio.objects.filter(rc_24_pc__lt=rc_24_pc_agregado, rc_24_pc__gt=0).count()
+    percentil24_dyn = int((mun_menor_24 / total_mun_24 * 100)) if total_mun_24 > 0 else 0
+    
+    total_mun_00 = Municipio.objects.filter(rc_00_pc__gt=0).count()
+    mun_menor_00 = Municipio.objects.filter(rc_00_pc__lt=rc_00_pc_agregado, rc_00_pc__gt=0).count()
+    percentil00_dyn = int((mun_menor_00 / total_mun_00 * 100)) if total_mun_00 > 0 else 0
+
+    aggregated_data['avg_imposto_taxas_contribuicoes'] = _group_pc_media(queryset, 'conta_detalhada__imposto_taxas_contribuicoes')
+    aggregated_data['avg_imposto'] = _group_pc_media(queryset, 'conta_especifica__imposto')
+    aggregated_data['avg_iss'] = _group_pc_media(queryset, 'conta_mais_especifica__iss')
+    aggregated_data['avg_iptu'] = _group_pc_media(queryset, 'conta_mais_especifica__iptu')
+    aggregated_data['avg_itbi'] = _group_pc_media(queryset, 'conta_mais_especifica__itbi')
+    aggregated_data['avg_imposto_renda'] = _group_pc_media(queryset, 'conta_mais_especifica__imposto_renda')
+    aggregated_data['avg_outros_impostos'] = _group_pc_media(queryset, ['conta_mais_especifica__outros_impostos', 'conta_mais_especifica__imposto_icms', 'conta_mais_especifica__imposto_ipva'])
+    aggregated_data['avg_taxas'] = _group_pc_media(queryset, 'conta_especifica__taxas')
+    aggregated_data['avg_taxa_policia'] = _group_pc_media(queryset, 'conta_mais_especifica__taxa_policia')
+    aggregated_data['avg_taxa_prestacao_servico'] = _group_pc_media(queryset, 'conta_mais_especifica__taxa_prestacao_servico')
+    aggregated_data['avg_outras_taxas'] = _group_pc_media(queryset, 'conta_mais_especifica__outras_taxas')
+    aggregated_data['avg_contribuicoes_melhoria'] = _group_pc_media(queryset, 'conta_especifica__contribuicoes_melhoria')
+    aggregated_data['avg_contribuicao_melhoria_pavimento_obras'] = _group_pc_media(queryset, 'conta_mais_especifica__contribuicao_melhoria_pavimento_obras')
+    aggregated_data['avg_contribuicao_melhoria_agua_potavel'] = _group_pc_media(queryset, 'conta_mais_especifica__contribuicao_melhoria_agua_potavel')
+    aggregated_data['avg_contribuicao_melhoria_iluminacao_publica'] = _group_pc_media(queryset, 'conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')
+    aggregated_data['avg_outras_contribuicoes_melhoria'] = _group_pc_media(queryset, 'conta_mais_especifica__outras_contribuicoes_melhoria')
+    aggregated_data['avg_contribuicoes'] = _group_pc_media(queryset, 'conta_detalhada__contribuicoes')
+    aggregated_data['avg_contribuicoes_sociais'] = _group_pc_media(queryset, 'conta_especifica__contribuicoes_sociais')
+    aggregated_data['avg_contribuicoes_iluminacao_publica'] = _group_pc_media(queryset, 'conta_especifica__contribuicoes_iluminacao_publica')
+    aggregated_data['avg_outras_contribuicoes'] = _group_pc_media(queryset, 'conta_especifica__outras_contribuicoes')
+    aggregated_data['avg_transferencias_correntes'] = _group_pc_media(queryset, 'conta_detalhada__transferencias_correntes')
+    aggregated_data['avg_tranferencias_uniao'] = _group_pc_media(queryset, 'conta_especifica__tranferencias_uniao')
+    aggregated_data['avg_transferencia_uniao_fpm'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_fpm')
+    aggregated_data['avg_transferencia_uniao_exploracao'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_exploracao')
+    aggregated_data['avg_transferencia_uniao_sus'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_sus')
+    aggregated_data['avg_transferencia_uniao_fnde'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_fnde')
+    aggregated_data['avg_transferencia_uniao_fundeb'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_fundeb')
+    aggregated_data['avg_transferencia_uniao_fnas'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_uniao_fnas')
+    aggregated_data['avg_outras_transferencias_uniao'] = _group_pc_media(queryset, 'conta_mais_especifica__outras_transferencias_uniao')
+    aggregated_data['avg_tranferencias_estados'] = _group_pc_media(queryset, 'conta_especifica__tranferencias_estados')
+    aggregated_data['avg_transferencia_estado_icms'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_estado_icms')
+    aggregated_data['avg_transferencia_estado_ipva'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_estado_ipva')
+    aggregated_data['avg_transferencia_estado_exploracao'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_estado_exploracao')
+    aggregated_data['avg_transferencia_estado_sus'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_estado_sus')
+    aggregated_data['avg_transferencia_estado_assistencia'] = _group_pc_media(queryset, 'conta_mais_especifica__transferencia_estado_assistencia')
+    aggregated_data['avg_outras_transferencias_estado'] = _group_pc_media(queryset, 'conta_mais_especifica__outras_transferencias_estado')
+    aggregated_data['avg_outras_tranferencias'] = _group_pc_media(queryset, 'conta_especifica__outras_tranferencias')
+    aggregated_data['avg_outras_receita'] = _group_pc_media(queryset, 'conta_detalhada__outras_receita')
+    aggregated_data['avg_receita_patrimonial'] = _group_pc_media(queryset, 'conta_especifica__receita_patrimonial')
+    aggregated_data['avg_receita_agropecuaria'] = _group_pc_media(queryset, 'conta_especifica__receita_agropecuaria')
+    aggregated_data['avg_receita_industrial'] = _group_pc_media(queryset, 'conta_especifica__receita_industrial')
+    aggregated_data['avg_receita_servicos'] = _group_pc_media(queryset, 'conta_especifica__receita_servicos')
+    aggregated_data['avg_outras_receitas'] = _group_pc_media(queryset, 'conta_especifica__outras_receitas')
 
 
     revenue_tree = []
@@ -2329,6 +2411,8 @@ def conjunto_fiscal_api(request):
             'rc00_pc': rc_00_pc_agregado,
             'delta_rc_pc': delta_rc_pc,
             'delta_pop': delta_pop,
+            'percentil24': percentil24_dyn,
+            'percentil00': percentil00_dyn,
             'media_nacional_rc_pc': 316.74,
             'media_nacional_pop': 16.04,
         }
@@ -2337,9 +2421,6 @@ def conjunto_fiscal_api(request):
 
 def conjunto_chart_api(request):
     queryset, filtros_ativos = _get_filtered_municipios(request)
-
-    if not filtros_ativos:
-        return JsonResponse({})
 
     # --- agregações (copiado da sua view existente) ---
     aggregated_data = queryset.aggregate(
@@ -2394,7 +2475,6 @@ def conjunto_chart_api(request):
         total_transferencia_estado_sus=Coalesce(Sum('conta_mais_especifica__transferencia_estado_sus'), Value(0.0)),
         total_transferencia_estado_assistencia=Coalesce(Sum('conta_mais_especifica__transferencia_estado_assistencia'), Value(0.0)),
         total_outras_transferencias_estado=Coalesce(Sum('conta_mais_especifica__outras_transferencias_estado'), Value(0.0)),
-    )
     )
 
     def v(key):
@@ -2496,9 +2576,6 @@ def conjunto_chart_api(request):
 
 def conjunto_data_api(request):
     queryset, filtros_ativos = _get_filtered_municipios(request)
-
-    if not filtros_ativos:
-        return JsonResponse({"data": []})
 
     # --- Anotação e seleção de valores (a mesma da view `conjunto_detalhe_view`) ---
     qs = (

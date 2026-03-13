@@ -2,30 +2,33 @@
 {% load static %}
 
 {% block extra_head %}
-  <title>Detalhamento de Receita por Conjunto de Municípios</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-  <script src="https://cdn.plotly/plotly-latest.min.js"></script>
+<title>Detalhamento de Receita por Conjunto de Municípios</title>
 
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-  <script defer src="{% static 'global/js/search-modal.js' %}"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="https://cdn.plotly/plotly-latest.min.js"></script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+<script defer src="{% static 'global/js/search-modal.js' %}"></script>
 {% endblock extra_head %}
 
 {% block content %}
 
 <style>
   /* Força o fundo branco na página inteira */
-  html, body, .content-wrapper, .dashboard-content {
+  html,
+  body,
+  .content-wrapper,
+  .dashboard-content {
     background-color: #ffffff !important;
   }
 
@@ -37,34 +40,41 @@
       top: auto !important;
       left: 0 !important;
       width: 100% !important;
-      height: 80vh !important; 
+      height: 80vh !important;
       max-height: 80vh !important;
       background-color: #ffffff !important;
       z-index: 10000 !important;
       visibility: visible !important;
     }
-    .content-wrapper { display: block !important; }
-    
+
+    .content-wrapper {
+      display: block !important;
+    }
+
     /* Remove a película escura do Bootstrap */
-    .offcanvas-backdrop { display: none !important; }
+    .offcanvas-backdrop {
+      display: none !important;
+    }
   }
 
   /* ========== Ajustes Desktop (Alinhamento) ========== */
   @media (min-width: 992px) {
     .content-wrapper {
       display: flex !important;
-      align-items: stretch !important; 
+      align-items: stretch !important;
     }
-    #filtrosOffcanvas { 
-      height: auto !important; 
-      min-height: 100% !important; 
-      overflow: visible !important; 
+
+    #filtrosOffcanvas {
+      height: auto !important;
+      min-height: 100% !important;
+      overflow: visible !important;
       background-color: #ffffff !important;
       border-right: 1px solid #dee2e6;
     }
-    #filtrosOffcanvas .offcanvas-body { 
-      overflow: visible !important; 
-      padding-bottom: 4rem !important; 
+
+    #filtrosOffcanvas .offcanvas-body {
+      overflow: visible !important;
+      padding-bottom: 4rem !important;
     }
   }
 
@@ -74,15 +84,18 @@
   #search-modal .modal-body {
     background-color: #ffffff !important;
   }
+
   #search-modal .list-group-item {
     background-color: #ffffff !important;
     color: #333333 !important;
     border-bottom: 1px solid #e9ecef !important;
   }
+
   #search-modal .list-group-item:hover {
-    background-color: #f0f4f8 !important; 
+    background-color: #f0f4f8 !important;
     color: #103758 !important;
   }
+
   #search-input {
     background-color: #ffffff !important;
     color: #333333 !important;
@@ -96,14 +109,15 @@
     gap: 2.5rem;
     width: 100% !important;
     max-width: 100% !important;
-    overflow: hidden !important; /* Mata qualquer barra de rolagem horizontal */
+    overflow: hidden !important;
+    /* Mata qualquer barra de rolagem horizontal */
   }
 
   .chart-slot {
     position: relative;
     width: 100% !important;
     max-width: 100% !important;
-    height: 350px; 
+    height: 350px;
   }
 
   /* Trava o Canvas para não estourar a div pai */
@@ -114,51 +128,53 @@
 
   @media (min-width: 992px) {
     .chart-slot {
-      height: 450px; 
+      height: 450px;
     }
   }
 
   /* ========== Padronização do Menu Superior (Fundo Branco) ========== */
-    .dropdown-menu {
-      background-color: #ffffff !important;
-      border: 1px solid #e9ecef !important;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-    }
-    
-    .dropdown-item {
-      background-color: #ffffff !important;
-      color: #333333 !important;
-    }
-    
-    .dropdown-item:hover, 
-    .dropdown-item:focus {
-      background-color: #f0f4f8 !important; 
-      color: #103758 !important;
-    }
+  .dropdown-menu {
+    background-color: #ffffff !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
 
-/* ========== Destaque Exclusivo: Análise Agregada (4º Item do Menu) ========== */
-    .dropdown-menu li:nth-child(4) .dropdown-item,
-    .dropdown-menu > .dropdown-item:nth-child(4),
-    .dropdown-item[href*="/conjunto"],
-    .dropdown-item[href*="/analise-agregada"] {
-      color: #103758 !important;
-      font-weight: 700 !important;
-    }
+  .dropdown-item {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+  }
 
+  .dropdown-item:hover,
+  .dropdown-item:focus {
+    background-color: #f0f4f8 !important;
+    color: #103758 !important;
+  }
+
+  /* ========== Destaque Exclusivo: Análise Agregada (4º Item do Menu) ========== */
+  .dropdown-menu li:nth-child(4) .dropdown-item,
+  .dropdown-menu>.dropdown-item:nth-child(4),
+  .dropdown-item[href*="/conjunto"],
+  .dropdown-item[href*="/analise-agregada"] {
+    color: #103758 !important;
+    font-weight: 700 !important;
+  }
 </style>
 
 {% load currency_filters %}
 
 <div class="content-wrapper">
-  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
-    
-    <div class="offcanvas-header d-lg-none border-bottom bg-white p-0" style="position: relative; height: 70px; z-index: 1055;">
+  <aside class="sidebar offcanvas-lg offcanvas-bottom shadow-lg" tabindex="-1" id="filtrosOffcanvas"
+    aria-labelledby="filtrosOffcanvasLabel" data-bs-backdrop="false">
+
+    <div class="offcanvas-header d-lg-none border-bottom bg-white p-0"
+      style="position: relative; height: 70px; z-index: 1055;">
       <div class="w-100 d-flex justify-content-center align-items-center h-100">
         <i class="fa-solid fa-sliders fs-5 me-2" style="color: #103758;"></i>
-        <h5 class="offcanvas-title fw-bold mb-0" id="filtrosOffcanvasLabel" style="color: #103758;">Filtros de Análise</h5>
+        <h5 class="offcanvas-title fw-bold mb-0" id="filtrosOffcanvasLabel" style="color: #103758;">Filtros de Análise
+        </h5>
       </div>
-      <button type="button" data-bs-dismiss="offcanvas" data-bs-target="#filtrosOffcanvas" aria-label="Fechar" 
-              style="position: absolute !important; top: -12px !important; right: -12px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; border: none !important; background-color: #e2e8f0 !important; color: #103758 !important; display: flex !important; justify-content: center !important; align-items: center !important; z-index: 9999 !important;">
+      <button type="button" data-bs-dismiss="offcanvas" data-bs-target="#filtrosOffcanvas" aria-label="Fechar"
+        style="position: absolute !important; top: -12px !important; right: -12px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; border: none !important; background-color: #e2e8f0 !important; color: #103758 !important; display: flex !important; justify-content: center !important; align-items: center !important; z-index: 9999 !important;">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -181,9 +197,11 @@
               <option value="100 mil a 200 mil">100 mil a 200 mil</option>
               <option value="200 mil a 500 mil">200 mil a 500 mil</option>
               <option value="Acima de 500 mil">Acima de 500 mil</option>
-              
-              <option disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;──────────&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
-              
+
+              <option disabled>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;──────────&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </option>
+
               <option value="Acima de 80 mil">Acima de 80 mil</option>
               <option value="Abaixo de 80 mil">Abaixo de 80 mil</option>
             </select>
@@ -196,7 +214,9 @@
         <div class="filter-group mb-4">
           <label for="filtro-rm" class="form-label">Região Metropolitana:</label>
           <div class="input-group input-group-sm">
-            <select id="filtro-rm" class="form-select form-select-sm"><option value="todos">Todas</option></select>
+            <select id="filtro-rm" class="form-select form-select-sm">
+              <option value="todos">Todas</option>
+            </select>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-rm">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
@@ -206,7 +226,9 @@
         <div class="filter-group mb-4">
           <label for="filtro-regiao" class="form-label">Região:</label>
           <div class="input-group input-group-sm">
-            <select id="filtro-regiao" class="form-select form-select-sm"><option value="todos">Todas</option></select>
+            <select id="filtro-regiao" class="form-select form-select-sm">
+              <option value="todos">Todas</option>
+            </select>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-regiao">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
@@ -216,7 +238,9 @@
         <div class="filter-group mb-4">
           <label for="filtro-uf" class="form-label">UF:</label>
           <div class="input-group input-group-sm">
-            <select id="filtro-uf" class="form-select form-select-sm"><option value="todos">Todos</option></select>
+            <select id="filtro-uf" class="form-select form-select-sm">
+              <option value="todos">Todos</option>
+            </select>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-uf">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
@@ -248,41 +272,62 @@
 
   <!-- CONTEÚDO -->
   <main class="dashboard-content position-relative">
-    
-    <button class="btn d-flex d-lg-none justify-content-center align-items-center rounded-circle shadow-lg position-fixed p-0" 
-            type="button" 
-            data-bs-toggle="offcanvas" 
-            data-bs-target="#filtrosOffcanvas" 
-            aria-controls="filtrosOffcanvas"
-            style="width: 50px; height: 50px; bottom: 30px; left: 20px; z-index: 2000; background-color: #103758 !important; opacity: 1 !important; border: none !important;">
+
+    <button
+      class="btn d-flex d-lg-none justify-content-center align-items-center rounded-circle shadow-lg position-fixed p-0"
+      type="button" data-bs-toggle="offcanvas" data-bs-target="#filtrosOffcanvas" aria-controls="filtrosOffcanvas"
+      style="width: 50px; height: 50px; bottom: 30px; left: 20px; z-index: 2000; background-color: #103758 !important; opacity: 1 !important; border: none !important;">
       <i class="fa-solid fa-magnifying-glass fs-5 text-white"></i>
     </button>
 
     <section class="summary-cards-row">
-      <div class="summary-card kpi-card"><div><h6>População</h6><div class="value" id="kpi-populacao">0</div></div></div>
-      <div class="summary-card kpi-card"><div><h6>Quantidade de Municípios</h6><div class="value" id="kpi-quantidade">0</div></div></div>
-      <div class="summary-card kpi-card"><div><h6>Receita per capita</h6><div class="value" id="kpi-receita-per-capita">0</div></div></div>
-      <div class="summary-card kpi-card"><div><h6>Diferença da média Nacional</h6><div class="value" id="kpi-diferenca-media">0</div></div></div>
+      <div class="summary-card kpi-card">
+        <div>
+          <h6>População</h6>
+          <div class="value" id="kpi-populacao">0</div>
+        </div>
+      </div>
+      <div class="summary-card kpi-card">
+        <div>
+          <h6>Quantidade de Municípios</h6>
+          <div class="value" id="kpi-quantidade">0</div>
+        </div>
+      </div>
+      <div class="summary-card kpi-card">
+        <div>
+          <h6 class="d-flex align-items-center">Receita per capita
+          </h6>
+          <div class="value" id="kpi-receita-per-capita">0</div>
+        </div>
+      </div>
+      <div class="summary-card kpi-card">
+        <div>
+          <h6>Diferença da média Nacional</h6>
+          <div class="value" id="kpi-diferenca-media">0</div>
+        </div>
+      </div>
     </section>
 
     <section class="metric-card">
       <h5>
         Detalhamento da Receita Corrente
-        <!--
+        <i class="fa-solid fa-circle-info ms-2 text-slate-400 cursor-pointer" style="font-size: 11px;"
+          data-bs-toggle="tooltip" data-bs-placement="top"
+          title="A média apresentada é a Média Aritmética Simples (Soma das Receitas p/c de cada município subdividida pelo número de cidades)."></i>
+
         <div id="valor-toggle" class="segmented">
           <button id="btn-per-capita" class="segmented-option active" type="button">Per Capita</button>
-          <button id="btn-valores-reais" class="segmented-option" type="button">Valores Reais</button>
+          <button id="btn-valores-reais" class="segmented-option" type="button">Valor Total</button>
         </div>
-        -->
       </h5>
 
       <div id="main-revenue-details-container">
         {% if revenue_tree %}
-          {% for item in revenue_tree %}
-            {% include "detail/_revenue_item_aggregate.html" with item=item level=0 %}
-          {% endfor %}
+        {% for item in revenue_tree %}
+        {% include "detail/_revenue_item_aggregate.html" with item=item level=0 %}
+        {% endfor %}
         {% else %}
-          <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
+        <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
         {% endif %}
       </div>
     </section>
@@ -291,21 +336,21 @@
       <h5>
         Composição da Receita
         <select id="chart-category-select" class="select-compact">
-            <option value="main_categories">Categorias Principais</option>
-            <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
-            <option value="imposto">___ Impostos</option>
-            <option value="taxas">____ Taxas</option>
-            <option value="contribuicoes_melhoria">____ Contribuições de Melhoria</option>
-            <option value="contribuicoes">Contribuições</option>
-            <option value="transferencias_correntes">Transferências Correntes</option>
-            <option value="transferencias_uniao">___ Transferências da União</option>
-            <option value="transferencias_estado">___ Transferências dos Estados</option>
-            <option value="outras_receitas">Outras Receitas</option>
+          <option value="main_categories">Categorias Principais</option>
+          <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
+          <option value="imposto">___ Impostos</option>
+          <option value="taxas">____ Taxas</option>
+          <option value="contribuicoes_melhoria">____ Contribuições de Melhoria</option>
+          <option value="contribuicoes">Contribuições</option>
+          <option value="transferencias_correntes">Transferências Correntes</option>
+          <option value="transferencias_uniao">___ Transferências da União</option>
+          <option value="transferencias_estado">___ Transferências dos Estados</option>
+          <option value="outras_receitas">Outras Receitas</option>
         </select>
       </h5>
 
       <!-- Bloco de gráficos (composição + densidade) -->
-      <div class="chart-section">
+      <div id="chart-section" class="chart-section">
         <div class="chart-slot">
           <canvas id="myChart"></canvas>
         </div>
@@ -314,6 +359,155 @@
         </div>
       </div>
 
+      <div id="chart-empty-state" style="display:none;">
+        <p class="text-gray-500 text-center py-4">Selecione filtros para visualizar a análise agregada.</p>
+      </div>
+
+    </section>
+
+    <!-- SÍNTESE FISCAL E DEMOGRÁFICA (dinâmica via AJAX) -->
+    <section id="sintese-fiscal-container" class="mt-4" style="display:none;">
+      <div class="mb-6">
+        <div class="section-heading mb-1">
+          <span>Síntese Fiscal e Demográfica (2000 - 2024)</span>
+        </div>
+        <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+          <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          * Valores financeiros corrigidos pela inflação para 2024
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div
+          class="lg:col-span-5 bg-[#f8fafc] rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+
+            <div class="mb-8">
+              <div class="flex items-start gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <i class="fa-solid fa-money-bill-trend-up text-emerald-600 text-sm"></i>
+                </div>
+                <p class="text-slate-600 leading-relaxed text-sm">
+                  A <strong class="text-slate-800">Receita por Habitante</strong>
+                  <span id="text-filtro-nome-rc">do conjunto</span>
+                  <span id="text-delta-rc-pc">—</span>
+                  entre 2000 e 2024.<br><span class="text-[0.8rem] opacity-80">No mesmo período, a média nacional variou
+                    <strong class="text-slate-700" id="text-media-nacional-rc">316,74%</strong>.</span>
+                </p>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-[#103758]/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <i class="fa-solid fa-users text-[#103758] text-[0.8rem]"></i>
+                </div>
+                <p class="text-slate-600 leading-relaxed text-sm">
+                  A <strong class="text-slate-800">População</strong>
+                  <span id="text-filtro-nome-pop">do conjunto</span>
+                  <span id="text-delta-pop">—</span>
+                  neste intervalo de tempo.<br><span class="text-[0.8rem] opacity-80">Enquanto o crescimento
+                    populacional médio no Brasil foi de <strong class="text-slate-700"
+                      id="text-media-nacional-pop">16,04%</strong>.</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+              <div class="flex items-start justify-between mb-6">
+                <h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mt-2">Base para Ranking</h4>
+                <div id="timeline-toggle" class="segmented"
+                  style="display:inline-flex; flex-direction:column; gap:4px; max-width: 100px;">
+                  <button class="segmented-option active w-full" type="button" data-mode="percentil">Percentil</button>
+                  <button class="segmented-option w-full" type="button" data-mode="quintil">Quintil</button>
+                  <button class="segmented-option w-full" type="button" data-mode="decil">Decil</button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-center gap-8 py-6">
+
+                <div class="flex flex-col items-center flex-1 max-w-[150px]">
+                  <span class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-widest text-center">2000</span>
+
+                  <div class="relative flex flex-col items-center">
+                    <div id="circle-2000"
+                      class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300"
+                      data-quintil="-" data-decil="-" data-percentil="0">
+                      <span
+                        class="dynamic-label text-[10px] font-bold uppercase tracking-wider opacity-90 mb-0.5 leading-none">-</span>
+                      <span class="dynamic-value text-3xl font-black leading-none">-</span>
+                    </div>
+
+                    <span
+                      class="dynamic-explanation text-[11px] font-medium text-slate-500 text-center mt-3 leading-snug"></span>
+                  </div>
+                </div>
+
+                <div class="text-slate-300 px-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </div>
+
+                <div class="flex flex-col items-center flex-1 max-w-[150px]">
+                  <span
+                    class="text-sm font-bold text-[var(--fnp-dark-blue)] uppercase mb-3 tracking-widest text-center">2024</span>
+                  <div class="relative flex flex-col items-center">
+                    <div id="circle-2024"
+                      class="timeline-circle-dynamic w-28 h-28 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300"
+                      data-quintil="-" data-decil="-" data-percentil="0">
+                      <span
+                        class="dynamic-label text-[10px] font-bold uppercase tracking-wider opacity-90 mb-0.5 leading-none">-</span>
+                      <span class="dynamic-value text-3xl font-black leading-none">-</span>
+                    </div>
+                    <span
+                      class="dynamic-explanation text-[11px] font-medium text-slate-500 text-center mt-3 leading-snug"></span>
+                  </div>
+                </div>
+
+              </div>
+
+              <p id="timeline-dynamic-summary" class="text-center text-sm text-slate-500 mt-2 px-4 leading-relaxed"
+                data-muni-name="Conjunto Selecionado"></p>
+
+              <div id="timeline-ruler-container" class="mt-8 px-4 w-full max-w-sm mx-auto hidden relative h-16"></div>
+
+            </div>
+
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-slate-200">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Legenda dos
+              Gráficos</span>
+            <div class="flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-bold text-slate-500 uppercase">
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#103758]"></span> <span
+                  id="text-legend-cjt">CONJUNTO SELECIONADO (EVOLUÇÃO)</span></div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#cbd5e1]"></span> <span
+                  class="lbl-media-base-chart">Média Nacional</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 flex flex-col gap-5">
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da Receita por
+              Habitante (2000-2024)</h4>
+            <div class="flex-1 relative min-h-[160px]">
+              <canvas id="chartReceitaEvo"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da População
+              (2000-2024)</h4>
+            <div class="flex-1 relative min-h-[160px]">
+              <canvas id="chartPopEvo"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </div>
@@ -341,14 +535,14 @@
 <script src="{% static 'detail/js/script_density.js' %}"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const searchModalEl = document.getElementById('search-modal');
     const filtrosOffcanvasEl = document.getElementById('filtrosOffcanvas');
     const filterGroups = document.getElementById('filters');
     const btnLimpar = document.getElementById('btn-limpar-filtros');
-    
+
     if (!filtrosOffcanvasEl) return;
-    
+
     // Instância do Offcanvas do Bootstrap
     const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(filtrosOffcanvasEl);
 
@@ -356,11 +550,11 @@
     if (filterGroups) {
       const inputs = filterGroups.querySelectorAll('select, input[type="radio"]');
       inputs.forEach(input => {
-        input.addEventListener('change', function() {
+        input.addEventListener('change', function () {
           if (window.innerWidth < 992) {
             setTimeout(() => {
               offcanvasInstance.hide();
-            }, 300); 
+            }, 300);
           }
         });
       });
@@ -368,7 +562,7 @@
 
     // 2. MINIMIZAR AO CLICAR EM LIMPAR FILTROS
     if (btnLimpar) {
-      btnLimpar.addEventListener('click', function() {
+      btnLimpar.addEventListener('click', function () {
         if (window.innerWidth < 992) {
           setTimeout(() => {
             offcanvasInstance.hide();
@@ -389,16 +583,16 @@
 </script>
 
 <script>
-    if (typeof Chart !== 'undefined') {
-      Chart.defaults.maintainAspectRatio = false;
-      Chart.defaults.responsive = true;
-      
-      // Se for celular (tela menor que 768px), ajusta a fonte e o layout para caber tudo na tela
-      if (window.innerWidth < 768) {
-        Chart.defaults.font.size = 9; // Reduz a fonte levemente para caber o texto longo
-        Chart.defaults.layout.padding = { left: 0, right: 10, top: 0, bottom: 0 }; // Evita o corte na esquerda
-      }
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+
+    // Se for celular (tela menor que 768px), ajusta a fonte e o layout para caber tudo na tela
+    if (window.innerWidth < 768) {
+      Chart.defaults.font.size = 9; // Reduz a fonte levemente para caber o texto longo
+      Chart.defaults.layout.padding = { left: 0, right: 10, top: 0, bottom: 0 }; // Evita o corte na esquerda
     }
-  </script>
+  }
+</script>
 
 {% endblock content %}
