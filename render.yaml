@@ -14,7 +14,7 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "ifem.onrender.com"
+        value: "subfinanciados-ifem.onrender.com,localhost" # Aceita o domínio padrão do Render e localhost
       - key: PYTHON_VERSION
         value: "3.12.7"
       - key: SECURE_SSL_REDIRECT
