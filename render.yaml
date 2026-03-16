@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: subfinanciados-ifem
+    env: python
+    region: ohio
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Você vai colar a URL do Supabase no painel do Render
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "ifem.onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
