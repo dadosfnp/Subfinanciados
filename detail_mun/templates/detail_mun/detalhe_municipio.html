@@ -8,8 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     
-    <link rel="stylesheet" href="{% static 'detail/css/style_mun.css' %}">
-    <link rel="stylesheet" href="{% static 'detail/css/sticky_header.css' %}">
+    <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun.css' %}">
+    <link rel="stylesheet" href="{% static 'detail_mun/css/sticky_header.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
@@ -98,8 +98,8 @@
             </div>
             
             <div class="segmented" style="padding: 2px;">
-                <button type="button" class="segmented-option active kpi-rc-toggle text-[10px] sm:text-[11px]" data-mode="pc">Per Capita</button>
-                <button type="button" class="segmented-option kpi-rc-toggle text-[10px] sm:text-[11px]" data-mode="tot">Total</button>
+                <button type="button" class="segmented-option active text-[10px] sm:text-[11px]" data-mode="pc">Per Capita</button>
+                <button type="button" class="segmented-option text-[10px] sm:text-[11px]" data-mode="tot">Total</button>
             </div>
         </div>
 
@@ -153,7 +153,7 @@
             <div class="dna-tree-wrapper" id="main-revenue-details-container">
                 {% if revenue_tree %}
                     {% for item in revenue_tree %}
-                        {% include "detail/_revenue_item.html" with item=item level=0 %}
+                        {% include "detail_mun/_revenue_item.html" with item=item level=0 %}
                     {% endfor %}
                 {% else %}
                     <div class="p-8 text-center text-slate-500 border border-slate-200 rounded-lg">Nenhum detalhamento encontrado.</div>
@@ -374,7 +374,7 @@
 }
 </script>
 
-<script src="{% static 'detail/js/script_mun.js' %}"></script>
-<script src="{% static 'detail/js/script_density_mun.js' %}"></script>
+<script src="{% static 'detail_mun/js/script_mun.js' %}"></script>
+<script src="{% static 'detail_mun/js/script_density_mun.js' %}"></script>
 
 {% endblock content %}

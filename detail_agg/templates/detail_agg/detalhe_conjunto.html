@@ -9,7 +9,7 @@
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'detail/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'detail_agg/css/style.css' %}">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -326,7 +326,7 @@
       <div id="main-revenue-details-container">
         {% if revenue_tree %}
         {% for item in revenue_tree %}
-        {% include "detail/_revenue_item_aggregate.html" with item=item level=0 %}
+        {% include "detail_agg/_revenue_item_aggregate.html" with item=item level=0 %}
         {% endfor %}
         {% else %}
         <p class="text-gray-500 text-center py-4">Nenhum dado de receita detalhada foi encontrado.</p>
@@ -533,8 +533,8 @@
 {{ data_json|json_script:"mun-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
 {{ data_f_json|json_script:"mun-data-f" }}
-<script src="{% static 'detail/js/script.js' %}"></script>
-<script src="{% static 'detail/js/script_density.js' %}"></script>
+<script src="{% static 'detail_agg/js/script.js' %}"></script>
+<script src="{% static 'detail_agg/js/script_density.js' %}"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {

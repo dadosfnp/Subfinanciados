@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class DetailConfig(AppConfig):
+class DetailAggConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'detail'
+    name = 'detail_agg'
