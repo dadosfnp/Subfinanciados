@@ -203,13 +203,36 @@ document.addEventListener('DOMContentLoaded', function () {
           el.textContent = pc ? 'Valor por Habitante' : 'Valor Real';
       });
 
-      $$('.media-block-wrapper').forEach(el => el.classList.toggle('hidden', !pc));
+      // Update visibility of the wrapper items when toggling per capita/real
+      // BUT keep the individual display states of media vs mediana respected
+      $$('.estatistica-media').forEach(el => el.style.display = pc ? '' : 'none');
+      $$('.estatistica-mediana').forEach(el => el.style.display = pc ? '' : 'none');
 
       sortAll(pc);
     }
     
     segmented?.querySelector('[data-mode="pc"]')?.addEventListener('click', ()=>showMode('pc'));
     segmented?.querySelector('[data-mode="vr"]')?.addEventListener('click', ()=>showMode('vr'));
+    
+    // ------------ Toggle Média/Mediana ------------
+    const estatisticaToggle = $('#estatistica-toggle');
+    function showEstatistica(m){
+      const isMedia = m === 'media';
+      estatisticaToggle?.querySelector('[data-est="media"]')?.classList.toggle('active', isMedia);
+      estatisticaToggle?.querySelector('[data-est="mediana"]')?.classList.toggle('active', !isMedia);
+      
+      $$('.estatistica-media').forEach(el => {
+         el.classList.toggle('hidden', !isMedia);
+         el.classList.toggle('invisible-by-est', !isMedia);
+      });
+      $$('.estatistica-mediana').forEach(el => {
+         el.classList.toggle('hidden', isMedia);
+         el.classList.toggle('invisible-by-est', isMedia);
+      });
+    }
+
+    estatisticaToggle?.querySelector('[data-est="media"]')?.addEventListener('click', ()=>showEstatistica('media'));
+    estatisticaToggle?.querySelector('[data-est="mediana"]')?.addEventListener('click', ()=>showEstatistica('mediana'));
     // ------------ índice de headings (Gráfico -> Árvore) ------------
     let headingIndex = new Map();
     function buildHeadingIndex(scope=document){
@@ -1111,35 +1134,31 @@ timelineBtns.forEach(btn => {
             updateBenchmarkTrend('trend-comparativo-rc', munRc, compRc, labelNome);
             updateBenchmarkTrend('trend-comparativo-pop', munPop, compPop, labelNome);
         }
+    }
 
-        // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
-        const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
-        const kpiRcLabel = document.getElementById('kpi-rc-label');
-        const kpiRcValue = document.getElementById('kpi-rc-value');
+    // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
+    const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
+    const kpiRcLabel = document.getElementById('kpi-rc-label');
+    const kpiRcValue = document.getElementById('kpi-rc-value');
 
-        if (kpiRcToggles.length > 0) {
-            kpiRcToggles.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // Alterna o estilo visual dos botões
-                    kpiRcToggles.forEach(b => {
-                        b.classList.remove('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
-                        b.classList.add('text-slate-400');
-                    });
-                    btn.classList.add('active', 'bg-white', 'text-[#103758]', 'shadow-sm');
-                    btn.classList.remove('text-slate-400');
+    if (kpiRcToggles.length > 0) {
+        kpiRcToggles.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Alterna o estilo visual dos botões
+                kpiRcToggles.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
-                    // Alterna os textos e valores
-                    const mode = btn.dataset.mode;
-                    if (mode === 'pc') {
-                        kpiRcLabel.textContent = 'Valor por Habitante';
-                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-pc');
-                    } else {
-                        kpiRcLabel.textContent = 'Total Absoluto';
-                        kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-tot');
-                    }
-                });
+                // Alterna os textos e valores
+                const mode = btn.dataset.mode;
+                if (mode === 'pc') {
+                    kpiRcLabel.textContent = 'Valor por Habitante';
+                    kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-pc');
+                } else {
+                    kpiRcLabel.textContent = 'Total Absoluto';
+                    kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-tot');
+                }
             });
-        }
+        });
     }
 
     globalBaseBtns.forEach(btn => btn.addEventListener('click', function() { updateGlobalBase(this.dataset.base); }));

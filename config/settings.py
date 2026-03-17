@@ -13,14 +13,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
-MAPBOX_PUBLIC_TOKEN = os.getenv("MAPBOX_PUBLIC_TOKEN", "")
-
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+MAPBOX_PUBLIC_TOKEN = os.getenv("MAPBOX_PUBLIC_TOKEN", "")
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,7 +32,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['*']
+# Lê a variável ou usa fallbacks - Aceita múltiplos hosts separados por vírgula
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "subfinanciados-ifem.onrender.com,localhost,127.0.0.1").split(",")
+
+# Adicione também esta configuração para evitar erros de CSRF em formulários
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "https://subfinanciados-ifem.onrender.com,https://*.onrender.com").split(",")
 
 
 # Application definition
@@ -91,12 +95,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Configuração de banco de dados híbrida
+# Prioriza a DATABASE_URL (Supabase/Prod) e mantém SQLite como fallback
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{os.path.join(BASE_DIR, "db.sqlite3")}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+
+# Se estiver em produção (DATABASE_URL presente e não é SQLite), força SSL
+if os.getenv("DATABASE_URL") and not os.getenv("DATABASE_URL").startswith("sqlite"):
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+    }
 
 
 # Password validation
