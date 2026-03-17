@@ -32,10 +32,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Lê a variável ou usa fallbacks - Aceita múltiplos hosts separados por vírgula
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "subfinanciados-ifem.onrender.com,localhost,127.0.0.1").split(",")
 
-# Configurações de CSRF para produção
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://subfinanciados-ifem.onrender.com,https://*.onrender.com').split(',')
+# Adicione também esta configuração para evitar erros de CSRF em formulários
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "https://subfinanciados-ifem.onrender.com,https://*.onrender.com").split(",")
 
 
 # Application definition
@@ -102,6 +103,12 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
+
+# Se estiver em produção (DATABASE_URL presente e não é SQLite), força SSL
+if os.getenv("DATABASE_URL") and not os.getenv("DATABASE_URL").startswith("sqlite"):
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+    }
 
 
 # Password validation
