@@ -100,7 +100,8 @@ def api_get_dashboard_data(request):
         classification_filter = 'quintil'
         num_quantiles = 5
 
-    base_classification_labels = [f'{i+1}º {classification_filter}' for i in range(num_qua    try:
+    base_classification_labels = [f'{i+1}º {classification_filter}' for i in range(num_quantiles)]
+    try:
         # --- Lógica 2024 ---
         aggregated_data_list_24 = []
         field_for_aggregation_24 = ''
