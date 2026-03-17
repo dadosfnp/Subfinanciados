@@ -122,7 +122,6 @@
                      data-val-tot="R$ {{ municipio.rc_2024|br_abrev }}">
                     R$ {{ municipio.rc_24_pc|br_float }}
                 </div>
-                <div id="trend-comparativo-rc" class="kpi-hero-trend mt-1"></div>
             </div>
         </div>
     </article>
@@ -132,11 +131,17 @@
 
     <section class="dashboard-split mb-12">
         <div>
-            <div class="section-heading">
+            <div class="section-heading flex flex-col items-start gap-4">
                 <span>Estrutura de Receitas</span>                       
-                <div id="valor-toggle" class="segmented">
-                    <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
-                    <button class="segmented-option" type="button" data-mode="vr">Valores Reais</button>
+                <div class="flex items-center gap-3">
+                    <div id="valor-toggle" class="segmented">
+                        <button class="segmented-option active" type="button" data-mode="pc">Per Capita</button>
+                        <button class="segmented-option" type="button" data-mode="vr">Valor Total</button>
+                    </div>
+                    <div id="estatistica-toggle" class="segmented">
+                        <button class="segmented-option active" type="button" data-est="media">Média</button>
+                        <button class="segmented-option" type="button" data-est="mediana">Mediana</button>
+                    </div>
                 </div>
             </div>
 

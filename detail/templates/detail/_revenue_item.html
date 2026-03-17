@@ -8,12 +8,15 @@
     .animate-fade-in-row {
         animation: fadeInRow 0.5s ease-out forwards;
     }
+    .invisible-by-est {
+        display: none !important;
+    }
 </style>
 
 
-<div class="revenue-item-wrapper overflow-hidden">
+<div class="revenue-item-wrapper overflow-hidden ml-[calc({{ level }}*18px)]">
     
-    <div class="tree-row group transition-colors hover:bg-slate-100 border-b border-slate-100 last:border-0 level-{{ level }} py-3 pr-4 {% if level == 0 %}pl-4{% else %}border-l-[3px] border-l-slate-300 pl-[13px] bg-slate-50/40{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
+    <div class="tree-row group transition-colors hover:bg-slate-100 border-b border-slate-100 last:border-0 level-{{ level }} py-3 pr-4 {% if level == 0 %}pl-4{% else %}border-l-[4px] border-l-slate-300 pl-[16px] bg-slate-50/40{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
          {% if has_children %}data-target="{{ item.target_id }}"{% endif %}
          data-field-base="{{ item.field_base }}" 
          style="cursor: pointer;">
@@ -41,9 +44,7 @@
                     <h4 class="{% if level == 0 %}text-[20px] sm:text-[22px]{% else %}text-sm sm:text-base{% endif %} font-bold text-[#103758] transition-colors duration-300 group-hover:text-[#194685] whitespace-normal break-words leading-tight">{{ item.name }}</h4>
                 </div>
             </div>
-            
             <div class="pl-2 sm:pl-[22px] mb-3">
-                
                 <p class="revenue-dynamic-phrase text-[14px] sm:text-[16px] text-slate-500 font-medium whitespace-normal break-words leading-snug"
                    data-muni-name="{{ municipio.name_muni|title }}"
                    data-pct-nacional="{{ item.percentiles.nacional|default:'' }}"
@@ -61,7 +62,7 @@
                     </span>
                 </div>
                 
-                <div class="media-block-wrapper transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
+                <div class="media-block-wrapper estatistica-media transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
                     <span class="revenue-dynamic-media-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Média Nacional</span>
                     
                     <span class="revenue-dynamic-media-value block text-[18px] font-black text-slate-500 break-all"
@@ -70,7 +71,7 @@
                           data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|floatformat:2 }}{% endif %}">
                     </span>
                 </div>
-                <div class="media-block-wrapper transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
+                <div class="media-block-wrapper estatistica-mediana hidden transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
                     <span class="revenue-dynamic-mediana-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mediana Nacional</span>
                     
                     <span class="revenue-dynamic-mediana-value block text-[18px] font-black text-slate-500"
