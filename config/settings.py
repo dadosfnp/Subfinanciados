@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'home',
     'ifem',
     'map',
-    'detail',
+    'detail_mun',
+    'detail_agg',
      
 ]
 

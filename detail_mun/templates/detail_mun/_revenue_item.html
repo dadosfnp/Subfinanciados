@@ -86,7 +86,7 @@
     {% if has_children %}
     <div id="{{ item.target_id }}" class="hidden mt-1 mb-1 animate-fade-in-row">
         {% for child in item.children %}
-            {% include "detail/_revenue_item.html" with item=child level=level|add:1 %}
+            {% include "detail_mun/_revenue_item.html" with item=child level=level|add:1 %}
         {% endfor %}
     </div>
     {% endif %}

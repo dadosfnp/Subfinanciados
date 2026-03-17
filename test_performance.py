@@ -5,7 +5,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')  # Ajuste o nome do módulo de settings se necessário
 django.setup()
 
-from detail.views import conjunto_detalhe_view
+from detail_mun.views import conjunto_detalhe_view
 from django.test import RequestFactory
 import time
 
