@@ -313,8 +313,13 @@ def api_get_dashboard_data(request):
         if include_2000_data:
             response_data["tableData00"] = table_data_00
             response_data["tableHeaders00"] = table_headers_00
+        return JsonResponse(response_data)
+    except Exception as e:
+        import traceback
+        return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
 
 def api_debug_status(request):
+    from django.conf import settings
     db_engine = settings.DATABASES['default']['ENGINE']
     db_name = settings.DATABASES['default']['NAME']
     db_host = settings.DATABASES['default'].get('HOST', 'N/A')
@@ -341,4 +346,3 @@ def api_debug_status(request):
         "env_database_url_present": bool(os.getenv("DATABASE_URL")),
         "env_secret_key_present": bool(os.getenv("DJANGO_SECRET_KEY"))
     })
-esponse(response_data)
