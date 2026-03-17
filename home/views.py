@@ -319,30 +319,23 @@ def api_get_dashboard_data(request):
         return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
 
 def api_debug_status(request):
+    from django.db import connection
     from django.conf import settings
-    db_engine = settings.DATABASES['default']['ENGINE']
-    db_name = settings.DATABASES['default']['NAME']
-    db_host = settings.DATABASES['default'].get('HOST', 'N/A')
+    import os
     
-    # Mascara o host e o nome para segurança
-    masked_host = f"{db_host[:5]}***" if db_host != 'N/A' else 'N/A'
-    
+    db_info = settings.DATABASES['default']
     try:
         municipio_count = Municipio.objects.count()
         conn_ok = True
-        error = None
     except Exception as e:
         municipio_count = -1
         conn_ok = False
-        error = str(e)
         
     return JsonResponse({
-        "engine": db_engine,
-        "host_masked": masked_host,
-        "database_name": db_name,
+        "database_engine": db_info['ENGINE'],
+        "database_host": db_info.get('HOST', 'N/A')[:10] + "...",
         "municipio_count": municipio_count,
         "connection_alive": conn_ok,
-        "error": error,
-        "env_database_url_present": bool(os.getenv("DATABASE_URL")),
-        "env_secret_key_present": bool(os.getenv("DJANGO_SECRET_KEY"))
+        "env_db_url": bool(os.getenv("DATABASE_URL")),
+        "debug_mode": settings.DEBUG
     })
