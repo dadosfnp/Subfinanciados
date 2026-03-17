@@ -1,3 +1,4 @@
+# home/views.py - v1.0.1 - Deploy Fix 17/03/2026 15:45
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Avg, StdDev
 from django.http import JsonResponse
