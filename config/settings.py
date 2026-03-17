@@ -104,11 +104,19 @@ DATABASES = {
     )
 }
 
-# Se estiver em produção (DATABASE_URL presente e não é SQLite), força SSL
+# Se NÃO for DEBUG (produção), DATABASE_URL é OBRIGATÓRIA
+if not DEBUG:
+    _db_url = os.getenv("DATABASE_URL", "")
+    if not _db_url or _db_url.startswith("sqlite"):
+        raise RuntimeError(
+            "ERRO CRÍTICO: DATABASE_URL não configurada em produção! "
+            "Configure a variável de ambiente no painel do Render."
+        )
+
+# Se for PostgreSQL, força SSL
 if os.getenv("DATABASE_URL") and not os.getenv("DATABASE_URL").startswith("sqlite"):
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',
-    }
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
 
 
 # Password validation
