@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Avg, StdDev
 from django.http import JsonResponse
+from django.db import connection
 from .models import Municipio, ContaDetalhada, Noticia 
 import numpy as np
 import math
@@ -313,8 +314,31 @@ def api_get_dashboard_data(request):
             response_data["tableData00"] = table_data_00
             response_data["tableHeaders00"] = table_headers_00
 
-        return JsonResponse(response_data)
+def api_debug_status(request):
+    db_engine = settings.DATABASES['default']['ENGINE']
+    db_name = settings.DATABASES['default']['NAME']
+    db_host = settings.DATABASES['default'].get('HOST', 'N/A')
+    
+    # Mascara o host e o nome para segurança
+    masked_host = f"{db_host[:5]}***" if db_host != 'N/A' else 'N/A'
+    
+    try:
+        municipio_count = Municipio.objects.count()
+        conn_ok = True
+        error = None
     except Exception as e:
-        import traceback
-        return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
+        municipio_count = -1
+        conn_ok = False
+        error = str(e)
+        
+    return JsonResponse({
+        "engine": db_engine,
+        "host_masked": masked_host,
+        "database_name": db_name,
+        "municipio_count": municipio_count,
+        "connection_alive": conn_ok,
+        "error": error,
+        "env_database_url_present": bool(os.getenv("DATABASE_URL")),
+        "env_secret_key_present": bool(os.getenv("DJANGO_SECRET_KEY"))
+    })
 esponse(response_data)
