@@ -187,11 +187,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       document.getElementById('kpi-receita-per-capita').textContent =
         (d.kpis?.receita_per_capita || 0)
-          .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 
       const diff = Number(d.kpis?.diferenca_media ?? 0);
       const elDiff = document.getElementById('kpi-diferenca-media');
-      elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 });
+      elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 1 });
       colorizeDiffKpi(diff);
     } catch(e) {
       console.error('[kpis] erro', e);
@@ -402,7 +402,7 @@ function updateTimelineColors(mode) {
   function renderEvolutionCharts(hist) {
     const fmtPct = (v) => {
       const n = Number(v) || 0;
-      const formatted = n.toFixed(2);
+      const formatted = n.toFixed(1).replace('.', ',');
       return n >= 0
         ? `<span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+${formatted}%</span>`
         : `<span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">${formatted}%</span>`;
@@ -418,8 +418,8 @@ function updateTimelineColors(mode) {
 
     const elMedRc = document.getElementById('text-media-nacional-rc');
     const elMedPop = document.getElementById('text-media-nacional-pop');
-    if (elMedRc && hist.media_nacional_rc_pc) elMedRc.textContent = Number(hist.media_nacional_rc_pc).toFixed(2) + '%';
-    if (elMedPop && hist.media_nacional_pop) elMedPop.textContent = Number(hist.media_nacional_pop).toFixed(2) + '%';
+    if (elMedRc && hist.media_nacional_rc_pc) elMedRc.textContent = Number(hist.media_nacional_rc_pc).toFixed(1).replace('.', ',') + '%';
+    if (elMedPop && hist.media_nacional_pop) elMedPop.textContent = Number(hist.media_nacional_pop).toFixed(1).replace('.', ',') + '%';
 
     const filterText = getActiveFilterText();
     const filterLabel = getActiveFilterLabel();
