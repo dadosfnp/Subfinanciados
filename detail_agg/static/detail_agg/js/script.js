@@ -1,4 +1,3 @@
-// detail/static/detail/js/script.js  (CONJUNTO)
 document.addEventListener('DOMContentLoaded', function () {
   // --- Debug helpers ---
   const DEBUG = false;
@@ -257,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>`;
   }
 
-  function updateTimelineColors(mode) {
+function updateTimelineColors(mode) {
       const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
       const summaryContainer = document.getElementById('timeline-dynamic-summary');
 
@@ -268,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const numMatch = rawValue.match(/\d+/);
           const num = numMatch ? numMatch[0] : null;
 
-          let hex = null; let isLightBackground = false; let explanationText = '';
+          let hex = null; let isLightBackground = false; 
           if (num) {
               if (mode === 'percentil') {
                   if (labelSpan) labelSpan.textContent = 'Percentil';
@@ -276,25 +275,20 @@ document.addEventListener('DOMContentLoaded', function () {
                   const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
                   hex = FNP_DECIL_COLORS[decilVal];
                   isLightBackground = (decilVal === 5 || decilVal === 6);
-                  explanationText = `Maior que <strong class="text-slate-800">${num}%</strong> dos munícipios`;
               } else if (mode === 'quintil') {
                   if (labelSpan) labelSpan.textContent = 'Quintil';
                   if (valueSpan) valueSpan.textContent = num + 'º';
                   hex = FNP_RANK_COLORS[num];
                   isLightBackground = (num === '3');
-                  const quintilWords = {'5': '20% mais ricos', '4': '40% a 20% mais ricos', '3': 'Intermediário', '2': 'Abaixo da Média', '1': '20% mais pobres'};
-                  explanationText = `<strong class="text-slate-800">${quintilWords[num] || ''}</strong> do país`;
               } else if (mode === 'decil') {
                   if (labelSpan) labelSpan.textContent = 'Decil';
                   if (valueSpan) valueSpan.textContent = num + 'º';
                   hex = FNP_DECIL_COLORS[num];
                   isLightBackground = (num === '5' || num === '6');
-                  explanationText = `Grupo <strong class="text-slate-800">${num}</strong> de 10 do país`;
               }
           } else {
               if (labelSpan) labelSpan.textContent = mode;
               if (valueSpan) valueSpan.textContent = '-';
-              explanationText = 'Dado Indisponível';
           }
 
           if (hex) {
@@ -303,11 +297,6 @@ document.addEventListener('DOMContentLoaded', function () {
           } else {
               circle.style.backgroundColor = '#f1f5f9';
               circle.style.color = '#94a3b8';
-          }
-
-          const explanationSpan = circle.nextElementSibling;
-          if (explanationSpan && explanationSpan.classList.contains('dynamic-explanation')) {
-              explanationSpan.innerHTML = explanationText;
           }
       });
 
@@ -319,8 +308,9 @@ document.addEventListener('DOMContentLoaded', function () {
           if (num00 && num24) {
               const val00 = parseInt(num00[0]);
               const val24 = parseInt(num24[0]);
+              
               if (val24 === val00) {
-                  summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do conjunto no Brasil se manteve</strong>.`;
+                  summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa do conjunto <strong class="text-slate-700">se manteve</strong> no ${val00}º ${mode}.`;
               } else if (mode === 'percentil') {
                   const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
                   const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
@@ -331,7 +321,27 @@ document.addEventListener('DOMContentLoaded', function () {
                   const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
                   summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa do conjunto <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${val00}º ${mode}</span> para o <span class="${corStatus} font-black">${val24}º ${mode}</span>.`;
               }
-              renderTimelineRuler(mode, val00, val24);
+              
+              const c00 = document.getElementById('circle-container-2000');
+              const c24 = document.getElementById('circle-container-2024');
+              const line = document.getElementById('cartesian-line');
+              
+              if (c00 && c24 && line) {
+                  let y00 = 50; let y24 = 50;
+                  if (mode === 'percentil') {
+                      y00 = 10 + (val00 / 100) * 80; y24 = 10 + (val24 / 100) * 80;
+                  } else if (mode === 'quintil') {
+                      y00 = 10 + ((val00 - 1) / 4) * 80; y24 = 10 + ((val24 - 1) / 4) * 80;
+                  } else if (mode === 'decil') {
+                      y00 = 10 + ((val00 - 1) / 9) * 80; y24 = 10 + ((val24 - 1) / 9) * 80;
+                  }
+                  c00.style.bottom = y00 + '%'; c24.style.bottom = y24 + '%';
+                  line.setAttribute('y1', (100 - y00) + '%'); line.setAttribute('y2', (100 - y24) + '%');
+              }
+              
+              if (typeof renderTimelineRuler === 'function') {
+                  renderTimelineRuler(mode, val00, val24);
+              }
           } else {
               summaryContainer.innerHTML = '';
               const r = document.getElementById('timeline-ruler-container');
@@ -401,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const elRc  = document.getElementById('text-delta-rc-pc');
     const elPop = document.getElementById('text-delta-pop');
     const deltaRc  = Number(hist.delta_rc_pc)  || 0;
-    const deltaPop = Number(hist.delta_pop)     || 0;
+    const deltaPop = Number(hist.delta_pop)    || 0;
 
     if (elRc)  elRc.innerHTML  = deltaRc  >= 0 ? `cresceu ${fmtPct(deltaRc)}`  : `caiu ${fmtPct(deltaRc)}`;
     if (elPop) elPop.innerHTML = deltaPop >= 0 ? `aumentou ${fmtPct(deltaPop)}` : `teve queda de ${fmtPct(deltaPop)}`;
