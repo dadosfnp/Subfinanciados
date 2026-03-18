@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.conf import settings
 from home.models import Municipio
 import numpy as np
 
@@ -9,6 +10,10 @@ def map(request):
     Renderiza o template HTML para a visualização do mapa.
     A lógica de filtro é tratada dinamicamente por chamadas de API.
     """
+    context = {
+        'MAPBOX_PUBLIC_TOKEN': getattr(settings, 'MAPBOX_PUBLIC_TOKEN', ''),
+    }
+
     return render(request, 'map/map.html')
 
 
