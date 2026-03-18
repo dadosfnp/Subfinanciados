@@ -49,6 +49,8 @@ class Municipio(models.Model):
     regiao = models.CharField(max_length=255)
     rank_nacional = models.IntegerField(null=True, blank=True)
     total_nacional = models.IntegerField(null=True, blank=True)
+    rank_nacional_00 = models.IntegerField(null=True, blank=True)
+    total_nacional_00 = models.IntegerField(null=True, blank=True)
     rank_estadual = models.IntegerField(null=True, blank=True)
     total_estadual = models.IntegerField(null=True, blank=True)
     rank_faixa = models.IntegerField(null=True, blank=True)
