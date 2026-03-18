@@ -1,0 +1,538 @@
+/* DETAIL (Conjunto)  */
+body { font-family: 'Inter', sans-serif; }
+
+/* título grande padrão das páginas internas */
+.page-title { font-size: 2rem; font-weight: 700; color: #111827; display:flex; align-items:center; gap:.5rem; }
+.page-subtitle { color:#6b7280; }
+
+/* KPI / Summary cards (visuais idênticos à Home) */
+.summary-cards-row{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.summary-card{background:#fff;border-radius:8px;padding:1.25rem;box-shadow:0 4px 8px rgba(0,0,0,.08);flex:1;min-width:220px;display:flex;align-items:center;gap:1rem}
+.summary-card h6{margin:0 0 .25rem;color:#6c757d;font-size:.95rem;font-weight:600}
+.summary-card .value{font-size:1.6rem;font-weight:700;color:#194685}
+
+/* Cards de conteúdo */
+.metric-card{
+  background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 4px 8px rgba(0,0,0,.08);margin-bottom:1.25rem;
+  /* >>> permite que tooltips “saiam” do card sem serem cortados */
+  overflow: visible;
+  position: relative;
+}
+.metric-card h5{margin:0 0 1rem;color:#194685;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+
+/* Select compacto usado no cabeçalho dos cards */
+.select-compact{padding:.25rem .5rem;font-size:.875rem;border:1px solid #dee2e6;border-radius:.375rem;background:#fff}
+
+/* Toggle retangular (Per Capita / Valores Reais) reaproveitando o global .segmented */
+.segmented{display:inline-flex;align-items:center;background:#fff;border:1px solid #d9dee7;border-radius:6px;overflow:hidden}
+.segmented .segmented-option{appearance:none;background:transparent;border:0;margin:0;padding:8px 14px;border-radius:0;font-weight:700;font-size:.9rem;line-height:1;cursor:pointer;color:#194685}
+.segmented .segmented-option + .segmented-option{border-left:1px solid #e5e7eb}
+.segmented .segmented-option.active{background:#194685;color:#fff}
+
+/* Componentes de árvore/indicadores */
+.toggle-heading,.toggle-subheading{cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.toggle-subheading{padding:.5rem 0}
+.toggle-heading .arrow,.toggle-subheading .arrow{transition:transform .2s}
+.toggle-heading.open .arrow,.toggle-subheading.open .arrow{transform:rotate(90deg)}
+
+/* linhas do detalhamento não cortam tooltips */
+.metric-detail-row{ overflow: visible; }
+
+.ranking-indicator-container{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.ranking-indicator{width:14px;height:14px;border-radius:3px}
+.quintil-1{background:#d73027}.quintil-2{background:#fc8d59}.quintil-3{background:#fee08b}.quintil-4{background:#91cf60}.quintil-5{background:#1a9850}
+
+/* Tooltip (mesmo padrão do município) */
+.ranking-tooltip{
+  position: absolute;
+  z-index: 1000;                         /* >>> sobe acima de tudo */
+  left: 50%;
+  bottom: calc(100% + 8px);              /* aparece acima do quadradinho */
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.95);
+  color: #fff;
+  border-radius: 6px;
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;                    /* pode quebrar linha */
+  max-width: 260px;                       /* largura máxima */
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;                   /* não intercepta hover */
+}
+.ranking-indicator-container:hover .ranking-tooltip{
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+/* setinha do balão */
+.ranking-indicator-container:hover .ranking-tooltip::before{
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(51,51,51,.95) transparent;
+}
+
+/* ====== Lupa ao lado do <select> (Detail) ====== */
+.content-wrapper .sidebar .input-group{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:nowrap;        /* não quebra a lupa pra baixo */
+}
+.content-wrapper .sidebar .input-group .form-select,
+.content-wrapper .sidebar .input-group select{
+  flex:1 1 0;
+  width:auto !important;   /* ignora width:100% herdado */
+  min-width:0;
+}
+.content-wrapper .sidebar .input-group > .btn{
+  flex:0 0 auto;
+  padding:.25rem .5rem;
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* ==========================================================================
+   SIDEBAR E FILTROS - CORREÇÃO FINAL (FUNDO BRANCO TOTAL)
+   ========================================================================== */
+
+/* 1. Container da Sidebar */
+.content-wrapper .sidebar {
+    flex: 0 0 280px;
+    background-color: #ffffff !important;
+    padding: 1.5rem;
+    border-right: 1px solid #dee2e6;
+    box-shadow: 2px 0 5px rgba(25, 70, 133, 0.12);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+/* 2. Container de Grupo (para os filtros com lupa) */
+.content-wrapper .sidebar .input-group {
+    display: flex !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+}
+
+/* 3. ESTILIZAÇÃO DE TODOS OS SELECTS E INPUTS (COM OU SEM LUPA) 
+   Aqui garantimos que Classificar, Subgrupo, etc. fiquem BRANCOS.
+*/
+.content-wrapper .sidebar .form-select,
+.content-wrapper .sidebar select,
+.content-wrapper .sidebar .form-control {
+    /* Cor de Fundo e Borda */
+    background-color: #ffffff !important;  /* GARANTE FUNDO BRANCO */
+    border: 1px solid #d1d5db !important;  /* Borda Cinza Clara */
+    color: #374151 !important;             /* Texto Cinza Escuro */
+    
+    /* Geometria Padrão */
+    border-radius: 0.375rem !important;
+    font-size: 0.875rem;
+    padding: .25rem .5rem;
+    height: calc(1.8125rem + 2px);
+    
+    /* Remove estilo nativo e sombra */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+
+    /* Seta do Select (Cinza Escura) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+    
+    width: 100%;
+}
+
+/* 4. REGRAS ESPECÍFICAS PARA SELECTS DENTRO DE GRUPO (LADO DA LUPA) */
+.content-wrapper .sidebar .input-group .form-select,
+.content-wrapper .sidebar .input-group select,
+.content-wrapper .sidebar .input-group .form-control {
+    /* Remove a curva e a borda direita para colar na lupa */
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important; 
+    
+    flex: 1 1 auto;
+    width: 1% !important;
+}
+
+/* Estado de Foco (Fica azul ao clicar) */
+.content-wrapper .sidebar .form-select:focus,
+.content-wrapper .sidebar .form-control:focus {
+    border-color: #194685 !important;
+    outline: none !important;
+    z-index: 2;
+}
+
+/* 5. A LUPA (LADO DIREITO) - AZUL */
+.content-wrapper .sidebar .input-group > .btn,
+.content-wrapper .sidebar .input-group > button {
+    background-color: #ffffff !important;
+    color: #194685 !important;
+    
+    /* Borda AZUL */
+    border: 1px solid #194685 !important;
+    border-left: 1px solid #194685 !important; /* Divisória Azul */
+    
+    /* Arredondamento só na direita */
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+    
+    margin-left: -1px !important; /* Puxa para cobrir a borda cinza */
+    padding: .25rem .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+/* Ícone da Lupa */
+.content-wrapper .sidebar .input-group > .btn svg,
+.content-wrapper .sidebar .input-group > .btn i,
+.content-wrapper .sidebar .input-group > button i {
+    fill: #194685 !important;
+    color: #194685 !important;
+}
+
+/* Hover da Lupa */
+.content-wrapper .sidebar .input-group > .btn:hover,
+.content-wrapper .sidebar .input-group > button:hover {
+    background-color: #f0f8ff !important;
+    color: #143a6e !important;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   BOTÕES DE AÇÃO (Limpar / Baixar)
+   ========================================================================== */
+.content-wrapper .sidebar button.w-100,
+.content-wrapper .sidebar .btn-secondary,
+.content-wrapper .sidebar .btn-download { 
+    background-color: #194685 !important;
+    border-color: #194685 !important;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: 6px;
+    margin-top: 1rem;
+    transition: background-color 0.15s ease;
+}
+
+.content-wrapper .sidebar button.w-100:hover,
+.content-wrapper .sidebar .btn-secondary:hover,
+.content-wrapper .sidebar .btn-download:hover {
+    background-color: #123361 !important;
+    border-color: #123361 !important;
+}
+
+/* Mantém ajustes gráficos e KPI */
+.metric-card .chart-section{ width: 100%; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 16px; }
+.metric-card .chart-slot{ position: relative; height: 260px; overflow: hidden; border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
+.metric-card .chart-slot > canvas{ display: block; width: 100%; height: 100%; max-width: 100%; }
+@media (max-width: 768px){ .metric-card .chart-slot{ height: 220px; } }
+.summary-card .value#kpi-diferenca-media.neg { color: #dc2626 !important; }
+.summary-card .value#kpi-diferenca-media.pos { color: #16a34a !important; }
+.summary-card .value#kpi-diferenca-media.neu { color: #111827 !important; }
+
+/* ==========================================================================
+   MENU SUPERIOR - ESTILO PADRÃO FNP E Z-INDEX (ANÁLISE AGREGADA)
+   ========================================================================== */
+
+/* 1. Navbar no topo absoluto e liberação dos containers para não cortar o menu */
+header, nav, .navbar {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+.container, .container-fluid {
+    overflow: visible !important;
+}
+
+/* 2. Rebaixa a página para não engolir o menu (Proteção extra) */
+main, .content-wrapper, .dashboard-content, .metric-card {
+    position: relative !important;
+    z-index: 1 !important; 
+}
+
+/* 3. Estilo exato do Dropdown flutuante */
+.dropdown-menu.show {
+    display: block !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999999 !important; /* Sempre na frente de tudo */
+    background-color: #ffffff !important; 
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+    padding: 8px 0 !important;
+    min-width: 200px !important;
+    margin-top: 10px !important;
+}
+
+.dropdown-menu:not(.show) {
+    display: none !important;
+}
+
+/* 4. Padronização dos Itens do Menu (Todos inativos por padrão) */
+a.dropdown-item, 
+.dropdown-menu .dropdown-item {
+    background-color: transparent !important;
+    color: #334155 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    padding: 10px 20px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-weight: 400 !important; /* Impede falsos negritos */
+}
+
+a.dropdown-item:hover, 
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background-color: #f1f5f9 !important; 
+    color: #103758 !important;
+}
+
+/* ==========================================================================
+   MENU SUPERIOR: DESTAQUE EXCLUSIVO PARA ANÁLISE AGREGADA
+   ========================================================================== */
+body .navbar .dropdown-menu a.dropdown-item[href*="agregada"] {  
+    background-color: transparent; 
+    color: #103758; 
+    font-weight: 700; 
+}
+
+/* ==========================================================================
+   MENU SUPERIOR: NEUTRALIZA ACTIVE FALSO DO DJANGO
+   ========================================================================== */
+body .navbar .dropdown-menu a.dropdown-item.active:not([href*="agregada"]) {
+    background-color: transparent;
+    color: #334155;
+    font-weight: 400;
+}
+
+/* ==========================================================================
+   AJUSTES MOBILE: ANTI-VAZAMENTO, QUEBRA E NÚMEROS GRANDES (AGREGADA)
+   ========================================================================== */
+
+@media (max-width: 991.98px) {
+    /* 1. Trava o scroll horizontal invisível na tela inteira */
+    html, body, .content-wrapper, .dashboard-content {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+
+    /* 2. Permite que textos quebrem a linha, MAS protege os números */
+    h1, h2, h3, h4, h5, h6, p, div {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: normal !important; 
+    }
+
+    /* Os números NUNCA devem quebrar no meio (ex: 864.104.\n501) */
+    .tree-value strong, .tree-value span, .metric-detail-row strong {
+        white-space: nowrap !important;
+        font-size: 0.95rem !important; 
+    }
+
+    /* 3. Ajusta o card principal para respirar nas bordas */
+    .metric-card {
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        padding: 1.5rem 15px !important; 
+    }
+
+    /* 4. Força o Título e os Botões (Per capita/Reais) a empilharem com folga */
+    .metric-card h5 {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important; 
+        line-height: 1.3 !important;
+    }
+
+    /* Ajusta os botões para ocuparem 100% da largura da tela */
+    .segmented {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        box-sizing: border-box !important;
+    }
+    
+    .segmented .segmented-option {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 10px 4px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* 5. ESTRUTURA DOS ITENS: Enquadramento harmônico sem vazamento */
+    body .toggle-heading, 
+    body .toggle-subheading, 
+    body .tree-row, 
+    body .revenue-item-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch; 
+        height: auto;
+        padding: 16px 0;
+        box-sizing: border-box;
+        width: auto; 
+        position: relative;
+    }
+
+    /* Trava o título para ele encolher se necessário, protegendo a seta */
+    body .toggle-heading > div:first-child, 
+    body .toggle-subheading > div:first-child,
+    body .tree-row > div:first-child {
+        max-width: calc(100% - 35px); 
+        min-width: 0;
+    }
+
+    /* Fixa a setinha (>) no topo direito da área, sempre alinhada */
+    .tree-chevron, .arrow {
+        position: absolute !important;
+        right: 0 !important;
+        top: 20px !important;
+    }
+
+    /* 6. A CAIXA DE VALORES: Empilhada para caber números bilionários sem amassar */
+    .metric-detail-row, .tree-value {
+        display: flex !important;
+        flex-direction: column !important; /* Coloca um embaixo do outro */
+        gap: 8px !important; 
+        width: 100% !important;
+        background-color: #f8fafc !important; 
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Alinha tudo à esquerda e dá largura total para os números */
+    .metric-detail-row > div, 
+    .tree-value > div {
+        text-align: left !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Cria uma linha divisória sutil entre o "Valor" e a "Média Nacional" */
+    .metric-detail-row > div:last-child, 
+    .tree-value > div:last-child {
+        text-align: left !important; 
+        border-top: 1px solid #e2e8f0 !important; 
+        padding-top: 8px !important;
+    }
+}
+
+/* ==========================================================================
+   PADRONIZAÇÃO DA SIDEBAR (FONTES E CORES) - ANÁLISE AGREGADA
+   ========================================================================== */
+
+/* 1. TÍTULOS PRINCIPAIS E DE SEÇÃO (H4, H6) EM AZUL FNP */
+.content-wrapper .sidebar h1, 
+.content-wrapper .sidebar h2, 
+.content-wrapper .sidebar h3, 
+.content-wrapper .sidebar h4, 
+.content-wrapper .sidebar h5, 
+.content-wrapper .sidebar h6 {
+    color: #103758 !important; /* Azul FNP Oficial */
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 700 !important; /* Negrito marcado */
+}
+
+/* Tamanhos ajustados para hierarquia */
+.content-wrapper .sidebar h4 { font-size: 1.2rem !important; margin-bottom: 0.5rem !important; }
+.content-wrapper .sidebar h6 { font-size: 0.95rem !important; margin-bottom: 0.5rem !important; }
+
+/* 2. TÍTULOS DOS CAMPOS (Labels) EM AZUL FNP */
+.content-wrapper .sidebar .form-label,
+.content-wrapper .sidebar label {
+    display: block !important;
+    margin: 0 0 0.5rem 0 !important;
+    color: #103758 !important; /* Azul FNP */
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important; /* Semi-bold */
+    font-size: 0.9rem !important;
+}
+
+/* 3. OPÇÕES DE SELEÇÃO (Radio Buttons) EM CINZA ESCURO (Evita ficar tudo azul) */
+.content-wrapper .sidebar .form-check-label {
+    display: inline-block !important;
+    color: #334155 !important; /* Texto cinza neutro */
+    font-weight: 400 !important; /* Sem negrito */
+    font-size: 0.9rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* 4. GARANTIA DAS CAIXAS DE SELECT E LUPA */
+.content-wrapper .sidebar .form-select,
+.content-wrapper .sidebar select,
+.content-wrapper .sidebar .form-control {
+    font-family: 'Inter', sans-serif !important;
+    color: #334155 !important;
+}
+
+.content-wrapper .sidebar .input-group > .btn svg,
+.content-wrapper .sidebar .input-group > .btn i {
+    fill: #103758 !important;
+    color: #103758 !important;
+}
+
+/* ==========================================================================
+   MOBILE: ENQUADRAMENTO DE SUBCARDS PROFUNDOS (ANTI-BLOWOUT)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 1. Reduz o "degrau" da escada para níveis profundos não fugirem para a direita.
+       Vence as classes ml-4 e pl-3 do Tailwind através da especificidade da tag body. */
+    body .revenue-item-wrapper div[id] {
+        margin-left: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    /* 2. Remove o recuo extra de 22px dos textos/valores para ganhar área útil */
+    body .revenue-item-wrapper .tree-row div.pl-\[22px\] {
+        padding-left: 0;
+        min-width: 0; /* Destrava o limite lateral */
+    }
+
+    /* 3. A MÁGICA (Destravando o Flexbox):
+       O 'min-width: 0' diz ao Flexbox que ele tem permissão para encolher
+       além do tamanho do texto. Isso ativa o 'truncate' do seu HTML e
+       impede que a seta vaze da tela. */
+    body .revenue-item-wrapper .tree-row .flex-col {
+        min-width: 0;
+    }
+
+    body .revenue-item-wrapper .tree-row .justify-between {
+        min-width: 0;
+    }
+
+    /* Permite que o grupo do Título + Bolinha colorida encolha */
+    body .revenue-item-wrapper .tree-row .justify-between > .flex.items-center {
+        min-width: 0;
+        flex: 1; /* Ocupa o espaço livre sem empurrar a seta */
+    }
+}
