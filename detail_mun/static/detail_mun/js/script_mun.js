@@ -748,31 +748,59 @@ function updateTimelineColors(mode) {
             const val00 = parseInt(num00[0]);
             const val24 = parseInt(num24[0]);
             
-        if (val24 === val00) {
-            summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
-        } 
-        else if (mode === 'percentil') {
-            const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
-            const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
+            if (val24 === val00) {
+                summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
+            } 
+            else if (mode === 'percentil') {
+                const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
+                const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
 
-            summaryContainer.innerHTML = `Nestas duas décadas, a receita por habitante de <strong class="text-slate-700">${muniName}</strong> <span class="${statusColor} font-black">${statusAcao}</span> no ranking nacional, indo do percentil <span class="font-bold text-slate-400">${val00}%</span> para o <span class="${statusColor} font-black">${val24}%</span>.`;
-        } 
-        else {
-            const isMelhor = val24 > val00;
-            const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
-            const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
-            
-            const text00 = `${val00}º ${mode}`;
-            const text24 = `${val24}º ${mode}`;
+                summaryContainer.innerHTML = `Nestas duas décadas, a receita por habitante de <strong class="text-slate-700">${muniName}</strong> <span class="${statusColor} font-black">${statusAcao}</span> no ranking nacional, indo do percentil <span class="font-bold text-slate-400">${val00}%</span> para o <span class="${statusColor} font-black">${val24}%</span>.`;
+            } 
+            else {
+                const isMelhor = val24 > val00;
+                const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
+                const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
+                
+                const text00 = `${val00}º ${mode}`;
+                const text24 = `${val24}º ${mode}`;
 
-            summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
-        }
+                summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
+            }
             
-        renderTimelineRuler(mode, val00, val24);
+            const c00 = document.getElementById('circle-container-2000');
+            const c24 = document.getElementById('circle-container-2024');
+            const line = document.getElementById('cartesian-line');
             
-    } else {
+            if (c00 && c24 && line) {
+                let y00 = 50;
+                let y24 = 50;
+                
+                if (mode === 'percentil') {
+                    y00 = 10 + (val00 / 100) * 80;
+                    y24 = 10 + (val24 / 100) * 80;
+                } else if (mode === 'quintil') {
+                    y00 = 10 + ((val00 - 1) / 4) * 80;
+                    y24 = 10 + ((val24 - 1) / 4) * 80;
+                } else if (mode === 'decil') {
+                    y00 = 10 + ((val00 - 1) / 9) * 80;
+                    y24 = 10 + ((val24 - 1) / 9) * 80;
+                }
+                
+                c00.style.bottom = y00 + '%';
+                c24.style.bottom = y24 + '%';
+                
+                line.setAttribute('y1', (100 - y00) + '%');
+                line.setAttribute('y2', (100 - y24) + '%');
+            }
+            
+            // Chama a função da régua para desenhar ela embaixo do texto!
+            if (typeof renderTimelineRuler === 'function') {
+                renderTimelineRuler(mode, val00, val24);
+            }
+            
+        } else {
             summaryContainer.innerHTML = '';
-            /* OCULTAÇÃO DA RÉGUA CASO FALTEM DADOS NO EIXO TEMPORAL */
             const rulerContainer = document.getElementById('timeline-ruler-container');
             if (rulerContainer) rulerContainer.classList.add('hidden');
         }
