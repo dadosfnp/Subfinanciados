@@ -25,6 +25,7 @@ urlpatterns = [
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),
+    path('api/debug-status/', home_views.api_debug_status, name='debug_status'),
     path('api/dashboard-data/', home_views.api_get_dashboard_data, name='api_get_dashboard_data'),
 
     # --- APIS: DETAIL ---

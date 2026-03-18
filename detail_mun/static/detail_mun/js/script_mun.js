@@ -1,4 +1,3 @@
-// detail/static/detail/js/script_mun.js
 document.addEventListener('DOMContentLoaded', function () {
     const DEBUG = false;
     const log  = (...a) => DEBUG && console.log('[detail-mun]', ...a);
@@ -191,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   
     // ------------ Toggle PC/VR ------------
+    // ------------ Toggle PC/VR ------------
     const segmented = $('#valor-toggle');
     function showMode(m){
       const pc = m === 'pc';
@@ -209,8 +209,22 @@ document.addEventListener('DOMContentLoaded', function () {
       $$('.estatistica-mediana').forEach(el => el.style.display = pc ? '' : 'none');
 
       sortAll(pc);
+
+      // Sincroniza o Card Principal de Receita lá no topo
+      const kpiRcLabel = document.getElementById('kpi-rc-label');
+      const kpiRcValue = document.getElementById('kpi-rc-value');
+      const trendRc = document.getElementById('trend-comparativo-rc');
+
+      if (kpiRcLabel && kpiRcValue) {
+          kpiRcLabel.textContent = pc ? 'Valor por Habitante' : 'Total Absoluto';
+          kpiRcValue.textContent = kpiRcValue.getAttribute(pc ? 'data-val-pc' : 'data-val-tot');
+          
+          // Esconde o comparativo de tendência quando estiver em Valores Reais
+          if (trendRc) {
+              trendRc.style.display = pc ? 'flex' : 'none';
+          }
+      }
     }
-    
     segmented?.querySelector('[data-mode="pc"]')?.addEventListener('click', ()=>showMode('pc'));
     segmented?.querySelector('[data-mode="vr"]')?.addEventListener('click', ()=>showMode('vr'));
     
@@ -591,7 +605,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
 /* ========== LINHA DO TEMPO (QUINTIL/DECIL/PERCENTIL) ========== */
 const timelineBtns = document.querySelectorAll('#timeline-toggle .segmented-option');
-const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
 
 const FNP_RANK_COLORS = {
     '1': '#A81C21', '2': '#E47326', '3': '#F4D01D', '4': '#6AC074', '5': '#1C9148'
@@ -679,7 +692,6 @@ function updateTimelineColors(mode) {
     const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
     const summaryContainer = document.getElementById('timeline-dynamic-summary');
     
-    // 1. Atualiza as cores e rótulos de cada círculo individualmente
     timelineCircles.forEach(circle => {
         const rawValue = circle.getAttribute('data-' + mode) || '-';
         const labelSpan = circle.querySelector('.dynamic-label');
@@ -689,7 +701,6 @@ function updateTimelineColors(mode) {
 
         let hex = null;
         let isLightBackground = false;
-        let explanationText = '';
 
         if (num) {
             if (mode === 'percentil') {
@@ -698,27 +709,22 @@ function updateTimelineColors(mode) {
                 const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
                 hex = FNP_DECIL_COLORS[decilVal];
                 isLightBackground = (decilVal === 5 || decilVal === 6);
-                explanationText = `Maior que <strong class="text-slate-800">${num}%</strong> dos munícipios`;
             } 
             else if (mode === 'quintil') {
                 if (labelSpan) labelSpan.textContent = 'Quintil';
                 if (valueSpan) valueSpan.textContent = num + 'º';
                 hex = FNP_RANK_COLORS[num];
                 isLightBackground = (num === '3');
-                const quintilWords = {'5': '20% mais ricos', '4': '40% a 20% mais ricos', '3': 'Intermediário', '2': 'Abaixo da Média', '1': '20% mais pobres'};
-                explanationText = `<strong class="text-slate-800">${quintilWords[num] || ''}</strong> do país`;
             } 
             else if (mode === 'decil') {
                 if (labelSpan) labelSpan.textContent = 'Decil';
                 if (valueSpan) valueSpan.textContent = num + 'º';
                 hex = FNP_DECIL_COLORS[num];
                 isLightBackground = (num === '5' || num === '6');
-                explanationText = `Grupo <strong class="text-slate-800">${num}</strong> de 10 do país`;
             }
         } else {
             if (labelSpan) labelSpan.textContent = mode;
             if (valueSpan) valueSpan.textContent = '-';
-            explanationText = 'Dado Indisponível';
         }
 
         if (hex) {
@@ -728,14 +734,8 @@ function updateTimelineColors(mode) {
             circle.style.backgroundColor = '#f1f5f9';
             circle.style.color = '#94a3b8';
         }
-        
-        const explanationSpan = circle.nextElementSibling;
-        if (explanationSpan && explanationSpan.classList.contains('dynamic-explanation')) {
-            explanationSpan.innerHTML = explanationText;
-        }
-    }); // Fim do loop dos círculos
+    });
 
-    // 2. Lógica de síntese (executa apenas UMA VEZ após o loop)
     if (summaryContainer && timelineCircles.length >= 2) {
         const muniName = summaryContainer.getAttribute('data-muni-name');
         const raw00 = timelineCircles[0].getAttribute('data-' + mode);
@@ -794,7 +794,6 @@ function updateTimelineColors(mode) {
                 line.setAttribute('y2', (100 - y24) + '%');
             }
             
-            // Chama a função da régua para desenhar ela embaixo do texto!
             if (typeof renderTimelineRuler === 'function') {
                 renderTimelineRuler(mode, val00, val24);
             }
@@ -910,8 +909,8 @@ timelineBtns.forEach(btn => {
     function updateGlobalBase(base) {
         globalBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === base));
 
-        const baseNomes = { 'nacional': 'média nacional', 'estadual': 'média estadual', 'faixa': 'média da faixa' };
-        const labelNome = baseNomes[base] || 'média';
+        const baseNomes = { 'nacional': 'média dos municípios (nacional)', 'estadual': 'média dos municípios (estadual)', 'faixa': 'média dos municípios (faixa)' };
+        const labelNome = baseNomes[base] || 'média dos municípios';
         
         lblMediaBase.forEach(el => el.textContent = labelNome);
         if (lblMediaBaseChart) lblMediaBaseChart.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
@@ -924,8 +923,11 @@ timelineBtns.forEach(btn => {
         const evoKey = evoKeys[base];
 
         if (evolutionData && valMediaRc && valMediaPop) {
-            valMediaRc.textContent = `${evolutionData.receita[evoKey] || 0}%`;
-            valMediaPop.textContent = `${evolutionData.populacao[evoKey] || 0}%`;
+            const rcVal = parseSafe(evolutionData.receita[evoKey]);
+            const popVal = parseSafe(evolutionData.populacao[evoKey]);
+            
+            valMediaRc.textContent = `${rcVal.toFixed(1).replace('.', ',')}%`;
+            valMediaPop.textContent = `${popVal.toFixed(1).replace('.', ',')}%`;
         }
 
         if (evolutionData && canvasRec && canvasPop) {
@@ -995,9 +997,9 @@ timelineBtns.forEach(btn => {
 
         // DICIONÁRIO DE RÓTULOS E SUFIXOS PARA AS FRASES DINÂMICAS
         const baseLabels = {
-            'nacional': { media: 'Média Nacional', mediana: "Mediana Nacional", sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
-            'estadual': { media: 'Média Estadual', mediana: "Mediana Estadual", sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
-            'faixa': { media: 'Média da Faixa', mediana: "Mediana da Faixa", sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
+            'nacional': { media: 'Média dos Municípios (Nacional)', mediana: "Mediana dos Municípios (Nacional)", sufixo: 'dos municípios do país', kpi: 'Ranking Nacional' },
+            'estadual': { media: 'Média dos Municípios (Estadual)', mediana: "Mediana dos Municípios (Estadual)", sufixo: 'dos municípios do estado', kpi: 'Ranking Estadual' },
+            'faixa': { media: 'Média dos Municípios (Faixa)', mediana: "Mediana dos Municípios (Faixa)", sufixo: 'dos municípios da mesma faixa populacional', kpi: 'Ranking por Faixa' }
         };
 
         const config = baseLabels[base];
@@ -1164,31 +1166,6 @@ timelineBtns.forEach(btn => {
             updateBenchmarkTrend('trend-comparativo-rc', munRc, compRc, labelNome);
             updateBenchmarkTrend('trend-comparativo-pop', munPop, compPop, labelNome);
         }
-    }
-
-    // ------------ Toggle Interno do Card de Receita (Per Capita / Absolut) ------------
-    const kpiRcToggles = document.querySelectorAll('.kpi-rc-toggle');
-    const kpiRcLabel = document.getElementById('kpi-rc-label');
-    const kpiRcValue = document.getElementById('kpi-rc-value');
-
-    if (kpiRcToggles.length > 0) {
-        kpiRcToggles.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Alterna o estilo visual dos botões
-                kpiRcToggles.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // Alterna os textos e valores
-                const mode = btn.dataset.mode;
-                if (mode === 'pc') {
-                    kpiRcLabel.textContent = 'Valor por Habitante';
-                    kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-pc');
-                } else {
-                    kpiRcLabel.textContent = 'Total Absoluto';
-                    kpiRcValue.textContent = kpiRcValue.getAttribute('data-val-tot');
-                }
-            });
-        });
     }
 
     globalBaseBtns.forEach(btn => btn.addEventListener('click', function() { updateGlobalBase(this.dataset.base); }));

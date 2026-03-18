@@ -344,10 +344,10 @@ html, body {
 .tree-row:active { transform: scale(0.995); }
 
 /* Indentação conforme o nível da árvore */
-.tree-row.level-0 { font-weight: 1000; color: var(--fnp-dark-blue); }
-.tree-row.level-1 { font-weight: 600; color: var(--slate-800); padding-left: 24px; }
-.tree-row.level-2 { font-weight: 500; color: var(--slate-500); padding-left: 40px; font-size: 1.25rem; }
-.tree-row.level-3 { font-weight: 500; color: var(--slate-400); padding-left: 56px; font-size: 1.25rem; }
+.tree-row.level-0 { font-weight: 900; color: var(--fnp-dark-blue); }
+.tree-row.level-1 { font-weight: 700; color: var(--slate-800); }
+.tree-row.level-2 { font-weight: 600; color: var(--slate-600); }
+.tree-row.level-3 { font-weight: 500; color: var(--slate-500); }
 
 @media (min-width: 768px) {
     .tree-row.level-1 { padding-left: 40px; }
