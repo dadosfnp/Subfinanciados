@@ -691,11 +691,7 @@ function renderTimelineRuler(mode, val00, val24) {
 function updateTimelineColors(mode) {
     const timelineCircles = document.querySelectorAll('.timeline-circle-dynamic');
     const summaryContainer = document.getElementById('timeline-dynamic-summary');
-    const rulerContainer = document.getElementById('timeline-ruler-container');
     
-    // Forçar a exibição da régua para todos os modos
-    if (rulerContainer) rulerContainer.classList.remove('hidden');
-
     timelineCircles.forEach(circle => {
         const rawValue = circle.getAttribute('data-' + mode) || '-';
         const labelSpan = circle.querySelector('.dynamic-label');
@@ -707,19 +703,7 @@ function updateTimelineColors(mode) {
         let isLightBackground = false;
 
         if (num) {
-            // --- NOVA LÓGICA: RANKING NACIONAL ---
-            if (mode === 'ranking') {
-                if (labelSpan) labelSpan.textContent = 'Nacional';
-                if (valueSpan) valueSpan.textContent = parseInt(num).toLocaleString('pt-BR') + 'º';
-                
-                // Mantém a cor baseada no percentil para seguir o padrão visual
-                const p = parseInt(circle.getAttribute('data-percentil')) || 0;
-                const decilVal = Math.max(1, Math.ceil(p / 10));
-                hex = FNP_DECIL_COLORS[decilVal];
-                isLightBackground = (decilVal === 5 || decilVal === 6);
-            } 
-            // --- LÓGICA ORIGINAL PRESERVADA ---
-            else if (mode === 'percentil') {
+            if (mode === 'percentil') {
                 if (labelSpan) labelSpan.textContent = 'Percentil';
                 if (valueSpan) valueSpan.textContent = num + '%';
                 const decilVal = Math.max(1, Math.ceil(parseInt(num) / 10));
@@ -739,7 +723,7 @@ function updateTimelineColors(mode) {
                 isLightBackground = (num === '5' || num === '6');
             }
         } else {
-            if (labelSpan) labelSpan.textContent = mode === 'ranking' ? 'Nacional' : mode;
+            if (labelSpan) labelSpan.textContent = mode;
             if (valueSpan) valueSpan.textContent = '-';
         }
 
@@ -757,35 +741,30 @@ function updateTimelineColors(mode) {
         const raw00 = timelineCircles[0].getAttribute('data-' + mode);
         const raw24 = timelineCircles[1].getAttribute('data-' + mode);
         
-        const num00Match = raw00 ? raw00.match(/\d+/) : null;
-        const num24Match = raw24 ? raw24.match(/\d+/) : null;
+        const num00 = raw00 ? raw00.match(/\d+/) : null;
+        const num24 = raw24 ? raw24.match(/\d+/) : null;
         
-        if (num00Match && num24Match) {
-            const val00 = parseInt(num00Match[0]);
-            const val24 = parseInt(num24Match[0]);
+        if (num00 && num24) {
+            const val00 = parseInt(num00[0]);
+            const val24 = parseInt(num24[0]);
             
             if (val24 === val00) {
                 summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
             } 
-            // --- RESUMO PARA RANKING ---
-            else if (mode === 'ranking') {
-                const subiu = val24 < val00; // No ranking, menor número = melhor posição
-                const statusAcao = subiu ? 'SUBIU' : 'CAIU';
-                const statusColor = subiu ? 'text-emerald-600' : 'text-rose-600';
-                summaryContainer.innerHTML = `Nestas duas décadas, a posição de <strong class="text-slate-700">${muniName}</strong> no ranking nacional <span class="${statusColor} font-black">${statusAcao}</span>, saindo de <span class="font-bold text-slate-400">${val00.toLocaleString('pt-BR')}º</span> para <span class="${statusColor} font-black">${val24.toLocaleString('pt-BR')}º</span> lugar.`;
-            }
-            // --- RESUMOS ORIGINAIS PRESERVADOS ---
             else if (mode === 'percentil') {
                 const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
                 const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
+
                 summaryContainer.innerHTML = `Nestas duas décadas, a receita por habitante de <strong class="text-slate-700">${muniName}</strong> <span class="${statusColor} font-black">${statusAcao}</span> no ranking nacional, indo do percentil <span class="font-bold text-slate-400">${val00}%</span> para o <span class="${statusColor} font-black">${val24}%</span>.`;
             } 
             else {
                 const isMelhor = val24 > val00;
                 const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
                 const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
+                
                 const text00 = `${val00}º ${mode}`;
                 const text24 = `${val24}º ${mode}`;
+
                 summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
             }
             
@@ -794,15 +773,10 @@ function updateTimelineColors(mode) {
             const line = document.getElementById('cartesian-line');
             
             if (c00 && c24 && line) {
-                let y00 = 50, y24 = 50;
+                let y00 = 50;
+                let y24 = 50;
                 
-                if (mode === 'ranking') {
-                    // Posicionamento vertical do ranking: 1º no topo (90%), Último na base (10%)
-                    const t00 = parseInt(timelineCircles[0].getAttribute('data-total-rank')) || 5570;
-                    const t24 = parseInt(timelineCircles[1].getAttribute('data-total-rank')) || 5479;
-                    y00 = 90 - ((val00 / t00) * 80);
-                    y24 = 90 - ((val24 / t24) * 80);
-                } else if (mode === 'percentil') {
+                if (mode === 'percentil') {
                     y00 = 10 + (val00 / 100) * 80;
                     y24 = 10 + (val24 / 100) * 80;
                 } else if (mode === 'quintil') {
@@ -815,6 +789,7 @@ function updateTimelineColors(mode) {
                 
                 c00.style.bottom = y00 + '%';
                 c24.style.bottom = y24 + '%';
+                
                 line.setAttribute('y1', (100 - y00) + '%');
                 line.setAttribute('y2', (100 - y24) + '%');
             }
@@ -948,11 +923,8 @@ timelineBtns.forEach(btn => {
         const evoKey = evoKeys[base];
 
         if (evolutionData && valMediaRc && valMediaPop) {
-            const rcVal = parseSafe(evolutionData.receita[evoKey]);
-            const popVal = parseSafe(evolutionData.populacao[evoKey]);
-            
-            valMediaRc.textContent = `${rcVal.toFixed(1).replace('.', ',')}%`;
-            valMediaPop.textContent = `${popVal.toFixed(1).replace('.', ',')}%`;
+            valMediaRc.textContent = `${evolutionData.receita[evoKey] || 0}%`;
+            valMediaPop.textContent = `${evolutionData.populacao[evoKey] || 0}%`;
         }
 
         if (evolutionData && canvasRec && canvasPop) {

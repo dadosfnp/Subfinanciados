@@ -33,7 +33,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wa
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
 
 # Lê a variável ou usa fallbacks - Aceita múltiplos hosts separados por vírgula
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "subfinanciados-ifem.onrender.com,localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "ifem.onrender.com,localhost,127.0.0.1").split(",")
 
 # Adicione também esta configuração para evitar erros de CSRF em formulários
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "https://subfinanciados-ifem.onrender.com,https://*.onrender.com").split(",")
