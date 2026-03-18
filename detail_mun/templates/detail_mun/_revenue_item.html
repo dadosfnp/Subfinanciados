@@ -57,7 +57,7 @@
                     <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 lbl-tipo-valor">Valor/Habitante</span>
                     <span class="block text-[18px] font-black text-[#103758]">
                         <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
-                        <span class="valor-per-capita">R$ {{ item.value_pc|br_float }}</span>
+                        <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
                     </span>
                 </div>
                 
@@ -65,18 +65,18 @@
                     <span class="revenue-dynamic-media-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Média Nacional</span>
                     
                     <span class="revenue-dynamic-media-value block text-[18px] font-black text-slate-500 break-all"
-                          data-val-nacional="{% if item.media_nacional %}R$ {{ item.media_nacional|floatformat:2 }}{% endif %}"
-                          data-val-estadual="{% if item.media_estadual %}R$ {{ item.media_estadual|floatformat:2 }}{% endif %}"
-                          data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|floatformat:2 }}{% endif %}">
+                          data-val-nacional="{% if item.media_nacional %}R$ {{ item.media_nacional|br_integer }}{% endif %}"
+                          data-val-estadual="{% if item.media_estadual %}R$ {{ item.media_estadual|br_integer }}{% endif %}"
+                          data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|br_integer }}{% endif %}">
                     </span>
                 </div>
                 <div class="media-block-wrapper transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
                     <span class="revenue-dynamic-mediana-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mediana Nacional</span>
                     
                     <span class="revenue-dynamic-mediana-value block text-[18px] font-black text-slate-500"
-                          data-val-nacional="{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|floatformat:2 }}{% endif %}"
-                          data-val-estadual="{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|floatformat:2 }}{% endif %}"
-                          data-val-faixa="{% if item.mediana_faixa %}R$ {{ item.mediana_faixa|floatformat:2 }}{% endif %}">
+                          data-val-nacional="{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|br_integer }}{% endif %}"
+                          data-val-estadual="{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|br_integer }}{% endif %}"
+                          data-val-faixa="{% if item.mediana_faixa %}R$ {{ item.mediana_faixa|br_integer }}{% endif %}">
                           </span>
                 </div>
             </div>

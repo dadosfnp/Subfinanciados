@@ -118,9 +118,9 @@
             <div>
                 <span class="kpi-label mb-2" id="kpi-rc-label">Valor por Habitante</span>
                 <div class="kpi-hero-value" id="kpi-rc-value"
-                     data-val-pc="R$ {{ municipio.rc_24_pc|br_float }}"
+                     data-val-pc="R$ {{ municipio.rc_24_pc|br_integer }}"
                      data-val-tot="R$ {{ municipio.rc_2024|br_abrev }}">
-                    R$ {{ municipio.rc_24_pc|br_float }}
+                    R$ {{ municipio.rc_24_pc|br_integer }}
                 </div>
                 <div id="trend-comparativo-rc" class="kpi-hero-trend mt-1"></div>
             </div>
@@ -214,9 +214,9 @@
                             <p class="text-slate-600 leading-relaxed text-sm">
                                 A <strong class="text-slate-800">Receita por Habitante</strong> 
                                 {% if evolucao_historica.delta_rc_pc >= 0 %}
-                                    cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+{{ evolucao_historica.delta_rc_pc }}%</span>
+                                    cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+{{ evolucao_historica.delta_rc_pc|floatformat:1 }}%</span>
                                 {% else %}
-                                    caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_rc_pc }}%</span>
+                                    caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_rc_pc|floatformat:1 }}%</span>
                                 {% endif %}
                                 entre 2000 e 2024.<br><span class="text-[0.8rem] opacity-80">No mesmo período, a média nacional variou <strong class="text-slate-700" id="val-media-rc">316%</strong>.</span>
                             </p>
@@ -229,9 +229,9 @@
                             <p class="text-slate-600 leading-relaxed text-sm">
                                 A <strong class="text-slate-800">População</strong> do município 
                                 {% if evolucao_historica.delta_populacao >= 0 %}
-                                    aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+{{ evolucao_historica.delta_populacao }}%</span>
+                                    aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+{{ evolucao_historica.delta_populacao|floatformat:1 }}%</span>
                                 {% else %}
-                                    teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_populacao }}%</span>
+                                    teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_populacao|floatformat:1 }}%</span>
                                 {% endif %}
                                 neste intervalo de tempo.<br><span class="text-[0.8rem] opacity-80">Enquanto o crescimento populacional médio no Brasil foi de <strong class="text-slate-700" id="val-media-pop">15%</strong>.</span>
                             </p>

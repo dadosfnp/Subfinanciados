@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   
     
-// ==========================================================================
+    // ==========================================================================
     // CONTROLE DOS RANKINGS INDEPENDENTES (POPULAÇÃO E RECEITA)
     // ==========================================================================
     const kpiRankingTriggers = document.querySelectorAll('.kpi-ranking-trigger');
@@ -977,19 +977,20 @@ timelineBtns.forEach(btn => {
             const pct = el.getAttribute(`data-pct-${base}`);
             const muniName = el.getAttribute('data-muni-name');
 
-            /* Captura o elemento do indicador de cor no mesmo nivel hierarquico para uso como referencia de estilo */
             const indicator = el.closest('.tree-row').querySelector('.revenue-color-indicator');
             const indicatorColor = indicator ? indicator.style.backgroundColor : 'inherit';
 
             if (pct && pct.trim() !== '' && pct !== 'None') {
-                const numPct = parseFloat(pct.replace(',', '.'));
+                // 1. Converte para float e já arredonda para o inteiro mais próximo
+                const numPct = Math.round(parseFloat(pct.replace(',', '.')));
 
                 if (numPct < 0) {
                     el.innerHTML = '';
                 } else {
                     const adv = numPct > 50 ? '' : 'apenas ';
-                    /* Engloba o texto de acao e o valor numerico do percentil na mesma estilizacao de cor do indicador */
-                    el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> <span style="color: ${indicatorColor}; font-weight: 600;">supera ${adv}${pct}%</span> ${config.sufixo}`;
+                    
+                    // 2. Na template string, usamos a variável 'numPct' que agora é inteira
+                    el.innerHTML = `<strong class="font-semibold text-slate-700">${muniName}</strong> <span style="color: ${indicatorColor}; font-weight: 600;">supera ${adv}${numPct}%</span> ${config.sufixo}`;
                 }
 
             } else {
@@ -1064,20 +1065,21 @@ timelineBtns.forEach(btn => {
     let shortMsg = "";
 
     if (isPop) {
-        valDisplay = Math.abs(munValue);
+        valDisplay = Math.abs(munValue).toFixed(1).replace('.', ',');
         const isPos = munValue >= 0;
         arrow = isPos ? '▲' : '▼';
         statusClass = isPos ? 'positive' : 'negative';
         shortMsg = "Evolução populacional 2000-2024.";
     } else {
         if (compValue !== 0 && !isNaN(compValue)) {
-            const fPct = Math.round((munValue / compValue - 1) * 100);
-            valDisplay = Math.abs(fPct);
+            const fPct = (munValue / compValue - 1) * 100;
+            valDisplay = Math.abs(fPct).toFixed(1).replace('.', ',');
             const isPositive = fPct >= 0;
             const direcao = isPositive ? "acima" : "abaixo";
             arrow = isPositive ? '▲' : '▼';
             statusClass = isPositive ? 'positive' : 'negative';
-            shortMsg = `${fPct === 0 ? 'Igual à' : Math.abs(fPct) + '% ' + direcao + ' da'} média ${labelBase}`;
+            const valMsg = Math.abs(fPct).toFixed(1).replace('.', ',');
+            shortMsg = `${Math.abs(fPct) < 0.05 ? 'Igual à' : valMsg + '% ' + direcao + ' da'} média ${labelBase}`;
         } else {
             shortMsg = "Dado comparativo indisponível.";
         }
