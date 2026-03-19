@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const $  = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   
-    // ------------ JSON helpers ------------
+    // Tenta JSON.parse normal; se o valor for string duplo-encodado (ex: template renderizou
+    // o json_script como string em vez de objeto), faz um segundo parse.
     function safeParseJSONById(id) {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -16,6 +17,10 @@ document.addEventListener('DOMContentLoaded', function () {
       catch { return null; }
     }
     function getJsonText(id){ const el = document.getElementById(id); return (el && el.textContent) ? el.textContent.trim() : ''; }
+    // Fallback para quando safeParseJSONById falha: extrai os campos de ranking via regex.
+    // Necessário porque o Django (LANGUAGE_CODE='pt-br' + USE_THOUSAND_SEPARATOR=True) pode
+    // renderizar inteiros com separador de milhar no template (ex: 3796 → "3.796"), o que
+    // quebra JSON.parse. A regex extrai apenas os dígitos, contornando o problema.
     function parseRankingDataFromText(id){
       const txt = getJsonText(id); if (!txt) return null;
       const keys = ['rank_nacional','total_nacional','rank_estadual','total_estadual','rank_faixa','total_faixa'];
@@ -31,7 +36,9 @@ document.addEventListener('DOMContentLoaded', function () {
       return out;
     }
   
-    // ------------ normalizers/formatters ------------
+    // Normaliza string para comparação agnóstica: remove acentos, valores monetários e
+    // numéricos antes de comparar labels de receita. Necessário porque os mesmos headings
+    // podem aparecer com R$ formatado, números de anos ou pequenas variações tipográficas.
     const normalize = (str) => (str||'')
       .normalize('NFD').replace(/\p{Diacritic}/gu,'')
       .replace(/R\$\s?[\d\.,]+/g,' ')
@@ -41,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
   
     const fmtInt = (n) => (Number.isFinite(n) ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(n) : '—');
   
+    // Extrai apenas o texto do heading, ignorando os elementos filhos de valor e indicador
+    // injetados dinamicamente. O clone evita mutação do DOM original.
     const cleanText = (h) => {
       if (!h) return '';
       const c = h.cloneNode(true);
@@ -93,7 +102,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (tip) tip.textContent = `O município supera ${pct}% dos outros municípios`;
     }
   
-    // ------------ FUNÇÃO DE RANKING UNIFICADA E BLINDADA ------------
+    // Atualiza todos os indicadores visuais de ranking da página quando a base de comparação muda.
+    // Opera em dois alvos independentes: (1) os indicadores coloridos de cada item de receita
+    // na árvore, e (2) o KPI de ranking nacional/estadual/porte no topo da página.
     function updateRankingUI(selected) {
       if (percentileData) {
         $$('.revenue-item-wrapper').forEach(wrap => {
@@ -142,6 +153,8 @@ document.addEventListener('DOMContentLoaded', function () {
         let rankColorClass = 'text-[var(--fnp-dark-blue)]';
 
         if (!isNaN(rk) && !isNaN(tot) && tot > 0) {
+            // Converte posição absoluta em percentil para determinar a cor.
+            // Ex: 1º de 5479 → percentil ~100% (verde); 5479º de 5479 → 0% (vermelho).
             const percentilReal = ((tot - rk) / tot) * 100;
             
             if (percentilReal <= 20) rankColorClass = 'text-[#A81C21]';
@@ -190,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   
     // ------------ Toggle PC/VR ------------
-    // ------------ Toggle PC/VR ------------
     const segmented = $('#valor-toggle');
     function showMode(m){
       const pc = m === 'pc';
@@ -203,12 +215,19 @@ document.addEventListener('DOMContentLoaded', function () {
           el.textContent = pc ? 'Valor por Habitante' : 'Valor Real';
       });
 
-      // Update visibility of the wrapper items when toggling per capita/real
-      // BUT keep the individual display states of media vs mediana respected
-      $$('.estatistica-media').forEach(el => el.style.display = pc ? '' : 'none');
-      $$('.estatistica-mediana').forEach(el => el.style.display = pc ? '' : 'none');
+      // Em Valores Reais, esconde os elementos de comparação (média/mediana) do DOM.
+      // Ao voltar para Per Capita, limpa o inline style para deixar as classes hidden/visible
+      // definidas por showEstatistica() voltarem a controlar a visibilidade.
+      $$('.estatistica-media, .estatistica-mediana').forEach(el => el.style.display = pc ? '' : 'none');
 
       sortAll(pc);
+
+      // Sincroniza active no sticky valor toggle
+      document.querySelectorAll('#sticky-valor-toggle .segmented-option').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+
+      // Oculta o toggle Média/Mediana quando em Valores Reais (não existe comparativo)
+      if (estatisticaToggle) estatisticaToggle.style.setProperty('display', pc ? '' : 'none', 'important');
+      if (typeof window._setStickyExtras === 'function') window._setStickyExtras();
 
       // Sincroniza o Card Principal de Receita lá no topo
       const kpiRcLabel = document.getElementById('kpi-rc-label');
@@ -243,6 +262,8 @@ document.addEventListener('DOMContentLoaded', function () {
          el.classList.toggle('hidden', isMedia);
          el.classList.toggle('invisible-by-est', isMedia);
       });
+      // Sincroniza active no sticky estatistica toggle
+      document.querySelectorAll('#sticky-estatistica-toggle .segmented-option').forEach(b => b.classList.toggle('active', b.dataset.est === m));
     }
 
     estatisticaToggle?.querySelector('[data-est="media"]')?.addEventListener('click', ()=>showEstatistica('media'));
@@ -667,6 +688,26 @@ function renderTimelineRuler(mode, val00, val24) {
         txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
         txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
         color24 = FNP_DECIL_COLORS[val24];
+    } else if (mode === 'ranking') {
+        const circle00 = document.getElementById('circle-2000');
+        const circle24 = document.getElementById('circle-2024');
+        const t00 = parseInt(circle00 ? circle00.getAttribute('data-total-rank') : '5570') || 5570;
+        const t24 = parseInt(circle24 ? circle24.getAttribute('data-total-rank') : '5479') || 5479;
+
+        trackHTML = `<div class="w-full h-2.5 rounded-full" style="background: linear-gradient(to right, #A81C21, #E47326, #F4D01D, #6AC074, #1C9148);"></div>`;
+        pos00 = ((t00 - val00) / t00) * 100;
+        pos24 = ((t24 - val24) / t24) * 100;
+
+        txt00 = `${val00.toLocaleString('pt-BR')}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
+        txt24 = `${val24.toLocaleString('pt-BR')}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+
+        scaleMarkers = `
+            <span class="absolute -left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">0</span>
+            <span class="absolute -right-12 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">${t24.toLocaleString('pt-BR')}</span>
+        `;
+
+        const decilVal = Math.max(1, Math.ceil((pos24 / 100) * 10));
+        color24 = FNP_DECIL_COLORS[decilVal] || '#1C9148';
     }
 
     container.innerHTML = `
@@ -707,18 +748,18 @@ function updateTimelineColors(mode) {
         let isLightBackground = false;
 
         if (num) {
-            // --- NOVA LÓGICA: RANKING NACIONAL ---
             if (mode === 'ranking') {
-                if (labelSpan) labelSpan.textContent = 'Nacional';
+                if (labelSpan) labelSpan.textContent = '';
                 if (valueSpan) valueSpan.textContent = parseInt(num).toLocaleString('pt-BR') + 'º';
-                
-                // Mantém a cor baseada no percentil para seguir o padrão visual
+
+                // O ranking absoluto (ex: 1549º) não tem escala de cor própria de 1-10.
+                // Reutiliza o percentil já calculado pelo backend para mapear na paleta de decis,
+                // mantendo coerência visual com os outros modos.
                 const p = parseInt(circle.getAttribute('data-percentil')) || 0;
                 const decilVal = Math.max(1, Math.ceil(p / 10));
                 hex = FNP_DECIL_COLORS[decilVal];
                 isLightBackground = (decilVal === 5 || decilVal === 6);
-            } 
-            // --- LÓGICA ORIGINAL PRESERVADA ---
+            }
             else if (mode === 'percentil') {
                 if (labelSpan) labelSpan.textContent = 'Percentil';
                 if (valueSpan) valueSpan.textContent = num + '%';
@@ -739,7 +780,7 @@ function updateTimelineColors(mode) {
                 isLightBackground = (num === '5' || num === '6');
             }
         } else {
-            if (labelSpan) labelSpan.textContent = mode === 'ranking' ? 'Nacional' : mode;
+            if (labelSpan) labelSpan.textContent = mode === 'ranking' ? '' : mode;
             if (valueSpan) valueSpan.textContent = '-';
         }
 
@@ -769,10 +810,12 @@ function updateTimelineColors(mode) {
             } 
             // --- RESUMO PARA RANKING ---
             else if (mode === 'ranking') {
+                const t00 = parseInt(timelineCircles[0].getAttribute('data-total-rank')) || 5570;
+                const t24 = parseInt(timelineCircles[1].getAttribute('data-total-rank')) || 5479;
                 const subiu = val24 < val00; // No ranking, menor número = melhor posição
                 const statusAcao = subiu ? 'SUBIU' : 'CAIU';
                 const statusColor = subiu ? 'text-emerald-600' : 'text-rose-600';
-                summaryContainer.innerHTML = `Nestas duas décadas, a posição de <strong class="text-slate-700">${muniName}</strong> no ranking nacional <span class="${statusColor} font-black">${statusAcao}</span>, saindo de <span class="font-bold text-slate-400">${val00.toLocaleString('pt-BR')}º</span> para <span class="${statusColor} font-black">${val24.toLocaleString('pt-BR')}º</span> lugar.`;
+                summaryContainer.innerHTML = `Em 2000, <strong class="text-slate-700">${muniName}</strong> estava no <span class="font-bold text-slate-400">${val00.toLocaleString('pt-BR')}º</span> lugar de ${t00.toLocaleString('pt-BR')} e <span class="${statusColor} font-black">${statusAcao}</span> para a posição <span class="${statusColor} font-black">${val24.toLocaleString('pt-BR')}º</span> de ${t24.toLocaleString('pt-BR')} no ano de 2024.`;
             }
             // --- RESUMOS ORIGINAIS PRESERVADOS ---
             else if (mode === 'percentil') {
@@ -844,7 +887,7 @@ timelineBtns.forEach(btn => {
     // ==========================================
     const globalBaseBtns = document.querySelectorAll('#global-base-toggle .segmented-option');
     const lblMediaBase = document.querySelectorAll('.lbl-media-base');
-    const lblMediaBaseChart = document.querySelector('.lbl-media-base-chart');
+    const lblMediaBaseChart = document.querySelectorAll('.lbl-media-base-chart');
     const valMediaRc = document.getElementById('val-media-rc');
     const valMediaPop = document.getElementById('val-media-pop');
 
@@ -885,9 +928,9 @@ timelineBtns.forEach(btn => {
             }
         },
         scales: {
-            x: { 
-                grid: { display: false }, 
-                ticks: { font: { weight: 'bold' }, color: '#475569' } 
+            x: {
+                grid: { display: false },
+                ticks: { display: false }
             },
             y: { 
                 beginAtZero: true,
@@ -938,7 +981,7 @@ timelineBtns.forEach(btn => {
         const labelNome = baseNomes[base] || 'média dos municípios';
         
         lblMediaBase.forEach(el => el.textContent = labelNome);
-        if (lblMediaBaseChart) lblMediaBaseChart.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1);
+        lblMediaBaseChart.forEach(el => el.textContent = labelNome.charAt(0).toUpperCase() + labelNome.slice(1));
 
         const evoKeys = {
             'nacional': 'nac',
@@ -1202,7 +1245,7 @@ timelineBtns.forEach(btn => {
     if (typeof renderChart === 'function') renderChart(currentKey);
     initializeToggleListeners();
     // Detecta qual modo esta ativo no HTML e inicializa a timeline com ele */
-    const activeTimelineMode = document.querySelector('#timeline-toggle .segmented-option.active')?.dataset.mode || 'percentil';
+    const activeTimelineMode = document.querySelector('#timeline-toggle .segmented-option.active')?.dataset.mode || 'ranking';
     updateTimelineColors(activeTimelineMode);    
     // Dispara a visualização global padrão
     updateGlobalBase('nacional');
@@ -1227,17 +1270,65 @@ timelineBtns.forEach(btn => {
     stickyBaseBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const selectedBase = this.dataset.base;
-            
-            // Atualiza o estado visual do próprio sticky
             stickyBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === selectedBase));
-            
-            // Dispara a atualização global (que já sincroniza o seletor principal)
             updateGlobalBase(selectedBase);
-            
-            // Sincroniza visualmente o seletor principal caso ele mude
             mainBaseBtns.forEach(b => b.classList.toggle('active', b.dataset.base === selectedBase));
         });
     });
+
+    // Sticky: Per Capita / Valores Reais
+    const stickyValorToggleEl = document.getElementById('sticky-valor-toggle');
+    const stickyEstToggleEl   = document.getElementById('sticky-estatistica-toggle');
+    const stickyValorBtns = document.querySelectorAll('#sticky-valor-toggle .segmented-option');
+    stickyValorBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const m = this.dataset.mode;
+            stickyValorBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+            segmented?.querySelectorAll('.segmented-option').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+            showMode(m);
+        });
+    });
+
+    // Sticky: Média / Mediana
+    const stickyEstBtns = document.querySelectorAll('#sticky-estatistica-toggle .segmented-option');
+    stickyEstBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const m = this.dataset.est;
+            stickyEstBtns.forEach(b => b.classList.toggle('active', b.dataset.est === m));
+            estatisticaToggle?.querySelectorAll('.segmented-option').forEach(b => b.classList.toggle('active', b.dataset.est === m));
+            showEstatistica(m);
+        });
+    });
+
+    // IntersectionObserver: mostra toggles no sticky apenas dentro da seção de receitas
+    if (segmented && stickyValorToggleEl && stickyEstToggleEl) {
+        let togglesOutOfView = false;
+        let sectionInView = false;
+
+        const setStickyExtras = () => {
+            const val = (togglesOutOfView && sectionInView) ? 'inline-flex' : 'none';
+            stickyValorToggleEl.style.setProperty('display', val, 'important');
+            // lê o modo ativo do toggle original — fonte da verdade
+            const isPerCapita = segmented?.querySelector('.segmented-option.active')?.dataset.mode === 'pc';
+            stickyEstToggleEl.style.setProperty('display', (val === 'inline-flex' && isPerCapita) ? 'inline-flex' : 'none', 'important');
+        };
+        window._setStickyExtras = setStickyExtras;
+
+        // Observer 1: toggles originais saíram da tela?
+        new IntersectionObserver((entries) => {
+            togglesOutOfView = !entries[0].isIntersecting;
+            setStickyExtras();
+        }, { threshold: 0 }).observe(segmented);
+
+        // Observer 2: seção de receitas ainda está visível?
+        const receitasSection = document.getElementById('receitas-section');
+        if (receitasSection) {
+            new IntersectionObserver((entries) => {
+                sectionInView = entries[0].isIntersecting;
+                setStickyExtras();
+            }, { threshold: 0 }).observe(receitasSection);
+        }
+    }
 
     // 3. Sincronização Inversa (Global -> Sticky)
     mainBaseBtns.forEach(btn => {

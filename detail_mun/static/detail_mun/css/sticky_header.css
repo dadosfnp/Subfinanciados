@@ -1,5 +1,8 @@
 /* ==========================================================================
-   STICKY HEADER (MANTÉM NOME E FILTROS NO TOPO)
+   STICKY HEADER — Fixo no topo, aparece via scroll (ver script_mun.js).
+   Usa transform em vez de display/visibility para que a animação de entrada
+   seja composta na GPU (sem reflow), garantindo 60fps mesmo em dispositivos lentos.
+   A classe .visible é adicionada por JS quando scrollY > 300px.
    ========================================================================== */
 .sticky-header {
     position: fixed !important;
@@ -7,12 +10,14 @@
     left: 0 !important;
     width: 100% !important;
     background: rgba(16, 55, 88, 0.98) !important; /* Azul escuro FNP */
+    /* backdrop-filter cria o efeito de vidro fosco; -webkit- é necessário para Safari */
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     z-index: 999999 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-    transform: translateY(-100%);
+    transform: translateY(-100%); /* estado inicial: fora da tela acima */
+    /* cubic-bezier(0.16, 1, 0.3, 1) = aceleração rápida com desaceleração suave (spring-like) */
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
     padding: 0.75rem 0 !important;
     display: block !important;
@@ -59,11 +64,16 @@
 
 .sticky-header-controls {
     display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-end !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
 }
 
-/* PADRONIZAÇÃO DO TOGGLE (Fundo claro, Seleção azul) */
+/* Os toggles dentro do sticky seguem a mesma paleta dos toggles originais da página
+   (#e9eef6 fundo, #194685 seleção), mas precisam ser redefinidos aqui porque o contexto
+   escuro do header herdaria estilos globais incorretos. */
 .sticky-header .segmented {
     background: #e9eef6 !important; /* Cor de fundo padrão dos toggles do site */
     border-radius: 999px !important;
@@ -90,22 +100,34 @@
     box-shadow: 0 2px 8px rgba(25, 70, 133, 0.25) !important;
 }
 
+/* Breakpoint 767.98px = Bootstrap md (< 768px). Em mobile, com até 3 toggles visíveis
+   simultaneamente (base + valor + estatística), o layout não cabe em linha — usa scroll
+   horizontal em vez de quebrar em duas linhas e desalinhar o nome do município. */
 @media (max-width: 767.98px) {
     .sticky-header-container {
-        gap: 1rem !important;
+        gap: 0.75rem !important;
     }
-    
+
     .sticky-header-title {
         font-size: 1rem !important;
-        max-width: 140px !important;
+        max-width: 130px !important;
     }
-    
-    .sticky-header-controls .sticky-header-label {
+
+    /* Permite scroll horizontal nos toggles em vez de quebrar linha */
+    .sticky-header-controls {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        /* Esconde scrollbar visualmente mas mantém funcional */
+        scrollbar-width: none !important;
+    }
+    .sticky-header-controls::-webkit-scrollbar {
         display: none !important;
     }
 
     .sticky-header .segmented-option {
-        padding: 6px 10px !important;
-        font-size: 0.75rem !important;
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
     }
 }
