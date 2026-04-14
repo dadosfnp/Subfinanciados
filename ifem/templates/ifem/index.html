@@ -1043,8 +1043,8 @@
                             {% for noticia in noticias %}
                                 <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
                                     
-                                    {% if noticia.imagem %}
-                                        <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
+                                    {% if noticia.imagem_embed_url %}
+                                        <img src="{{ noticia.imagem_embed_url }}" class="news-bg-img" alt="{{ noticia.titulo }}" referrerpolicy="no-referrer">
                                     {% else %}
                                         <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
                                     {% endif %}
