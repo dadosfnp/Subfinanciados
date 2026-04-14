@@ -74,7 +74,10 @@ async function updateDependentFilters() {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
-    porte: filtroPorte.value
+    porte: filtroPorte.value,
+    subgrupo: filtroSubgrupo.value,
+    classification: filtroClassificacao.value,
+    calculation_mode: filtroModoCalculo.value
   };
 
   try {
@@ -738,8 +741,9 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
       popupAtivo = null;
     }
 
-    /* Se a mudanca nao for no municipio ou subgrupo, refaz a cascata antes de atualizar o mapa */
-    if (sel !== filtroMunicipio && sel !== filtroSubgrupo) {
+    /* Se a mudanca nao for no municipio (filtro-folha), refaz a cascata antes de atualizar o mapa.
+       Inclui subgrupo/quintil pra que UF/RM/região sejam recalculadas só com os municípios do quintil escolhido. */
+    if (sel !== filtroMunicipio) {
       await updateDependentFilters();
     }
 
