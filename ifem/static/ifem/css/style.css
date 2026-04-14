@@ -1442,8 +1442,15 @@ p {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-top: 40px; 
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 40px;
     margin-bottom: 10px;
+}
+
+a.btn-tutorial {
+    text-decoration: none;
 }
 
 /* --- Botão Veja Tutorial --- */
