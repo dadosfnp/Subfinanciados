@@ -494,7 +494,19 @@ class ContaMaisEspecificaPercentil(models.Model):
 class Noticia(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título da Matéria")
     data = models.DateField(verbose_name="Data de Publicação")
-    imagem = models.ImageField(upload_to='noticias/', verbose_name="Imagem de Capa")
+    # Hospedagem externa (Google Drive, Imgur, etc.) — filesystem do Render é efêmero,
+    # por isso não usamos ImageField. O template resolve o link via `imagem_embed_url`.
+    imagem_url = models.URLField(
+        max_length=500,
+        verbose_name="Link da Imagem de Capa",
+        help_text=(
+            "Cole o link de compartilhamento da imagem. "
+            "Funciona com Google Drive (o arquivo precisa estar como 'Qualquer pessoa com o link'), "
+            "Imgur ou qualquer URL pública direta (.jpg/.png)."
+        ),
+        blank=True,
+        null=True,
+    )
     tag = models.CharField(max_length=50, verbose_name="Categoria (Tag)")
     link = models.URLField(max_length=500, verbose_name="Link de Destino", blank=True, null=True)
 
@@ -505,6 +517,29 @@ class Noticia(models.Model):
 
     def __str__(self):
         return self.titulo
+
+    @property
+    def imagem_embed_url(self):
+        """
+        Converte qualquer formato de link do Google Drive (view, open, uc) para o
+        endpoint de thumbnail, que é o mais estável para hotlink em <img>.
+        Links de outros hosts (Imgur etc.) passam sem alteração.
+        """
+        url = (self.imagem_url or '').strip()
+        if not url:
+            return ''
+        if 'drive.google.com' not in url:
+            return url
+
+        import re
+        match = (
+            re.search(r'/file/d/([A-Za-z0-9_-]+)', url)
+            or re.search(r'[?&]id=([A-Za-z0-9_-]+)', url)
+        )
+        if not match:
+            return url
+        file_id = match.group(1)
+        return f'https://drive.google.com/thumbnail?id={file_id}&sz=w1000'
 
 
 class MediaNacionalReceita(models.Model):
