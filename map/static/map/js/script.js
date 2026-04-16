@@ -30,6 +30,7 @@ const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
 
 let debounceTimer = null;
 let lastRequestId = 0;
+let breakdownState = { count: 0, averageRevenue: 0, features: [] };
 
 // ===================== Helpers =====================
 function restoreSelectValue(selectEl, value) {
@@ -154,6 +155,14 @@ async function atualizarMapa() {
         style: 'currency',
         currency: 'BRL'
       });
+
+    // Guarda o resumo + as features pra o modal de breakdown poder consultar
+    // sem precisar refazer o fetch.
+    breakdownState = {
+      count,
+      averageRevenue,
+      features
+    };
 
     // ===== MAPA (SEMPRE TODOS OS MUNICÍPIOS) =====
     if (map.getSource('municipios')) {
@@ -812,6 +821,85 @@ async function downloadTableData() {
   }
 }
 document.getElementById('download-table-btn').addEventListener('click', downloadTableData);
+
+// ===================== Modal: Distribuição por Quintil/Decil =====================
+// Cores espelhadas das que aparecem no mapa, pra reforçar a leitura visual.
+const BREAKDOWN_QUINTIL_COLORS = ['#d73027', '#fc8d59', '#fee08b', '#91cf60', '#1a9850'];
+const BREAKDOWN_DECIL_COLORS = [
+  '#a50026', '#d73027', '#f46d43', '#fdae61', '#fee08b',
+  '#d9ef8b', '#a6d96a', '#66bd63', '#1a9850', '#006837'
+];
+
+function renderBreakdownModal(){
+  const titleEl  = document.getElementById('breakdown-modal-title');
+  const grupoEl  = document.getElementById('breakdown-grupo-titulo');
+  const listEl   = document.getElementById('breakdown-list');
+  const emptyEl  = document.getElementById('breakdown-empty');
+  const totalEl  = document.getElementById('breakdown-total');
+  const avgEl    = document.getElementById('breakdown-avg');
+
+  totalEl.textContent = breakdownState.count.toLocaleString('pt-BR');
+  avgEl.textContent = breakdownState.averageRevenue.toLocaleString('pt-BR', {
+    style: 'currency', currency: 'BRL'
+  });
+
+  const classification = filtroClassificacao.value;
+  if (classification === 'natural') {
+    listEl.innerHTML = '';
+    grupoEl.classList.add('d-none');
+    emptyEl.classList.remove('d-none');
+    titleEl.textContent = 'Distribuição da seleção';
+    return;
+  }
+  emptyEl.classList.add('d-none');
+  grupoEl.classList.remove('d-none');
+
+  const isQuintil = classification === 'quintil';
+  const numGroups = isQuintil ? 5 : 10;
+  const colors = isQuintil ? BREAKDOWN_QUINTIL_COLORS : BREAKDOWN_DECIL_COLORS;
+  const labelSingular = isQuintil ? 'quintil' : 'decil';
+  titleEl.textContent = `Distribuição da seleção por ${labelSingular}`;
+  grupoEl.textContent = `Municípios em cada ${labelSingular}`;
+
+  // Identifica em qual grupo cada município está.
+  // Modo "por_filtro" usa dynamic_quantile (1..N). Modo "total" usa o
+  // quintil/decil pré-calculado (string "Xº quintil") — extraímos o número.
+  const usePorFiltro = filtroModoCalculo.value === 'por_filtro';
+  const fallbackField = isQuintil ? 'quintil24_pre_calculado' : 'decil24_pre_calculado';
+
+  const counts = Array(numGroups).fill(0);
+  for (const f of breakdownState.features) {
+    let n = null;
+    if (usePorFiltro) {
+      const dq = f.properties.dynamic_quantile;
+      if (dq) n = Number(dq);
+    } else {
+      const raw = f.properties[fallbackField];
+      const m = (typeof raw === 'string') ? raw.match(/^(\d+)/) : null;
+      if (m) n = Number(m[1]);
+    }
+    if (n && n >= 1 && n <= numGroups) counts[n - 1]++;
+  }
+
+  const total = counts.reduce((a, b) => a + b, 0);
+  const maxCount = Math.max(1, ...counts);
+
+  listEl.innerHTML = counts.map((c, idx) => {
+    const pct = total > 0 ? (c / total * 100) : 0;
+    const widthPct = (c / maxCount * 100);
+    return `
+      <div class="breakdown-row">
+        <span class="breakdown-label">${idx + 1}º ${labelSingular}</span>
+        <div class="breakdown-bar-wrap">
+          <div class="breakdown-bar" style="width:${widthPct}%; background:${colors[idx]};"></div>
+        </div>
+        <span class="breakdown-count">${c.toLocaleString('pt-BR')} (${pct.toFixed(1).replace('.', ',')}%)</span>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('btn-ver-mais-breakdown')?.addEventListener('click', renderBreakdownModal);
 
 // ======== PRINT DO MAPA =========
 document.getElementById("btn-screenshot").addEventListener("click", async () => {
