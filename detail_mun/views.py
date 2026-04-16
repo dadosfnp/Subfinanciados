@@ -531,14 +531,49 @@ def municipio_detalhe_view(request, municipio_id):
 
     media_estadual = CrescimentoMedioUf.objects.filter(uf=municipio.uf).first()
     media_porte = CrescimentoMedioPorte.objects.filter(porte=faixa).first()
-    
+
+    # Média de receita per capita do quintil/decil ao qual o município pertence.
+    # Usado no card "Valor por Habitante" pra contextualizar o município dentro
+    # do seu grupo de classificação (trend ▲/▼ + texto, igual à evolução populacional).
+    media_quintil_pc = None
+    if municipio.quintil24:
+        media_quintil_pc = (Municipio.objects
+                            .filter(quintil24=municipio.quintil24)
+                            .exclude(rc_24_pc__isnull=True)
+                            .aggregate(media=Avg('rc_24_pc'))['media'])
+
+    media_decil_pc = None
+    if municipio.decil24:
+        media_decil_pc = (Municipio.objects
+                          .filter(decil24=municipio.decil24)
+                          .exclude(rc_24_pc__isnull=True)
+                          .aggregate(media=Avg('rc_24_pc'))['media'])
+
+    def _trend_grupo(media_grupo, nome_grupo):
+        """Pré-monta os campos exibidos no trend (seta, %, classe, texto)."""
+        if media_grupo is None or municipio.rc_24_pc is None or media_grupo == 0:
+            return None
+        pct = (municipio.rc_24_pc / media_grupo - 1) * 100
+        positivo = pct >= 0
+        return {
+            'pct_fmt': f'{abs(pct):.1f}'.replace('.', ','),
+            'arrow': '▲' if positivo else '▼',
+            'status': 'positive' if positivo else 'negative',
+            'direcao': 'acima' if positivo else 'abaixo',
+            'media_fmt': f'R$ {media_grupo:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'),
+            'grupo_nome': nome_grupo or '—',
+        }
+
+    trend_quintil = _trend_grupo(media_quintil_pc, municipio.quintil24)
+    trend_decil = _trend_grupo(media_decil_pc, municipio.decil24)
+
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
         'data': data,
-        'evolucao_historica': evolucao_historica, 
+        'evolucao_historica': evolucao_historica,
 
         'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
         'media_estadual_rc_pc': round(media_estadual.receita, 2) if media_estadual else None,
@@ -547,6 +582,11 @@ def municipio_detalhe_view(request, municipio_id):
         'media_nacional_pop': round(media_nacional_pop, 2),
         'media_estadual_pop': round(media_estadual.populacao, 2) if media_estadual else None,
         'media_faixa_pop': round(media_porte.populacao, 2) if media_porte else None,
+
+        'media_quintil_pc': round(media_quintil_pc, 2) if media_quintil_pc is not None else None,
+        'media_decil_pc': round(media_decil_pc, 2) if media_decil_pc is not None else None,
+        'trend_quintil': trend_quintil,
+        'trend_decil': trend_decil,
     }
 
     return render(request, 'detail_mun/detalhe_municipio.html', context)

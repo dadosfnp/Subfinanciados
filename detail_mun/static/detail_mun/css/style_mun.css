@@ -538,6 +538,23 @@ html, body {
     transform: scale(0.96);
 }
 
+/* Versão compacta — usada no toggle Quintil/Decil dentro do card "Receita" */
+.segmented.segmented-mini {
+    padding: 2px;
+    border-radius: 10px;
+    width: auto;
+}
+.segmented.segmented-mini .segmented-option {
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 8px;
+}
+.segmented.segmented-mini .segmented-option.active {
+    box-shadow: 0 2px 6px rgba(25, 70, 133, 0.25);
+    transform: none;
+}
+
 /* Fixadores absolutos das tags de ranking */
 .kpi-card {
     position: relative;
