@@ -268,6 +268,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
     estatisticaToggle?.querySelector('[data-est="media"]')?.addEventListener('click', ()=>showEstatistica('media'));
     estatisticaToggle?.querySelector('[data-est="mediana"]')?.addEventListener('click', ()=>showEstatistica('mediana'));
+
+    // ------------ Toggle Quintil/Decil — trend abaixo de "Valor por Habitante" ------------
+    const grupoToggle = $('#grupo-media-toggle');
+    const trendGrupoRoot = $('#trend-grupo-rc');
+    const trendGrupoArrow = $('#trend-grupo-arrow');
+    const trendGrupoText = $('#trend-grupo-text');
+    function showGrupo(g){
+      if (!trendGrupoRoot || !trendGrupoArrow || !trendGrupoText) return;
+      const ds = trendGrupoRoot.dataset;
+      const has = (g === 'quintil') ? !!ds.quintilArrow : !!ds.decilArrow;
+      // Se o grupo escolhido não tem dado, mantém o outro ativo no toggle
+      if (!has){
+        const fallback = (g === 'quintil') ? 'decil' : 'quintil';
+        if ((fallback === 'quintil' ? ds.quintilArrow : ds.decilArrow)) g = fallback;
+      }
+      const isQuintil = g === 'quintil';
+      grupoToggle?.querySelector('[data-grupo="quintil"]')?.classList.toggle('active', isQuintil);
+      grupoToggle?.querySelector('[data-grupo="decil"]')?.classList.toggle('active', !isQuintil);
+
+      const arrow   = isQuintil ? ds.quintilArrow   : ds.decilArrow;
+      const pct     = isQuintil ? ds.quintilPct     : ds.decilPct;
+      const status  = isQuintil ? ds.quintilStatus  : ds.decilStatus;
+      const direcao = isQuintil ? ds.quintilDirecao : ds.decilDirecao;
+      const grupo   = isQuintil ? ds.quintilGrupo   : ds.decilGrupo;
+      const media   = isQuintil ? ds.quintilMedia   : ds.decilMedia;
+
+      trendGrupoArrow.className = `kpi-hero-trend font-black ${status || ''}`;
+      trendGrupoArrow.textContent = `${arrow} ${pct}%`;
+      // Capitaliza a primeira letra ("acima" → "Acima") pra ficar igual ao tom dos outros textos.
+      const direcaoCap = direcao ? direcao.charAt(0).toUpperCase() + direcao.slice(1) : '';
+      trendGrupoText.textContent = `${direcaoCap} da média do ${grupo} : ${media}`;
+    }
+    grupoToggle?.querySelector('[data-grupo="quintil"]')?.addEventListener('click', ()=>showGrupo('quintil'));
+    grupoToggle?.querySelector('[data-grupo="decil"]')?.addEventListener('click', ()=>showGrupo('decil'));
+    // Inicializa com quintil
+    if (trendGrupoRoot) showGrupo('quintil');
     // ------------ índice de headings (Gráfico -> Árvore) ------------
     let headingIndex = new Map();
     function buildHeadingIndex(scope=document){

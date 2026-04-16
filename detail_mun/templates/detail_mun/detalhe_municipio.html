@@ -128,12 +128,35 @@
                      data-val-tot="R$ {{ municipio.rc_2024|br_abrev }}">
                     R$ {{ municipio.rc_24_pc|br_float }}
                 </div>
-                <div class="mt-1 flex flex-col invisible pointer-events-none select-none" aria-hidden="true">
-                    <div class="flex items-center">
-                        <span class="kpi-hero-trend font-black">▲ 0%</span> 
+
+                {% if trend_quintil or trend_decil %}
+                <div id="trend-grupo-rc" class="mt-1 flex flex-col"
+                     {% if trend_quintil %}
+                     data-quintil-arrow="{{ trend_quintil.arrow }}"
+                     data-quintil-pct="{{ trend_quintil.pct_fmt }}"
+                     data-quintil-status="{{ trend_quintil.status }}"
+                     data-quintil-direcao="{{ trend_quintil.direcao }}"
+                     data-quintil-grupo="{{ trend_quintil.grupo_nome }}"
+                     data-quintil-media="{{ trend_quintil.media_fmt }}"
+                     {% endif %}
+                     {% if trend_decil %}
+                     data-decil-arrow="{{ trend_decil.arrow }}"
+                     data-decil-pct="{{ trend_decil.pct_fmt }}"
+                     data-decil-status="{{ trend_decil.status }}"
+                     data-decil-direcao="{{ trend_decil.direcao }}"
+                     data-decil-grupo="{{ trend_decil.grupo_nome }}"
+                     data-decil-media="{{ trend_decil.media_fmt }}"
+                     {% endif %}>
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <span class="kpi-hero-trend font-black" id="trend-grupo-arrow"></span>
+                        <div id="grupo-media-toggle" class="segmented segmented-mini" role="tablist" aria-label="Tipo de classificação">
+                            <button class="segmented-option active" type="button" data-grupo="quintil">Quintil</button>
+                            <button class="segmented-option" type="button" data-grupo="decil">Decil</button>
+                        </div>
                     </div>
-                    <div class="text-[11px] font-medium mt-1 leading-tight">Alinhamento estrutural</div>
+                    <div class="text-[11px] font-medium text-slate-400 mt-1 leading-tight" id="trend-grupo-text"></div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </article>

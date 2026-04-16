@@ -1,12 +1,38 @@
 # home/views.py - v1.0.1 - Deploy Fix 17/03/2026 15:45
+import re
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Avg, StdDev, Count
 from django.http import JsonResponse
 from django.db import connection
-from .models import Municipio, ContaDetalhada, Noticia 
+from .models import Municipio, ContaDetalhada, Noticia
 import numpy as np
 import math
 from collections import defaultdict
+
+
+def _format_brl(value):
+    """Formata float para 'R$ 1.234' (sem decimais, separador BR)."""
+    if value is None:
+        return '—'
+    return 'R$ ' + f'{int(round(value)):,}'.replace(',', '.')
+
+
+def _medias_por_grupo(field, prefix):
+    """
+    Agrega Avg(rc_24_pc) por quintil/decil e devolve dict
+    {<prefix><n>: 'R$ X.XXX'} indexado pelo número do grupo (q1, q2, ..., d1, d2, ...).
+    """
+    qs = (Municipio.objects
+          .exclude(**{f'{field}__isnull': True})
+          .exclude(rc_24_pc__isnull=True)
+          .values(field)
+          .annotate(media=Avg('rc_24_pc')))
+    out = {}
+    for row in qs:
+        match = re.match(r'(\d+)', row[field] or '')
+        if match:
+            out[f'{prefix}{match.group(1)}'] = _format_brl(row['media'])
+    return out
 
 # --- VIEW DASHBOARD ---
 def home(request):
@@ -22,8 +48,16 @@ def index(request):
     """
     # Busca as notícias cadastradas no Admin
     noticias = Noticia.objects.all().order_by('-data')
-    # ATENÇÃO: Verifique se o arquivo está na pasta templates/ifem/index.html
-    return render(request, 'ifem/index.html', {'noticias': noticias})
+
+    # Médias per capita por grupo, exibidas dentro de cada box da seção Metodologia
+    medias_quintis = _medias_por_grupo('quintil24', 'q')
+    medias_decis = _medias_por_grupo('decil24', 'd')
+
+    return render(request, 'ifem/index.html', {
+        'noticias': noticias,
+        'medias_quintis': medias_quintis,
+        'medias_decis': medias_decis,
+    })
 
 # --- FUNÇÕES DE API (MANTIDAS IGUAIS) ---
 def api_get_dependent_filters(request):
