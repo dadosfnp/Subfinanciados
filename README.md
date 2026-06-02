@@ -21,6 +21,8 @@ O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para anál
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Mapbox](https://img.shields.io/badge/Mapbox-000000?style=for-the-badge&logo=mapbox&logoColor=white)
 
@@ -53,6 +55,71 @@ O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para anál
     ```bash
     python manage.py runserver
     ```
+
+---
+
+## 🐳 Rodando com Docker (recomendado para testar)
+
+O projeto é **containerizado**. Com Docker você sobe o app idêntico ao de produção com um único comando — sem instalar Python nem dependências na máquina.
+
+**Pré-requisitos:** Docker Desktop (ou Docker Engine + Compose).
+
+### Modo local (SQLite + dados de exemplo)
+
+Ideal para **testar/avaliar na sua máquina**, sem acesso ao banco de produção.
+
+1.  **Clone a branch e entre na pasta:**
+    ```bash
+    git clone -b infra/dockerizar-ifem git@github.com:dadosfnp/Subfinanciados.git
+    cd Subfinanciados
+    ```
+2.  **Crie o `.env` a partir do exemplo:**
+    ```bash
+    cp .env.example .env
+    ```
+    No `.env`, defina uma `DJANGO_SECRET_KEY` qualquer (50+ caracteres) e **mantenha a linha `DATABASE_URL` comentada** — assim o app usa SQLite local automaticamente.
+3.  **Suba o container:**
+    ```bash
+    docker compose up -d --build
+    ```
+    O app fica em **http://localhost:8003** (ainda sem dados).
+4.  **Carregue os dados de exemplo** (peça o arquivo `data_ifem_dump.json` ao time e coloque na pasta do projeto):
+    ```bash
+    docker compose cp data_ifem_dump.json ifem:/app/data_ifem_dump.json
+    docker compose exec ifem python manage.py loaddata /app/data_ifem_dump.json
+    ```
+5.  **Abra http://localhost:8003** — plataforma completa com os 5.479 municípios.
+
+> 💡 Para parar **sem perder** os dados locais: `docker compose stop`. Evite `docker compose down`, que recria o container e zera o SQLite local.
+
+### Variáveis de ambiente
+
+A lista completa está em `.env.example`. As principais:
+
+| Variável | Para quê |
+| :--- | :--- |
+| `DJANGO_SECRET_KEY` | Chave do Django (obrigatória). |
+| `DATABASE_URL` | Conexão PostgreSQL. **Comentada/vazia = SQLite local.** |
+| `MAPBOX_PUBLIC_TOKEN` | Token público do Mapbox para os mapas. |
+| `DJANGO_DEBUG` | `False` em produção, sempre. |
+| `GUNICORN_WORKERS` | Nº de workers do Gunicorn dentro do container. |
+| `RUN_MIGRATIONS` | `1` aplica migrações automaticamente no start do container. |
+
+---
+
+## ☁️ Produção (Droplet + PostgreSQL Managed)
+
+Em produção o app roda **como container** no Droplet (DigitalOcean), atrás do **Nginx**, com banco **PostgreSQL Managed** num database dedicado (`ifem`). Segue o padrão Docker da FNP: um `Dockerfile`/serviço por sistema.
+
+*   **Build/atualização no servidor:**
+    ```bash
+    docker compose up -d --build
+    ```
+*   **Validação sem expor publicamente** (túnel SSH — acesse em http://localhost:8003):
+    ```bash
+    ssh -L 8003:localhost:8003 root@<ip-do-droplet>
+    ```
+*   **Decisões de arquitetura e passo a passo da migração:** ver `tasks/plan-migracao-droplet.md`, `tasks/runbook-migracao-droplet.md` e o ADR-001 na pasta TIC da FNP.
 
 ---
 
