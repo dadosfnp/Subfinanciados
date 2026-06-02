@@ -30,11 +30,17 @@ O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para anál
 
 ## 🚀 Como Começar
 
-### Pré-requisitos
+> 🐳 **Recomendado:** a forma mais rápida e padronizada de rodar o projeto é via **Docker** — pule para a seção [Rodando com Docker](#-rodando-com-docker-recomendado-para-testar). Um único comando sobe o app idêntico ao de produção.
+>
+> O fluxo abaixo (venv) é uma **alternativa** para desenvolvimento local sem container.
+
+### Alternativa: ambiente local sem Docker (venv)
+
+#### Pré-requisitos
 *   Python 3.10+
 *   Ambiente virtual (venv)
 
-### Instalação Rápida
+#### Instalação Rápida
 1.  **Clone o projeto e entre na pasta:**
     ```bash
     git clone <url-do-repo>
