@@ -22,5 +22,8 @@ data_ifem_backup.json
 .DS_Store
 Thumbs.db
 
+# Exports CSV
+exports/
+
 # Contexto Gemini
 GEMINI.md
