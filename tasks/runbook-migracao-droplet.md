@@ -55,3 +55,43 @@ server {
 - DATABASE_URL do IFEM gravada em `/root/.ifem_db_url` (chmod 600, root-only).
 - Teste: `psql "$IFEM_URL" SELECT current_user,current_database()` → ifem_app | ifem. OK.
 - PENDÊNCIAS DE SEGURANÇA: levar senha do ifem_app (e doadmin) para o cofre Bitwarden; /root/.ifem_db_url é temporário.
+
+## Fase D1 — Dump de dados — 2026-06-02 — CONCLUÍDA
+- `data_ifem_dump.json` (50MB) gerado via imagem Docker com db.sqlite3 montado (stdout → host).
+- Contagens batem com SQLite: 5479 municipio; 6×5479 contas/percentis; medias/medianas; 99 percentis; 84 RM; 5 noticias.
+- Ignorado pelo git (*.json). Será transferido ao droplet por scp.
+
+## Fase Git — 2026-06-02 — CONCLUÍDA
+- ACHADO: .env (com SECRET_KEY+Mapbox) e db.sqlite3 estavam TRACKEADOS (já no histórico do GitHub).
+  → PENDÊNCIA: rotacionar SECRET_KEY e token Mapbox do repo. Droplet usa segredos NOVOS (não afetado).
+- Branch `infra/dockerizar-ifem` (a partir de feat/media-quintil-decil), 4 commits:
+  chore(rm --cached .env/db.sqlite3) / perf(indices+geojson) / fix(segredos via env) / feat(docker).
+- Push OK para remote `production` = github.com/dadosfnp/Subfinanciados.
+
+## Fase E — Deploy no droplet — 2026-06-02 — EM ANDAMENTO
+- [x] Swap 2G criado e ativo (/swapfile, em /etc/fstab).
+- [x] Deploy key SSH gerada no droplet (/root/.ssh/id_ifem_deploy, alias github-ifem). PUB a adicionar no GitHub (read-only).
+- [x] Docker 29.5.2 + Compose v5.1.4 instalados e habilitados.
+- [x] Deploy key adicionada no repo (read-only) — auth OK ("Hi dadosfnp/Subfinanciados!").
+- [x] Clonado em /var/www/ifem (branch infra/dockerizar-ifem, 4 commits). Lixo: arquivo "$null" no repo (limpar depois).
+- [x] .env criado (chmod 600): SECRET_KEY nova (64 chars), DATABASE_URL do ifem, MAPBOX, SECURE_SSL_REDIRECT=False.
+- [x] data_ifem_dump.json (49M) transferido via scp para /var/www/ifem/.
+- [x] docker compose build no droplet (imagem ifem-subfinanciados:latest).
+- [x] CONFLITO de migrations (duas 0003) → merge 0004 commitado/pushed. Lição: rebuild da imagem após git pull (código entra via COPY no build).
+- [x] migrate aplicou tudo (0003 x2 + 0004_merge) + loaddata = 38.648 objetos instalados.
+- [x] Contagens validadas no Postgres ifem: municipio=5479, noticia=5, contadetalhada=5479.
+- [x] docker compose up -d → container HEALTHY, HTTP 200 em 127.0.0.1:8003, 2 workers gunicorn.
+- APP NO AR no droplet, lendo o database ifem do Managed. Acesso via túnel SSH (localhost:8003). Render/FNP intocados.
+
+## Perf — 2026-06-02
+- Medições no droplet (localhost, sem túnel): home 34ms, mapa 8ms, análise 10ms, geojson 0.32s/2.8MB, query DB 8ms.
+- Diagnóstico: app rápido; lentidão percebida = túnel SSH + payload geojson sem compressão.
+- Ação: GZipMiddleware ativado. Geojson 2.811KB → 411KB (−85%), Content-Encoding: gzip. Deploy OK.
+
+## PENDÊNCIAS APÓS APP NO AR
+- [ ] Dicionário de dados: gerador automático dos models (docs/ no repo + índice TIC).
+- [ ] playbook-novo-sistema.md (local a definir com Pedro: repo de docs vs TIC/05_desenvolvimento).
+- [ ] SEGURANÇA: rotacionar SECRET_KEY e token Mapbox do histórico do repo; senhas (doadmin, ifem_app) no cofre Bitwarden.
+- [ ] Limpeza: arquivo lixo "$null" no repo; 44 staticfiles hashed; db.sqlite3 (deixou de ser versionado, ok).
+- [ ] Se precisar do /admin: criar superuser (loaddata não traz usuários).
+- [ ] Futuro (publicar): Nginx vhost p/ ifem, TLS, Cloudflare, domínio registro.br, desligar Render.
