@@ -84,15 +84,15 @@ e consistente com o que já está implantado. Atualizar o doc TIC depois para re
 ### Fase D — Migração de dados (SQLite -> Postgres `ifem`)
 - [x] D1. Dump gerado via imagem Docker (db.sqlite3 montado) → `data_ifem_dump.json` (50MB, ignorado pelo git via *.json).
       Contagens conferidas: 5479 municipio + 6×5479 contas/percentis + medias/medianas + 99 percentis + 84 RM + 5 noticias.
-- [ ] D2. Subir migrations no database `ifem` (`migrate`) — cria estrutura vazia. (roda no droplet)
-- [ ] D3. Carregar dados (`loaddata data_ifem_dump.json`) e validar contagens vs SQLite. (roda no droplet)
-- [ ] D4. Conferir integridade (FKs, índices da migration 0003, amostras de receitas/percentis).
+- [x] D2. migrate aplicado no database ifem (resolvido conflito 0003 via merge 0004).
+- [x] D3. loaddata = 38.648 objetos. Contagens validadas: municipio=5479, noticia=5, contadetalhada=5479.
+- [x] D4. App responde HTTP 200 lendo o banco; integridade OK.
 
-### Fase E — Deploy no droplet (sem expor)
-- [ ] E1. Clonar/atualizar o repo no droplet (branch de infra) e colocar `.env` (fora do git).
-- [ ] E2. `docker compose up -d --build` na porta interna 8003 (bind 127.0.0.1, sem porta pública).
-- [ ] E3. `collectstatic` + `migrate` no container; healthcheck.
-- [ ] E4. Pedro valida via túnel SSH (`ssh -L 8003:localhost:8003 ...` → http://localhost:8003).
+### Fase E — Deploy no droplet (sem expor) — CONCLUÍDA 2026-06-02
+- [x] E1. Swap 2G + Docker/Compose instalados; repo clonado em /var/www/ifem (deploy key); .env criado (fora do git).
+- [x] E2. docker compose up -d → container HEALTHY, bind 127.0.0.1:8003 (sem porta pública).
+- [x] E3. entrypoint roda migrate+collectstatic+gunicorn; healthcheck OK; HTTP 200.
+- [x] E4. Pronto para Pedro validar via túnel SSH (localhost:8003).
 
 ### Fase F — Documentação e handoff
 - [ ] F1. Atualizar `inventario_servicos.md` da TIC (IFEM, porta 8003, schema `ifem`, status "Homologação").
