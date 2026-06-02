@@ -65,6 +65,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Comprime respostas dinâmicas (HTML/JSON). Crítico para a API de GeoJSON do mapa,
+    # que trafega ~2.8MB sem compressão. Seguro aqui: respostas são dados públicos (sem risco BREACH).
+    'django.middleware.gzip.GZipMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
