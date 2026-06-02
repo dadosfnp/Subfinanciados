@@ -148,42 +148,47 @@ def municipios_geojson_api(request):
                 pass # Lida graciosamente com filtros de subgrupo "natural" malformados
 
     # Constrói as feições GeoJSON a partir dos municípios filtrados
+    # Usa .values() para evitar instanciar objetos ORM completos (mais rápido)
+    _fields = (
+        'cod_ibge', 'name_muni', 'name_muni_uf', 'populacao24', 'uf',
+        'rc_24_pc', 'cadunico', 'sus_dependente', 'quintil24', 'decil24',
+        'percentil24', 'percentil24_n', 'coordx', 'coordy',
+    )
     features = []
-    for municipio in queryset:
-        # Adiciona o quantil calculado dinamicamente ou o pré-calculado
+    for municipio in queryset.values(*_fields):
+        rc = municipio['rc_24_pc']
         current_muni_quantile = None
-        if municipio.rc_24_pc is not None and len(quantile_boundaries) > 0:
-            current_muni_quantile_idx = np.searchsorted(quantile_boundaries, municipio.rc_24_pc)
-            current_muni_quantile = int(current_muni_quantile_idx + 1)
+        if rc is not None and len(quantile_boundaries) > 0:
+            current_muni_quantile = int(np.searchsorted(quantile_boundaries, rc) + 1)
         elif quantil_calculation == 'total':
-             # Se o cálculo é 'total', usa o campo pré-calculado do modelo
             if classification_filter == 'quintil':
-                current_muni_quantile = municipio.quintil24
+                current_muni_quantile = municipio['quintil24']
             elif classification_filter == 'decil':
-                current_muni_quantile = municipio.decil24
+                current_muni_quantile = municipio['decil24']
+
+        pop = municipio['populacao24'] or 0
+        cadunico = municipio['cadunico'] or 0
+        perc_cadunico = min((cadunico / pop * 100) if pop > 0 else 0, 100)
 
         feature = {
             "type": "Feature",
             "geometry": {
-                # Se 'geometry' for sempre um Point, isso está ok.
-                # Se for Polygon, você precisará carregar os dados geográficos.
                 "type": "Point",
-                "coordinates": [municipio.coordx, municipio.coordy]
+                "coordinates": [municipio['coordx'], municipio['coordy']]
             },
             "properties": {
-                'cod_ibge': municipio.cod_ibge,
-                'name_muni': municipio.name_muni,
-                'name_muni_uf': municipio.name_muni_uf,
-                'Populacao24': municipio.populacao24,
-                'uf': municipio.uf,
-                'rc_24_pc': municipio.rc_24_pc,
-                'perc_pop_cadunico': (municipio.cadunico / municipio.populacao24 * 100) if (municipio.cadunico / municipio.populacao24 * 100) < 100 else 100,
-                'sus_dependente': municipio.sus_dependente,
-                'quintil24_pre_calculado': municipio.quintil24, # Manter para referência
-                'decil24_pre_calculado': municipio.decil24,   # Manter para referência
-                'percentil24': municipio.percentil24,
-                'percentil24_n': municipio.percentil24_n,
-                # NOVO CAMPO: Quantil dinamicamente calculado
+                'cod_ibge': municipio['cod_ibge'],
+                'name_muni': municipio['name_muni'],
+                'name_muni_uf': municipio['name_muni_uf'],
+                'Populacao24': municipio['populacao24'],
+                'uf': municipio['uf'],
+                'rc_24_pc': rc,
+                'perc_pop_cadunico': perc_cadunico,
+                'sus_dependente': municipio['sus_dependente'],
+                'quintil24_pre_calculado': municipio['quintil24'],
+                'decil24_pre_calculado': municipio['decil24'],
+                'percentil24': municipio['percentil24'],
+                'percentil24_n': municipio['percentil24_n'],
                 'dynamic_quantile': current_muni_quantile
             }
         }
