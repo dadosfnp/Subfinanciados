@@ -94,4 +94,15 @@ server {
 - [ ] SEGURANÇA: rotacionar SECRET_KEY e token Mapbox do histórico do repo; senhas (doadmin, ifem_app) no cofre Bitwarden.
 - [ ] Limpeza: arquivo lixo "$null" no repo; 44 staticfiles hashed; db.sqlite3 (deixou de ser versionado, ok).
 - [ ] Se precisar do /admin: criar superuser (loaddata não traz usuários).
-- [ ] Futuro (publicar): Nginx vhost p/ ifem, TLS, Cloudflare, domínio registro.br, desligar Render.
+- [ ] Futuro (publicar): Nginx vhost p/ ifem (deploy/nginx-ifem.conf pronto), TLS, Cloudflare, domínio registro.br, desligar Render.
+
+## Segurança/Limpeza do repo — 2026-06-02
+- GZipMiddleware ativado (geojson 2.8MB → 411KB).
+- staticfiles/ e ~$*.xlsx fora do versionamento; arquivo-lixo "$null" removido.
+- REESCRITA DE HISTÓRICO (git-filter-repo): expurgado .env e db.sqlite3 de TODO o histórico (438 commits).
+  Backup: ../subfinanciados-backup-pre-filter.bundle. Force-push em todas as branches do remote.
+  → AÇÃO EQUIPE: re-clonar (git fetch + reset --hard) — histórico mudou.
+  Working local e droplet re-sincronizados; container seguiu healthy / HTTP 200.
+- Limpeza não-IFEM: removidos gitlink órfão "Subfinanciados" (submódulo acidental) e package-lock.json (sem package.json).
+  Mantidos (decisão do Pedro): check_db.py, debug/test_*.py, exports do folheto.
+- PENDÊNCIA SEGURANÇA (Pedro): senhas (doadmin, ifem_app) no Bitwarden; opcional restringir token Mapbox por URL.
