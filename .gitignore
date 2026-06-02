@@ -25,5 +25,11 @@ Thumbs.db
 # Exports CSV
 exports/
 
+# Arquivos estáticos coletados — collectstatic regenera no build (Render) e no entrypoint (Docker)
+staticfiles/
+
+# Temporários de lock do Excel
+~$*.xlsx
+
 # Contexto Gemini
 GEMINI.md
