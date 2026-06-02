@@ -1,0 +1,31 @@
+# Controle de versão e ambiente local
+.git
+.gitignore
+.gitattributes
+.vscode/
+.venv/
+venv/
+
+# Segredos e banco local — NUNCA vão para a imagem
+.env
+.env.*
+db.sqlite3
+*.sqlite3
+
+# Artefatos que o container regenera no entrypoint
+staticfiles/
+
+# Uploads locais (em produção é volume)
+media/
+
+# Planejamento, exports e dados volumosos que não pertencem à imagem
+tasks/
+export_folheto/
+*.xlsx
+*.log
+
+# Caches Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
