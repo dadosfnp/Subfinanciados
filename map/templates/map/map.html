@@ -229,25 +229,51 @@
         </div>
 
         <div class="filter-group">
-          <label for="filtro-classificacao" class="form-label">Colorir por:</label>
-          <select id="filtro-classificacao" class="form-select form-select-sm">
-            <option value="quintil" selected>Quintis de Receita p/c</option>
-            <option value="decil">Decis de Receita p/c</option>
-            <option value="natural">Quebras Naturais (Receita)</option>
+          <label for="filtro-modo-analise" class="form-label">Modo de análise:</label>
+          <select id="filtro-modo-analise" class="form-select form-select-sm">
+            <option value="receita" selected>Receita atual (2024)</option>
+            <option value="crescimento">Crescimento 2000 → 2024</option>
           </select>
         </div>
 
-        <div class="filter-group">
-          <label for="filtro-subgrupo" class="form-label">Quintil:</label>
-          <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
+        <!-- Controles do modo "Receita atual" (escondidos no modo crescimento) -->
+        <div id="bloco-receita">
+          <div class="filter-group">
+            <label for="filtro-classificacao" class="form-label">Colorir por:</label>
+            <select id="filtro-classificacao" class="form-select form-select-sm">
+              <option value="quintil" selected>Quintis de Receita p/c</option>
+              <option value="decil">Decis de Receita p/c</option>
+              <option value="natural">Quebras Naturais (Receita)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filtro-subgrupo" class="form-label">Quintil:</label>
+            <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
+            <select id="filtro-modo-calculo" class="form-select form-select-sm">
+              <option value="total">País (Total)</option>
+              <option value="por_filtro">Filtro Atual</option>
+            </select>
+          </div>
         </div>
 
-        <div class="filter-group">
-          <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
-          <select id="filtro-modo-calculo" class="form-select form-select-sm">
-            <option value="total">País (Total)</option>
-            <option value="por_filtro">Filtro Atual</option>
-          </select>
+        <!-- Controles do modo "Crescimento 2000→2024" -->
+        <div id="bloco-crescimento" style="display:none;">
+          <div class="filter-group">
+            <label for="filtro-metrica-crescimento" class="form-label">Métrica de crescimento:</label>
+            <select id="filtro-metrica-crescimento" class="form-select form-select-sm">
+              <option value="cresc_pop_pct" selected>Crescimento da população (%)</option>
+              <option value="cresc_rcpc_pct">Crescimento da receita p/c (%)</option>
+              <option value="var_rank">Variação no ranking nacional</option>
+              <option value="var_quintil">Variação no quintil</option>
+              <option value="var_decil">Variação no decil</option>
+              <option value="var_percentil">Variação no percentil</option>
+            </select>
+          </div>
         </div>
       </div>
 
