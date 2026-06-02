@@ -27,7 +27,12 @@ MAPBOX_PUBLIC_TOKEN = os.getenv("MAPBOX_PUBLIC_TOKEN", "")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wad0f%oo%qiu5xej8fgnbwm%r_$oxh#5u')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError(
+        "A variável de ambiente DJANGO_SECRET_KEY não está definida. "
+        "Configure-a no arquivo .env (desenvolvimento) ou nas variáveis de ambiente (produção)."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
