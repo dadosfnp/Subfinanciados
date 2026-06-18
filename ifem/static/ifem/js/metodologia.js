@@ -137,13 +137,22 @@
           requestAnimationFrame(function () { seg.style.strokeDasharray = Math.max(0, len - gap) + " " + (C - len + gap); });
         });
       }, 0.4);
-      // hover cruzado legenda <-> segmento
+      // hover cruzado legenda <-> segmento, mostrando o número no centro
+      const center = document.getElementById("donutCenter");
+      const NOMES = ["Impostos & Taxas", "Transferências", "Contribuições", "Outras receitas"];
+      const PCT = ["18%", "62%", "6%", "14%"];
+      function setCenter(idx) {
+        if (!center) return;
+        center.innerHTML = (idx == null) ? "<b>25</b><span>fontes</span>"
+          : "<b>" + PCT[idx] + "</b><span>" + NOMES[idx] + "</span>";
+      }
       function hover(idx, on) {
         segs.forEach(function (seg) {
           const s = seg.getAttribute("data-slice");
           seg.classList.toggle("hot", on && s == idx);
           seg.classList.toggle("dim", on && s != idx);
         });
+        setCenter(on ? parseInt(idx, 10) : null);
       }
       document.querySelectorAll(".met-legend li[data-slice]").forEach(function (li) {
         const idx = li.getAttribute("data-slice");
@@ -174,6 +183,7 @@
       for (let i = 0; i < n; i++) {
         const el = document.createElement("i");
         el.style.background = corEscala(n === 1 ? 0 : i / (n - 1));
+        if (n <= 10) el.textContent = (i + 1); // número do quintil/decil sobre a régua
         qbar.appendChild(el);
       }
       const blocos = qbar.querySelectorAll("i"), total = 420; // entrada em lote (~0,4s)
@@ -232,7 +242,7 @@
       if (typeof window.Chart === "undefined") return;
       function dens(x) { if (x <= 0) return 0; const mu = Math.log(22), s = 0.55; return Math.exp(-Math.pow(Math.log(x) - mu, 2) / (2 * s * s)) / (x * s); }
       const pts = []; for (let x = 1; x <= 100; x++) pts.push({ x: x, y: dens(x) });
-      const LINE_X = 11, PEAK_X = 17;
+      const LINE_X = 11;
 
       // Marcador do município: sombreia a faixa subfinanciada e desenha a linha + rótulo
       // numa cápsula acima da curva (no padding do topo), sem colidir com o pico.
@@ -259,10 +269,6 @@
           // ponteiro
           ctx.beginPath(); ctx.moveTo(px - 5, y + h); ctx.lineTo(px + 5, y + h); ctx.lineTo(px, y + h + 5); ctx.closePath(); ctx.fill();
           ctx.fillStyle = "#fff"; ctx.fillText(txt, x + 8, y + 15);
-          // rótulo do pico
-          const ppx = chart.scales.x.getPixelForValue(PEAK_X);
-          ctx.fillStyle = "#1f7a3d"; ctx.font = "700 11px Inter, sans-serif"; ctx.textAlign = "center";
-          ctx.fillText("pico = típico", ppx, a.top + 14);
           ctx.restore();
         },
       };
