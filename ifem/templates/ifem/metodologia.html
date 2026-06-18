@@ -13,27 +13,32 @@
 {% block content %}
 <main class="met">
 
-  <!-- Progresso de leitura -->
   <div class="met-progress"><span id="met-progress-bar"></span></div>
 
-  <!-- Mini-nav por capítulos -->
   <nav class="met-dots" aria-label="Capítulos">
-    <a href="#cap-problema" data-label="O problema" class="active"></a>
+    <a href="#cap-sobre" data-label="O que é" class="active"></a>
+    <a href="#cap-usos" data-label="Para que serve"></a>
     <a href="#cap-indicador" data-label="O indicador"></a>
     <a href="#cap-receitas" data-label="As receitas"></a>
+    <a href="#cap-faixas" data-label="Faixas"></a>
     <a href="#cap-quantis" data-label="Quantis"></a>
-    <a href="#cap-densidade" data-label="Densidade"></a>
+    <a href="#cap-ranking" data-label="Ranking"></a>
     <a href="#cap-tempo" data-label="2000 → 2024"></a>
+    <a href="#cap-densidade" data-label="Densidade"></a>
     <a href="#cap-media" data-label="Média × Mediana"></a>
     <a href="#cap-social" data-label="Vulnerabilidade"></a>
+    <a href="#cap-agregada" data-label="Agregada"></a>
+    <a href="#cap-dados" data-label="Tratamento"></a>
     <a href="#cap-limites" data-label="Cuidados"></a>
     <a href="#cap-fontes" data-label="Fontes"></a>
   </nav>
 
-  <!-- ============ HERO ============ -->
+  <!-- ============ HERO (vídeo) ============ -->
   <header class="met-hero" id="topo">
-    <div class="met-hero__layer" data-parallax="0.25"></div>
-    <div class="met-hero__grid" data-parallax="0.12"></div>
+    <video class="met-hero__video" autoplay loop muted playsinline poster="{% static 'ifem/images/mapa-desigualdade.png' %}">
+      <source src="{% static 'ifem/videos/videohero.mp4' %}" type="video/mp4">
+    </video>
+    <div class="met-hero__overlay"></div>
     <div class="met-hero__inner">
       <p class="met-eyebrow">Metodologia · IFEM</p>
       <h1 class="met-hero__title">
@@ -41,79 +46,88 @@
         para ser cuidado pela <span class="met-skew">sua cidade</span>?
       </h1>
       <p class="met-hero__sub">
-        Reunimos os dados oficiais de finanças dos municípios e os transformamos
-        numa forma simples de comparar a desigualdade de receitas no Brasil.
+        Como medimos a desigualdade no financiamento dos municípios brasileiros —
+        de forma transparente, passo a passo.
       </p>
       <div class="met-hero__counters">
         <div><b data-count="5570">0</b><span>municípios</span></div>
         <div><b data-count="2">0</b><span>retratos no tempo · 2000 e 2024</span></div>
-        <div><b data-count="25">0</b><span>tipos de receita</span></div>
+        <div><b data-count="25">0</b><span>fontes de receita</span></div>
       </div>
-      <a href="#cap-problema" class="met-cue" id="heroCue">
-        Comece a explorar <i></i>
-      </a>
+      <a href="#cap-sobre" class="met-cue" id="heroCue">Comece a explorar <i></i></a>
     </div>
   </header>
 
-  <!-- ============ 01 · O PROBLEMA ============ -->
-  <section class="met-sec" id="cap-problema" data-bg="light">
+  <!-- ============ 01 · O QUE É / O QUE MEDE ============ -->
+  <section class="met-sec" id="cap-sobre" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>01 — O problema</p>
-      <h2 class="met-title" data-anim>A receita total<br><span class="y">engana</span>.</h2>
+      <p class="met-kick" data-anim>01 — O que é o IFEM</p>
+      <h2 class="met-title" data-anim>Dados oficiais,<br>fáceis de comparar.</h2>
       <p class="met-lead" data-anim>
-        Olhar só o quanto uma cidade arrecada favorece as mais populosas.<br>
-        A pergunta certa não é <em>quanto ela recebe</em> — é
-        <em>quanto sobra para cada&nbsp;habitante</em>.
+        O IFEM — Indicadores de Financiamento e Equidade Municipal — é uma plataforma da FNP.<br>
+        Reúne dados oficiais sobre as finanças dos municípios e os transforma em informação
+        fácil de consultar, comparar e interpretar.
       </p>
-
-      <div class="met-versus" data-anim>
-        <article class="met-card met-card--city">
-          <header>🏙️ Cidade grande</header>
-          <div class="met-bars">
-            <div class="met-bar-line"><span>Receita</span><i class="met-bar" data-w="100%" style="--c:var(--m-blue)"></i><b>R$ 4 bi</b></div>
-            <div class="met-bar-line"><span>População</span><i class="met-bar" data-w="100%" style="--c:#7c8aa0"></i><b>1.000.000</b></div>
-          </div>
-          <div class="met-pc low"><span>por habitante</span><b class="met-num" data-count="4000" data-prefix="R$ ">R$ 0</b></div>
-        </article>
-
-        <div class="met-versus__x">vs</div>
-
-        <article class="met-card met-card--city">
-          <header>🏡 Cidade pequena</header>
-          <div class="met-bars">
-            <div class="met-bar-line"><span>Receita</span><i class="met-bar" data-w="22%" style="--c:var(--m-blue)"></i><b>R$ 100 mi</b></div>
-            <div class="met-bar-line"><span>População</span><i class="met-bar" data-w="8%" style="--c:#7c8aa0"></i><b>10.000</b></div>
-          </div>
-          <div class="met-pc high"><span>por habitante</span><b class="met-num" data-count="10000" data-prefix="R$ ">R$ 0</b></div>
-        </article>
+      <p class="met-lead" data-anim>
+        Ele mede a <b>capacidade de financiamento corrente</b> de cada município, por habitante:
+        quanto a cidade dispõe, em média, para sustentar serviços públicos e suas responsabilidades locais.
+      </p>
+      <div class="met-pill-row" data-anim>
+        <span class="met-pill">Receita corrente bruta</span>
+        <span class="met-pill">Sem deduções legais</span>
+        <span class="met-pill">Comparável entre municípios</span>
       </div>
-      <p class="met-foot" data-anim>
-        A cidade grande arrecada <b>40× mais</b> — mas dispõe de
-        <b class="y">menos da metade por&nbsp;habitante</b>.
-      </p>
+      <button class="met-more" data-more aria-expanded="false" data-anim><span>O que é receita corrente?</span><i></i></button>
+      <div class="met-more__panel">
+        <p>
+          Receita corrente é o conjunto de recursos que ingressam regularmente no orçamento e financiam
+          as atividades permanentes do município — pessoal, manutenção de serviços e políticas públicas.
+          Inclui o que o município arrecada (impostos, taxas, contribuições) e o que recebe da União e
+          dos estados (FPM, ICMS, IPVA, Fundeb, SUS). Difere da receita de capital, ligada a investimentos
+          e operações de crédito. No IFEM, todas as receitas são consideradas em termos <b>brutos</b>,
+          o que preserva a comparabilidade entre municípios.
+        </p>
+      </div>
     </div>
   </section>
 
-  <!-- ============ 02 · O INDICADOR ============ -->
-  <section class="met-sec" id="cap-indicador" data-bg="soft">
+  <!-- ============ 02 · PARA QUE SERVE ============ -->
+  <section class="met-sec" id="cap-usos" data-bg="soft">
+    <div class="met-box">
+      <p class="met-kick" data-anim>02 — Para que serve</p>
+      <h2 class="met-title" data-anim>De gestores a jornalistas.</h2>
+      <p class="met-lead" data-anim>
+        O IFEM apoia quem precisa entender o financiamento municipal: gestores públicos, pesquisadores,
+        jornalistas, parlamentares, organizações da sociedade civil e cidadãos.
+      </p>
+      <div class="met-usos" data-anim>
+        <div>Comparar a receita per capita de municípios</div>
+        <div>Identificar desigualdades na distribuição de recursos</div>
+        <div>Observar municípios relativamente subfinanciados</div>
+        <div>Investigar as causas dessas desigualdades</div>
+        <div>Acompanhar a evolução histórica das receitas</div>
+        <div>Comparar municípios de mesmo porte</div>
+        <div>Analisar diferenças entre regiões e estados</div>
+        <div>Subsidiar debates sobre federalismo fiscal</div>
+        <div>Apoiar estudos, reportagens e políticas públicas</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 · O INDICADOR ============ -->
+  <section class="met-sec" id="cap-indicador" data-bg="light">
     <div class="met-box met-box--split">
       <div class="met-col">
-        <p class="met-kick" data-anim>02 — O indicador</p>
+        <p class="met-kick" data-anim>03 — O indicador</p>
         <h2 class="met-title" data-anim>Receita corrente<br><span class="g">per capita</span>.</h2>
         <p class="met-lead" data-anim>
           A medida que torna comparáveis municípios de qualquer tamanho:<br>
           o volume médio de receita disponível por habitante, a cada ano.
         </p>
-        <button class="met-more" data-more aria-expanded="false" data-anim>
-          <span>Por que receita bruta?</span><i></i>
-        </button>
-        <div class="met-more__panel">
-          <p>
-            Todas as receitas entram em termos <b>brutos</b>, sem deduções legais.
-            Isso reflete o total que ingressa nos cofres e preserva a
-            comparabilidade — já que as deduções incidem de forma desigual sobre cada rubrica.
-          </p>
-        </div>
+        <p class="met-lead" data-anim>
+          Olhar só a receita total favorece os mais populosos. Dividir pela população revela a
+          relação entre <b>recursos disponíveis</b> e <b>população atendida</b>.
+        </p>
       </div>
       <div class="met-col met-col--center">
         <div class="met-formula" data-anim>
@@ -126,23 +140,23 @@
     </div>
   </section>
 
-  <!-- ============ 03 · AS RECEITAS (donut) ============ -->
-  <section class="met-sec" id="cap-receitas" data-bg="light">
+  <!-- ============ 04 · AS RECEITAS (donut com números) ============ -->
+  <section class="met-sec" id="cap-receitas" data-bg="soft">
     <div class="met-box met-box--split">
       <div class="met-col">
-        <p class="met-kick" data-anim>03 — De onde vem o dinheiro</p>
-        <h2 class="met-title" data-anim>Quatro grupos.<br><span class="y">25 tipos</span> de receita.</h2>
+        <p class="met-kick" data-anim>04 — De onde vem o dinheiro</p>
+        <h2 class="met-title" data-anim>Quatro grupos.<br><span class="y">25 fontes</span> de receita.</h2>
         <p class="met-lead" data-anim>
           O IFEM mostra não só <em>quanto</em> o município tem por habitante,<br>
           mas <em>de onde</em> vem — e como cada fonte explica sua posição fiscal.
         </p>
         <ul class="met-legend" data-anim>
-          <li data-slice="0"><i style="--c:var(--m-blue)"></i> Impostos, Taxas e Contribuições de Melhoria</li>
-          <li data-slice="1"><i style="--c:var(--m-green)"></i> Transferências Correntes</li>
-          <li data-slice="2"><i style="--c:var(--m-yellow)"></i> Contribuições</li>
-          <li data-slice="3"><i style="--c:#8a5cf6"></i> Outras Receitas Correntes</li>
+          <li data-slice="0"><i style="--c:var(--m-blue)"></i> <span>Impostos, Taxas e Contribuições de Melhoria</span> <b>18%</b></li>
+          <li data-slice="1"><i style="--c:var(--m-green)"></i> <span>Transferências Correntes</span> <b>62%</b></li>
+          <li data-slice="2"><i style="--c:var(--m-yellow)"></i> <span>Contribuições</span> <b>6%</b></li>
+          <li data-slice="3"><i style="--c:#8a5cf6"></i> <span>Outras Receitas Correntes</span> <b>14%</b></li>
         </ul>
-        <p class="met-foot" data-anim>Passe o mouse sobre a legenda para destacar cada anel.</p>
+        <p class="met-foot" data-anim>Passe o mouse sobre a legenda para destacar no gráfico. Participações ilustrativas.</p>
       </div>
       <div class="met-col met-col--center">
         <div class="met-donut" data-anim>
@@ -153,20 +167,39 @@
             <circle class="met-donut__seg" data-slice="2" cx="100" cy="100" r="80" style="--c:var(--m-yellow)"></circle>
             <circle class="met-donut__seg" data-slice="3" cx="100" cy="100" r="80" style="--c:#8a5cf6"></circle>
           </svg>
-          <div class="met-donut__c"><b>25</b><span>fontes</span></div>
+          <div class="met-donut__c" id="donutCenter"><b>25</b><span>fontes</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ 04 · QUANTIS (clímax escuro) ============ -->
-  <section class="met-sec met-sec--dark" id="cap-quantis" data-bg="dark">
+  <!-- ============ 05 · FAIXAS POPULACIONAIS ============ -->
+  <section class="met-sec" id="cap-faixas" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>04 — Organizando 5.570 municípios</p>
+      <p class="met-kick" data-anim>05 — Comparar entre iguais</p>
+      <h2 class="met-title" data-anim>Faixas populacionais.</h2>
+      <p class="met-lead" data-anim>
+        Municípios são estratificados por porte, em oito faixas — e, quando útil,
+        em dois grandes grupos (abaixo e acima de 80 mil habitantes).
+      </p>
+      <div class="met-faixas" data-anim>
+        <span>Até 5 mil</span><span>5–10 mil</span><span>10–20 mil</span><span>20–50 mil</span>
+        <span>50–100 mil</span><span>100–200 mil</span><span>200–500 mil</span><span>+500 mil</span>
+      </div>
+      <div class="met-faixas met-faixas--alt" data-anim>
+        <span>Abaixo de 80 mil</span><span>Acima de 80 mil</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 · QUANTIS ============ -->
+  <section class="met-sec" id="cap-quantis" data-bg="soft">
+    <div class="met-box">
+      <p class="met-kick" data-anim>06 — Organizando 5.570 municípios</p>
       <h2 class="met-title" data-anim>Uma fila,<br>do menor ao maior.</h2>
       <p class="met-lead" data-anim>
         Ordenados pela receita por habitante e divididos em grupos de tamanho semelhante.<br>
-        Os primeiros reúnem os <b class="y">mais subfinanciados</b>; os últimos, os mais bem financiados.
+        Os primeiros reúnem os <b>mais subfinanciados</b>; os últimos, os mais bem financiados.
       </p>
 
       <div class="met-tabs" data-anim>
@@ -189,52 +222,55 @@
             <p>~55 municípios por grupo. A leitura mais granular da posição relativa.</p>
           </div>
         </div>
-        <!-- Régua que muda conforme a aba (quintil=5, decil=10, percentil=100) -->
         <div class="met-scale">
           <div class="met-scale__bar" id="quintilBar"></div>
           <div class="met-scale__ends"><span>− menor receita p/c</span><span>maior receita p/c +</span></div>
         </div>
       </div>
-      <p class="met-foot" data-anim>
-        Cada município recebe uma <b>posição relativa</b> = posição no ranking ÷ total de municípios.
-      </p>
-    </div>
-  </section>
 
-  <!-- ============ 05 · DENSIDADE ============ -->
-  <section class="met-sec" id="cap-densidade" data-bg="soft">
-    <div class="met-box">
-      <p class="met-kick" data-anim>05 — Onde cada um está</p>
-      <h2 class="met-title" data-anim>O gráfico de <span class="g">densidade</span>.</h2>
-      <p class="met-lead" data-anim>
-        Uma curva contínua mostra a concentração de municípios em cada faixa de receita.<br>
-        O <b>pico</b> é a realidade típica; a <b>cauda à direita</b>, a minoria muito bem financiada.
-      </p>
-      <div class="met-density" data-anim>
-        <canvas id="densityChart"></canvas>
-        <div class="met-density__tags">
-          <span>subfinanciado</span><span class="mid">típico</span><span>bem financiado</span>
-        </div>
+      <button class="met-more" data-more aria-expanded="false" data-anim><span>Como o quantil é calculado?</span><i></i></button>
+      <div class="met-more__panel">
+        <p>
+          Os municípios são ordenados em ordem crescente de receita por habitante. Cada um recebe uma
+          <b>posição relativa</b> = posição no ranking ÷ total de municípios. A partir dela é classificado:
+          os 20% menores valores formam o 1º quintil; os 10% menores, o 1º decil; e assim por diante.
+        </p>
       </div>
-      <p class="met-foot" data-anim>
-        A <b class="r">linha vermelha</b> marca onde um município está nessa fila —
-        revelando, num relance, sua posição no país.
+    </div>
+  </section>
+
+  <!-- ============ 07 · RANKING ============ -->
+  <section class="met-sec" id="cap-ranking" data-bg="light">
+    <div class="met-box">
+      <p class="met-kick" data-anim>07 — Posição ordinal</p>
+      <h2 class="met-title" data-anim>O ranking municipal.</h2>
+      <p class="met-lead" data-anim>
+        A posição de cada município em relação aos demais.<br>
+        Ordenados do menor para o maior valor: as primeiras posições têm <b>menor</b> receita por habitante.
+      </p>
+      <p class="met-lead" data-anim>
+        O ranking pode ser nacional, estadual ou por faixa populacional — situando o município
+        no país, no seu estado ou entre seus pares de porte semelhante.
       </p>
     </div>
   </section>
 
-  <!-- ============ 06 · 2000 → 2024 (clímax escuro) ============ -->
-  <section class="met-sec met-sec--dark" id="cap-tempo" data-bg="dark">
+  <!-- ============ 08 · 2000 → 2024 (valores reais) ============ -->
+  <section class="met-sec" id="cap-tempo" data-bg="soft">
     <div class="met-box">
-      <p class="met-kick" data-anim>06 — A máquina do tempo</p>
+      <p class="met-kick" data-anim>08 — A máquina do tempo</p>
       <h2 class="met-title" data-anim>2000 <span class="y">→</span> 2024.</h2>
       <p class="met-lead" data-anim>
-        Para comparar dois momentos, corrigimos 2000 pela inflação (IPCA), a preços de 2024.<br>
+        Para comparar dois momentos, corrigimos 2000 pela inflação (IPCA acumulado), a preços de 2024.<br>
         Assim a variação reflete ganho ou perda <b>real</b> de poder de compra.
       </p>
       <div class="met-eq" data-anim>
-        <span>Valor Real (2000)</span><i>=</i><span>Nominal (2000)</span><i>×</i><span>[ 1 + IPCA ]</span>
+        <span>Valor Real (2000)</span><i>=</i><span>Nominal (2000)</span><i>×</i><span>[ 1 + IPCA acumulado ]</span>
       </div>
+      <p class="met-foot" data-anim>
+        Disponibilidade: em <b>2000</b>, população e receita corrente total. Em <b>2024</b>, também o
+        detalhamento das receitas por tipo — permitindo uma análise mais granular.
+      </p>
 
       <h3 class="met-h3" data-anim>O efeito tesoura</h3>
       <p class="met-lead" data-anim>
@@ -250,16 +286,37 @@
         <span class="met-scissor__l bot">População</span>
       </div>
       <p class="met-foot" data-anim>
+        Um município pode arrecadar mais no total e, ainda assim, ter menos por habitante.
         Veja isso vivo no mapa:
         <a href="{% url 'mapa' %}" class="met-link">a análise de crescimento 2000→2024 ↗</a>
       </p>
     </div>
   </section>
 
-  <!-- ============ 07 · MÉDIA × MEDIANA ============ -->
-  <section class="met-sec" id="cap-media" data-bg="light">
+  <!-- ============ 09 · DENSIDADE ============ -->
+  <section class="met-sec" id="cap-densidade" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>07 — Cada município, um voto</p>
+      <p class="met-kick" data-anim>09 — Onde cada um está</p>
+      <h2 class="met-title" data-anim>O gráfico de <span class="g">densidade</span>.</h2>
+      <p class="met-lead" data-anim>
+        Uma curva contínua mostra a concentração de municípios em cada faixa de receita.<br>
+        O <b>pico</b> indica o valor mais frequente; a <b>cauda à direita</b>, a minoria muito bem financiada.
+      </p>
+      <div class="met-density" data-anim>
+        <canvas id="densityChart"></canvas>
+        <div class="met-density__tags"><span>menor receita p/c</span><span>maior receita p/c</span></div>
+      </div>
+      <p class="met-foot" data-anim>
+        A <b class="r">linha vermelha</b> marca onde um município está nessa fila —
+        revelando, num relance, sua posição no país.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 10 · MÉDIA × MEDIANA ============ -->
+  <section class="met-sec" id="cap-media" data-bg="soft">
+    <div class="met-box">
+      <p class="met-kick" data-anim>10 — Cada município, um voto</p>
       <h2 class="met-title" data-anim>Média municipal,<br>não da população.</h2>
       <p class="met-lead" data-anim>
         No IFEM, cada município pesa igual — independentemente do tamanho.<br>
@@ -286,10 +343,10 @@
     </div>
   </section>
 
-  <!-- ============ 08 · VULNERABILIDADE ============ -->
-  <section class="met-sec" id="cap-social" data-bg="soft">
+  <!-- ============ 11 · VULNERABILIDADE ============ -->
+  <section class="met-sec" id="cap-social" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>08 — Quem depende do poder público</p>
+      <p class="met-kick" data-anim>11 — Quem depende do poder público</p>
       <h2 class="met-title" data-anim>Receita não vive sozinha.</h2>
       <p class="met-lead" data-anim>
         Dois indicadores sociais contextualizam a pressão sobre os serviços públicos.
@@ -297,7 +354,7 @@
       <div class="met-duo" data-anim>
         <article class="met-card met-card--flip">
           <h4>População SUS dependente</h4>
-          <p>Estimativa (ANS) sem plano privado de saúde. Quanto maior, maior a demanda direta sobre a rede pública.</p>
+          <p>Estimativa (ANS) da parcela sem plano privado de saúde. Quanto maior, maior a demanda direta sobre a rede pública.</p>
           <code>Pop. total − cobertos por plano privado</code>
         </article>
         <article class="met-card met-card--flip">
@@ -306,17 +363,72 @@
           <code>Inscritos ÷ população × 100</code>
         </article>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ 12 · ANÁLISE AGREGADA ============ -->
+  <section class="met-sec" id="cap-agregada" data-bg="soft">
+    <div class="met-box">
+      <p class="met-kick" data-anim>12 — O município representativo</p>
+      <h2 class="met-title" data-anim>Análise agregada.</h2>
+      <p class="met-lead" data-anim>
+        Ao filtrar por região, porte ou estado, o IFEM gera um ente sintético — um “município típico”
+        do grupo — com série histórica, densidade e composição de receitas próprias.
+      </p>
+      <div class="met-duo" data-anim>
+        <article class="met-card met-card--flip">
+          <h4>Convergência</h4>
+          <p>A distância do grupo para a média nacional diminui: aproxima-se dos patamares de financiamento do país.</p>
+        </article>
+        <article class="met-card met-card--flip">
+          <h4>Divergência</h4>
+          <p>O grupo se afasta da média nacional: a receita per capita estagna frente ao país, ou o crescimento populacional “dilui” seus recursos.</p>
+        </article>
+      </div>
       <p class="met-foot" data-anim>
-        Também comparamos por <b>recortes</b>: Brasil, região, UF, porte, quantil e ranking —
-        e geramos um “município representativo” para cada grupo.
+        Funciona como um termômetro de saúde fiscal e demográfica — útil para benchmarking
+        e para antecipar pressões orçamentárias antes que virem crise.
       </p>
     </div>
   </section>
 
-  <!-- ============ 09 · CUIDADOS ============ -->
+  <!-- ============ 13 · COMPARAÇÕES + TRATAMENTO ============ -->
+  <section class="met-sec" id="cap-dados" data-bg="light">
+    <div class="met-box">
+      <p class="met-kick" data-anim>13 — Recortes e tratamento</p>
+      <h2 class="met-title" data-anim>Mesmos dados,<br>diferentes lentes.</h2>
+      <p class="met-lead" data-anim>
+        O IFEM recorta os dados sem alterar os valores originais — apenas ajustando o foco da análise.
+      </p>
+      <div class="met-recortes" data-anim>
+        <div><b>Brasil</b><span>visão panorâmica</span></div>
+        <div><b>Região / UF</b><span>disparidades regionais</span></div>
+        <div><b>Porte</b><span>comparar entre iguais</span></div>
+        <div><b>Quintil / Decil / Percentil</b><span>posição relativa</span></div>
+        <div><b>Ranking</b><span>posição ordinal</span></div>
+      </div>
+      <h3 class="met-h3" data-anim>Tratamento dos dados</h3>
+      <p class="met-lead" data-anim>
+        A confiabilidade vem de um processo rigoroso sobre as bases oficiais (Siconfi/STN e IBGE):
+      </p>
+      <ul class="met-checklist" data-anim>
+        <li>Identificação unificada por códigos oficiais do IBGE</li>
+        <li>Padronização de estados, regiões e municípios</li>
+        <li>Compatibilização entre bases fiscais e demográficas</li>
+        <li>Cálculo dos indicadores per capita e construção dos quantis</li>
+        <li>Consistência e verificação de dados ausentes</li>
+      </ul>
+      <p class="met-foot" data-anim>
+        Se um município não aparece em uma consulta, é porque não há dado oficial para aquela variável
+        ou período — não por exclusão da plataforma.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 14 · CUIDADOS ============ -->
   <section class="met-sec" id="cap-limites" data-bg="soft">
     <div class="met-box">
-      <p class="met-kick" data-anim>09 — Honestidade intelectual</p>
+      <p class="met-kick" data-anim>14 — Honestidade intelectual</p>
       <h2 class="met-title" data-anim>O que o IFEM <span class="r">não</span> diz.</h2>
       <p class="met-lead" data-anim>
         Receita por habitante mede <b>disponibilidade de recursos</b>.<br>
@@ -326,32 +438,45 @@
         <div><span>≠</span><p>Receita não é qualidade do gasto.</p></div>
         <div><span>≠</span><p>Receita não é eficiência da gestão.</p></div>
         <div><span>!</span><p>Custos de prestação variam por território.</p></div>
-        <div><span>!</span><p>Depende da consistência das declarações oficiais.</p></div>
+        <div><span>!</span><p>Não capta desigualdades internas (intraurbanas).</p></div>
+        <div><span>!</span><p>Não substitui análise fiscal completa (dívida, pessoal, resultado primário).</p></div>
+        <div><span>!</span><p>Depende da consistência das declarações oficiais (Siconfi).</p></div>
       </div>
     </div>
   </section>
 
-  <!-- ============ 10 · FONTES + CTA ============ -->
-  <section class="met-sec met-sec--end" id="cap-fontes" data-bg="end">
+  <!-- ============ 15 · FONTES + COMO CITAR + CTA ============ -->
+  <section class="met-sec" id="cap-fontes" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>10 — Origem dos dados</p>
+      <p class="met-kick" data-anim>15 — Origem dos dados</p>
       <h2 class="met-title" data-anim>Bases públicas<br>e oficiais.</h2>
       <div class="met-sources" data-anim>
-        <div><b>DCA / SICONFI</b><span>Receita corrente e detalhamento</span></div>
-        <div><b>IBGE / RIPSA</b><span>População e território</span></div>
+        <div><b>DCA / SICONFI</b><span>Receita corrente e seu detalhamento</span></div>
+        <div><b>IBGE / RIPSA</b><span>População e identificação territorial</span></div>
         <div><b>ANS</b><span>População SUS dependente</span></div>
         <div><b>MDS / SAGICAD</b><span>População no CadÚnico</span></div>
       </div>
+
+      <h3 class="met-h3" data-anim>Como citar</h3>
+      <div class="met-cite-box" data-anim>
+        <p class="met-cite-label">Texto geral</p>
+        <p class="met-cite-ref">
+          Frente Nacional de Prefeitas e Prefeitos (FNP). <em>IFEM: Indicadores de Financiamento e
+          Equidade Municipal</em>. Dados organizados a partir de bases oficiais do Tesouro Nacional
+          (Siconfi) e do IBGE. Disponível em: [URL da plataforma]. Acesso em: [data].
+        </p>
+        <p class="met-cite-label">Em gráficos ou tabelas</p>
+        <p class="met-cite-ref">
+          Fonte: Elaboração própria com base no IFEM/FNP (dados do Siconfi/Tesouro Nacional e IBGE).
+        </p>
+      </div>
+
       <div class="met-cta" data-anim>
         <h3>Agora que você sabe como lemos os dados…</h3>
         <div class="met-cta__btns">
           <a href="{% url 'mapa' %}" class="met-btn primary">Explorar no mapa</a>
           <a href="{% url 'home' %}" class="met-btn ghost">Ver análise gráfica</a>
         </div>
-        <p class="met-cite">
-          Fonte: FNP — IFEM (Indicadores de Financiamento e Equidade Municipal),
-          a partir de bases oficiais do Tesouro Nacional (Siconfi) e do IBGE.
-        </p>
       </div>
     </div>
   </section>
