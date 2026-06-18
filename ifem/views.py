@@ -7,8 +7,14 @@ def landing_page(request):
     return render(request, 'ifem/index.html')
 
 def metodologia_page(request):
-    """Página de storytelling da metodologia do IFEM (scroll narrativo com GSAP)."""
-    return render(request, 'ifem/metodologia.html')
+    """Página de storytelling da metodologia do IFEM (scroll narrativo com GSAP).
+
+    Passa a média nacional REAL da receita per capita para a página exibir um
+    número oficial (e não ilustrativo) na seção do indicador.
+    """
+    media = Municipio.objects.filter(rc_24_pc__isnull=False).aggregate(m=Avg('rc_24_pc'))['m'] or 0
+    # String limpa (sem separador de milhar) para o data-count do contador no JS.
+    return render(request, 'ifem/metodologia.html', {'media_nacional': str(round(media))})
 
 def busca_municipio_simples_api(request):
     """
