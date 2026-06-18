@@ -120,7 +120,7 @@
           <span class="met-formula__top">Receita corrente do município</span>
           <span class="met-formula__bar"></span>
           <span class="met-formula__bot">População do município</span>
-          <span class="met-formula__eq">= R$ <b class="met-num" data-count="3214">0</b> / hab.</span>
+          <span class="met-formula__eq">Média nacional: <b class="met-num" data-count="{{ media_nacional }}" data-prefix="R$ ">R$ 0</b> / hab.</span>
         </div>
       </div>
     </div>
@@ -142,7 +142,7 @@
           <li data-slice="2"><i style="--c:var(--m-yellow)"></i> Contribuições</li>
           <li data-slice="3"><i style="--c:#8a5cf6"></i> Outras Receitas Correntes</li>
         </ul>
-        <p class="met-foot" data-anim>Passe o mouse sobre os anéis para destacar cada grupo.</p>
+        <p class="met-foot" data-anim>Passe o mouse sobre a legenda para destacar cada anel.</p>
       </div>
       <div class="met-col met-col--center">
         <div class="met-donut" data-anim>
@@ -153,7 +153,7 @@
             <circle class="met-donut__seg" data-slice="2" cx="100" cy="100" r="80" style="--c:var(--m-yellow)"></circle>
             <circle class="met-donut__seg" data-slice="3" cx="100" cy="100" r="80" style="--c:#8a5cf6"></circle>
           </svg>
-          <div class="met-donut__c"><b>25</b><span>rubricas</span></div>
+          <div class="met-donut__c"><b>25</b><span>fontes</span></div>
         </div>
       </div>
     </div>
@@ -168,11 +168,6 @@
         Ordenados pela receita por habitante e divididos em grupos de tamanho semelhante.<br>
         Os primeiros reúnem os <b class="y">mais subfinanciados</b>; os últimos, os mais bem financiados.
       </p>
-
-      <div class="met-scale" data-anim>
-        <div class="met-scale__bar" id="quintilBar"></div>
-        <div class="met-scale__ends"><span>− menor receita p/c</span><span>maior receita p/c +</span></div>
-      </div>
 
       <div class="met-tabs" data-anim>
         <div class="met-tabs__head" role="tablist">
@@ -193,6 +188,11 @@
             <b class="met-num" data-count="100">0</b><span>grupos · 1% cada</span>
             <p>~55 municípios por grupo. A leitura mais granular da posição relativa.</p>
           </div>
+        </div>
+        <!-- Régua que muda conforme a aba (quintil=5, decil=10, percentil=100) -->
+        <div class="met-scale">
+          <div class="met-scale__bar" id="quintilBar"></div>
+          <div class="met-scale__ends"><span>− menor receita p/c</span><span>maior receita p/c +</span></div>
         </div>
       </div>
       <p class="met-foot" data-anim>
@@ -246,8 +246,8 @@
           <path id="scTop" d="M10,160 C200,140 400,80 590,30"></path>
           <path id="scBot" d="M10,160 C200,168 400,176 590,168"></path>
         </svg>
-        <span class="met-scissor__l top">Receita total ↑</span>
-        <span class="met-scissor__l bot">População ↑</span>
+        <span class="met-scissor__l top">Receita total</span>
+        <span class="met-scissor__l bot">População</span>
       </div>
       <p class="met-foot" data-anim>
         Veja isso vivo no mapa:
@@ -313,11 +313,11 @@
     </div>
   </section>
 
-  <!-- ============ 09 · CUIDADOS (dark) ============ -->
-  <section class="met-sec met-sec--dark" id="cap-limites" data-bg="dark">
+  <!-- ============ 09 · CUIDADOS ============ -->
+  <section class="met-sec" id="cap-limites" data-bg="soft">
     <div class="met-box">
       <p class="met-kick" data-anim>09 — Honestidade intelectual</p>
-      <h2 class="met-title" data-anim>O que o IFEM <span class="y">não</span> diz.</h2>
+      <h2 class="met-title" data-anim>O que o IFEM <span class="r">não</span> diz.</h2>
       <p class="met-lead" data-anim>
         Receita por habitante mede <b>disponibilidade de recursos</b>.<br>
         Não mede desempenho, nem qualidade do gasto.

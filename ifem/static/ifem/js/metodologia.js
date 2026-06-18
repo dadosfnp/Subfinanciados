@@ -157,16 +157,32 @@
       });
     }
 
-    /* ---------- Escala de quintis (5 blocos) ---------- */
-    const qbar = document.getElementById("quintilBar");
-    if (qbar) {
-      ["#d73027", "#fc8d59", "#fee08b", "#91cf60", "#1a9850"].forEach(function (c) {
-        const i = document.createElement("i"); i.style.background = c; qbar.appendChild(i);
-      });
-      whenVisible(qbar, function () {
-        qbar.querySelectorAll("i").forEach(function (b, idx) { setTimeout(function () { b.style.flex = "1"; }, 110 * idx); });
-      }, 0.4);
+    /* ---------- Régua de quantis (muda conforme a aba) ---------- */
+    // Paleta RdYlGn (vermelho → amarelo → verde), interpolada para N divisões.
+    const STOPS = [[215,48,39],[252,141,89],[254,224,139],[145,207,96],[26,152,80]];
+    function corEscala(t) {
+      t = Math.max(0, Math.min(1, t));
+      const seg = t * (STOPS.length - 1);
+      const i = Math.min(STOPS.length - 2, Math.floor(seg));
+      const f = seg - i, a = STOPS[i], b = STOPS[i + 1];
+      return "rgb(" + Math.round(a[0]+(b[0]-a[0])*f) + "," + Math.round(a[1]+(b[1]-a[1])*f) + "," + Math.round(a[2]+(b[2]-a[2])*f) + ")";
     }
+    const qbar = document.getElementById("quintilBar");
+    function renderRegua(n) {
+      if (!qbar) return;
+      qbar.innerHTML = "";
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement("i");
+        el.style.background = corEscala(n === 1 ? 0 : i / (n - 1));
+        qbar.appendChild(el);
+      }
+      const blocos = qbar.querySelectorAll("i"), total = 420; // entrada em lote (~0,4s)
+      blocos.forEach(function (b, idx) {
+        setTimeout(function () { b.style.opacity = "1"; b.style.transform = "scaleY(1)"; }, (total / n) * idx);
+      });
+    }
+    const REGUA_N = { q: 5, d: 10, p: 100 };
+    whenVisible(qbar, function () { renderRegua(REGUA_N.q); }, 0.35);
 
     /* ---------- Tabs (quantil/decil/percentil) ---------- */
     const tabHead = document.querySelector(".met-tabs__head");
@@ -180,6 +196,7 @@
             p.classList.toggle("active", on);
             if (on) { const n = p.querySelector("[data-count]"); if (n) animateCount(n); }
           });
+          renderRegua(REGUA_N[tab] || 5); // a régua acompanha a aba
         });
       });
     }
@@ -215,30 +232,54 @@
       if (typeof window.Chart === "undefined") return;
       function dens(x) { if (x <= 0) return 0; const mu = Math.log(22), s = 0.55; return Math.exp(-Math.pow(Math.log(x) - mu, 2) / (2 * s * s)) / (x * s); }
       const pts = []; for (let x = 1; x <= 100; x++) pts.push({ x: x, y: dens(x) });
-      const LINE_X = 11;
-      const vLine = {
-        id: "vline",
+      const LINE_X = 11, PEAK_X = 17;
+
+      // Marcador do município: sombreia a faixa subfinanciada e desenha a linha + rótulo
+      // numa cápsula acima da curva (no padding do topo), sem colidir com o pico.
+      const marker = {
+        id: "marker",
+        beforeDatasetsDraw: function (chart) {
+          const a = chart.chartArea, px = chart.scales.x.getPixelForValue(LINE_X), ctx = chart.ctx;
+          ctx.save(); ctx.fillStyle = "rgba(198,40,40,.05)"; ctx.fillRect(a.left, a.top, px - a.left, a.bottom - a.top); ctx.restore();
+        },
         afterDatasetsDraw: function (chart) {
-          const px = chart.scales.x.getPixelForValue(LINE_X), a = chart.chartArea, ctx = chart.ctx;
-          ctx.save(); ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom);
-          ctx.lineWidth = 3; ctx.strokeStyle = "#c62828"; ctx.stroke();
-          ctx.fillStyle = "#c62828"; ctx.font = "600 12px Inter, sans-serif"; ctx.fillText("um município", px + 8, a.top + 14);
+          const a = chart.chartArea, ctx = chart.ctx;
+          const px = chart.scales.x.getPixelForValue(LINE_X);
+          ctx.save();
+          // linha + base
+          ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.lineWidth = 2.5; ctx.strokeStyle = "#c62828"; ctx.stroke();
+          ctx.beginPath(); ctx.arc(px, a.bottom, 3.5, 0, Math.PI * 2); ctx.fillStyle = "#c62828"; ctx.fill();
+          // cápsula com rótulo no topo (dentro do padding superior)
+          const txt = "um município"; ctx.font = "600 12px Inter, sans-serif";
+          const w = ctx.measureText(txt).width + 16, h = 22, y = a.top - h - 4;
+          let x = px - w / 2; x = Math.max(a.left, Math.min(x, a.right - w));
+          ctx.fillStyle = "#c62828"; ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(x, y, w, h, 7); else ctx.rect(x, y, w, h);
+          ctx.fill();
+          // ponteiro
+          ctx.beginPath(); ctx.moveTo(px - 5, y + h); ctx.lineTo(px + 5, y + h); ctx.lineTo(px, y + h + 5); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = "#fff"; ctx.fillText(txt, x + 8, y + 15);
+          // rótulo do pico
+          const ppx = chart.scales.x.getPixelForValue(PEAK_X);
+          ctx.fillStyle = "#1f7a3d"; ctx.font = "700 11px Inter, sans-serif"; ctx.textAlign = "center";
+          ctx.fillText("pico = típico", ppx, a.top + 14);
           ctx.restore();
         },
       };
       const ctx = canvas.getContext("2d");
       const grad = ctx.createLinearGradient(0, 0, 0, 220);
-      grad.addColorStop(0, "rgba(47,128,237,.35)"); grad.addColorStop(1, "rgba(47,128,237,.02)");
+      grad.addColorStop(0, "rgba(25,70,133,.28)"); grad.addColorStop(1, "rgba(25,70,133,.02)");
       new Chart(ctx, {
         type: "line",
-        data: { datasets: [{ data: pts, borderColor: "#194685", borderWidth: 3, fill: true, backgroundColor: grad, tension: 0.45, pointRadius: 0 }] },
+        data: { datasets: [{ data: pts, borderColor: "#194685", borderWidth: 2.5, fill: true, backgroundColor: grad, tension: 0.45, pointRadius: 0 }] },
         options: {
           responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 30, left: 2, right: 2 } },
           animation: { duration: 1500, easing: "easeOutCubic" },
           plugins: { legend: { display: false }, tooltip: { enabled: false } },
           scales: { x: { type: "linear", min: 0, max: 100, display: false }, y: { display: false, min: 0 } },
         },
-        plugins: [vLine],
+        plugins: [marker],
       });
     }
     whenVisible(dcanvas, function () { buildDensity(dcanvas); }, 0.3);
