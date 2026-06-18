@@ -6,6 +6,10 @@ from home.models import Municipio
 def landing_page(request):
     return render(request, 'ifem/index.html')
 
+def metodologia_page(request):
+    """Página de storytelling da metodologia do IFEM (scroll narrativo com GSAP)."""
+    return render(request, 'ifem/metodologia.html')
+
 def busca_municipio_simples_api(request):
     """
     Endpoint otimizado para o autocomplete da Landing Page do IFEM.
