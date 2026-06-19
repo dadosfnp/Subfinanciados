@@ -36,7 +36,7 @@
 
 /* ============ HERO (vídeo) ============ */
 .met-hero { position: relative; min-height: 92vh; display: flex; align-items: center; justify-content: center;
-  text-align: center; color: #fff; overflow: hidden; padding: 8vh 6vw; }
+  text-align: center; color: #fff; overflow: hidden; padding: 8vh 6vw; background: #0d2a44; }
 .met-hero__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .met-hero__overlay { position: absolute; inset: 0; z-index: 1;
   background: linear-gradient(180deg, rgba(8,24,40,.6), rgba(8,24,40,.78)); }
