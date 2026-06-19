@@ -396,8 +396,8 @@
       <p class="met-kick" data-anim>10 · Cada município, um voto</p>
       <h2 class="met-title" data-anim>Média municipal,<br>não da população.</h2>
       <p class="met-lead" data-anim>
-        No IFEM, cada município pesa igual, independentemente do tamanho.<br>
-        Assim, poucas metrópoles não distorcem a leitura do conjunto.
+        No IFEM, cada município pesa igual, independentemente do tamanho.
+        Veja a diferença com um exemplo de três cidades:
       </p>
       <div class="met-mtable" data-anim>
         <div class="met-mrow head"><span>Município</span><span>População</span><span>Receita</span><span>Por hab.</span></div>
@@ -405,9 +405,22 @@
         <div class="met-mrow"><span>B</span><span>20 mil</span><span>R$ 120 mi</span><b>R$ 6.000</b></div>
         <div class="met-mrow"><span>C</span><span>1 milhão</span><span>R$ 4 bi</span><b>R$ 4.000</b></div>
       </div>
-      <div class="met-twoval" data-anim>
-        <div class="met-vbox ok"><span>Média municipal</span><b class="met-num" data-count="6667" data-prefix="R$ ">R$ 0</b><i>cada cidade pesa igual</i></div>
-        <div class="met-vbox no"><span>Média agregada (pop.)</span><b class="met-num" data-count="4097" data-prefix="R$ ">R$ 0</b><i>dominada pela metrópole</i></div>
+      <p class="met-foot" data-anim>A partir <b>dos mesmos dados</b>, há duas formas de tirar a média, e elas dão resultados bem diferentes:</p>
+      <div class="met-medias" data-anim>
+        <div class="met-media ok">
+          <span class="met-media__tag">✓ Como o IFEM faz</span>
+          <h4>Média municipal</h4>
+          <p class="met-media__calc">Média da coluna “por habitante”:<br>(10.000 + 6.000 + 4.000) ÷ 3 cidades</p>
+          <b class="met-num" data-count="6667" data-prefix="R$ ">R$ 0</b>
+          <p class="met-media__note">Cada cidade vale um voto. A metrópole não distorce o resultado.</p>
+        </div>
+        <div class="met-media no">
+          <span class="met-media__tag">Outra leitura</span>
+          <h4>Média agregada (por população)</h4>
+          <p class="met-media__calc">Receita total dividida pela população total:<br>R$ 4,22 bi ÷ 1.030.000 habitantes</p>
+          <b class="met-num" data-count="4097" data-prefix="R$ ">R$ 0</b>
+          <p class="met-media__note">Ponderada pela população: a metrópole C “puxa” o valor para baixo.</p>
+        </div>
       </div>
       <button class="met-more" data-more aria-expanded="false" data-anim><span>E a mediana?</span><i></i></button>
       <div class="met-more__panel">

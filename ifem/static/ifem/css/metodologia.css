@@ -222,13 +222,19 @@
 .met-mrow:last-child { border-bottom: 0; }
 .met-mrow.head { background: var(--m-soft); font-weight: 800; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--m-mut); }
 .met-mrow b { font-weight: 900; color: var(--m-blue2); }
-.met-twoval { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 1.5rem; }
-.met-vbox { border-radius: 16px; padding: 1.4rem 1.6rem; }
-.met-vbox span { font-size: .86rem; color: var(--m-mut); } .met-vbox b { display: block; font-size: 2rem; font-weight: 900; margin: .2rem 0; }
-.met-vbox i { font-style: normal; font-size: .86rem; color: var(--m-mut); }
-.met-vbox.ok { background: #eaf6ef; border: 1px solid #bfe3cd; } .met-vbox.ok b { color: var(--m-green); }
-.met-vbox.no { background: #fbf0e8; border: 1px solid #f0d6bf; } .met-vbox.no b { color: #c8722f; }
-@media (max-width: 720px) { .met-twoval { grid-template-columns: 1fr; } .met-mrow { grid-template-columns: 1fr 1fr; gap: .3rem; } }
+.met-medias { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1rem; }
+.met-media { border-radius: 18px; padding: 1.6rem; border: 1px solid; }
+.met-media.ok { background: #eaf6ef; border-color: #bfe3cd; }
+.met-media.no { background: #fbf0e8; border-color: #f0d6bf; }
+.met-media__tag { display: inline-block; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: .28rem .75rem; border-radius: 999px; margin-bottom: .8rem; }
+.met-media.ok .met-media__tag { background: var(--m-green); color: #fff; }
+.met-media.no .met-media__tag { background: #d8975a; color: #fff; }
+.met-media h4 { font-size: 1.1rem; font-weight: 800; margin: 0 0 .5rem; }
+.met-media__calc { font-size: .88rem; color: var(--m-mut); line-height: 1.5; margin: 0 0 .7rem; }
+.met-media b { display: block; font-size: 2.3rem; font-weight: 900; line-height: 1; }
+.met-media.ok b { color: var(--m-green); } .met-media.no b { color: #c8722f; }
+.met-media__note { font-size: .85rem; color: var(--m-mut); margin: .6rem 0 0; line-height: 1.45; }
+@media (max-width: 720px) { .met-medias { grid-template-columns: 1fr; } .met-mrow { grid-template-columns: 1fr 1fr; gap: .3rem; } }
 
 /* ---------- Cards duo ---------- */
 .met-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 2.2rem; }
