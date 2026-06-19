@@ -141,11 +141,28 @@
 .met-donut__c b { font-size: 2.4rem; font-weight: 900; color: var(--m-blue2); line-height: 1; }
 .met-donut__c span { color: var(--m-mut); font-size: .82rem; margin-top: .2rem; max-width: 130px; }
 
-/* ---------- Faixas ---------- */
-.met-faixas { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 2.2rem; }
+/* ---------- Escala de portes (barras crescentes, animam ao entrar) ---------- */
+.met-portes { display: flex; align-items: flex-end; gap: .7rem; margin-top: 2.4rem; padding: 1.8rem 1.6rem 1.4rem;
+  background: #fff; border: 1px solid var(--m-line); border-radius: 18px; box-shadow: 0 14px 40px rgba(16,55,88,.06); overflow-x: auto; }
+.met-porte { flex: 1; min-width: 64px; display: flex; flex-direction: column; align-items: center; gap: .7rem; }
+.met-porte i { width: 100%; max-width: 50px; height: var(--h); border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #4f9bf2, var(--m-blue2)); transform: scaleY(0); transform-origin: bottom;
+  transition: transform .7s cubic-bezier(.2,.7,.2,1); }
+.met-portes.in .met-porte i { transform: scaleY(1); }
+.met-porte span { font-size: .76rem; font-weight: 600; color: var(--m-mut); text-align: center; line-height: 1.2; }
+@media (max-width: 760px){ .met-portes { gap: .4rem; padding: 1.4rem 1rem 1rem; } .met-porte { min-width: 52px; } .met-porte span { font-size: .66rem; } }
+
+/* ---------- Faixas (pílulas) ---------- */
+.met-faixas { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.2rem; }
 .met-faixas span { padding: .55rem 1.1rem; background: #fff; border: 1px solid var(--m-line); border-radius: 999px; font-weight: 600; font-size: .92rem; color: var(--m-blue2); box-shadow: 0 6px 16px rgba(16,55,88,.04); }
-.met-faixas--alt { margin-top: 1rem; }
 .met-faixas--alt span { background: #eef4fb; border-color: #d8e6f5; }
+
+/* ---------- Barra de ranking ---------- */
+.met-rankbar { margin-top: 2.4rem; }
+.met-rankbar__track { height: 16px; border-radius: 8px; background: linear-gradient(90deg, #d73027, #fc8d59, #fee08b, #91cf60, #1a9850); box-shadow: 0 10px 26px rgba(0,0,0,.1); }
+.met-rankbar__ends { display: flex; justify-content: space-between; margin-top: .7rem; font-size: .86rem; color: var(--m-mut); gap: 1rem; }
+.met-rankbar__ends b { color: var(--m-ink); }
+@media (max-width: 520px){ .met-rankbar__ends { font-size: .74rem; } }
 
 /* ---------- Tabs (claras) ---------- */
 .met-tabs { margin-top: 2.4rem; background: #fff; border: 1px solid var(--m-line); border-radius: 18px; padding: 1.6rem; box-shadow: 0 14px 40px rgba(16,55,88,.06); }

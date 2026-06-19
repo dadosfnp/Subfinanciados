@@ -234,15 +234,21 @@
       <p class="met-kick" data-anim>05 · Comparar entre iguais</p>
       <h2 class="met-title" data-anim>Faixas populacionais.</h2>
       <p class="met-lead" data-anim>
-        Municípios são estratificados por porte, em oito faixas, e, quando útil,
-        em dois grandes grupos (abaixo e acima de 80 mil habitantes).
+        Municípios são estratificados por porte populacional, em oito faixas.
       </p>
-      <div class="met-faixas" data-anim>
-        <span>Até 5 mil</span><span>5–10 mil</span><span>10–20 mil</span><span>20–50 mil</span>
-        <span>50–100 mil</span><span>100–200 mil</span><span>200–500 mil</span><span>+500 mil</span>
+      <div class="met-portes" data-anim>
+        <div class="met-porte"><i style="--h:26px"></i><span>Até 5 mil</span></div>
+        <div class="met-porte"><i style="--h:36px"></i><span>5 a 10 mil</span></div>
+        <div class="met-porte"><i style="--h:48px"></i><span>10 a 20 mil</span></div>
+        <div class="met-porte"><i style="--h:60px"></i><span>20 a 50 mil</span></div>
+        <div class="met-porte"><i style="--h:74px"></i><span>50 a 100 mil</span></div>
+        <div class="met-porte"><i style="--h:88px"></i><span>100 a 200 mil</span></div>
+        <div class="met-porte"><i style="--h:102px"></i><span>200 a 500 mil</span></div>
+        <div class="met-porte"><i style="--h:120px"></i><span>+500 mil</span></div>
       </div>
+      <p class="met-foot" data-anim>Quando útil, os municípios também são agrupados em dois grandes blocos:</p>
       <div class="met-faixas met-faixas--alt" data-anim>
-        <span>Abaixo de 80 mil</span><span>Acima de 80 mil</span>
+        <span>Abaixo de 80 mil habitantes</span><span>Acima de 80 mil habitantes</span>
       </div>
     </div>
   </section>
@@ -251,7 +257,7 @@
   <section class="met-sec" id="cap-quantis" data-bg="soft">
     <div class="met-box">
       <p class="met-kick" data-anim>06 · Organizando 5.570 municípios</p>
-      <h2 class="met-title" data-anim>Uma fila,<br>do menor ao maior.</h2>
+      <h2 class="met-title" data-anim>Uma fila,<br>do <span class="r">menor</span> ao <span class="g">maior</span>.</h2>
       <p class="met-lead" data-anim>
         Ordenados pela receita por habitante e divididos em grupos de tamanho semelhante.<br>
         Os primeiros reúnem os <b>mais subfinanciados</b>; os últimos, os mais bem financiados.
@@ -307,6 +313,13 @@
         O ranking pode ser nacional, estadual ou por faixa populacional, situando o município
         no país, no seu estado ou entre seus pares de porte semelhante.
       </p>
+      <div class="met-rankbar" data-anim>
+        <div class="met-rankbar__track"></div>
+        <div class="met-rankbar__ends">
+          <span><b>1ª posição</b> · menor receita p/c</span>
+          <span>última posição · maior receita p/c</span>
+        </div>
+      </div>
     </div>
   </section>
 
