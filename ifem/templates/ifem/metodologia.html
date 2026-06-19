@@ -426,7 +426,8 @@
       <p class="met-kick" data-anim>11 · Quem depende do poder público</p>
       <h2 class="met-title" data-anim>Receita não vive sozinha.</h2>
       <p class="met-lead" data-anim>
-        Dois indicadores sociais contextualizam a pressão sobre os serviços públicos.
+        No município brasileiro típico, boa parte da população depende diretamente do poder público.
+        Dois indicadores ajudam a dimensionar essa pressão sobre os serviços.
       </p>
       <div class="met-vuln" data-anim>
         <article class="met-vcard">
@@ -434,9 +435,9 @@
             <span class="met-ico met-ico--red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg></span>
             <h4>População SUS dependente</h4>
           </div>
-          <div class="met-vcard__big"><b>{{ media_sus }}%</b><span>média dos municípios</span></div>
+          <div class="met-vcard__big"><b>{{ media_sus }}%</b><span>da população, em média</span></div>
           <div class="met-vcard__bar"><i data-w="{{ media_sus }}%" style="--c:var(--m-red)"></i></div>
-          <p>Parcela sem plano privado de saúde (estimativa ANS). Quanto maior, maior a demanda direta sobre a rede pública.</p>
+          <p>Em média, cerca de <b>9 em cada 10 habitantes</b> de um município dependem do SUS, sem plano privado de saúde (estimativa ANS). Quanto maior, maior a pressão sobre a rede pública.</p>
           <code>Pop. total − cobertos por plano privado</code>
         </article>
         <article class="met-vcard">
@@ -444,9 +445,9 @@
             <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
             <h4>População no CadÚnico</h4>
           </div>
-          <div class="met-vcard__big"><b>{{ media_cad }}%</b><span>média dos municípios</span></div>
+          <div class="met-vcard__big"><b>{{ media_cad }}%</b><span>da população, em média</span></div>
           <div class="met-vcard__bar"><i data-w="{{ media_cad }}%" style="--c:var(--m-blue)"></i></div>
-          <p>Inscritos no Cadastro Único (MDS), medida de vulnerabilidade. Inscrição não significa receber benefício.</p>
+          <p>Em média, quase <b>6 em cada 10 habitantes</b> estão inscritos no Cadastro Único (MDS), medida de vulnerabilidade social. Inscrição não significa receber benefício.</p>
           <code>Inscritos ÷ população × 100</code>
         </article>
       </div>
@@ -462,27 +463,30 @@
         Ao filtrar por região, porte ou estado, o IFEM gera um ente sintético, um “município típico”
         do grupo, com série histórica, densidade e composição de receitas próprias.
       </p>
+      <p class="met-lead" data-anim>
+        Comparando esse grupo com a média nacional ao longo do tempo, dois cenários surgem:
+      </p>
       <div class="met-conv" data-anim>
         <div class="met-conv__card">
-          <svg class="met-conv__svg" viewBox="0 0 160 80" preserveAspectRatio="none">
-            <line x1="8" y1="14" x2="152" y2="38" class="ln nac"/>
-            <line x1="8" y1="66" x2="152" y2="44" class="ln grp"/>
-          </svg>
-          <h4><span class="dot g"></span> Convergência</h4>
-          <p>A distância do grupo para a média nacional <b>diminui</b>: ele se aproxima dos patamares de financiamento do país.</p>
+          <span class="met-conv__ico g">
+            <svg viewBox="0 0 64 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="16" x2="26" y2="16"/><polyline points="20 9 27 16 20 23"/>
+              <line x1="60" y1="16" x2="38" y2="16"/><polyline points="44 9 37 16 44 23"/>
+            </svg>
+          </span>
+          <h4>Convergência</h4>
+          <p>O grupo <b>se aproxima</b> da média nacional ao longo do tempo, caminhando para os mesmos patamares de financiamento do país.</p>
         </div>
         <div class="met-conv__card">
-          <svg class="met-conv__svg" viewBox="0 0 160 80" preserveAspectRatio="none">
-            <line x1="8" y1="34" x2="152" y2="14" class="ln nac"/>
-            <line x1="8" y1="46" x2="152" y2="70" class="ln grp"/>
-          </svg>
-          <h4><span class="dot r"></span> Divergência</h4>
-          <p>O grupo <b>se afasta</b> da média nacional: sua receita estagna frente ao país, ou o crescimento populacional “dilui” seus recursos.</p>
+          <span class="met-conv__ico r">
+            <svg viewBox="0 0 64 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="30" y1="16" x2="8" y2="16"/><polyline points="14 9 7 16 14 23"/>
+              <line x1="34" y1="16" x2="56" y2="16"/><polyline points="50 9 57 16 50 23"/>
+            </svg>
+          </span>
+          <h4>Divergência</h4>
+          <p>O grupo <b>se afasta</b> da média nacional: sua receita por habitante estagna frente ao país, ou o crescimento populacional dilui seus recursos.</p>
         </div>
-      </div>
-      <div class="met-conv__leg" data-anim>
-        <span><i class="nac"></i> Média nacional</span>
-        <span><i class="grp"></i> Grupo selecionado</span>
       </div>
       <p class="met-foot" data-anim>
         Funciona como um termômetro de saúde fiscal e demográfica, útil para benchmarking

@@ -260,7 +260,7 @@
           ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.lineWidth = 2.5; ctx.strokeStyle = "#c62828"; ctx.stroke();
           ctx.beginPath(); ctx.arc(px, a.bottom, 3.5, 0, Math.PI * 2); ctx.fillStyle = "#c62828"; ctx.fill();
           // cápsula com rótulo no topo (dentro do padding superior)
-          const txt = "um município"; ctx.font = "600 12px Inter, sans-serif";
+          const txt = "município"; ctx.font = "600 12px Inter, sans-serif";
           const w = ctx.measureText(txt).width + 16, h = 22, y = a.top - h - 4;
           let x = px - w / 2; x = Math.max(a.left, Math.min(x, a.right - w));
           ctx.fillStyle = "#c62828"; ctx.beginPath();
