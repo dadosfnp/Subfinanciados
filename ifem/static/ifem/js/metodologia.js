@@ -289,5 +289,12 @@
       });
     }
     whenVisible(dcanvas, function () { buildDensity(dcanvas); }, 0.3);
+
+    /* ---------- Escala de portes (barras crescem em sequência) ---------- */
+    const portes = document.querySelector(".met-portes");
+    whenVisible(portes, function () {
+      portes.querySelectorAll(".met-porte i").forEach(function (b, idx) { b.style.transitionDelay = (idx * 0.06) + "s"; });
+      portes.classList.add("in");
+    }, 0.3);
   });
 })();
