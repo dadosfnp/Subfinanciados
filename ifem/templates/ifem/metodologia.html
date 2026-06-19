@@ -437,8 +437,11 @@
           </div>
           <div class="met-vcard__big"><b>{{ media_sus }}%</b><span>da população, em média</span></div>
           <div class="met-vcard__bar"><i data-w="{{ media_sus }}%" style="--c:var(--m-red)"></i></div>
-          <p>Em média, cerca de <b>9 em cada 10 habitantes</b> de um município dependem do SUS, sem plano privado de saúde (estimativa ANS). Quanto maior, maior a pressão sobre a rede pública.</p>
-          <code>Pop. total − cobertos por plano privado</code>
+          <p>Em média, cerca de <b>9 em cada 10 habitantes</b> de um município dependem do SUS, sem plano privado de saúde. Quanto maior, maior a pressão sobre a rede pública.</p>
+          <div class="met-vcard__meta">
+            <span class="met-vcard__calc">Como se calcula: população total menos a população coberta por plano privado de saúde.</span>
+            <span class="met-vcard__src">Fonte: ANS (Agência Nacional de Saúde Suplementar)</span>
+          </div>
         </article>
         <article class="met-vcard">
           <div class="met-vcard__top">
@@ -447,8 +450,11 @@
           </div>
           <div class="met-vcard__big"><b>{{ media_cad }}%</b><span>da população, em média</span></div>
           <div class="met-vcard__bar"><i data-w="{{ media_cad }}%" style="--c:var(--m-blue)"></i></div>
-          <p>Em média, quase <b>6 em cada 10 habitantes</b> estão inscritos no Cadastro Único (MDS), medida de vulnerabilidade social. Inscrição não significa receber benefício.</p>
-          <code>Inscritos ÷ população × 100</code>
+          <p>Em média, quase <b>6 em cada 10 habitantes</b> estão inscritos no Cadastro Único, medida de vulnerabilidade social. Inscrição não significa receber benefício.</p>
+          <div class="met-vcard__meta">
+            <span class="met-vcard__calc">Como se calcula: pessoas inscritas no CadÚnico divididas pela população total, multiplicado por 100.</span>
+            <span class="met-vcard__src">Fonte: MDS (Ministério do Desenvolvimento e Assistência Social)</span>
+          </div>
         </article>
       </div>
     </div>
@@ -460,38 +466,36 @@
       <p class="met-kick" data-anim>12 · O município representativo</p>
       <h2 class="met-title" data-anim>Análise agregada.</h2>
       <p class="met-lead" data-anim>
-        Ao filtrar por região, porte ou estado, o IFEM gera um ente sintético, um “município típico”
-        do grupo, com série histórica, densidade e composição de receitas próprias.
+        Ao filtrar por região, porte ou estado, o IFEM constrói um “município típico” do grupo:
+        um perfil sintético que resume o comportamento médio daquele conjunto.
       </p>
-      <p class="met-lead" data-anim>
-        Comparando esse grupo com a média nacional ao longo do tempo, dois cenários surgem:
-      </p>
-      <div class="met-conv" data-anim>
-        <div class="met-conv__card">
-          <span class="met-conv__ico g">
-            <svg viewBox="0 0 64 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="4" y1="16" x2="26" y2="16"/><polyline points="20 9 27 16 20 23"/>
-              <line x1="60" y1="16" x2="38" y2="16"/><polyline points="44 9 37 16 44 23"/>
-            </svg>
-          </span>
-          <h4>Convergência</h4>
-          <p>O grupo <b>se aproxima</b> da média nacional ao longo do tempo, caminhando para os mesmos patamares de financiamento do país.</p>
+      <div class="met-steps" data-anim>
+        <div class="met-step">
+          <span class="met-step__n">1</span>
+          <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></span>
+          <h4>Filtrar</h4>
+          <p>Você escolhe o recorte: região, porte ou estado.</p>
         </div>
-        <div class="met-conv__card">
-          <span class="met-conv__ico r">
-            <svg viewBox="0 0 64 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="30" y1="16" x2="8" y2="16"/><polyline points="14 9 7 16 14 23"/>
-              <line x1="34" y1="16" x2="56" y2="16"/><polyline points="50 9 57 16 50 23"/>
-            </svg>
-          </span>
-          <h4>Divergência</h4>
-          <p>O grupo <b>se afasta</b> da média nacional: sua receita por habitante estagna frente ao país, ou o crescimento populacional dilui seus recursos.</p>
+        <span class="met-step__arrow">→</span>
+        <div class="met-step">
+          <span class="met-step__n">2</span>
+          <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
+          <h4>Consolidar</h4>
+          <p>O IFEM reúne todos os municípios que atendem ao critério.</p>
+        </div>
+        <span class="met-step__arrow">→</span>
+        <div class="met-step">
+          <span class="met-step__n">3</span>
+          <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></svg></span>
+          <h4>Município típico</h4>
+          <p>Surge um perfil com série histórica e composição de receitas do grupo.</p>
         </div>
       </div>
-      <p class="met-foot" data-anim>
-        Funciona como um termômetro de saúde fiscal e demográfica, útil para benchmarking
-        e para antecipar pressões orçamentárias antes que virem crise.
-      </p>
+      <div class="met-note" data-anim>
+        Comparando esse perfil com a média nacional ao longo do tempo, vê-se se o grupo
+        <b class="g">converge</b> (se aproxima do país) ou <b class="r">diverge</b> (se afasta).
+        Funciona como um termômetro de saúde fiscal e demográfica para benchmarking.
+      </div>
     </div>
   </section>
 
