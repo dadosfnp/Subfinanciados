@@ -87,11 +87,28 @@
 .met-more__panel p { margin: 1.1rem 0 0; padding: 1.2rem 1.4rem; background: #fff; border: 1px solid var(--m-line);
   border-left: 3px solid var(--m-green); border-radius: 12px; color: var(--m-mut); line-height: 1.6; max-width: 720px; text-align: left; }
 
-/* ---------- Usos (grid) ---------- */
-.met-usos { display: grid; grid-template-columns: repeat(3,1fr); gap: .9rem; margin-top: 2.2rem; }
-.met-usos div { background: #fff; border: 1px solid var(--m-line); border-radius: 12px; padding: 1rem 1.2rem;
-  font-size: .95rem; color: #2c3a48; box-shadow: 0 6px 18px rgba(16,55,88,.04); transition: transform .2s; }
-.met-usos div:hover { transform: translateY(-3px); border-color: #cfe0f2; }
+/* ---------- Ícones de linha ---------- */
+.met-ico { display: inline-flex; align-items: center; justify-content: center; }
+.met-ico svg { width: 22px; height: 22px; }
+
+/* ---------- Personas (quem usa) ---------- */
+.met-personas { display: grid; grid-template-columns: repeat(6,1fr); gap: .8rem; margin-top: 2rem; }
+.met-personas > div { display: flex; flex-direction: column; align-items: center; gap: .7rem; text-align: center;
+  background: #fff; border: 1px solid var(--m-line); border-radius: 14px; padding: 1.3rem .6rem;
+  font-size: .82rem; font-weight: 700; color: #2c3a48; box-shadow: 0 6px 18px rgba(16,55,88,.04);
+  transition: transform .2s, border-color .2s; }
+.met-personas > div:hover { transform: translateY(-4px); border-color: #cfe0f2; }
+.met-personas .met-ico { width: 46px; height: 46px; border-radius: 50%; background: #eef4fb; color: var(--m-blue2); }
+@media (max-width: 880px){ .met-personas { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 480px){ .met-personas { grid-template-columns: repeat(2,1fr); } }
+
+/* ---------- Usos (ícone + texto) ---------- */
+.met-usos { display: grid; grid-template-columns: repeat(3,1fr); gap: .9rem; margin-top: 1.6rem; }
+.met-usos > div { display: flex; align-items: flex-start; gap: .85rem; background: #fff; border: 1px solid var(--m-line);
+  border-radius: 14px; padding: 1.1rem 1.2rem; box-shadow: 0 6px 18px rgba(16,55,88,.04); transition: transform .2s, border-color .2s; }
+.met-usos > div:hover { transform: translateY(-3px); border-color: #cfe0f2; }
+.met-usos .met-ico { width: 38px; height: 38px; border-radius: 10px; background: #eaf6ef; color: var(--m-green); flex-shrink: 0; }
+.met-usos p { margin: 0; font-size: .94rem; color: #2c3a48; line-height: 1.45; }
 @media (max-width: 760px){ .met-usos { grid-template-columns: 1fr; } }
 
 /* ---------- Fórmula ---------- */
