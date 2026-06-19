@@ -73,9 +73,15 @@
 .met-link { color: var(--m-blue2); font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(25,70,133,.4); }
 .met-link:hover { border-color: var(--m-blue2); }
 
-/* ---------- Pílulas ---------- */
-.met-pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.6rem; }
-.met-pill { padding: .5rem 1rem; background: #eef4fb; border: 1px solid #d8e6f5; border-radius: 999px; color: var(--m-blue2); font-weight: 600; font-size: .9rem; }
+/* ---------- Destaques (com ícone) ---------- */
+.met-tags { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-top: 1.8rem; }
+.met-tags > div { display: flex; align-items: center; gap: .75rem; background: #fff; border: 1px solid var(--m-line);
+  border-radius: 14px; padding: 1rem 1.2rem; font-weight: 700; color: #1f2c3a; font-size: .95rem;
+  box-shadow: 0 6px 18px rgba(16,55,88,.04); transition: transform .2s, border-color .2s; }
+.met-tags > div:hover { transform: translateY(-3px); border-color: #bfe3cd; }
+.met-tags .met-ico { width: 34px; height: 34px; border-radius: 9px; background: #eaf6ef; color: var(--m-green); flex-shrink: 0; }
+.met-tags .met-ico svg { width: 19px; height: 19px; }
+@media (max-width: 720px){ .met-tags { grid-template-columns: 1fr; } }
 
 /* ---------- "Saiba mais" ---------- */
 .met-more { display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.6rem; padding: .65rem 1.2rem;
