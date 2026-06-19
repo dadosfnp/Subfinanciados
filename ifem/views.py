@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Avg, Q
+from django.db.models import Avg, Q, F, FloatField, ExpressionWrapper
 from home.models import Municipio
 
 def landing_page(request):
@@ -37,6 +37,12 @@ def metodologia_page(request):
     abaixo = pop_qs.filter(populacao24__lte=80000).count()
     acima = total - abaixo
 
+    # Médias nacionais dos indicadores sociais (média dos municípios).
+    media_sus = pop_qs.filter(sus_dependente__isnull=False).aggregate(m=Avg('sus_dependente'))['m'] or 0
+    media_cad = pop_qs.filter(cadunico__isnull=False, populacao24__gt=0).annotate(
+        pct=ExpressionWrapper(F('cadunico') * 100.0 / F('populacao24'), output_field=FloatField())
+    ).aggregate(m=Avg('pct'))['m'] or 0
+
     ctx = {
         'media_nacional': str(round(media)),
         'faixas': faixas,
@@ -44,6 +50,8 @@ def metodologia_page(request):
         'acima80': acima,
         'pct_abaixo80': round(abaixo / total * 100),
         'pct_acima80': round(acima / total * 100),
+        'media_sus': round(media_sus),
+        'media_cad': round(media_cad),
     }
     return render(request, 'ifem/metodologia.html', ctx)
 
