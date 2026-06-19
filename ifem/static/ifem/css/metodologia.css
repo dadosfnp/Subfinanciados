@@ -308,14 +308,21 @@
 .met-checklist li::before { content: "✓"; position: absolute; left: 0; top: .5rem; width: 20px; height: 20px; border-radius: 50%;
   background: #eaf6ef; color: var(--m-green); font-weight: 800; font-size: .75rem; display: flex; align-items: center; justify-content: center; }
 
-/* ---------- Cuidados ---------- */
-.met-warn { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2.2rem; }
-.met-warn > div { display: flex; gap: 1rem; align-items: flex-start; background: #fff; border: 1px solid var(--m-line);
-  border-radius: 14px; padding: 1.2rem 1.4rem; box-shadow: 0 8px 24px rgba(16,55,88,.05); transition: transform .2s; }
-.met-warn > div:hover { transform: translateY(-3px); }
-.met-warn span { font-size: 1.35rem; font-weight: 900; color: var(--m-red); line-height: 1; }
-.met-warn p { margin: 0; color: var(--m-ink); font-weight: 600; text-align: left; }
-@media (max-width: 720px) { .met-warn { grid-template-columns: 1fr; } }
+/* ---------- Cuidados (dois blocos: não significa / leitura) ---------- */
+.met-cuidados { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin-top: 2.2rem; align-items: start; }
+.met-cuidados__col { background: #fff; border: 1px solid var(--m-line); border-radius: 18px; padding: 1.7rem; box-shadow: 0 14px 38px rgba(16,55,88,.06); }
+.met-cuidados__head { display: flex; align-items: center; gap: .8rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--m-line); }
+.met-cuidados__head h4 { font-size: 1.12rem; font-weight: 800; margin: 0; }
+.met-cuidados__head .met-ico { width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; }
+.met-cuidados__col.red .met-ico { background: #fdecea; color: var(--m-red); }
+.met-cuidados__col.amber .met-ico { background: #fdf4e0; color: #c08a00; }
+.met-cuidados__col ul { list-style: none; margin: 0; padding: 0; }
+.met-cuidados__col li { position: relative; padding: .65rem 0 .65rem 1.5rem; color: #2c3a48; line-height: 1.5; border-bottom: 1px solid #f1f5f9; font-size: .96rem; }
+.met-cuidados__col li:last-child { border-bottom: 0; }
+.met-cuidados__col li::before { content: ""; position: absolute; left: 0; top: 1rem; width: 7px; height: 7px; border-radius: 50%; }
+.met-cuidados__col.red li::before { background: var(--m-red); }
+.met-cuidados__col.amber li::before { background: #d9a300; }
+@media (max-width: 720px) { .met-cuidados { grid-template-columns: 1fr; } }
 
 /* ---------- Fontes ---------- */
 .met-sources { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-top: 2.2rem; }
