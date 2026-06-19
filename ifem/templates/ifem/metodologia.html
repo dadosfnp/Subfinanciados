@@ -428,14 +428,24 @@
       <p class="met-lead" data-anim>
         Dois indicadores sociais contextualizam a pressão sobre os serviços públicos.
       </p>
-      <div class="met-duo" data-anim>
-        <article class="met-card met-card--flip">
-          <h4>População SUS dependente</h4>
-          <p>Estimativa (ANS) da parcela sem plano privado de saúde. Quanto maior, maior a demanda direta sobre a rede pública.</p>
+      <div class="met-vuln" data-anim>
+        <article class="met-vcard">
+          <div class="met-vcard__top">
+            <span class="met-ico met-ico--red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg></span>
+            <h4>População SUS dependente</h4>
+          </div>
+          <div class="met-vcard__big"><b>{{ media_sus }}%</b><span>média dos municípios</span></div>
+          <div class="met-vcard__bar"><i data-w="{{ media_sus }}%" style="--c:var(--m-red)"></i></div>
+          <p>Parcela sem plano privado de saúde (estimativa ANS). Quanto maior, maior a demanda direta sobre a rede pública.</p>
           <code>Pop. total − cobertos por plano privado</code>
         </article>
-        <article class="met-card met-card--flip">
-          <h4>População no CadÚnico</h4>
+        <article class="met-vcard">
+          <div class="met-vcard__top">
+            <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <h4>População no CadÚnico</h4>
+          </div>
+          <div class="met-vcard__big"><b>{{ media_cad }}%</b><span>média dos municípios</span></div>
+          <div class="met-vcard__bar"><i data-w="{{ media_cad }}%" style="--c:var(--m-blue)"></i></div>
           <p>Inscritos no Cadastro Único (MDS), medida de vulnerabilidade. Inscrição não significa receber benefício.</p>
           <code>Inscritos ÷ população × 100</code>
         </article>

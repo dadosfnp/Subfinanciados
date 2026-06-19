@@ -115,7 +115,7 @@
     });
 
     /* ---------- Barras (cidades) ---------- */
-    document.querySelectorAll(".met-bar[data-w]").forEach(function (bar) {
+    document.querySelectorAll("[data-w]").forEach(function (bar) {
       whenVisible(bar, function () {
         requestAnimationFrame(function () { bar.style.transition = "width 1.6s cubic-bezier(.2,.7,.2,1)"; bar.style.width = bar.getAttribute("data-w"); });
       }, 0.6);
