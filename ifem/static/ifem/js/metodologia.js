@@ -296,5 +296,38 @@
       portes.querySelectorAll(".met-porte i").forEach(function (b, idx) { b.style.transitionDelay = (idx * 0.06) + "s"; });
       portes.classList.add("in");
     }, 0.3);
+
+    /* ---------- Carrossel de recortes (imagens) ---------- */
+    (function () {
+      const track = document.getElementById("recortesTrack");
+      const dotsWrap = document.getElementById("recortesDots");
+      if (!track || !dotsWrap) return;
+      const total = track.children.length;
+      let idx = 0;
+      for (let i = 0; i < total; i++) {
+        const d = document.createElement("button");
+        d.setAttribute("aria-label", "Ir ao recorte " + (i + 1));
+        d.addEventListener("click", (function (n) { return function () { go(n); }; })(i));
+        dotsWrap.appendChild(d);
+      }
+      function go(i) {
+        idx = (i + total) % total;
+        track.style.transform = "translateX(" + (-idx * 100) + "%)";
+        dotsWrap.querySelectorAll("button").forEach(function (b, j) { b.classList.toggle("active", j === idx); });
+      }
+      const prev = document.getElementById("recortesPrev");
+      const next = document.getElementById("recortesNext");
+      if (prev) prev.addEventListener("click", function () { go(idx - 1); });
+      if (next) next.addEventListener("click", function () { go(idx + 1); });
+      let x0 = null;
+      track.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+      track.addEventListener("touchend", function (e) {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+        x0 = null;
+      });
+      go(0);
+    })();
   });
 })();
