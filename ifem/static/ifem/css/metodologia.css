@@ -150,7 +150,20 @@
   transition: transform .7s cubic-bezier(.2,.7,.2,1); }
 .met-portes.in .met-porte i { transform: scaleY(1); }
 .met-porte span { font-size: .76rem; font-weight: 600; color: var(--m-mut); text-align: center; line-height: 1.2; }
-@media (max-width: 760px){ .met-portes { gap: .4rem; padding: 1.4rem 1rem 1rem; } .met-porte { min-width: 52px; } .met-porte span { font-size: .66rem; } }
+.met-porte__n { font-size: .8rem; font-weight: 800; color: var(--m-blue2); }
+@media (max-width: 760px){ .met-portes { gap: .4rem; padding: 1.4rem 1rem 1rem; } .met-porte { min-width: 52px; } .met-porte span { font-size: .64rem; } .met-porte__n { font-size: .64rem; } }
+
+/* ---------- Dois grandes blocos (abaixo / acima de 80 mil) ---------- */
+.met-split80 { margin-top: 1rem; }
+.met-split80__bar { display: flex; height: 42px; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 26px rgba(16,55,88,.08); }
+.met-split80__bar .seg { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: .9rem; min-width: 0; white-space: nowrap; }
+.met-split80__bar .seg.a { background: var(--m-blue2); }
+.met-split80__bar .seg.b { background: var(--m-yellow); color: #4a3500; }
+.met-split80__legend { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: .8rem; font-size: .9rem; color: var(--m-mut); }
+.met-split80__legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .3rem; vertical-align: middle; }
+.met-split80__legend i.a { background: var(--m-blue2); }
+.met-split80__legend i.b { background: var(--m-yellow); }
+.met-split80__legend b { color: var(--m-ink); }
 
 /* ---------- Faixas (pílulas) ---------- */
 .met-faixas { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.2rem; }
@@ -227,6 +240,24 @@
 .met-card--flip p:last-child { margin-bottom: 0; }
 .met-card--flip code { display: block; background: var(--m-soft); border-radius: 8px; padding: .7rem .9rem; color: var(--m-blue2); font-size: .86rem; }
 @media (max-width: 720px) { .met-duo { grid-template-columns: 1fr; } }
+
+/* ---------- Convergência / Divergência (análise agregada) ---------- */
+.met-conv { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 2.2rem; }
+.met-conv__card { background: #fff; border: 1px solid var(--m-line); border-radius: 18px; padding: 1.6rem; box-shadow: 0 14px 38px rgba(16,55,88,.06); transition: transform .25s, box-shadow .25s; }
+.met-conv__card:hover { transform: translateY(-5px); box-shadow: 0 24px 56px rgba(16,55,88,.12); }
+.met-conv__svg { width: 100%; height: 80px; margin-bottom: 1rem; }
+.met-conv__svg .ln { fill: none; stroke-width: 3; stroke-linecap: round; }
+.met-conv__svg .ln.nac { stroke: #9aa7b5; stroke-dasharray: 5 5; }
+.met-conv__svg .ln.grp { stroke: var(--m-blue); }
+.met-conv__card h4 { display: flex; align-items: center; gap: .55rem; font-size: 1.18rem; font-weight: 800; margin: 0 0 .5rem; }
+.met-conv__card h4 .dot { width: 11px; height: 11px; border-radius: 50%; }
+.met-conv__card h4 .dot.g { background: var(--m-green); } .met-conv__card h4 .dot.r { background: var(--m-red); }
+.met-conv__card p { margin: 0; color: var(--m-mut); line-height: 1.6; }
+.met-conv__leg { display: flex; gap: 1.6rem; margin-top: 1rem; font-size: .86rem; color: var(--m-mut); }
+.met-conv__leg i { display: inline-block; width: 20px; border-top: 3px solid; vertical-align: middle; margin-right: .4rem; }
+.met-conv__leg i.nac { border-color: #9aa7b5; border-top-style: dashed; }
+.met-conv__leg i.grp { border-color: var(--m-blue); }
+@media (max-width: 720px) { .met-conv { grid-template-columns: 1fr; } }
 
 /* ---------- Recortes ---------- */
 .met-recortes { display: grid; grid-template-columns: repeat(5,1fr); gap: .9rem; margin-top: 2.2rem; }

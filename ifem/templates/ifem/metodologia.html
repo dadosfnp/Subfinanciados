@@ -235,20 +235,29 @@
       <h2 class="met-title" data-anim>Faixas populacionais.</h2>
       <p class="met-lead" data-anim>
         Municípios são estratificados por porte populacional, em oito faixas.
+        A altura de cada barra mostra <b>quantos municípios</b> existem em cada faixa:
+        a grande maioria é de pequeno porte.
       </p>
       <div class="met-portes" data-anim>
-        <div class="met-porte"><i style="--h:26px"></i><span>Até 5 mil</span></div>
-        <div class="met-porte"><i style="--h:36px"></i><span>5 a 10 mil</span></div>
-        <div class="met-porte"><i style="--h:48px"></i><span>10 a 20 mil</span></div>
-        <div class="met-porte"><i style="--h:60px"></i><span>20 a 50 mil</span></div>
-        <div class="met-porte"><i style="--h:74px"></i><span>50 a 100 mil</span></div>
-        <div class="met-porte"><i style="--h:88px"></i><span>100 a 200 mil</span></div>
-        <div class="met-porte"><i style="--h:102px"></i><span>200 a 500 mil</span></div>
-        <div class="met-porte"><i style="--h:120px"></i><span>+500 mil</span></div>
+        {% for f in faixas %}
+        <div class="met-porte">
+          <b class="met-porte__n">{{ f.count }}</b>
+          <i style="--h:{{ f.h }}px"></i>
+          <span>{{ f.label }}</span>
+        </div>
+        {% endfor %}
       </div>
-      <p class="met-foot" data-anim>Quando útil, os municípios também são agrupados em dois grandes blocos:</p>
-      <div class="met-faixas met-faixas--alt" data-anim>
-        <span>Abaixo de 80 mil habitantes</span><span>Acima de 80 mil habitantes</span>
+
+      <p class="met-foot" data-anim>Quando útil, os municípios também são vistos em dois grandes blocos:</p>
+      <div class="met-split80" data-anim>
+        <div class="met-split80__bar">
+          <div class="seg a" style="width:{{ pct_abaixo80 }}%"><span>{{ pct_abaixo80 }}%</span></div>
+          <div class="seg b" style="width:{{ pct_acima80 }}%"><span>{{ pct_acima80 }}%</span></div>
+        </div>
+        <div class="met-split80__legend">
+          <span><i class="a"></i> Abaixo de 80 mil hab.: <b>{{ abaixo80 }}</b> municípios</span>
+          <span><i class="b"></i> Acima de 80 mil hab.: <b>{{ acima80 }}</b> municípios</span>
+        </div>
       </div>
     </div>
   </section>
@@ -443,15 +452,27 @@
         Ao filtrar por região, porte ou estado, o IFEM gera um ente sintético, um “município típico”
         do grupo, com série histórica, densidade e composição de receitas próprias.
       </p>
-      <div class="met-duo" data-anim>
-        <article class="met-card met-card--flip">
-          <h4>Convergência</h4>
-          <p>A distância do grupo para a média nacional diminui: aproxima-se dos patamares de financiamento do país.</p>
-        </article>
-        <article class="met-card met-card--flip">
-          <h4>Divergência</h4>
-          <p>O grupo se afasta da média nacional: a receita per capita estagna frente ao país, ou o crescimento populacional “dilui” seus recursos.</p>
-        </article>
+      <div class="met-conv" data-anim>
+        <div class="met-conv__card">
+          <svg class="met-conv__svg" viewBox="0 0 160 80" preserveAspectRatio="none">
+            <line x1="8" y1="14" x2="152" y2="38" class="ln nac"/>
+            <line x1="8" y1="66" x2="152" y2="44" class="ln grp"/>
+          </svg>
+          <h4><span class="dot g"></span> Convergência</h4>
+          <p>A distância do grupo para a média nacional <b>diminui</b>: ele se aproxima dos patamares de financiamento do país.</p>
+        </div>
+        <div class="met-conv__card">
+          <svg class="met-conv__svg" viewBox="0 0 160 80" preserveAspectRatio="none">
+            <line x1="8" y1="34" x2="152" y2="14" class="ln nac"/>
+            <line x1="8" y1="46" x2="152" y2="70" class="ln grp"/>
+          </svg>
+          <h4><span class="dot r"></span> Divergência</h4>
+          <p>O grupo <b>se afasta</b> da média nacional: sua receita estagna frente ao país, ou o crescimento populacional “dilui” seus recursos.</p>
+        </div>
+      </div>
+      <div class="met-conv__leg" data-anim>
+        <span><i class="nac"></i> Média nacional</span>
+        <span><i class="grp"></i> Grupo selecionado</span>
       </div>
       <p class="met-foot" data-anim>
         Funciona como um termômetro de saúde fiscal e demográfica, útil para benchmarking
