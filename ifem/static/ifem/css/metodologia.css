@@ -255,3 +255,49 @@
 .met-btn:hover { transform: translateY(-2px); }
 .met-btn.primary { background: var(--m-yellow); color: #1b1300; box-shadow: 0 12px 30px rgba(238,175,25,.3); }
 .met-btn.ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.45); }
+
+/* ============================================================
+   RESPONSIVO — o texto flui (sem palavra órfã) e o layout adapta
+   ============================================================ */
+@media (max-width: 991px) {
+  .met-sec { padding: 10vh 6vw; }
+  .met-recortes { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 760px) {
+  /* As quebras de linha controladas (boas no desktop) somem no mobile:
+     o texto reflui sozinho, sem deixar uma palavra sozinha numa linha. */
+  .met br { display: none; }
+
+  .met-sec { padding: 8vh 5vw; }
+  .met-hero { padding: 7vh 5vw; min-height: 86vh; }
+  .met-hero__title { font-size: clamp(1.9rem, 9vw, 2.6rem); }
+  .met-hero__sub { font-size: 1rem; }
+  .met-hero__counters { gap: 1.6rem; margin-bottom: 2.2rem; }
+  .met-hero__counters b { font-size: 2rem; }
+
+  .met-title { font-size: clamp(1.7rem, 8vw, 2.3rem); }
+  .met-lead, .met-foot, .met-tabpane p, .met-more__panel p { max-width: 100%; }
+
+  .met-formula { width: 100%; padding: 1.6rem 1.4rem; }
+  .met-eq { font-size: .88rem; padding: 1.1rem 1.2rem; }
+
+  .met-tabs { padding: 1.1rem; }
+  .met-tabs__head { display: flex; width: 100%; }
+  .met-tabs__head button { flex: 1; padding: .5rem .3rem; font-size: .85rem; }
+  .met-tabpane b { font-size: 2rem; }
+
+  .met-density canvas { height: 200px !important; }
+  .met-scale__bar { height: 38px; }
+  .met-scale__bar i { font-size: .72rem; }
+
+  /* Tabela: mantém 4 colunas estreitas (valores curtos) em vez de quebrar feio */
+  .met-mrow { grid-template-columns: 1.1fr 1fr 1fr 1fr; font-size: .78rem; padding: .6rem .55rem; gap: .25rem; }
+  .met-mrow.head { font-size: .66rem; }
+}
+@media (max-width: 480px) {
+  .met-cta { padding: 2.2rem 1.2rem; }
+  .met-cta__btns { flex-direction: column; align-items: stretch; }
+  .met-btn { width: 100%; text-align: center; }
+  .met-faixas span { font-size: .85rem; }
+  .met-formula__top, .met-formula__bot { font-size: 1.05rem; }
+}
