@@ -241,17 +241,19 @@
 .met-card--flip code { display: block; background: var(--m-soft); border-radius: 8px; padding: .7rem .9rem; color: var(--m-blue2); font-size: .86rem; }
 @media (max-width: 720px) { .met-duo { grid-template-columns: 1fr; } }
 
-/* ---------- Convergência / Divergência (análise agregada) ---------- */
-.met-conv { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 2.2rem; }
-.met-conv__card { background: #fff; border: 1px solid var(--m-line); border-radius: 18px; padding: 1.6rem; box-shadow: 0 14px 38px rgba(16,55,88,.06); transition: transform .25s, box-shadow .25s; }
-.met-conv__card:hover { transform: translateY(-5px); box-shadow: 0 24px 56px rgba(16,55,88,.12); }
-.met-conv__ico { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 48px; border-radius: 12px; margin-bottom: 1rem; }
-.met-conv__ico svg { width: 40px; height: 22px; }
-.met-conv__ico.g { background: #e9f7ef; color: var(--m-green); }
-.met-conv__ico.r { background: #fdecea; color: var(--m-red); }
-.met-conv__card h4 { font-size: 1.18rem; font-weight: 800; margin: 0 0 .5rem; }
-.met-conv__card p { margin: 0; color: var(--m-mut); line-height: 1.6; }
-@media (max-width: 720px) { .met-conv { grid-template-columns: 1fr; } }
+/* ---------- Análise agregada (processo em 3 passos + nota) ---------- */
+.met-steps { display: flex; align-items: stretch; gap: .8rem; margin-top: 2.4rem; }
+.met-step { flex: 1; background: #fff; border: 1px solid var(--m-line); border-radius: 16px; padding: 1.6rem; position: relative; box-shadow: 0 12px 34px rgba(16,55,88,.05); transition: transform .25s; }
+.met-step:hover { transform: translateY(-4px); }
+.met-step__n { position: absolute; top: -13px; left: 1.4rem; width: 28px; height: 28px; border-radius: 50%; background: var(--m-blue2); color: #fff; font-weight: 800; font-size: .9rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(25,70,133,.3); }
+.met-step .met-ico { width: 44px; height: 44px; border-radius: 11px; margin: .5rem 0 .9rem; }
+.met-step h4 { font-size: 1.1rem; font-weight: 800; margin: 0 0 .4rem; }
+.met-step p { color: var(--m-mut); line-height: 1.5; margin: 0; font-size: .92rem; }
+.met-step__arrow { align-self: center; color: var(--m-yellow); font-weight: 900; font-size: 1.7rem; flex-shrink: 0; }
+@media (max-width: 760px) { .met-steps { flex-direction: column; gap: 1.4rem; } .met-step__arrow { transform: rotate(90deg); align-self: center; } }
+
+.met-note { margin-top: 2rem; background: #eef4fb; border: 1px solid #d8e6f5; border-radius: 14px; padding: 1.3rem 1.6rem; color: #2c3a48; line-height: 1.65; }
+.met-note b.g { color: var(--m-green); } .met-note b.r { color: var(--m-red); }
 
 /* ---------- Vulnerabilidade (número + barra) ---------- */
 .met-vuln { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 2.2rem; }
@@ -268,7 +270,9 @@
 .met-vcard__bar { height: 10px; border-radius: 6px; background: #eef2f7; margin: .9rem 0 1.1rem; overflow: hidden; }
 .met-vcard__bar i { display: block; height: 100%; width: 0; background: var(--c); border-radius: 6px; }
 .met-vcard p { color: var(--m-mut); line-height: 1.55; margin: 0 0 1rem; }
-.met-vcard code { display: block; background: var(--m-soft); border-radius: 8px; padding: .65rem .85rem; color: var(--m-blue2); font-size: .85rem; }
+.met-vcard__meta { border-top: 1px solid var(--m-line); padding-top: .9rem; }
+.met-vcard__calc { display: block; color: var(--m-mut); font-size: .85rem; line-height: 1.45; margin-bottom: .5rem; }
+.met-vcard__src { display: block; font-size: .78rem; font-weight: 700; color: var(--m-blue2); }
 @media (max-width: 720px){ .met-vuln { grid-template-columns: 1fr; } }
 
 /* ---------- Carrossel de recortes (imagens) ---------- */
