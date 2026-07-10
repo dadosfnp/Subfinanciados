@@ -106,3 +106,24 @@ server {
 - Limpeza não-IFEM: removidos gitlink órfão "Subfinanciados" (submódulo acidental) e package-lock.json (sem package.json).
   Mantidos (decisão do Pedro): check_db.py, debug/test_*.py, exports do folheto.
 - PENDÊNCIA SEGURANÇA (Pedro): senhas (doadmin, ifem_app) no Bitwarden; opcional restringir token Mapbox por URL.
+
+## Fase Pública — Publicação em ifem.fnp.org.br — 2026-07-10 — CONCLUÍDA
+Objetivo: expor o IFEM publicamente em https://ifem.fnp.org.br (antes só via túnel SSH). Render mantido como fallback (decisão do Pedro).
+
+- DNS: zona `ifem.fnp.org.br` criada na DigitalOcean (registro A → 142.93.205.222); NS do fnp.org.br já eram DO. Propagou em minutos (validado em ns1.digitalocean.com, 1.1.1.1, 8.8.8.8).
+- Nginx: vhost `deploy/nginx-ifem.conf` → /etc/nginx/sites-available/ifem + link em sites-enabled; proxy_pass 127.0.0.1:8003.
+- TLS: `certbot --nginx -d ifem.fnp.org.br` → cert Let's Encrypt (CN=ifem.fnp.org.br, expira 2026-10-08), renovação automática. Redirect 80→443 no Nginx.
+- Django (.env do droplet): ALLOWED_HOSTS=ifem.fnp.org.br,localhost,127.0.0.1 ; CSRF_TRUSTED_ORIGINS=https://ifem.fnp.org.br.
+- Endurecimento HTTPS: `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO','https')` em config/settings.py (commit 565a506 em feat/pagina-metodologia) + SECURE_SSL_REDIRECT=True → HSTS (1 ano, includeSubDomains, preload) + cookies Secure.
+- Validação externa: home HTTP 200 em https (0 redirects); http→https 1 salto; HSTS presente; cert Let's Encrypt válido.
+
+### INCIDENTE (resolvido) — loop de redirect
+- O SECURE_PROXY_SSL_HEADER foi commitado primeiro em `infra/dockerizar-ifem` (branch do runbook de junho), mas o droplet MIGROU para `feat/pagina-metodologia` (HEAD 9259fc6). Rebuild ligou SECURE_SSL_REDIRECT=True sem o header no código → loop de redirect (home 301 infinito, site fora do ar ~1 min).
+- Rollback: SECURE_SSL_REDIRECT=False + `docker compose up -d --force-recreate` → home 200 restaurado (sem rebuild).
+- Fix: header reaplicado na branch CORRETA (feat/pagina-metodologia, commit 565a506); pull + rebuild com salvaguarda (só liga SSL_REDIRECT se `grep -q SECURE_PROXY_SSL_HEADER config/settings.py`). Lição registrada em `tasks/lessons.md`.
+
+### PENDÊNCIAS DESTA FASE
+- Commit `05bfdda` (mesmo header) ficou órfão em `infra/dockerizar-ifem` — inócuo; avaliar limpeza.
+- Docs desta fase (runbook, lessons.md) ainda não commitados — aguardando decisão do Pedro sobre em qual branch/commit registrar.
+- Atualizar inventário TIC: IFEM status "Publicado", domínio ifem.fnp.org.br, TLS ativo.
+- Avaliar desligar o Render quando ifem.fnp.org.br estiver consolidado.
