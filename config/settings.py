@@ -190,6 +190,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Redireciona HTTP para HTTPS - Ativado apenas em produção via Variável de Ambiente
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
 
+# Atrás do Nginx (que termina o TLS), a requisição chega ao Gunicorn como HTTP interno.
+# O proxy seta `X-Forwarded-Proto` (proxy_set_header ... $scheme, sobrescrevendo o valor do
+# cliente), e este header diz ao Django que a conexão externa é HTTPS. Sem isso,
+# SECURE_SSL_REDIRECT=True entra em loop infinito: o app nunca "enxerga" o https e redireciona
+# de novo. Seguro em dev (o header não vem, nada muda) e em prod (só o Nginx local, em
+# 127.0.0.1, fala com o container — o cliente não consegue forjar o header).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 if not DEBUG and SECURE_SSL_REDIRECT:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
