@@ -2,12 +2,12 @@
 {% load static %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'ifem/css/metodologia.css' %}">
+  <link rel="stylesheet" href="{% static 'metodologia/css/metodologia.css' %}">
   <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script defer src="{% static 'ifem/js/metodologia.js' %}"></script>
+  <script defer src="{% static 'metodologia/js/metodologia.js' %}"></script>
 {% endblock extra_head %}
 
 {% block content %}
@@ -524,23 +524,23 @@
         <div class="met-carousel__viewport">
           <div class="met-carousel__track" id="recortesTrack">
             <figure class="met-slide">
-              <img src="{% static 'ifem/images/metodologia/brasil.webp' %}" alt="Mapa do Brasil" loading="lazy">
+              <img src="{% static 'metodologia/images/brasil.webp' %}" alt="Mapa do Brasil" loading="lazy">
               <figcaption><span class="met-slide__tag">Recorte 1</span><h4>Brasil</h4><p>Visão panorâmica do financiamento de todos os municípios do país.</p></figcaption>
             </figure>
             <figure class="met-slide">
-              <img src="{% static 'ifem/images/metodologia/regiao.webp' %}" alt="Regiões e estados do Brasil" loading="lazy">
+              <img src="{% static 'metodologia/images/regiao.webp' %}" alt="Regiões e estados do Brasil" loading="lazy">
               <figcaption><span class="met-slide__tag">Recorte 2</span><h4>Região / UF</h4><p>Disparidades entre regiões e estados, revelando contrastes territoriais.</p></figcaption>
             </figure>
             <figure class="met-slide">
-              <img src="{% static 'ifem/images/metodologia/porte.webp' %}" alt="Cidades de portes diferentes" loading="lazy">
+              <img src="{% static 'metodologia/images/porte.webp' %}" alt="Cidades de portes diferentes" loading="lazy">
               <figcaption><span class="met-slide__tag">Recorte 3</span><h4>Porte populacional</h4><p>Comparação entre municípios de tamanho populacional semelhante.</p></figcaption>
             </figure>
             <figure class="met-slide">
-              <img src="{% static 'ifem/images/metodologia/quantil.webp' %}" alt="Distribuição em quantis" loading="lazy">
+              <img src="{% static 'metodologia/images/quantil.webp' %}" alt="Distribuição em quantis" loading="lazy">
               <figcaption><span class="met-slide__tag">Recorte 4</span><h4>Quintil / Decil / Percentil</h4><p>A posição relativa de cada município na distribuição nacional.</p></figcaption>
             </figure>
             <figure class="met-slide">
-              <img src="{% static 'ifem/images/metodologia/ranking.webp' %}" alt="Ranking de municípios" loading="lazy">
+              <img src="{% static 'metodologia/images/ranking.webp' %}" alt="Ranking de municípios" loading="lazy">
               <figcaption><span class="met-slide__tag">Recorte 5</span><h4>Ranking</h4><p>A posição ordinal de cada município em relação aos demais.</p></figcaption>
             </figure>
           </div>

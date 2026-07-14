@@ -1122,19 +1122,19 @@ p {
     position: relative;
 }
 
-.box-q-pro .q-val { 
-    font-size: 1.1rem; 
-    font-weight: 800; 
-    line-height: 1; 
+.box-q-pro .q-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1;
 }
 
-.box-q-pro .q-label { 
-    font-size: 0.55rem; 
-    text-transform: uppercase; 
-    margin-top: 4px; 
-    opacity: 0.95; 
-    text-align: center; 
-    line-height: 1.2; 
+.box-q-pro .q-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    margin-top: 4px;
+    opacity: 0.95;
+    text-align: center;
+    line-height: 1.2;
 }
 
 /* Interações e Animação CSS Nativa */
