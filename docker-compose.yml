@@ -1,0 +1,26 @@
+# Compose do IFEM/Subfinanciados — piloto do padrão Docker da FNP.
+# Banco é o PostgreSQL Managed (externo): NÃO há serviço de banco aqui.
+services:
+  ifem:
+    build: .
+    image: ifem-subfinanciados:latest
+    container_name: ifem
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # Bind APENAS em localhost do droplet — sem exposição pública nesta fase.
+      # O acesso para validação é via túnel SSH (ssh -L 8003:localhost:8003).
+      # Quando publicar: o Nginx do host faz proxy_pass para 127.0.0.1:8003.
+      - "127.0.0.1:8003:8000"
+    volumes:
+      # Uploads persistem fora do ciclo de vida do container.
+      - ifem_media:/app/media
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  ifem_media:

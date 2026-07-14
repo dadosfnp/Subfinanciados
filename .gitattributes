@@ -1,0 +1,4 @@
+# Scripts shell e entrypoints SEMPRE com quebra de linha LF, mesmo clonados no Windows.
+# Sem isso, CRLF quebra a execução dentro do container Linux.
+*.sh text eol=lf
+entrypoint.sh text eol=lf

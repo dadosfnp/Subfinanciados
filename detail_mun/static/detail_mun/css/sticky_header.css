@@ -1,0 +1,133 @@
+/* ==========================================================================
+   STICKY HEADER — Fixo no topo, aparece via scroll (ver script_mun.js).
+   Usa transform em vez de display/visibility para que a animação de entrada
+   seja composta na GPU (sem reflow), garantindo 60fps mesmo em dispositivos lentos.
+   A classe .visible é adicionada por JS quando scrollY > 300px.
+   ========================================================================== */
+.sticky-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: rgba(16, 55, 88, 0.98) !important; /* Azul escuro FNP */
+    /* backdrop-filter cria o efeito de vidro fosco; -webkit- é necessário para Safari */
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    z-index: 999999 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    transform: translateY(-100%); /* estado inicial: fora da tela acima */
+    /* cubic-bezier(0.16, 1, 0.3, 1) = aceleração rápida com desaceleração suave (spring-like) */
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding: 0.75rem 0 !important;
+    display: block !important;
+}
+
+.sticky-header.visible {
+    transform: translateY(0) !important;
+}
+
+.sticky-header-container {
+    max-width: 95% !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 2rem !important;
+}
+
+.sticky-header-info {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sticky-header-label {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    line-height: 1 !important;
+    margin-bottom: 4px !important;
+}
+
+.sticky-header-title {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 300px !important;
+}
+
+.sticky-header-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+}
+
+/* Os toggles dentro do sticky seguem a mesma paleta dos toggles originais da página
+   (#e9eef6 fundo, #194685 seleção), mas precisam ser redefinidos aqui porque o contexto
+   escuro do header herdaria estilos globais incorretos. */
+.sticky-header .segmented {
+    background: #e9eef6 !important; /* Cor de fundo padrão dos toggles do site */
+    border-radius: 999px !important;
+    padding: 4px !important;
+    display: inline-flex !important;
+    gap: 4px !important;
+    border: none !important;
+}
+
+.sticky-header .segmented-option {
+    color: #194685 !important; /* Azul escuro do texto inativo */
+    border-radius: 999px !important;
+    padding: 6px 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    border: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.sticky-header .segmented-option.active {
+    background: #194685 !important; /* Fundo azul na seleção */
+    color: #ffffff !important; /* Texto branco na seleção */
+    box-shadow: 0 2px 8px rgba(25, 70, 133, 0.25) !important;
+}
+
+/* Breakpoint 767.98px = Bootstrap md (< 768px). Em mobile, com até 3 toggles visíveis
+   simultaneamente (base + valor + estatística), o layout não cabe em linha — usa scroll
+   horizontal em vez de quebrar em duas linhas e desalinhar o nome do município. */
+@media (max-width: 767.98px) {
+    .sticky-header-container {
+        gap: 0.75rem !important;
+    }
+
+    .sticky-header-title {
+        font-size: 1rem !important;
+        max-width: 130px !important;
+    }
+
+    /* Permite scroll horizontal nos toggles em vez de quebrar linha */
+    .sticky-header-controls {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        /* Esconde scrollbar visualmente mas mantém funcional */
+        scrollbar-width: none !important;
+    }
+    .sticky-header-controls::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .sticky-header .segmented-option {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
+    }
+}

@@ -27,9 +27,17 @@ const filtroSubgrupo       = document.getElementById('filtro-subgrupo');
 const filtroRm             = document.getElementById('filtro-rm');
 const filtroClassificacao  = document.getElementById('filtro-classificacao');
 const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
+const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
+const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescimento');
+const blocoReceita             = document.getElementById('bloco-receita');
+const blocoCrescimento         = document.getElementById('bloco-crescimento');
+
+// True quando o usuário está no modo "Crescimento 2000→2024".
+const modoCrescimentoAtivo = () => filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
 
 let debounceTimer = null;
 let lastRequestId = 0;
+let breakdownState = { count: 0, averageRevenue: 0, features: [] };
 
 // ===================== Helpers =====================
 function restoreSelectValue(selectEl, value) {
@@ -55,7 +63,9 @@ function paramsKeyFromSelects() {
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
     classification: filtroClassificacao.value,
-    calculation_mode: filtroModoCalculo.value
+    calculation_mode: filtroModoCalculo.value,
+    modo_analise: filtroModoAnalise ? filtroModoAnalise.value : 'receita',
+    metrica: filtroMetricaCrescimento ? filtroMetricaCrescimento.value : ''
   };
   const cleaned = {};
   Object.entries(raw).forEach(([k, v]) => { if (v && v !== 'todos') cleaned[k] = v; });
@@ -74,7 +84,10 @@ async function updateDependentFilters() {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
-    porte: filtroPorte.value
+    porte: filtroPorte.value,
+    subgrupo: filtroSubgrupo.value,
+    classification: filtroClassificacao.value,
+    calculation_mode: filtroModoCalculo.value
   };
 
   try {
@@ -106,6 +119,9 @@ async function updateDependentFilters() {
 async function atualizarMapa() {
   const classificacaoAtual = filtroClassificacao.value;
 
+  // No modo crescimento, pede os campos históricos/derivados à API (analise=crescimento).
+  const analiseAtual = modoCrescimentoAtivo() ? 'crescimento' : undefined;
+
   const paramsResumo = {
     regiao: filtroRegiao.value,
     uf: filtroUf.value,
@@ -114,12 +130,13 @@ async function atualizarMapa() {
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
     classification: classificacaoAtual,
-    calculation_mode: filtroModoCalculo.value
+    calculation_mode: filtroModoCalculo.value,
+    analise: analiseAtual
   };
 
   const paramsMapa = {
     ...paramsResumo,
-    municipio: 'todos' 
+    municipio: 'todos'
   };
 
   const desiredKey = paramsKeyFromSelects();
@@ -151,6 +168,14 @@ async function atualizarMapa() {
         style: 'currency',
         currency: 'BRL'
       });
+
+    // Guarda o resumo + as features pra o modal de breakdown poder consultar
+    // sem precisar refazer o fetch.
+    breakdownState = {
+      count,
+      averageRevenue,
+      features
+    };
 
     // ===== MAPA (SEMPRE TODOS OS MUNICÍPIOS) =====
     if (map.getSource('municipios')) {
@@ -209,7 +234,7 @@ map.on("load", async () => {
 
   hideBaseMunicipalityLayers();
   await updateDependentFilters();
-  atualizarClassificacao(); // seta cores + legenda e chama o debounce internamente
+  refrescarVisualizacao(); // aplica o modo de análise (receita por padrão): cores + legenda + refetch
 
 // =========================================================
   // LOGICA UNIFICADA: Xambioá e Varginha
@@ -396,6 +421,28 @@ function applyZoom(geojsonData) {
 }
 
 
+// Bloco comparativo 2000→2024 do popup, exibido apenas no modo de análise "crescimento".
+function blocoCrescimentoPopup(props) {
+  const naDado = (v) => v === null || v === undefined || v === '';
+  const fmtInt = (v) => naDado(v) ? 'N/D' : (+v).toLocaleString('pt-BR');
+  const fmtBRL = (v) => naDado(v) ? 'N/D' : (+v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtPct = (v) => naDado(v) ? 'N/D' : `${v > 0 ? '+' : ''}${(+v).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+  const seta = (v) => naDado(v) ? '' : (v > 0 ? '<span style="color:#1a9850">▲</span>' : (v < 0 ? '<span style="color:#d73027">▼</span>' : '<span style="color:#999">▬</span>'));
+  const varTxt = (v, un = '') => naDado(v) ? 'N/D' : `${seta(v)} ${v > 0 ? '+' : ''}${(+v).toLocaleString('pt-BR')}${un}`;
+
+  const rowStyle = 'display:flex;justify-content:space-between;gap:.75rem;font-size:.85rem;margin:.22rem 0;color:#444;';
+  const valStyle = 'text-align:right;font-weight:600;color:#1f2937;';
+  return `
+    <div style="margin-top:.6rem;border-top:1px solid #e5e7eb;padding-top:.55rem;">
+      <div style="font-weight:800;color:#103758;margin-bottom:.4rem;font-size:.95rem;">Crescimento 2000 → 2024</div>
+      <div style="${rowStyle}"><span>População</span><span style="${valStyle}">${fmtInt(props.populacao00)} → ${fmtInt(props.Populacao24)} <strong>(${fmtPct(props.cresc_pop_pct)})</strong></span></div>
+      <div style="${rowStyle}"><span>Receita p/c</span><span style="${valStyle}">${fmtBRL(props.rc_00_pc)} → ${fmtBRL(props.rc_24_pc)} <strong>(${fmtPct(props.cresc_rcpc_pct)})</strong></span></div>
+      <div style="${rowStyle}"><span>Ranking nacional</span><span style="${valStyle}">${varTxt(props.var_rank, ' pos.')}</span></div>
+      <div style="${rowStyle}"><span>Quintil / Decil</span><span style="${valStyle}">${varTxt(props.var_quintil)} / ${varTxt(props.var_decil)}</span></div>
+      <div style="${rowStyle}"><span>Percentil</span><span style="${valStyle}">${varTxt(props.var_percentil, ' p.p.')}</span></div>
+    </div>`;
+}
+
 function abrirPopupDoMunicipioSelecionado(feature) {
   if (!feature?.properties) return;
 
@@ -505,6 +552,8 @@ function abrirPopupDoMunicipioSelecionado(feature) {
         </div>
       </div>
 
+      ${ modoCrescimentoAtivo() ? blocoCrescimentoPopup(props) : '' }
+
       ${summaryHTML}
 
       <a href="/municipio/${props.cod_ibge}/" class="popup-btn-details" target="_blank">
@@ -613,8 +662,6 @@ function buildSizeLegendSVGRow(config = [
 
 // ===================== Legenda: Cores (100% alinhada) =====================
 function updateLegend(classification) {
-  const legend = document.getElementById('legend');
-
   let header = 'Quintil';
   let items  = []; // {color, text}
 
@@ -652,7 +699,14 @@ function updateLegend(classification) {
     ];
   }
 
-  const listHTML = `
+  renderLegend(header, items);
+}
+
+// Monta a legenda (cabeçalho + faixas de cor + faixa populacional).
+// Reaproveitada pelos modos "receita" e "crescimento".
+function renderLegend(header, items) {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = `
     <h5>${header}</h5>
     <ul style="list-style:none;margin:.25rem 0 .5rem 0;padding:0;">
       ${items.map(it => `
@@ -664,13 +718,61 @@ function updateLegend(classification) {
     <h6 class="legend-subtitle" style="margin-top:.5rem;border-top:1px solid #e5e7eb;padding-top:.5rem;">Faixa Populacional</h6>
     <div id="size-legend" class="size-legend"></div>
   `;
-
-  legend.innerHTML = listHTML;
   legend.querySelector('#size-legend').innerHTML = buildSizeLegendSVGRow([
     { label: '≤ 200 mil',   value: 120_000 },
     { label: '200–500 mil', value: 350_000 },
     { label: '> 500 mil',   value: 800_000 }
   ]);
+}
+
+// ===================== Modo de Análise: Crescimento 2000→2024 =====================
+// Faixas calibradas pela distribuição real dos municípios (percentis 10–90 de cada métrica).
+const METRICAS_CRESCIMENTO = {
+  cresc_pop_pct:  { titulo: 'Crescimento da população', stops: [-10, 0, 15, 35],
+    textos: ['Queda > 10%', 'Queda até 10%', 'Alta até 15%', 'Alta 15–35%', 'Alta > 35%'] },
+  cresc_rcpc_pct: { titulo: 'Cresc. receita p/c', stops: [200, 280, 350, 450],
+    textos: ['< 200%', '200–280%', '280–350%', '350–450%', '> 450%'] },
+  var_rank:       { titulo: 'Variação no ranking nacional', stops: [-800, -100, 100, 800],
+    textos: ['Caiu > 800 pos.', 'Caiu 100–800', 'Estável (±100)', 'Subiu 100–800', 'Subiu > 800 pos.'] },
+  var_quintil:    { titulo: 'Variação no quintil', stops: [-1, 0, 1, 2],
+    textos: ['Caiu ≥ 2', 'Caiu 1', 'Manteve', 'Subiu 1', 'Subiu ≥ 2'] },
+  var_decil:      { titulo: 'Variação no decil', stops: [-2, 0, 1, 3],
+    textos: ['Caiu ≥ 2', 'Caiu 1', 'Manteve', 'Subiu 1–2', 'Subiu ≥ 3'] },
+  var_percentil:  { titulo: 'Variação no percentil', stops: [-12, -3, 3, 12],
+    textos: ['Caiu > 12 p.p.', 'Caiu 3–12', 'Estável (±3)', 'Subiu 3–12', 'Subiu > 12 p.p.'] }
+};
+// Paleta divergente única (queda → alta): vermelho → amarelo → verde.
+const CRESCIMENTO_CORES = ['#d73027', '#fc8d59', '#fee08b', '#91cf60', '#1a9850'];
+
+// Expressão Mapbox de cor por faixa. Município sem dado (null) é pintado de cinza.
+function getCrescimentoPaint(metricaKey) {
+  const cfg = METRICAS_CRESCIMENTO[metricaKey] || METRICAS_CRESCIMENTO.cresc_pop_pct;
+  const step = ['step', ['get', metricaKey], CRESCIMENTO_CORES[0]];
+  cfg.stops.forEach((s, i) => step.push(s, CRESCIMENTO_CORES[i + 1]));
+  // 'case' curto-circuita: se a propriedade for nula, o 'step' nem é avaliado.
+  return ['case', ['==', ['get', metricaKey], null], '#cccccc', step];
+}
+
+function updateLegendCrescimento(metricaKey) {
+  const cfg = METRICAS_CRESCIMENTO[metricaKey] || METRICAS_CRESCIMENTO.cresc_pop_pct;
+  const items = CRESCIMENTO_CORES.map((cor, i) => ({ color: cor, text: cfg.textos[i] }));
+  renderLegend(cfg.titulo + ' (2000→2024)', items);
+}
+
+// Despachante central: aplica a visualização conforme o modo de análise ativo.
+function refrescarVisualizacao() {
+  if (modoCrescimentoAtivo()) {
+    blocoReceita.style.display = 'none';
+    blocoCrescimento.style.display = '';
+    const metrica = filtroMetricaCrescimento.value;
+    map.setPaintProperty('populacao-circulos', 'circle-color', getCrescimentoPaint(metrica));
+    updateLegendCrescimento(metrica);
+    scheduleAtualizarMapa();
+  } else {
+    blocoReceita.style.display = '';
+    blocoCrescimento.style.display = 'none';
+    atualizarClassificacao(); // seta cores + legenda + subgrupo e agenda o refetch
+  }
 }
 
 // ===================== Classificação (cores + subfiltro) =====================
@@ -721,9 +823,11 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
   filtroSubgrupo.value = 'todos';
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
+  if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
+  if (filtroMetricaCrescimento) filtroMetricaCrescimento.value = 'cresc_pop_pct';
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
   await updateDependentFilters();
-  atualizarClassificacao();
+  refrescarVisualizacao();
   if (popupAtivo) {
   popupAtivo.remove();
   popupAtivo = null;
@@ -738,8 +842,9 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
       popupAtivo = null;
     }
 
-    /* Se a mudanca nao for no municipio ou subgrupo, refaz a cascata antes de atualizar o mapa */
-    if (sel !== filtroMunicipio && sel !== filtroSubgrupo) {
+    /* Se a mudanca nao for no municipio (filtro-folha), refaz a cascata antes de atualizar o mapa.
+       Inclui subgrupo/quintil pra que UF/RM/região sejam recalculadas só com os municípios do quintil escolhido. */
+    if (sel !== filtroMunicipio) {
       await updateDependentFilters();
     }
 
@@ -749,6 +854,8 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 
 filtroModoCalculo.addEventListener('change', atualizarClassificacao);
 filtroClassificacao.addEventListener('change', atualizarClassificacao);
+if (filtroModoAnalise) filtroModoAnalise.addEventListener('change', refrescarVisualizacao);
+if (filtroMetricaCrescimento) filtroMetricaCrescimento.addEventListener('change', refrescarVisualizacao);
 
 map.on("mouseenter", "populacao-circulos", () => { map.getCanvas().style.cursor = "pointer"; });
 map.on("mouseleave", "populacao-circulos", () => { map.getCanvas().style.cursor = ""; });
@@ -808,6 +915,85 @@ async function downloadTableData() {
   }
 }
 document.getElementById('download-table-btn').addEventListener('click', downloadTableData);
+
+// ===================== Modal: Distribuição por Quintil/Decil =====================
+// Cores espelhadas das que aparecem no mapa, pra reforçar a leitura visual.
+const BREAKDOWN_QUINTIL_COLORS = ['#d73027', '#fc8d59', '#fee08b', '#91cf60', '#1a9850'];
+const BREAKDOWN_DECIL_COLORS = [
+  '#a50026', '#d73027', '#f46d43', '#fdae61', '#fee08b',
+  '#d9ef8b', '#a6d96a', '#66bd63', '#1a9850', '#006837'
+];
+
+function renderBreakdownModal(){
+  const titleEl  = document.getElementById('breakdown-modal-title');
+  const grupoEl  = document.getElementById('breakdown-grupo-titulo');
+  const listEl   = document.getElementById('breakdown-list');
+  const emptyEl  = document.getElementById('breakdown-empty');
+  const totalEl  = document.getElementById('breakdown-total');
+  const avgEl    = document.getElementById('breakdown-avg');
+
+  totalEl.textContent = breakdownState.count.toLocaleString('pt-BR');
+  avgEl.textContent = breakdownState.averageRevenue.toLocaleString('pt-BR', {
+    style: 'currency', currency: 'BRL'
+  });
+
+  const classification = filtroClassificacao.value;
+  if (classification === 'natural') {
+    listEl.innerHTML = '';
+    grupoEl.classList.add('d-none');
+    emptyEl.classList.remove('d-none');
+    titleEl.textContent = 'Distribuição da seleção';
+    return;
+  }
+  emptyEl.classList.add('d-none');
+  grupoEl.classList.remove('d-none');
+
+  const isQuintil = classification === 'quintil';
+  const numGroups = isQuintil ? 5 : 10;
+  const colors = isQuintil ? BREAKDOWN_QUINTIL_COLORS : BREAKDOWN_DECIL_COLORS;
+  const labelSingular = isQuintil ? 'quintil' : 'decil';
+  titleEl.textContent = `Distribuição da seleção por ${labelSingular}`;
+  grupoEl.textContent = `Municípios em cada ${labelSingular}`;
+
+  // Identifica em qual grupo cada município está.
+  // Modo "por_filtro" usa dynamic_quantile (1..N). Modo "total" usa o
+  // quintil/decil pré-calculado (string "Xº quintil") — extraímos o número.
+  const usePorFiltro = filtroModoCalculo.value === 'por_filtro';
+  const fallbackField = isQuintil ? 'quintil24_pre_calculado' : 'decil24_pre_calculado';
+
+  const counts = Array(numGroups).fill(0);
+  for (const f of breakdownState.features) {
+    let n = null;
+    if (usePorFiltro) {
+      const dq = f.properties.dynamic_quantile;
+      if (dq) n = Number(dq);
+    } else {
+      const raw = f.properties[fallbackField];
+      const m = (typeof raw === 'string') ? raw.match(/^(\d+)/) : null;
+      if (m) n = Number(m[1]);
+    }
+    if (n && n >= 1 && n <= numGroups) counts[n - 1]++;
+  }
+
+  const total = counts.reduce((a, b) => a + b, 0);
+  const maxCount = Math.max(1, ...counts);
+
+  listEl.innerHTML = counts.map((c, idx) => {
+    const pct = total > 0 ? (c / total * 100) : 0;
+    const widthPct = (c / maxCount * 100);
+    return `
+      <div class="breakdown-row">
+        <span class="breakdown-label">${idx + 1}º ${labelSingular}</span>
+        <div class="breakdown-bar-wrap">
+          <div class="breakdown-bar" style="width:${widthPct}%; background:${colors[idx]};"></div>
+        </div>
+        <span class="breakdown-count">${c.toLocaleString('pt-BR')} (${pct.toFixed(1).replace('.', ',')}%)</span>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('btn-ver-mais-breakdown')?.addEventListener('click', renderBreakdownModal);
 
 // ======== PRINT DO MAPA =========
 document.getElementById("btn-screenshot").addEventListener("click", async () => {

@@ -16,6 +16,11 @@ class Command(BaseCommand):
         pop.columns = pop.columns.str.lower()
         rec24.columns = rec24.columns.str.lower()
         rec00.columns = rec00.columns.str.lower()
+        
+        # 1. Ranking Nacional
+        # ascending=False -> O maior valor de rc_23_pc recebe o rank 1
+        rec00['rank_nacional00'] = rec00['receita_00_pc'].rank(method='min', ascending=False).astype(int)
+        rec00['total_nacional00'] = len(rec00) # O total é simplesmente o número de municípios
 
         rec24 = rec24.merge(pop, on='cod_ibge', how='left')
         rec24 = rec24.merge(rec00, on='cod_ibge', how='left')
@@ -53,6 +58,9 @@ class Command(BaseCommand):
                                         .where(lambda s: s.notna(), None)
                                 )
 
+        rec24['rank_nacional00'] = rec24['rank_nacional00'].fillna(0).astype(int)
+        rec24['total_nacional00'] = rec24['total_nacional00'].fillna(0).astype(int)
+
         # 5. Criar coluna de nome_muni_uf
         rec24['name_muni_uf'] = rec24['nome_muni'] + ' - ' + rec24['uf']
 
@@ -88,7 +96,9 @@ class Command(BaseCommand):
                 rc_24_pc = row['receita_pc'],
                 rc_00_pc = row['receita_00_pc'],
                 rank_nacional = row['rank_nacional'],
+                rank_nacional_00 = row['rank_nacional00'],
                 total_nacional = row['total_nacional'],
+                total_nacional_00 = row['total_nacional00'],
                 rank_estadual = row['rank_estadual'] ,
                 total_estadual = row['total_estadual'],
                 rank_faixa = row['rank_faixa'],

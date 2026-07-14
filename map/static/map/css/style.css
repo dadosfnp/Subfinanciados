@@ -259,6 +259,91 @@ body .map-page.popup-active .map-overlay-container {
 }
 #summary-card p{ margin:5px 0; font-size:.9rem; }
 
+.btn-ver-mais-link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--fnp-blue, #194685);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.btn-ver-mais-link:hover { color: var(--fnp-dark-blue, #103758); text-decoration: underline; }
+
+/* ---------- Modal de Distribuicao (breakdown por quintil/decil) ---------- */
+#breakdown-modal .modal-content { border-radius: 12px; }
+#breakdown-modal .modal-header { border-bottom: 1px solid #e5e7eb; }
+.breakdown-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.breakdown-summary-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.breakdown-summary-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #103758;
+}
+.breakdown-grupo-titulo {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+  margin: 6px 2px 10px;
+}
+.breakdown-list { display: flex; flex-direction: column; gap: 8px; }
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 80px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+.breakdown-row .breakdown-label { font-weight: 600; color: #103758; }
+.breakdown-row .breakdown-bar-wrap {
+  position: relative;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.breakdown-row .breakdown-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.breakdown-row .breakdown-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #475569;
+}
+.breakdown-empty {
+  padding: 20px;
+  background: #fef3c7;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #92400e;
+  text-align: center;
+}
+
 /* ---------- LEGENDA ---------- */
 #legend{
   background:rgba(255,255,255,.9);

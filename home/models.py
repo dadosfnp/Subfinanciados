@@ -23,10 +23,10 @@ class Municipio(models.Model):
     cod_ibge = models.CharField(max_length=7, unique=True)
     name_muni = models.CharField(max_length=255)
     name_muni_uf = models.CharField(max_length=255)
-    uf = models.CharField(max_length=2)
+    uf = models.CharField(max_length=2, db_index=True)
     coordx = models.FloatField()
     coordy = models.FloatField()
-    populacao24 = models.IntegerField(null=True)
+    populacao24 = models.IntegerField(null=True, db_index=True)
     populacao24_rank_nacional = models.IntegerField(null=True, blank=True)
     populacao24_total_nacional = models.IntegerField(null=True, blank=True)
     populacao24_rank_estadual = models.IntegerField(null=True, blank=True)
@@ -36,19 +36,21 @@ class Municipio(models.Model):
     populacao00 = models.IntegerField(null=True, blank=True)
     rc_2024 = models.FloatField(null=True, blank=True)
     rc_2000 = models.FloatField(null=True, blank=True)
-    rc_24_pc = models.FloatField(null=True, blank=True)
+    rc_24_pc = models.FloatField(null=True, blank=True, db_index=True)
     rc_00_pc = models.FloatField(null=True, blank=True)
-    quintil24 = models.CharField(max_length=50, null=True, blank=True)
-    decil24 = models.CharField(max_length=50, null=True, blank=True)
+    quintil24 = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    decil24 = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     quintil00 = models.CharField(max_length=50, null=True, blank=True)
     decil00 = models.CharField(max_length=50, null=True, blank=True)
     percentil24 = models.CharField(max_length=50, null=True, blank=True)
     percentil24_n = models.IntegerField(null=True, blank=True)
     percentil00 = models.CharField(max_length=50, null=True, blank=True)
     percentil00_n = models.IntegerField(null=True, blank=True)
-    regiao = models.CharField(max_length=255)
+    regiao = models.CharField(max_length=255, db_index=True)
     rank_nacional = models.IntegerField(null=True, blank=True)
     total_nacional = models.IntegerField(null=True, blank=True)
+    rank_nacional_00 = models.IntegerField(null=True, blank=True)
+    total_nacional_00 = models.IntegerField(null=True, blank=True)
     rank_estadual = models.IntegerField(null=True, blank=True)
     total_estadual = models.IntegerField(null=True, blank=True)
     rank_faixa = models.IntegerField(null=True, blank=True)
@@ -492,7 +494,19 @@ class ContaMaisEspecificaPercentil(models.Model):
 class Noticia(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título da Matéria")
     data = models.DateField(verbose_name="Data de Publicação")
-    imagem = models.ImageField(upload_to='noticias/', verbose_name="Imagem de Capa")
+    # Hospedagem externa (Google Drive, Imgur, etc.) — filesystem do Render é efêmero,
+    # por isso não usamos ImageField. O template resolve o link via `imagem_embed_url`.
+    imagem_url = models.URLField(
+        max_length=500,
+        verbose_name="Link da Imagem de Capa",
+        help_text=(
+            "Cole o link de compartilhamento da imagem. "
+            "Funciona com Google Drive (o arquivo precisa estar como 'Qualquer pessoa com o link'), "
+            "Imgur ou qualquer URL pública direta (.jpg/.png)."
+        ),
+        blank=True,
+        null=True,
+    )
     tag = models.CharField(max_length=50, verbose_name="Categoria (Tag)")
     link = models.URLField(max_length=500, verbose_name="Link de Destino", blank=True, null=True)
 
@@ -503,6 +517,29 @@ class Noticia(models.Model):
 
     def __str__(self):
         return self.titulo
+
+    @property
+    def imagem_embed_url(self):
+        """
+        Converte qualquer formato de link do Google Drive (view, open, uc) para o
+        endpoint de thumbnail, que é o mais estável para hotlink em <img>.
+        Links de outros hosts (Imgur etc.) passam sem alteração.
+        """
+        url = (self.imagem_url or '').strip()
+        if not url:
+            return ''
+        if 'drive.google.com' not in url:
+            return url
+
+        import re
+        match = (
+            re.search(r'/file/d/([A-Za-z0-9_-]+)', url)
+            or re.search(r'[?&]id=([A-Za-z0-9_-]+)', url)
+        )
+        if not match:
+            return url
+        file_id = match.group(1)
+        return f'https://drive.google.com/thumbnail?id={file_id}&sz=w1000'
 
 
 class MediaNacionalReceita(models.Model):

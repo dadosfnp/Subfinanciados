@@ -1,7 +1,32 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.conf import settings
 from home.models import Municipio
 import numpy as np
+import re
+
+
+def _num_classe(valor):
+    """Extrai o número de uma classe textual como '3º quintil' ou '7º decil'.
+
+    Retorna None quando o valor é nulo/sem dígito, para que a variação seja
+    tratada como "sem dado" em vez de quebrar com erro.
+    """
+    if not valor:
+        return None
+    m = re.search(r'(\d+)', str(valor))
+    return int(m.group(1)) if m else None
+
+
+def _cresc_pct(novo, velho):
+    """Variação percentual de `velho` para `novo`, arredondada a 1 casa.
+
+    Retorna None se faltar base ou se a base for zero (evita divisão por zero),
+    para o frontend pintar como "sem dado".
+    """
+    if novo is None or velho is None or velho == 0:
+        return None
+    return round((novo - velho) / velho * 100, 1)
 
 
 def map(request):
@@ -9,6 +34,10 @@ def map(request):
     Renderiza o template HTML para a visualização do mapa.
     A lógica de filtro é tratada dinamicamente por chamadas de API.
     """
+    context = {
+        'MAPBOX_PUBLIC_TOKEN': getattr(settings, 'MAPBOX_PUBLIC_TOKEN', ''),
+    }
+
     return render(request, 'map/map.html')
 
 
@@ -142,46 +171,91 @@ def municipios_geojson_api(request):
             except ValueError:
                 pass # Lida graciosamente com filtros de subgrupo "natural" malformados
 
+    # Modo de análise: 'receita' (padrão, comportamento original) ou 'crescimento' (2000 vs 2024).
+    # No modo crescimento puxamos também os campos históricos e devolvemos métricas calculadas.
+    analise = request.GET.get('analise', 'receita')
+
     # Constrói as feições GeoJSON a partir dos municípios filtrados
+    # Usa .values() para evitar instanciar objetos ORM completos (mais rápido)
+    _fields = (
+        'cod_ibge', 'name_muni', 'name_muni_uf', 'populacao24', 'uf',
+        'rc_24_pc', 'cadunico', 'sus_dependente', 'quintil24', 'decil24',
+        'percentil24', 'percentil24_n', 'coordx', 'coordy',
+    )
+    if analise == 'crescimento':
+        # Campos extras só neste modo — mantém o payload do modo 'receita' enxuto.
+        _fields = _fields + (
+            'populacao00', 'rc_00_pc', 'quintil00', 'decil00', 'percentil00_n',
+            'rank_nacional', 'rank_nacional_00', 'total_nacional',
+        )
     features = []
-    for municipio in queryset:
-        # Adiciona o quantil calculado dinamicamente ou o pré-calculado
+    for municipio in queryset.values(*_fields):
+        rc = municipio['rc_24_pc']
         current_muni_quantile = None
-        if municipio.rc_24_pc is not None and len(quantile_boundaries) > 0:
-            current_muni_quantile_idx = np.searchsorted(quantile_boundaries, municipio.rc_24_pc)
-            current_muni_quantile = int(current_muni_quantile_idx + 1)
+        if rc is not None and len(quantile_boundaries) > 0:
+            current_muni_quantile = int(np.searchsorted(quantile_boundaries, rc) + 1)
         elif quantil_calculation == 'total':
-             # Se o cálculo é 'total', usa o campo pré-calculado do modelo
             if classification_filter == 'quintil':
-                current_muni_quantile = municipio.quintil24
+                current_muni_quantile = municipio['quintil24']
             elif classification_filter == 'decil':
-                current_muni_quantile = municipio.decil24
+                current_muni_quantile = municipio['decil24']
+
+        pop = municipio['populacao24'] or 0
+        cadunico = municipio['cadunico'] or 0
+        perc_cadunico = min((cadunico / pop * 100) if pop > 0 else 0, 100)
 
         feature = {
             "type": "Feature",
             "geometry": {
-                # Se 'geometry' for sempre um Point, isso está ok.
-                # Se for Polygon, você precisará carregar os dados geográficos.
                 "type": "Point",
-                "coordinates": [municipio.coordx, municipio.coordy]
+                "coordinates": [municipio['coordx'], municipio['coordy']]
             },
             "properties": {
-                'cod_ibge': municipio.cod_ibge,
-                'name_muni': municipio.name_muni,
-                'name_muni_uf': municipio.name_muni_uf,
-                'Populacao24': municipio.populacao24,
-                'uf': municipio.uf,
-                'rc_24_pc': municipio.rc_24_pc,
-                'perc_pop_cadunico': (municipio.cadunico / municipio.populacao24 * 100) if (municipio.cadunico / municipio.populacao24 * 100) < 100 else 100,
-                'sus_dependente': municipio.sus_dependente,
-                'quintil24_pre_calculado': municipio.quintil24, # Manter para referência
-                'decil24_pre_calculado': municipio.decil24,   # Manter para referência
-                'percentil24': municipio.percentil24,
-                'percentil24_n': municipio.percentil24_n,
-                # NOVO CAMPO: Quantil dinamicamente calculado
+                'cod_ibge': municipio['cod_ibge'],
+                'name_muni': municipio['name_muni'],
+                'name_muni_uf': municipio['name_muni_uf'],
+                'Populacao24': municipio['populacao24'],
+                'uf': municipio['uf'],
+                'rc_24_pc': rc,
+                'perc_pop_cadunico': perc_cadunico,
+                'sus_dependente': municipio['sus_dependente'],
+                'quintil24_pre_calculado': municipio['quintil24'],
+                'decil24_pre_calculado': municipio['decil24'],
+                'percentil24': municipio['percentil24'],
+                'percentil24_n': municipio['percentil24_n'],
                 'dynamic_quantile': current_muni_quantile
             }
         }
+
+        # Métricas de crescimento 2000→2024 (somente quando solicitado).
+        if analise == 'crescimento':
+            pop00 = municipio['populacao00']
+            rc00pc = municipio['rc_00_pc']
+            q24, q00 = _num_classe(municipio['quintil24']), _num_classe(municipio['quintil00'])
+            d24, d00 = _num_classe(municipio['decil24']), _num_classe(municipio['decil00'])
+            p24n, p00n = municipio['percentil24_n'], municipio['percentil00_n']
+            rk24, rk00 = municipio['rank_nacional'], municipio['rank_nacional_00']
+            feature['properties'].update({
+                # Valores-base de 2000 (para o popup comparativo)
+                'populacao00': pop00,
+                'rc_00_pc': rc00pc,
+                'quintil00': municipio['quintil00'],
+                'decil00': municipio['decil00'],
+                'percentil00_n': p00n,
+                'rank_nacional': rk24,
+                'rank_nacional_00': rk00,
+                'total_nacional': municipio['total_nacional'],
+                # Métricas de variação (None = sem dado → frontend pinta cinza)
+                'cresc_pop_pct': _cresc_pct(municipio['populacao24'], pop00),
+                'cresc_rcpc_pct': _cresc_pct(rc, rc00pc),
+                # Variação de classe: positivo = melhorou (subiu de quintil/decil/percentil)
+                'var_quintil': (q24 - q00) if (q24 is not None and q00 is not None) else None,
+                'var_decil': (d24 - d00) if (d24 is not None and d00 is not None) else None,
+                'var_percentil': (p24n - p00n) if (p24n is not None and p00n is not None) else None,
+                # Ranking: número menor é melhor, então melhora = rank_2000 - rank_2024 (positivo sobe)
+                'var_rank': (rk00 - rk24) if (rk24 is not None and rk00 is not None) else None,
+            })
+
         features.append(feature)
 
     geojson_data = {

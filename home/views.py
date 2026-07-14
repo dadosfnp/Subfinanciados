@@ -1,12 +1,38 @@
 # home/views.py - v1.0.1 - Deploy Fix 17/03/2026 15:45
+import re
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Avg, StdDev
+from django.db.models import Avg, StdDev, Count
 from django.http import JsonResponse
 from django.db import connection
-from .models import Municipio, ContaDetalhada, Noticia 
+from .models import Municipio, ContaDetalhada, Noticia
 import numpy as np
 import math
 from collections import defaultdict
+
+
+def _format_brl(value):
+    """Formata float para 'R$ 1.234' (sem decimais, separador BR)."""
+    if value is None:
+        return '—'
+    return 'R$ ' + f'{int(round(value)):,}'.replace(',', '.')
+
+
+def _medias_por_grupo(field, prefix):
+    """
+    Agrega Avg(rc_24_pc) por quintil/decil e devolve dict
+    {<prefix><n>: 'R$ X.XXX'} indexado pelo número do grupo (q1, q2, ..., d1, d2, ...).
+    """
+    qs = (Municipio.objects
+          .exclude(**{f'{field}__isnull': True})
+          .exclude(rc_24_pc__isnull=True)
+          .values(field)
+          .annotate(media=Avg('rc_24_pc')))
+    out = {}
+    for row in qs:
+        match = re.match(r'(\d+)', row[field] or '')
+        if match:
+            out[f'{prefix}{match.group(1)}'] = _format_brl(row['media'])
+    return out
 
 # --- VIEW DASHBOARD ---
 def home(request):
@@ -22,14 +48,27 @@ def index(request):
     """
     # Busca as notícias cadastradas no Admin
     noticias = Noticia.objects.all().order_by('-data')
-    # ATENÇÃO: Verifique se o arquivo está na pasta templates/ifem/index.html
-    return render(request, 'ifem/index.html', {'noticias': noticias})
+
+    # Médias per capita por grupo, exibidas dentro de cada box da seção Metodologia
+    medias_quintis = _medias_por_grupo('quintil24', 'q')
+    medias_decis = _medias_por_grupo('decil24', 'd')
+
+    return render(request, 'ifem/index.html', {
+        'noticias': noticias,
+        'medias_quintis': medias_quintis,
+        'medias_decis': medias_decis,
+    })
 
 # --- FUNÇÕES DE API (MANTIDAS IGUAIS) ---
 def api_get_dependent_filters(request):
     regiao_selecionada = request.GET.get('regiao')
     uf_selecionada = request.GET.get('uf')
     rm_selecionada = request.GET.get('rm')
+    porte_filtro = request.GET.get('porte')
+    subgroup_filter = request.GET.get('subgrupo')
+    classification_filter = request.GET.get('classification', 'quintil')
+    quantil_calculation = request.GET.get('calculation_mode', 'total')
+
     queryset = Municipio.objects.all()
 
     if rm_selecionada and rm_selecionada != 'todos':
@@ -38,6 +77,72 @@ def api_get_dependent_filters(request):
         queryset = queryset.filter(regiao=regiao_selecionada)
     if uf_selecionada and uf_selecionada != 'todos':
         queryset = queryset.filter(uf=uf_selecionada)
+
+    # Porte populacional — mesma lógica aplicada no mapa (map/views.py)
+    if porte_filtro and porte_filtro != 'todos':
+        if porte_filtro == 'Até 5 mil':
+            queryset = queryset.filter(populacao24__lt=5000)
+        elif porte_filtro == '5 mil a 10 mil':
+            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+        elif porte_filtro == '10 mil a 20 mil':
+            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+        elif porte_filtro == '20 mil a 50 mil':
+            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+        elif porte_filtro == '50 mil a 100 mil':
+            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+        elif porte_filtro == '100 mil a 200 mil':
+            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+        elif porte_filtro == '200 mil a 500 mil':
+            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+        elif porte_filtro == 'Acima de 500 mil':
+            queryset = queryset.filter(populacao24__gte=500000)
+        elif porte_filtro == 'Acima de 80 mil':
+            queryset = queryset.filter(populacao24__gt=80000)
+        elif porte_filtro == 'Abaixo de 80 mil':
+            queryset = queryset.filter(populacao24__lte=80000)
+
+    # Subgrupo (quintil/decil/natural) — espelha o mapa pra cascata funcionar
+    if subgroup_filter and subgroup_filter != 'todos':
+        if quantil_calculation == 'por_filtro' and classification_filter in ('quintil', 'decil'):
+            num_quantiles = 5 if classification_filter == 'quintil' else 10
+            rc_values = np.array([
+                m['rc_24_pc']
+                for m in queryset.values('rc_24_pc')
+                if m.get('rc_24_pc') is not None
+            ])
+            if len(rc_values) > 0:
+                try:
+                    target_idx = int(subgroup_filter) - 1
+                    if 0 <= target_idx < num_quantiles:
+                        bounds = np.quantile(
+                            rc_values,
+                            np.linspace(0, 1, num_quantiles + 1)[1:-1]
+                        )
+                        min_val = bounds[target_idx - 1] if target_idx > 0 else None
+                        max_val = bounds[target_idx] if target_idx < num_quantiles - 1 else None
+                        if min_val is None:
+                            queryset = queryset.filter(rc_24_pc__lt=max_val)
+                        elif max_val is None:
+                            queryset = queryset.filter(rc_24_pc__gte=min_val)
+                        else:
+                            queryset = queryset.filter(rc_24_pc__gte=min_val, rc_24_pc__lt=max_val)
+                except ValueError:
+                    pass
+        elif classification_filter == 'quintil':
+            queryset = queryset.filter(quintil24=f'{subgroup_filter}º quintil')
+        elif classification_filter == 'decil':
+            queryset = queryset.filter(decil24=f'{subgroup_filter}º decil')
+        elif classification_filter == 'natural':
+            try:
+                min_str, max_str = subgroup_filter.split('-')
+                min_val = int(min_str)
+                if max_str.lower() == '999999':
+                    queryset = queryset.filter(rc_24_pc__gte=min_val)
+                else:
+                    max_val = int(max_str)
+                    queryset = queryset.filter(rc_24_pc__gte=min_val, rc_24_pc__lt=max_val)
+            except ValueError:
+                pass
 
     regioes = queryset.values_list('regiao', flat=True).distinct().order_by('regiao')
     ufs = queryset.values_list('uf', flat=True).distinct().order_by('uf')
@@ -171,8 +276,9 @@ def api_get_dashboard_data(request):
         if media_receita_per_capita > 0 and std_dev_res is not None:
             coeficiente_de_variacao = std_dev_res / media_receita_per_capita
         
-        nacional_total_municipios_base = Municipio.objects.all().count()
-        nacional_media_receita_per_capita_base = Municipio.objects.all().aggregate(Avg('rc_24_pc'))['rc_24_pc__avg'] or 1
+        _nacional_stats = Municipio.objects.aggregate(total=Count('id'), media_rc=Avg('rc_24_pc'))
+        nacional_total_municipios_base = _nacional_stats['total'] or 0
+        nacional_media_receita_per_capita_base = _nacional_stats['media_rc'] or 1
         gini_index = 0.202 
         perc_municipios_selecao = (total_municipios / nacional_total_municipios_base * 100) if nacional_total_municipios_base > 0 else 0
         diff_media_nacional = ((media_receita_per_capita - nacional_media_receita_per_capita_base) / nacional_media_receita_per_capita_base * 100) if nacional_media_receita_per_capita_base > 0 else 0

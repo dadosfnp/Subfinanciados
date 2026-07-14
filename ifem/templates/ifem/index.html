@@ -739,42 +739,42 @@
                         </div>
 
                         <span class="group-title-pro">Quintis (20% cada)</span>
-                        
+
                         <div class="row-quintis-pro">
-                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% dos municípios de menor receita">
+                            <div class="box-q-pro q-red" data-tooltip="1º Quintil : 0% a 20% dos municípios de menor receita — média {{ medias_quintis.q1 }}">
                                 <span class="q-val">1º</span>
                                 <span class="q-label">MENOR<br>RECEITA</span>
                             </div>
-                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% dos municípios de menor receita">
+                            <div class="box-q-pro q-orange" data-tooltip="2º Quintil : 20% a 40% dos municípios de menor receita — média {{ medias_quintis.q2 }}">
                                 <span class="q-val">2º</span>
                             </div>
-                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% dos municípios de menor receita">
+                            <div class="box-q-pro q-yellow" data-tooltip="3º Quintil : 40% a 60% dos municípios de menor receita — média {{ medias_quintis.q3 }}">
                                 <span class="q-val">3º</span>
                             </div>
-                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 20% a 40% dos municípios de maior receita">
+                            <div class="box-q-pro q-green-light" data-tooltip="4º Quintil : 20% a 40% dos municípios de maior receita — média {{ medias_quintis.q4 }}">
                                 <span class="q-val">4º</span>
                             </div>
-                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 20% dos municípios de maior receita">
+                            <div class="box-q-pro q-green" data-tooltip="5º Quintil : 20% dos municípios de maior receita — média {{ medias_quintis.q5 }}">
                                 <span class="q-val">5º</span>
                                 <span class="q-label">MAIOR<br>RECEITA</span>
                             </div>
                         </div>
 
                         <div class="divider-pro"><span>ou em maior detalhe(com 550 municípios em cada grupo)</span></div>
-                        
+
                         <span class="group-title-pro">Decis (10% cada)</span>
-                        
+
                         <div class="row-decis-pro">
-                            <div class="box-d-pro d-1" data-tooltip="1º Decil : 0% a 10% dos municípios de menor receita">1º</div>
-                            <div class="box-d-pro d-2" data-tooltip="2º Decil : 10% a 20% dos municípios de menor receita">2º</div>
-                            <div class="box-d-pro d-3" data-tooltip="3º Decil : 20% a 30% dos municípios de menor receita">3º</div>
-                            <div class="box-d-pro d-4" data-tooltip="4º Decil : 30% a 40% dos municípios de menor receita">4º</div>
-                            <div class="box-d-pro d-5" data-tooltip="5º Decil : 40% a 50% dos municípios de menor receita">5º</div>
-                            <div class="box-d-pro d-6" data-tooltip="6º Decil : 40% a 50% dos municípios de maior receita">6º</div>
-                            <div class="box-d-pro d-7" data-tooltip="7º Decil : 30% a 40% dos municípios de maior receita">7º</div>
-                            <div class="box-d-pro d-8" data-tooltip="8º Decil : 20% a 30% dos municípios de maior receita">8º</div>
-                            <div class="box-d-pro d-9" data-tooltip="9º Decil : 10% a 20% dos municípios de maior receita">9º</div>
-                            <div class="box-d-pro d-10" data-tooltip="10º Decil : 10% dos municípios de maior receita">10º</div>
+                            <div class="box-d-pro d-1" data-tooltip="1º Decil : 0% a 10% dos municípios de menor receita — média {{ medias_decis.d1 }}">1º</div>
+                            <div class="box-d-pro d-2" data-tooltip="2º Decil : 10% a 20% dos municípios de menor receita — média {{ medias_decis.d2 }}">2º</div>
+                            <div class="box-d-pro d-3" data-tooltip="3º Decil : 20% a 30% dos municípios de menor receita — média {{ medias_decis.d3 }}">3º</div>
+                            <div class="box-d-pro d-4" data-tooltip="4º Decil : 30% a 40% dos municípios de menor receita — média {{ medias_decis.d4 }}">4º</div>
+                            <div class="box-d-pro d-5" data-tooltip="5º Decil : 40% a 50% dos municípios de menor receita — média {{ medias_decis.d5 }}">5º</div>
+                            <div class="box-d-pro d-6" data-tooltip="6º Decil : 40% a 50% dos municípios de maior receita — média {{ medias_decis.d6 }}">6º</div>
+                            <div class="box-d-pro d-7" data-tooltip="7º Decil : 30% a 40% dos municípios de maior receita — média {{ medias_decis.d7 }}">7º</div>
+                            <div class="box-d-pro d-8" data-tooltip="8º Decil : 20% a 30% dos municípios de maior receita — média {{ medias_decis.d8 }}">8º</div>
+                            <div class="box-d-pro d-9" data-tooltip="9º Decil : 10% a 20% dos municípios de maior receita — média {{ medias_decis.d9 }}">9º</div>
+                            <div class="box-d-pro d-10" data-tooltip="10º Decil : 10% dos municípios de maior receita — média {{ medias_decis.d10 }}">10º</div>
                         </div>
                     </div>
 
@@ -881,6 +881,13 @@
                     </svg>
                     Veja tutorial
                 </button>
+                <a class="btn-tutorial" href="https://www.youtube.com/watch?v=hw3o_Ah38Tc&t=2s" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1C5.12 19.54 12 19.54 12 19.54s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.37z"></path>
+                        <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="currentColor"></polygon>
+                    </svg>
+                    Veja apresentação na Câmara dos Deputados
+                </a>
             </div>
 
             <div id="tutorialModal" class="tutorial-modal">
@@ -1036,8 +1043,8 @@
                             {% for noticia in noticias %}
                                 <a href="{{ noticia.link|default:'#' }}" class="news-card-pro" target="_blank">
                                     
-                                    {% if noticia.imagem %}
-                                        <img src="{{ noticia.imagem.url }}" class="news-bg-img" alt="{{ noticia.titulo }}">
+                                    {% if noticia.imagem_embed_url %}
+                                        <img src="{{ noticia.imagem_embed_url }}" class="news-bg-img" alt="{{ noticia.titulo }}" referrerpolicy="no-referrer">
                                     {% else %}
                                         <img src="https://via.placeholder.com/400x600" class="news-bg-img" alt="Sem imagem">
                                     {% endif %}

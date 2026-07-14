@@ -1,0 +1,97 @@
+{% load currency_filters %}
+{% with has_children=item.children %}
+<style>
+    @keyframes fadeInRow {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-row {
+        animation: fadeInRow 0.5s ease-out forwards;
+    }
+    .invisible-by-est {
+        display: none !important;
+    }
+</style>
+
+
+<div class="revenue-item-wrapper overflow-hidden transition-all duration-300 ml-0 sm:ml-[calc({{ level }}*32px)]">
+    
+    <div class="tree-row group transition-colors hover:bg-slate-100 border-b border-slate-100 last:border-0 level-{{ level }} py-4 pr-4 {% if level == 0 %}pl-5 rounded-lg mb-2 border border-slate-200 shadow-sm{% else %}border-l-[4px] border-l-slate-300 pl-[16px] bg-slate-50/60 mt-1 rounded-r-lg{% endif %} {% if has_children and level == 0 %}toggle-heading{% elif has_children and level > 0 %}toggle-subheading{% else %}metric-detail-row{% endif %}"
+         {% if has_children %}data-target="{{ item.target_id }}"{% endif %}
+         data-field-base="{{ item.field_base }}" 
+         style="cursor: pointer;">
+
+        <div class="flex flex-col w-full min-w-0">
+            
+            <div class="flex items-start justify-between gap-2 sm:gap-4 mb-1.5">
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                    
+                    <div class="flex flex-col items-center shrink-0 mt-1 sm:mt-0.5 gap-1.5">
+                        <div class="revenue-color-indicator w-3.5 h-3.5 rounded-sm transition-colors duration-300"
+                            style="background-color: #e2e8f0;" 
+                            data-q-nacional="{% if item.percentiles.nacional < 0 %}0{% elif item.percentiles.nacional <= 20 %}1{% elif item.percentiles.nacional <= 40 %}2{% elif item.percentiles.nacional <= 60 %}3{% elif item.percentiles.nacional <= 80 %}4{% else %}5{% endif %}"
+                            data-q-estadual="{% if item.percentiles.estadual < 0 %}0{% elif item.percentiles.estadual <= 20 %}1{% elif item.percentiles.estadual <= 40 %}2{% elif item.percentiles.estadual <= 60 %}3{% elif item.percentiles.estadual <= 80 %}4{% else %}5{% endif %}"
+                            data-q-faixa="{% if item.percentiles.faixa < 0 %}0{% elif item.percentiles.faixa <= 20 %}1{% elif item.percentiles.faixa <= 40 %}2{% elif item.percentiles.faixa <= 60 %}3{% elif item.percentiles.faixa <= 80 %}4{% else %}5{% endif %}">
+                        </div>
+                        
+                        {% if has_children %}
+                            <div class="p-0.5 rounded-full group-hover:bg-slate-200 transition-colors duration-300">
+                                <svg class="tree-chevron w-4 h-4 text-slate-400 transition-all duration-300 group-hover:text-[#194685]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h4 class="{% if level == 0 %}text-[20px] sm:text-[22px]{% else %}text-sm sm:text-base{% endif %} font-bold text-[#103758] transition-colors duration-300 group-hover:text-[#194685] whitespace-normal break-words leading-tight">{{ item.name }}</h4>
+                </div>
+            </div>
+            <div class="pl-2 sm:pl-[22px] mb-3">
+                <p class="revenue-dynamic-phrase text-[14px] sm:text-[16px] text-slate-500 font-medium whitespace-normal break-words leading-snug"
+                   data-muni-name="{{ municipio.name_muni|title }}"
+                   data-pct-nacional="{{ item.percentiles.nacional|default:'' }}"
+                   data-pct-estadual="{{ item.percentiles.estadual|default:'' }}"
+                   data-pct-faixa="{{ item.percentiles.faixa|default:'' }}">
+                   </p>
+            </div>
+            
+          <div class="pl-[18px] flex flex-wrap items-center gap-3 sm:gap-4 mt-2 tree-value mb-2">
+                <div class="bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
+                    <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 lbl-tipo-valor">Valor/Habitante</span>
+                    <span class="block text-[18px] font-black text-[#103758]">
+                        <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
+                        <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
+                    </span>
+                </div>
+                
+                <div class="media-block-wrapper estatistica-media transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
+                    <span class="revenue-dynamic-media-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Média Nacional</span>
+                    
+                    <span class="revenue-dynamic-media-value block text-[18px] font-black text-slate-500 break-all"
+                          data-val-nacional="{% if item.media_nacional %}R$ {{ item.media_nacional|br_integer }}{% endif %}"
+                          data-val-estadual="{% if item.media_estadual %}R$ {{ item.media_estadual|br_integer }}{% endif %}"
+                          data-val-faixa="{% if item.media_faixa %}R$ {{ item.media_faixa|br_integer }}{% endif %}">
+                    </span>
+                </div>
+                <div class="media-block-wrapper estatistica-mediana hidden transition-opacity duration-300 bg-slate-50 rounded-xl p-3 flex-1 min-w-[140px] max-w-[220px]">
+                    <span class="revenue-dynamic-mediana-label block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mediana Nacional</span>
+                    
+                    <span class="revenue-dynamic-mediana-value block text-[18px] font-black text-slate-500"
+                          data-val-nacional="{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|br_integer }}{% endif %}"
+                          data-val-estadual="{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|br_integer }}{% endif %}"
+                          data-val-faixa="{% if item.mediana_faixa %}R$ {{ item.mediana_faixa|br_integer }}{% endif %}">
+                          </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if has_children %}
+    <div id="{{ item.target_id }}" class="hidden mt-1 mb-1 animate-fade-in-row">
+        {% for child in item.children %}
+            {% include "detail_mun/_revenue_item.html" with item=child level=level|add:1 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endwith %}

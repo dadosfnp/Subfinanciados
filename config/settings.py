@@ -27,13 +27,18 @@ MAPBOX_PUBLIC_TOKEN = os.getenv("MAPBOX_PUBLIC_TOKEN", "")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-cf7d=i4d^itec4*8!wad0f%oo%qiu5xej8fgnbwm%r_$oxh#5u')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError(
+        "A variável de ambiente DJANGO_SECRET_KEY não está definida. "
+        "Configure-a no arquivo .env (desenvolvimento) ou nas variáveis de ambiente (produção)."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 't')
 
 # Lê a variável ou usa fallbacks - Aceita múltiplos hosts separados por vírgula
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "subfinanciados-ifem.onrender.com,localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "ifem.onrender.com,localhost,127.0.0.1").split(",")
 
 # Adicione também esta configuração para evitar erros de CSRF em formulários
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "https://subfinanciados-ifem.onrender.com,https://*.onrender.com").split(",")
@@ -53,12 +58,16 @@ INSTALLED_APPS = [
     'home',
     'ifem',
     'map',
-    'detail',
+    'detail_mun',
+    'detail_agg',
      
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Comprime respostas dinâmicas (HTML/JSON). Crítico para a API de GeoJSON do mapa,
+    # que trafega ~2.8MB sem compressão. Seguro aqui: respostas são dados públicos (sem risco BREACH).
+    'django.middleware.gzip.GZipMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -188,6 +197,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ==========================================
 # Redireciona HTTP para HTTPS - Ativado apenas em produção via Variável de Ambiente
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
+
+# Atrás do Nginx (que termina o TLS), a requisição chega ao Gunicorn como HTTP interno.
+# O proxy seta `X-Forwarded-Proto` (proxy_set_header ... $scheme, sobrescrevendo o valor do
+# cliente), e este header diz ao Django que a conexão externa é HTTPS. Sem isso,
+# SECURE_SSL_REDIRECT=True entra em loop infinito: o app nunca "enxerga" o https e redireciona
+# de novo. Seguro em dev (o header não vem, nada muda) e em prod (só o Nginx local, em
+# 127.0.0.1, fala com o container — o cliente não consegue forjar o header).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 if not DEBUG and SECURE_SSL_REDIRECT:
     SESSION_COOKIE_SECURE = True

@@ -229,25 +229,51 @@
         </div>
 
         <div class="filter-group">
-          <label for="filtro-classificacao" class="form-label">Colorir por:</label>
-          <select id="filtro-classificacao" class="form-select form-select-sm">
-            <option value="quintil" selected>Quintis de Receita p/c</option>
-            <option value="decil">Decis de Receita p/c</option>
-            <option value="natural">Quebras Naturais (Receita)</option>
+          <label for="filtro-modo-analise" class="form-label">Modo de análise:</label>
+          <select id="filtro-modo-analise" class="form-select form-select-sm">
+            <option value="receita" selected>Receita atual (2024)</option>
+            <option value="crescimento">Crescimento 2000 → 2024</option>
           </select>
         </div>
 
-        <div class="filter-group">
-          <label for="filtro-subgrupo" class="form-label">Quintil:</label>
-          <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
+        <!-- Controles do modo "Receita atual" (escondidos no modo crescimento) -->
+        <div id="bloco-receita">
+          <div class="filter-group">
+            <label for="filtro-classificacao" class="form-label">Colorir por:</label>
+            <select id="filtro-classificacao" class="form-select form-select-sm">
+              <option value="quintil" selected>Quintis de Receita p/c</option>
+              <option value="decil">Decis de Receita p/c</option>
+              <option value="natural">Quebras Naturais (Receita)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filtro-subgrupo" class="form-label">Quintil:</label>
+            <select id="filtro-subgrupo" class="form-select form-select-sm"></select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
+            <select id="filtro-modo-calculo" class="form-select form-select-sm">
+              <option value="total">País (Total)</option>
+              <option value="por_filtro">Filtro Atual</option>
+            </select>
+          </div>
         </div>
 
-        <div class="filter-group">
-          <label for="filtro-modo-calculo" class="form-label">Cálculo do Quantil:</label>
-          <select id="filtro-modo-calculo" class="form-select form-select-sm">
-            <option value="total">País (Total)</option>
-            <option value="por_filtro">Filtro Atual</option>
-          </select>
+        <!-- Controles do modo "Crescimento 2000→2024" -->
+        <div id="bloco-crescimento" style="display:none;">
+          <div class="filter-group">
+            <label for="filtro-metrica-crescimento" class="form-label">Métrica de crescimento:</label>
+            <select id="filtro-metrica-crescimento" class="form-select form-select-sm">
+              <option value="cresc_pop_pct" selected>Crescimento da população (%)</option>
+              <option value="cresc_rcpc_pct">Crescimento da receita p/c (%)</option>
+              <option value="var_rank">Variação no ranking nacional</option>
+              <option value="var_quintil">Variação no quintil</option>
+              <option value="var_decil">Variação no decil</option>
+              <option value="var_percentil">Variação no percentil</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -297,6 +323,9 @@
   <h5>Resumo do Filtro</h5>
   <p><strong>Municípios na seleção:</strong><br> <span id="summary-count">0</span></p>
   <p><strong>Receita Per Capita Média:</strong><br> <span id="summary-avg-revenue">R$ 0,00</span></p>
+  <button id="btn-ver-mais-breakdown" type="button" class="btn-ver-mais-link" data-bs-toggle="modal" data-bs-target="#breakdown-modal">
+    + Ver mais
+  </button>
 </div>
       <div id="legend"></div>
     </div>
@@ -312,6 +341,28 @@
       </div>
       <div class="modal-body p-0">
         <ul id="search-list" class="list-group list-group-flush"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="breakdown-modal" class="modal fade" tabindex="-1" aria-labelledby="breakdown-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title" id="breakdown-modal-title">Distribuição da seleção</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="breakdown-summary">
+          <div><span class="breakdown-summary-label">Municípios na seleção</span><span id="breakdown-total" class="breakdown-summary-value">0</span></div>
+          <div><span class="breakdown-summary-label">Receita Per Capita Média</span><span id="breakdown-avg" class="breakdown-summary-value">R$ 0,00</span></div>
+        </div>
+        <div id="breakdown-grupo-titulo" class="breakdown-grupo-titulo">Distribuição por quintil</div>
+        <div id="breakdown-list" class="breakdown-list"></div>
+        <div id="breakdown-empty" class="breakdown-empty d-none">
+          Esta visualização não está disponível para a classificação "Quebras Naturais".
+        </div>
       </div>
     </div>
   </div>
