@@ -9,6 +9,7 @@ from detail_mun import views as detail_mun_views
 from detail_agg import views as detail_agg_views
 from map import views as map_views
 from ifem import views as ifem_views
+from metodologia import views as metodologia_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,7 +23,7 @@ urlpatterns = [
     path('selecionar-municipio/', detail_mun_views.selecionar_municipio_view, name='selecionar_municipio'), # NOVA ROTA AQUI
     path('analise-municipal/', detail_agg_views.conjunto_detalhe_view, name='analise_municipal'),
     path('municipio/<str:municipio_id>/', detail_mun_views.municipio_detalhe_view, name='municipio_detalhe'),
-    path('metodologia/', ifem_views.metodologia_page, name='metodologia'),
+    path('metodologia/', metodologia_views.metodologia_page, name='metodologia'),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),

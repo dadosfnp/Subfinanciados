@@ -12,7 +12,7 @@ O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para anál
 *   **🗺️ Análise Geográfica:** Integração com Mapbox para visualização espacial dos dados fiscais e populacionais.
 *   **📊 Insights Agregados:** Ferramentas para análise de conjuntos de municípios (por região ou porte), com suporte a valores *Per Capita* e absolutos.
 *   **⚙️ Data Engine:** Pipeline automatizado de importação e processamento de dados (`.xlsx`/`.xls`) com validação de integridade.
-*   **🎨 Design Premium:** Interface inspirada em sistemas modernos (iOS/MacOS), com Bento Cards, micro-interações e suporte a WhiteNoise.
+*   **🎨 Design Premium:** Interface inspirada em sistemas modernos, com Bento Cards, micro-interações e suporte a WhiteNoise.
 
 ---
 
