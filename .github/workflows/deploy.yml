@@ -1,0 +1,51 @@
+name: Deploy produção (droplet)
+
+# Dispara o deploy automático no droplet a cada push na main (ou manualmente pela aba Actions).
+# O runner conecta via SSH e roda o deploy.sh, que rebuilda a imagem Docker e recria o container.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Serializa deploys: nunca roda dois ao mesmo tempo, e não cancela um deploy em andamento.
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        env:
+          SSH_HOST: ${{ secrets.DROPLET_SSH_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_SSH_USER }}
+          SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DROPLET_SSH_KNOWN_HOSTS }}
+          APP_DIR: ${{ secrets.DROPLET_APP_DIR }}
+        run: |
+          set -euo pipefail
+
+          # Guard: enquanto os secrets não estiverem configurados, o job passa (verde) sem fazer nada.
+          # Evita deploy vermelho no primeiro merge, antes de você concluir o setup no droplet.
+          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_KEY}" ]; then
+            echo "::notice::Secrets DROPLET_SSH_* ainda não configurados — deploy pulado. Veja tasks/runbook-migracao-droplet.md."
+            exit 0
+          fi
+
+          # Diretório do clone no droplet (default se o secret não for informado).
+          APP_DIR="${APP_DIR:-/var/www/ifem}"
+
+          # Chave privada de deploy em arquivo temporário com permissão restrita.
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${SSH_KEY}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+          # known_hosts fixado via secret (evita MITM; não usamos StrictHostKeyChecking=no).
+          printf '%s\n' "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+          echo "[ci] Disparando deploy em ${SSH_USER}@${SSH_HOST}:${APP_DIR}"
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o BatchMode=yes \
+            "${SSH_USER}@${SSH_HOST}" \
+            "cd '${APP_DIR}' && ./deploy.sh"

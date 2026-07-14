@@ -122,6 +122,16 @@ server {
     **Render** (`render.yaml`, a desligar); na migração para o droplet o equivalente não foi configurado.
 - FERRAMENTA: adicionado `deploy.sh` na raiz — encapsula `fetch + reset --hard` (resiste à reescrita de
   histórico) → `docker compose build` → `up -d`. Deploy manual vira um comando: `cd /var/www/ifem && ./deploy.sh`.
-- PENDÊNCIA (decisão do Pedro): configurar **auto-deploy** para não precisar acessar o droplet.
-  Opções: (a) GitHub Action que faz SSH no droplet e roda `deploy.sh` no push; (b) webhook do GitHub →
-  listener no droplet chamando `deploy.sh`. Ambas exigem uma chave SSH de deploy e secrets no repo.
+- AUTO-DEPLOY (decisão: GitHub Actions + SSH, gatilho `main`): workflow `.github/workflows/deploy.yml`.
+  A cada push na `main`, o runner conecta via SSH no droplet e roda `deploy.sh`. Enquanto os secrets não
+  existirem, o job passa (verde) sem fazer nada — não quebra o primeiro merge.
+  - **Setup manual no DROPLET (1x):**
+    1. Apontar o clone pra `main` (produção passa a seguir a main): `cd /var/www/ifem && git fetch --all && git checkout main && git reset --hard origin/main` (ajustar nome do remote — no droplet é `github-ifem`).
+    2. Garantir `deploy.sh` executável: `chmod +x deploy.sh` (só se o clone não tiver preservado o bit 100755).
+    3. Criar chave SSH dedicada ao CI (SEM passphrase): `ssh-keygen -t ed25519 -f ~/.ssh/id_ci_deploy -N ''` e autorizar: `cat ~/.ssh/id_ci_deploy.pub >> ~/.ssh/authorized_keys`.
+    4. Pegar o host key pro known_hosts do CI: `ssh-keyscan -H <IP_DO_DROPLET>` (guardar a saída).
+  - **Secrets no GitHub (repo → Settings → Secrets and variables → Actions):**
+    - `DROPLET_SSH_HOST` = IP/host do droplet · `DROPLET_SSH_USER` = usuário SSH (ex.: root)
+    - `DROPLET_SSH_KEY` = conteúdo de `~/.ssh/id_ci_deploy` (chave PRIVADA) · `DROPLET_SSH_KNOWN_HOSTS` = saída do `ssh-keyscan`
+    - `DROPLET_APP_DIR` = `/var/www/ifem` (opcional; é o default)
+  - Melhoria de segurança futura: usar um usuário `deploy` no grupo `docker` em vez de `root` no SSH.
