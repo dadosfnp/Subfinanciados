@@ -106,3 +106,22 @@ server {
 - Limpeza não-IFEM: removidos gitlink órfão "Subfinanciados" (submódulo acidental) e package-lock.json (sem package.json).
   Mantidos (decisão do Pedro): check_db.py, debug/test_*.py, exports do folheto.
 - PENDÊNCIA SEGURANÇA (Pedro): senhas (doadmin, ifem_app) no Bitwarden; opcional restringir token Mapbox por URL.
+
+## Consolidação main + processo de deploy — 2026-07-14
+- CONSOLIDAÇÃO: `main` reintegrada com a branch de produção `feat/pagina-metodologia` via PR #75.
+  Trazidos: app próprio `metodologia/` (extraído do `ifem`), scripts de export do folheto e fix HTTPS/Nginx.
+  Conflito resolvido em `config/urls.py` (rota `/metodologia/` aponta para o app novo). Árvore da `main`
+  ficou idêntica à `feat`. Validado: `check` (0 issues), `makemigrations --check` (sem pendências),
+  `GET /metodologia/` → 200.
+- COMO O DEPLOY REALMENTE FUNCIONA (importante — não é auto-deploy):
+  - O app roda em **container Docker** no droplet (`docker compose`, imagem `ifem-subfinanciados:latest`).
+  - O código entra na imagem via `COPY . .` no **build** do Dockerfile — **não** em runtime.
+  - Portanto **`git pull` sozinho não atualiza o app**: é obrigatório rebuildar a imagem e recriar o
+    container. `migrate` e `collectstatic` rodam sozinhos no `entrypoint.sh` a cada subida do container.
+  - **Não há auto-deploy hoje**: nenhum webhook/GitHub Action/cron. O "push→deploy automático" era do
+    **Render** (`render.yaml`, a desligar); na migração para o droplet o equivalente não foi configurado.
+- FERRAMENTA: adicionado `deploy.sh` na raiz — encapsula `fetch + reset --hard` (resiste à reescrita de
+  histórico) → `docker compose build` → `up -d`. Deploy manual vira um comando: `cd /var/www/ifem && ./deploy.sh`.
+- PENDÊNCIA (decisão do Pedro): configurar **auto-deploy** para não precisar acessar o droplet.
+  Opções: (a) GitHub Action que faz SSH no droplet e roda `deploy.sh` no push; (b) webhook do GitHub →
+  listener no droplet chamando `deploy.sh`. Ambas exigem uma chave SSH de deploy e secrets no repo.
