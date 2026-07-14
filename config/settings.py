@@ -58,9 +58,10 @@ INSTALLED_APPS = [
     'home',
     'ifem',
     'map',
+    'metodologia',
     'detail_mun',
     'detail_agg',
-     
+
 ]
 
 MIDDLEWARE = [
