@@ -53,23 +53,41 @@ O **Subfinanciados** é uma plataforma robusta desenvolvida em Django para anál
     # source venv/bin/activate        # Linux / macOS
     pip install -r requirements.txt
     ```
-3.  **Crie o arquivo `.env` (passo obrigatório):**
+3.  **Crie o arquivo `.env` (passo obrigatório — não pule):**
 
     O `.env` **não vem no repositório** (está no `.gitignore`), então todo clone precisa criar o seu.
     Sem a variável `DJANGO_SECRET_KEY` o Django **não sobe** e você verá o erro
     `A variável de ambiente DJANGO_SECRET_KEY não está definida`.
 
+    **3.1 — Copie o template `.env.example` para `.env`:**
     ```bash
     cp .env.example .env              # Linux / macOS
-    # copy .env.example .env          # Windows (PowerShell/CMD)
+    ```
+    ```powershell
+    Copy-Item .env.example .env       # Windows (PowerShell)
     ```
 
-    Agora gere uma `DJANGO_SECRET_KEY` e cole no `.env`:
+    **3.2 — Gere uma chave secreta.** Rode o comando abaixo e copie a linha que ele imprimir:
     ```bash
     python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
     ```
-    Abra o `.env` e substitua o valor de `DJANGO_SECRET_KEY` pela chave gerada.
-    Para rodar local com **SQLite**, mantenha a linha `DATABASE_URL` **comentada** (é o padrão do `.env.example`).
+
+    **3.3 — Abra o `.env` num editor de texto** e cole a chave gerada:
+    ```bash
+    notepad .env                      # Windows
+    # nano .env  (ou code .env)       # Linux / macOS / VS Code
+    ```
+    Localize a linha `DJANGO_SECRET_KEY=...` e substitua o valor pela chave do passo 3.2. Deve ficar assim:
+    ```env
+    DJANGO_SECRET_KEY=cole-aqui-a-chave-gerada-no-passo-3.2
+    ```
+
+    **3.4 — Ajuste as demais variáveis conforme o seu caso:**
+    *   `DATABASE_URL` → **deixe comentada** (com `#` na frente) para rodar em **SQLite local**. Para usar o PostgreSQL de produção, veja a seção [Conectando ao PostgreSQL de produção](#conectando-ao-postgresql-de-produção-opcional) logo abaixo.
+    *   `MAPBOX_PUBLIC_TOKEN` → cole o token público do Mapbox (peça ao time) para os mapas carregarem.
+    *   As demais (`DJANGO_DEBUG`, `ALLOWED_HOSTS`, etc.) já vêm com valores razoáveis para rodar local.
+
+    Salve e feche o arquivo.
 4.  **Prepare o Banco e Estáticos:**
     ```bash
     python manage.py migrate
@@ -152,16 +170,48 @@ A lista completa está em `.env.example`. As principais:
 
 ## ☁️ Produção (Droplet + PostgreSQL Managed)
 
-Em produção o app roda **como container** no Droplet (DigitalOcean), atrás do **Nginx**, com banco **PostgreSQL Managed** num database dedicado (`ifem`). Segue o padrão Docker da FNP: um `Dockerfile`/serviço por sistema.
+O IFEM está publicado em **https://ifem.fnp.org.br**. Em produção o app roda **como container** num Droplet (DigitalOcean), atrás do **Nginx** (que termina o TLS via Let's Encrypt), com banco **PostgreSQL Managed** num database dedicado (`ifem`). O clone de produção fica em `/var/www/ifem` no servidor. Segue o padrão Docker da FNP: um `Dockerfile`/serviço por sistema.
 
-*   **Build/atualização no servidor:**
+> ⚠️ **Por que não basta `git pull`:** o código entra na **imagem** Docker via `COPY . .` no build, não em runtime. Um `pull` sozinho **não** atualiza o app — o container continua rodando a imagem antiga. É obrigatório **rebuildar a imagem e recriar o container** após atualizar o código.
+
+### Como atualizar o IFEM em produção (deploy manual)
+
+É o fluxo em uso hoje. Qualquer pessoa com **acesso SSH ao droplet** e os dados corretos consegue atualizar:
+
+1.  **Conecte no droplet** (peça o IP e o usuário ao responsável pela infra — não ficam neste repositório):
+    ```bash
+    ssh <usuario>@<ip-do-droplet>
+    ```
+2.  **Entre na pasta do app e sincronize o código** com o remoto:
+    ```bash
+    cd /var/www/ifem
+    git fetch --all --prune
+    git reset --hard @{u}          # sincroniza com a branch remota (histórico já sofreu force-push)
+    ```
+3.  **Rebuild da imagem e recriação do container:**
     ```bash
     docker compose up -d --build
     ```
+    `migrate` e `collectstatic` rodam sozinhos no `entrypoint.sh` quando o container sobe.
+4.  **Confira que subiu:**
+    ```bash
+    docker compose ps
+    ```
+    App interno em `http://127.0.0.1:8003`; o Nginx faz o proxy público para `https://ifem.fnp.org.br`.
+
+> 💡 Onde há o `deploy.sh` (branch de infra), os passos 2–4 viram um comando só: `cd /var/www/ifem && ./deploy.sh`.
+
 *   **Validação sem expor publicamente** (túnel SSH — acesse em http://localhost:8003):
     ```bash
-    ssh -L 8003:localhost:8003 root@<ip-do-droplet>
+    ssh -L 8003:localhost:8003 <usuario>@<ip-do-droplet>
     ```
+
+### Deploy automático (em transição)
+
+Há um **GitHub Actions** (`.github/workflows/deploy.yml`, na branch de infra `chore/deploy-script-e-runbook`, ainda **não mergeada** na `main`) que dispara o deploy sozinho **a cada push na `main`**: o runner conecta no droplet via SSH e roda o `deploy.sh`. Enquanto os secrets `DROPLET_SSH_*` não estiverem configurados no repositório, o job passa sem fazer nada (guard de segurança).
+
+> **Atenção à branch de produção:** hoje o droplet acompanha a branch **`feat/pagina-metodologia`** (deploy manual). Quando o auto-deploy entrar em vigor, a branch de produção passa a ser a **`main`**. Sempre confirme a branch ativa no droplet com `git branch --show-current` antes de deployar.
+
 *   **Decisões de arquitetura e passo a passo da migração:** ver `tasks/plan-migracao-droplet.md`, `tasks/runbook-migracao-droplet.md` e o ADR-001 na pasta TIC da FNP.
 
 ---
