@@ -106,3 +106,32 @@ server {
 - Limpeza não-IFEM: removidos gitlink órfão "Subfinanciados" (submódulo acidental) e package-lock.json (sem package.json).
   Mantidos (decisão do Pedro): check_db.py, debug/test_*.py, exports do folheto.
 - PENDÊNCIA SEGURANÇA (Pedro): senhas (doadmin, ifem_app) no Bitwarden; opcional restringir token Mapbox por URL.
+
+## Consolidação main + processo de deploy — 2026-07-14
+- CONSOLIDAÇÃO: `main` reintegrada com a branch de produção `feat/pagina-metodologia` via PR #75.
+  Trazidos: app próprio `metodologia/` (extraído do `ifem`), scripts de export do folheto e fix HTTPS/Nginx.
+  Conflito resolvido em `config/urls.py` (rota `/metodologia/` aponta para o app novo). Árvore da `main`
+  ficou idêntica à `feat`. Validado: `check` (0 issues), `makemigrations --check` (sem pendências),
+  `GET /metodologia/` → 200.
+- COMO O DEPLOY REALMENTE FUNCIONA (importante — não é auto-deploy):
+  - O app roda em **container Docker** no droplet (`docker compose`, imagem `ifem-subfinanciados:latest`).
+  - O código entra na imagem via `COPY . .` no **build** do Dockerfile — **não** em runtime.
+  - Portanto **`git pull` sozinho não atualiza o app**: é obrigatório rebuildar a imagem e recriar o
+    container. `migrate` e `collectstatic` rodam sozinhos no `entrypoint.sh` a cada subida do container.
+  - **Não há auto-deploy hoje**: nenhum webhook/GitHub Action/cron. O "push→deploy automático" era do
+    **Render** (`render.yaml`, a desligar); na migração para o droplet o equivalente não foi configurado.
+- FERRAMENTA: adicionado `deploy.sh` na raiz — encapsula `fetch + reset --hard` (resiste à reescrita de
+  histórico) → `docker compose build` → `up -d`. Deploy manual vira um comando: `cd /var/www/ifem && ./deploy.sh`.
+- AUTO-DEPLOY (decisão: GitHub Actions + SSH, gatilho `main`): workflow `.github/workflows/deploy.yml`.
+  A cada push na `main`, o runner conecta via SSH no droplet e roda `deploy.sh`. Enquanto os secrets não
+  existirem, o job passa (verde) sem fazer nada — não quebra o primeiro merge.
+  - **Setup manual no DROPLET (1x):**
+    1. Apontar o clone pra `main` (produção passa a seguir a main): `cd /var/www/ifem && git fetch --all && git checkout main && git reset --hard origin/main` (ajustar nome do remote — no droplet é `github-ifem`).
+    2. Garantir `deploy.sh` executável: `chmod +x deploy.sh` (só se o clone não tiver preservado o bit 100755).
+    3. Criar chave SSH dedicada ao CI (SEM passphrase): `ssh-keygen -t ed25519 -f ~/.ssh/id_ci_deploy -N ''` e autorizar: `cat ~/.ssh/id_ci_deploy.pub >> ~/.ssh/authorized_keys`.
+    4. Pegar o host key pro known_hosts do CI: `ssh-keyscan -H <IP_DO_DROPLET>` (guardar a saída).
+  - **Secrets no GitHub (repo → Settings → Secrets and variables → Actions):**
+    - `DROPLET_SSH_HOST` = IP/host do droplet · `DROPLET_SSH_USER` = usuário SSH (ex.: root)
+    - `DROPLET_SSH_KEY` = conteúdo de `~/.ssh/id_ci_deploy` (chave PRIVADA) · `DROPLET_SSH_KNOWN_HOSTS` = saída do `ssh-keyscan`
+    - `DROPLET_APP_DIR` = `/var/www/ifem` (opcional; é o default)
+  - Melhoria de segurança futura: usar um usuário `deploy` no grupo `docker` em vez de `root` no SSH.
