@@ -330,4 +330,13 @@
       go(0);
     })();
   });
+
+  document.querySelectorAll(".met-tree__node").forEach(function(node) {
+        node.addEventListener("toggle", function() {
+          if (typeof ScrollTrigger !== "undefined") {
+            // Dá um refresh na altura para as animações de baixo não quebrarem
+            ScrollTrigger.refresh();
+          }
+        });
+      });
 })();

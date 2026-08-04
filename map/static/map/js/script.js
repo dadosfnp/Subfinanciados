@@ -12,7 +12,6 @@ const map = new mapboxgl.Map({
   center: [-54, -15],
   preserveDrawingBuffer: true,
   crossSourceCollisions: false
-
 });
 map.addControl(new mapboxgl.NavigationControl());
 
@@ -32,7 +31,7 @@ const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescim
 const blocoReceita             = document.getElementById('bloco-receita');
 const blocoCrescimento         = document.getElementById('bloco-crescimento');
 
-// True quando o usuário está no modo "Crescimento 2000→2024".
+// True quando o usuário está no modo "Crescimento 2000→2025".
 const modoCrescimentoAtivo = () => filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
 
 let debounceTimer = null;
@@ -421,7 +420,7 @@ function applyZoom(geojsonData) {
 }
 
 
-// Bloco comparativo 2000→2024 do popup, exibido apenas no modo de análise "crescimento".
+// Bloco comparativo 2000→2025 do popup, exibido apenas no modo de análise "crescimento".
 function blocoCrescimentoPopup(props) {
   const naDado = (v) => v === null || v === undefined || v === '';
   const fmtInt = (v) => naDado(v) ? 'N/D' : (+v).toLocaleString('pt-BR');
@@ -434,7 +433,7 @@ function blocoCrescimentoPopup(props) {
   const valStyle = 'text-align:right;font-weight:600;color:#1f2937;';
   return `
     <div style="margin-top:.6rem;border-top:1px solid #e5e7eb;padding-top:.55rem;">
-      <div style="font-weight:800;color:#103758;margin-bottom:.4rem;font-size:.95rem;">Crescimento 2000 → 2024</div>
+      <div style="font-weight:800;color:#103758;margin-bottom:.4rem;font-size:.95rem;">Crescimento 2000 → 2025</div>
       <div style="${rowStyle}"><span>População</span><span style="${valStyle}">${fmtInt(props.populacao00)} → ${fmtInt(props.Populacao24)} <strong>(${fmtPct(props.cresc_pop_pct)})</strong></span></div>
       <div style="${rowStyle}"><span>Receita p/c</span><span style="${valStyle}">${fmtBRL(props.rc_00_pc)} → ${fmtBRL(props.rc_24_pc)} <strong>(${fmtPct(props.cresc_rcpc_pct)})</strong></span></div>
       <div style="${rowStyle}"><span>Ranking nacional</span><span style="${valStyle}">${varTxt(props.var_rank, ' pos.')}</span></div>
@@ -725,7 +724,7 @@ function renderLegend(header, items) {
   ]);
 }
 
-// ===================== Modo de Análise: Crescimento 2000→2024 =====================
+// ===================== Modo de Análise: Crescimento 2000→2025 =====================
 // Faixas calibradas pela distribuição real dos municípios (percentis 10–90 de cada métrica).
 const METRICAS_CRESCIMENTO = {
   cresc_pop_pct:  { titulo: 'Crescimento da população', stops: [-10, 0, 15, 35],
@@ -756,7 +755,7 @@ function getCrescimentoPaint(metricaKey) {
 function updateLegendCrescimento(metricaKey) {
   const cfg = METRICAS_CRESCIMENTO[metricaKey] || METRICAS_CRESCIMENTO.cresc_pop_pct;
   const items = CRESCIMENTO_CORES.map((cor, i) => ({ color: cor, text: cfg.textos[i] }));
-  renderLegend(cfg.titulo + ' (2000→2024)', items);
+  renderLegend(cfg.titulo + ' (2000→2025)', items);
 }
 
 // Despachante central: aplica a visualização conforme o modo de análise ativo.
@@ -882,8 +881,8 @@ async function downloadTableData() {
 
     const columns = [
       { header:"Município", property:"name_muni_uf" },
-      { header:"População 2024", property:"Populacao24" },
-      { header:"Receita Per Capita 2024", property:"rc_24_pc" },
+      { header:"População 2025", property:"Populacao24" },
+      { header:"Receita Per Capita 2025", property:"rc_24_pc" },
       { header:"Quantil Dinâmico", property:"dynamic_quantile" },
       { header:"Quintil Pré-Calculado", property:"quintil24_pre_calculado" },
       { header:"Decil Pré-Calculado", property:"decil24_pre_calculado" },

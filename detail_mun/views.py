@@ -46,31 +46,31 @@ def _get_filtered_municipios(request):
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=5000, dados_atuais__populacao_atual__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=10000, dados_atuais__populacao_atual__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=20000, dados_atuais__populacao_atual__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=50000, dados_atuais__populacao_atual__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=100000, dados_atuais__populacao_atual__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=200000, dados_atuais__populacao_atual__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=500000)
         elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gt=80000)
         elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lte=80000)
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(quintil24=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__quintil_atual=subgroup_filter)
         elif classification_filter == 'decil':
-            queryset = queryset.filter(decil24=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__decil_atual=subgroup_filter)
 
     return queryset, True
 
@@ -84,12 +84,12 @@ def _group_pc_media(queryset, fields):
 
     qs = (
         queryset
-        .filter(populacao24__gt=0)
+        .filter(dados_atuais__populacao_atual__gt=0)
         .annotate(total=expr)
         .filter(total__gt=0)
         .annotate(
             pc=ExpressionWrapper(
-                F('total') / F('populacao24'),
+                F('total') / F('dados_atuais__populacao_atual'),
                 output_field=FloatField()
             )
         )
@@ -167,19 +167,23 @@ def _prepare_revenue_item(
 
 def municipio_detalhe_view(request, municipio_id):
     municipio = get_object_or_404(Municipio.objects.prefetch_related(
+        'dados_atuais', 'dados_2000',
         'conta_detalhada', 'conta_especifica', 'conta_mais_especifica',
         'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil'
     ), cod_ibge=municipio_id)
 
-    pop = municipio.populacao24 or 0
-    if pop < 5000: filtro_faixa = {'populacao24__lt': 5000}
-    elif pop < 10000: filtro_faixa = {'populacao24__gte': 5000, 'populacao24__lt': 10000}
-    elif pop < 20000: filtro_faixa = {'populacao24__gte': 10000, 'populacao24__lt': 20000}
-    elif pop < 50000: filtro_faixa = {'populacao24__gte': 20000, 'populacao24__lt': 50000}
-    elif pop < 100000: filtro_faixa = {'populacao24__gte': 50000, 'populacao24__lt': 100000}
-    elif pop < 200000: filtro_faixa = {'populacao24__gte': 100000, 'populacao24__lt': 200000}
-    elif pop < 500000: filtro_faixa = {'populacao24__gte': 200000, 'populacao24__lt': 500000}
-    else: filtro_faixa = {'populacao24__gte': 500000}
+    try:
+        pop = municipio.dados_atuais.populacao_atual or 0
+    except Exception:
+        pop = 0
+    if pop < 5000: filtro_faixa = {'dados_atuais__populacao_atual__lt': 5000}
+    elif pop < 10000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 5000, 'dados_atuais__populacao_atual__lt': 10000}
+    elif pop < 20000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 10000, 'dados_atuais__populacao_atual__lt': 20000}
+    elif pop < 50000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 20000, 'dados_atuais__populacao_atual__lt': 50000}
+    elif pop < 100000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 50000, 'dados_atuais__populacao_atual__lt': 100000}
+    elif pop < 200000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 100000, 'dados_atuais__populacao_atual__lt': 200000}
+    elif pop < 500000: filtro_faixa = {'dados_atuais__populacao_atual__gte': 200000, 'dados_atuais__populacao_atual__lt': 500000}
+    else: filtro_faixa = {'dados_atuais__populacao_atual__gte': 500000}
 
     if pop < 5000:
         faixa = "Até 5 mil"
@@ -200,10 +204,10 @@ def municipio_detalhe_view(request, municipio_id):
 
     # 2. FUNÇÃO PARA CALCULAR A MÉDIA PER CAPITA NO BANCO
     def avg_pc(campo):
-        return Avg(ExpressionWrapper(F(campo) / F('populacao24'), output_field=FloatField()))
+        return Avg(ExpressionWrapper(F(campo) / F('dados_atuais__populacao_atual'), output_field=FloatField()))
 
     # 3. FAZENDO A CONSULTA (Apenas municípios com população válida para não dar erro de divisão por zero)
-    base_query = Municipio.objects.exclude(populacao24__isnull=True).exclude(populacao24=0)
+    base_query = Municipio.objects.exclude(dados_atuais__populacao_atual__isnull=True).exclude(dados_atuais__populacao_atual=0)
     
     # Agregações para o 1º Nível (Conta Detalhada)
     agregacoes = {
@@ -225,13 +229,31 @@ def municipio_detalhe_view(request, municipio_id):
     mediana_estadual = MedianaUfReceita.objects.filter(ano_referencia=2024, uf=municipio.uf).first()
     mediana_faixa = MedianaPorteReceita.objects.filter(ano_referencia=2024, porte=faixa).first()
 
-    cd = municipio.conta_detalhada
-    cs = municipio.conta_especifica
-    cme = municipio.conta_mais_especifica
+    try:
+        cd = municipio.conta_detalhada
+    except Exception:
+        cd = None
+    try:
+        cs = municipio.conta_especifica
+    except Exception:
+        cs = None
+    try:
+        cme = municipio.conta_mais_especifica
+    except Exception:
+        cme = None
 
-    cdp = municipio.conta_detalhada_percentil
-    csp = municipio.conta_especifica_percentil
-    cmep = municipio.conta_mais_especifica_percentil
+    try:
+        cdp = municipio.conta_detalhada_percentil
+    except Exception:
+        cdp = None
+    try:
+        csp = municipio.conta_especifica_percentil
+    except Exception:
+        csp = None
+    try:
+        cmep = municipio.conta_mais_especifica_percentil
+    except Exception:
+        cmep = None
     
     revenue_tree = []
 
@@ -337,48 +359,62 @@ def municipio_detalhe_view(request, municipio_id):
         return {"labels": list(unzipped_series[0]), "values": list(unzipped_series[1])}
 
     # Prepara os dados do gráfico usando a função auxiliar e os valores PER CAPITA (_pc)
-    chart_data = {
-        "main_categories": get_chart_series(
-            ["Impostos, Taxas e Contribuições de Melhoria", "Contribuições", "Transf. Correntes", "Outras"],
-            [cd.imposto_taxas_contribuicoes_pc, cd.contribuicoes_pc, cd.transferencias_correntes_pc, cd.outras_receita_pc]
-        ),
-        "imposto_taxas_contribuicoes": get_chart_series(
-            ["Impostos", "Taxas", "Contrib. Melhoria"],
-            [cs.imposto_pc, cs.taxas_pc, cs.contribuicoes_melhoria_pc]
-        ),
-        "imposto": get_chart_series(
-            ["IPTU", "ITBI", "ISS", "Imposto de Renda", "ICMS", "IPVA", "Outros"],
-            [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.imposto_renda_pc, cme.imposto_icms_pc, cme.imposto_ipva_pc, cme.outros_impostos_pc]
-        ),
-        "taxas": get_chart_series(
-            ["Poder de Polícia", "Prestação de Serviços", "Outras"],
-            [cme.taxa_policia_pc, cme.taxa_prestacao_servico_pc, cme.outras_taxas_pc]
-        ),
-        "contribuicoes_melhoria": get_chart_series(
-            ["Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
-           [cme.contribuicao_melhoria_pavimento_obras_pc, cme.contribuicao_melhoria_agua_potavel_pc, cme.contribuicao_melhoria_iluminacao_publica_pc, cme.outras_contribuicoes_melhoria_pc]
-        ),
-        "contribuicoes": get_chart_series(
-            ["Sociais", "Iluminação Pública", "Outras"],
-            [cs.contribuicoes_sociais_pc, cs.contribuicoes_iluminacao_publica_pc, cs.outras_contribuicoes_pc]
-        ),
-        "transferencias_correntes": get_chart_series(
-            ["União", "Estados", "Outras"],
-            [cs.tranferencias_uniao_pc, cs.tranferencias_estados_pc, cs.outras_tranferencias_pc]
-        ),
-        "transferencias_uniao": get_chart_series(
-            ["FPM", "FPE", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
-            [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_fpe_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fundeb_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
-        ),
-        "transferencias_estado": get_chart_series(
-            ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
-            [cme.transferencia_estado_icms_pc, cme.transferencia_estado_ipva_pc, cme.transferencia_estado_exploracao_pc, cme.transferencia_estado_sus_pc, cme.transferencia_estado_assistencia_pc, cme.outras_transferencias_estado_pc]
-        ),
-        "outras_receitas": get_chart_series(
-            ["Patrimonial", "Agropecuária", "Industrial", "Serviços", "Outras"],
-            [cs.receita_patrimonial_pc, cs.receita_agropecuaria_pc, cs.receita_industrial_pc, cs.receita_servicos_pc, cs.outras_receitas_pc]
-        ),
-    }
+    if cd and cs and cme:
+        chart_data = {
+            "main_categories": get_chart_series(
+                ["Impostos, Taxas e Contribuições de Melhoria", "Contribuições", "Transf. Correntes", "Outras"],
+                [cd.imposto_taxas_contribuicoes_pc, cd.contribuicoes_pc, cd.transferencias_correntes_pc, cd.outras_receita_pc]
+            ),
+            "imposto_taxas_contribuicoes": get_chart_series(
+                ["Impostos", "Taxas", "Contrib. Melhoria"],
+                [cs.imposto_pc, cs.taxas_pc, cs.contribuicoes_melhoria_pc]
+            ),
+            "imposto": get_chart_series(
+                ["IPTU", "ITBI", "ISS", "Imposto de Renda", "ICMS", "IPVA", "Outros"],
+                [cme.iptu_pc, cme.itbi_pc, cme.iss_pc, cme.imposto_renda_pc, cme.imposto_icms_pc, cme.imposto_ipva_pc, cme.outros_impostos_pc]
+            ),
+            "taxas": get_chart_series(
+                ["Poder de Polícia", "Prestação de Serviços", "Outras"],
+                [cme.taxa_policia_pc, cme.taxa_prestacao_servico_pc, cme.outras_taxas_pc]
+            ),
+            "contribuicoes_melhoria": get_chart_series(
+                ["Pavimentação", "Água/Esgoto", "Iluminação", "Outras"],
+               [cme.contribuicao_melhoria_pavimento_obras_pc, cme.contribuicao_melhoria_agua_potavel_pc, cme.contribuicao_melhoria_iluminacao_publica_pc, cme.outras_contribuicoes_melhoria_pc]
+            ),
+            "contribuicoes": get_chart_series(
+                ["Sociais", "Iluminação Pública", "Outras"],
+                [cs.contribuicoes_sociais_pc, cs.contribuicoes_iluminacao_publica_pc, cs.outras_contribuicoes_pc]
+            ),
+            "transferencias_correntes": get_chart_series(
+                ["União", "Estados", "Outras"],
+                [cs.tranferencias_uniao_pc, cs.tranferencias_estados_pc, cs.outras_tranferencias_pc]
+            ),
+            "transferencias_uniao": get_chart_series(
+                ["FPM", "FPE", "Rec. Naturais", "SUS", "FNDE", "FUNDEB", "FNAS", "Outras"],
+                [cme.transferencia_uniao_fpm_pc, cme.transferencia_uniao_fpe_pc, cme.transferencia_uniao_exploracao_pc, cme.transferencia_uniao_sus_pc, cme.transferencia_uniao_fnde_pc, cme.transferencia_uniao_fundeb_pc, cme.transferencia_uniao_fnas_pc, cme.outras_transferencias_uniao_pc]
+            ),
+            "transferencias_estado": get_chart_series(
+                ["ICMS", "IPVA", "Rec. Naturais", "SUS", "Assistência", "Outras"],
+                [cme.transferencia_estado_icms_pc, cme.transferencia_estado_ipva_pc, cme.transferencia_estado_exploracao_pc, cme.transferencia_estado_sus_pc, cme.transferencia_estado_assistencia_pc, cme.outras_transferencias_estado_pc]
+            ),
+            "outras_receitas": get_chart_series(
+                ["Patrimonial", "Agropecuária", "Industrial", "Serviços", "Outras"],
+                [cs.receita_patrimonial_pc, cs.receita_agropecuaria_pc, cs.receita_industrial_pc, cs.receita_servicos_pc, cs.outras_receitas_pc]
+            ),
+        }
+    else:
+        chart_data = {
+            "main_categories": {"labels": [], "values": []},
+            "imposto_taxas_contribuicoes": {"labels": [], "values": []},
+            "imposto": {"labels": [], "values": []},
+            "taxas": {"labels": [], "values": []},
+            "contribuicoes_melhoria": {"labels": [], "values": []},
+            "contribuicoes": {"labels": [], "values": []},
+            "transferencias_correntes": {"labels": [], "values": []},
+            "transferencias_uniao": {"labels": [], "values": []},
+            "transferencias_estado": {"labels": [], "values": []},
+            "outras_receitas": {"labels": [], "values": []},
+        }
 
     # Prepare Percentile Data for JS
     percentile_data = {}
@@ -396,61 +432,61 @@ def municipio_detalhe_view(request, municipio_id):
         Municipio.objects
         .annotate(
             # Categorias Principais
-            main_categories=F('rc_24_pc'),
+            main_categories=F('dados_atuais__rc_atual_pc'),
 
             # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('populacao24'),
-            imposto = F('conta_especifica__imposto')/F('populacao24'),  
-            iptu = F('conta_mais_especifica__iptu')/F('populacao24'),
-            itbi = F('conta_mais_especifica__itbi')/F('populacao24'),
-            iss = F('conta_mais_especifica__iss')/F('populacao24'),
-            imposto_renda = F('conta_mais_especifica__imposto_renda')/F('populacao24'),
-            imposto_icms = F('conta_mais_especifica__imposto_icms')/F('populacao24'),
-            imposto_ipva = F('conta_mais_especifica__imposto_ipva')/F('populacao24'),
-            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('populacao24'),
-            taxas = F('conta_especifica__taxas')/F('populacao24'),
-            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('populacao24'),
-            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('populacao24'),
-            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('populacao24'),
+            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('dados_atuais__populacao_atual'),
+            imposto = F('conta_especifica__imposto')/F('dados_atuais__populacao_atual'),  
+            iptu = F('conta_mais_especifica__iptu')/F('dados_atuais__populacao_atual'),
+            itbi = F('conta_mais_especifica__itbi')/F('dados_atuais__populacao_atual'),
+            iss = F('conta_mais_especifica__iss')/F('dados_atuais__populacao_atual'),
+            imposto_renda = F('conta_mais_especifica__imposto_renda')/F('dados_atuais__populacao_atual'),
+            imposto_icms = F('conta_mais_especifica__imposto_icms')/F('dados_atuais__populacao_atual'),
+            imposto_ipva = F('conta_mais_especifica__imposto_ipva')/F('dados_atuais__populacao_atual'),
+            outros_impostos = F('conta_mais_especifica__outros_impostos')/F('dados_atuais__populacao_atual'),
+            taxas = F('conta_especifica__taxas')/F('dados_atuais__populacao_atual'),
+            taxa_policia = F('conta_mais_especifica__taxa_policia')/F('dados_atuais__populacao_atual'),
+            taxa_prestacao_servico = F('conta_mais_especifica__taxa_prestacao_servico')/F('dados_atuais__populacao_atual'),
+            outras_taxas = F('conta_mais_especifica__outras_taxas')/F('dados_atuais__populacao_atual'),
 
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('populacao24'),
-            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('populacao24'),
-            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('populacao24'),
-            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('populacao24'),
-            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('populacao24'),
+            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
+            contribuicao_melhoria_pavimento_obras = F('conta_mais_especifica__contribuicao_melhoria_pavimento_obras')/F('dados_atuais__populacao_atual'),
+            contribuicao_melhoria_agua_potavel = F('conta_mais_especifica__contribuicao_melhoria_agua_potavel')/F('dados_atuais__populacao_atual'),
+            contribuicao_melhoria_iluminacao_publica = F('conta_mais_especifica__contribuicao_melhoria_iluminacao_publica')/F('dados_atuais__populacao_atual'),
+            outras_contribuicoes_melhoria = F('conta_mais_especifica__outras_contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
 
             # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('populacao24'),
-            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('populacao24'),
-            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('populacao24'),
-            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('populacao24'),
+            contribuicoes=F('conta_detalhada__contribuicoes')/F('dados_atuais__populacao_atual'),
+            contribuicoes_sociais = F('conta_especifica__contribuicoes_sociais')/F('dados_atuais__populacao_atual'),
+            contribuicoes_iluminacao_publica = F('conta_especifica__contribuicoes_iluminacao_publica')/F('dados_atuais__populacao_atual'),
+            outras_contribuicoes = F('conta_especifica__outras_contribuicoes')/F('dados_atuais__populacao_atual'),
 
             # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('populacao24'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('populacao24'),
-            transferencias_uniao_fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('populacao24'),
-            transferencia_uniao_fpe = F('conta_mais_especifica__transferencia_uniao_fpe')/F('populacao24'),
-            transferencias_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('populacao24'),
-            transferencias_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('populacao24'),
-            transferencias_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('populacao24'),
-            transferencia_uniao_fundeb = F('conta_mais_especifica__transferencia_uniao_fundeb')/F('populacao24'),
-            transferencias_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('populacao24'),
-            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('populacao24'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('populacao24'),
-            transferencias_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('populacao24'),
-            transferencias_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('populacao24'),
-            transferencias_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('populacao24'),
-            transferencias_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('populacao24'),
-            transferencias_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('populacao24'),
-            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('populacao24'),
+            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao_fpm = F('conta_mais_especifica__transferencia_uniao_fpm')/F('dados_atuais__populacao_atual'),
+            transferencia_uniao_fpe = F('conta_mais_especifica__transferencia_uniao_fpe')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao_exploracao = F('conta_mais_especifica__transferencia_uniao_exploracao')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao_sus = F('conta_mais_especifica__transferencia_uniao_sus')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao_fnde = F('conta_mais_especifica__transferencia_uniao_fnde')/F('dados_atuais__populacao_atual'),
+            transferencia_uniao_fundeb = F('conta_mais_especifica__transferencia_uniao_fundeb')/F('dados_atuais__populacao_atual'),
+            transferencias_uniao_fnas = F('conta_mais_especifica__transferencia_uniao_fnas')/F('dados_atuais__populacao_atual'),
+            outras_transferencias_uniao = F('conta_mais_especifica__outras_transferencias_uniao')/F('dados_atuais__populacao_atual'),
+            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('dados_atuais__populacao_atual'),
+            transferencias_estado_icms = F('conta_mais_especifica__transferencia_estado_icms')/F('dados_atuais__populacao_atual'),
+            transferencias_estado_ipva = F('conta_mais_especifica__transferencia_estado_ipva')/F('dados_atuais__populacao_atual'),
+            transferencias_estado_exploracao = F('conta_mais_especifica__transferencia_estado_exploracao')/F('dados_atuais__populacao_atual'),
+            transferencias_estado_sus = F('conta_mais_especifica__transferencia_estado_sus')/F('dados_atuais__populacao_atual'),
+            transferencias_estado_assistencia = F('conta_mais_especifica__transferencia_estado_assistencia')/F('dados_atuais__populacao_atual'),
+            outras_transferencias_estado = F('conta_mais_especifica__outras_transferencias_estado')/F('dados_atuais__populacao_atual'),
 
             # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('populacao24'),
-            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('populacao24'),
-            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('populacao24'),
-            receita_industrial = F('conta_especifica__receita_industrial')/F('populacao24'),
-            receita_servicos = F('conta_especifica__receita_servicos')/F('populacao24'),
-            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('populacao24')
+            outras_receitas=F('conta_detalhada__outras_receita')/F('dados_atuais__populacao_atual'),
+            receita_patrimonial = F('conta_especifica__receita_patrimonial')/F('dados_atuais__populacao_atual'),
+            receita_agropecuaria = F('conta_especifica__receita_agropecuaria')/F('dados_atuais__populacao_atual'),
+            receita_industrial = F('conta_especifica__receita_industrial')/F('dados_atuais__populacao_atual'),
+            receita_servicos = F('conta_especifica__receita_servicos')/F('dados_atuais__populacao_atual'),
+            outras_receitas_outras = F('conta_especifica__outras_receitas')/F('dados_atuais__populacao_atual')
                   )
         .values(                  # já vem “flat” pro template
             "cod_ibge", "main_categories",
@@ -512,17 +548,17 @@ def municipio_detalhe_view(request, municipio_id):
 
     # Calcula a variacao percentual da populacao e da receita corrente per capita
     delta_populacao = 0.0
-    if municipio.populacao00 and municipio.populacao24 and municipio.populacao00 > 0:
-        delta_populacao = ((municipio.populacao24 / municipio.populacao00) - 1)  * 100
+    if municipio.dados_2000.populacao_00 and municipio.dados_atuais.populacao_atual and municipio.dados_2000.populacao_00 > 0:
+        delta_populacao = ((municipio.dados_atuais.populacao_atual / municipio.dados_2000.populacao_00) - 1)  * 100
 
     delta_rc_pc = 0.0
-    if municipio.rc_00_pc and municipio.rc_24_pc and municipio.rc_00_pc > 0:
-        delta_rc_pc = ((municipio.rc_24_pc / municipio.rc_00_pc) - 1)  * 100
+    if municipio.dados_2000.rc_00_pc and municipio.dados_atuais.rc_atual_pc and municipio.dados_2000.rc_00_pc > 0:
+        delta_rc_pc = ((municipio.dados_atuais.rc_atual_pc / municipio.dados_2000.rc_00_pc) - 1)  * 100
 
     evolucao_historica = {
         'delta_populacao': round(delta_populacao, 2),
         'delta_rc_pc': round(delta_rc_pc, 2),
-        'has_2000_data': bool(municipio.populacao00 or municipio.rc_00_pc)
+        'has_2000_data': bool(municipio.dados_2000.populacao_00 or municipio.dados_2000.rc_00_pc)
     }
 
     media_nacional_rc_pc = 316.7372  # Valor fixo da média nacional para 2024
@@ -536,24 +572,24 @@ def municipio_detalhe_view(request, municipio_id):
     # Usado no card "Valor por Habitante" pra contextualizar o município dentro
     # do seu grupo de classificação (trend ▲/▼ + texto, igual à evolução populacional).
     media_quintil_pc = None
-    if municipio.quintil24:
+    if municipio.dados_atuais.quintil_atual:
         media_quintil_pc = (Municipio.objects
-                            .filter(quintil24=municipio.quintil24)
-                            .exclude(rc_24_pc__isnull=True)
-                            .aggregate(media=Avg('rc_24_pc'))['media'])
+                            .filter(dados_atuais__quintil_atual=municipio.dados_atuais.quintil_atual)
+                            .exclude(dados_atuais__rc_atual_pc__isnull=True)
+                            .aggregate(media=Avg('dados_atuais__rc_atual_pc'))['media'])
 
     media_decil_pc = None
-    if municipio.decil24:
+    if municipio.dados_atuais.decil_atual:
         media_decil_pc = (Municipio.objects
-                          .filter(decil24=municipio.decil24)
-                          .exclude(rc_24_pc__isnull=True)
-                          .aggregate(media=Avg('rc_24_pc'))['media'])
+                          .filter(dados_atuais__decil_atual=municipio.dados_atuais.decil_atual)
+                          .exclude(dados_atuais__rc_atual_pc__isnull=True)
+                          .aggregate(media=Avg('dados_atuais__rc_atual_pc'))['media'])
 
     def _trend_grupo(media_grupo, nome_grupo):
         """Pré-monta os campos exibidos no trend (seta, %, classe, texto)."""
-        if media_grupo is None or municipio.rc_24_pc is None or media_grupo == 0:
+        if media_grupo is None or municipio.dados_atuais.rc_atual_pc is None or media_grupo == 0:
             return None
-        pct = (municipio.rc_24_pc / media_grupo - 1) * 100
+        pct = (municipio.dados_atuais.rc_atual_pc / media_grupo - 1) * 100
         positivo = pct >= 0
         return {
             'pct_fmt': f'{abs(pct):.1f}'.replace('.', ','),
@@ -564,8 +600,8 @@ def municipio_detalhe_view(request, municipio_id):
             'grupo_nome': nome_grupo or '—',
         }
 
-    trend_quintil = _trend_grupo(media_quintil_pc, municipio.quintil24)
-    trend_decil = _trend_grupo(media_decil_pc, municipio.decil24)
+    trend_quintil = _trend_grupo(media_quintil_pc, municipio.dados_atuais.quintil_atual)
+    trend_decil = _trend_grupo(media_decil_pc, municipio.dados_atuais.decil_atual)
 
     context = {
         'municipio': municipio,
@@ -600,15 +636,15 @@ def municipio_detalhe_view(request, municipio_id):
 def municipio_details_api(request):
     queryset, filtros_ativos = _get_filtered_municipios(request)
     
-    national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('rc_24_pc'))['avg_rc'] or 0
+    national_avg_rc = Municipio.objects.aggregate(avg_rc=Avg('dados_atuais__rc_atual_pc'))['avg_rc'] or 0
 
     # Aggregate data from the filtered queryset
     aggregated_data = queryset.aggregate(
-        total_populacao=Coalesce(Sum('populacao24'), Value(0)),
-        total_receita_corrente=Coalesce(Sum('rc_2024'), Value(0.0)),
-        avg_receita_per_capita=Avg('rc_24_pc'),
-        total_populacao_00=Coalesce(Sum('populacao00'), Value(0)),
-        total_receita_2000=Coalesce(Sum('rc_2000'), Value(0.0)),
+        total_populacao=Coalesce(Sum('dados_atuais__populacao_atual'), Value(0)),
+        total_receita_corrente=Coalesce(Sum('dados_atuais__rc_atual'), Value(0.0)),
+        avg_receita_per_capita=Avg('dados_atuais__rc_atual_pc'),
+        total_populacao_00=Coalesce(Sum('dados_2000__populacao_00'), Value(0)),
+        total_receita_2000=Coalesce(Sum('dados_2000__rc_00'), Value(0.0)),
     )
 
     pop24 = aggregated_data['total_populacao'] or 0
@@ -616,19 +652,19 @@ def municipio_details_api(request):
     rc24 = aggregated_data['total_receita_corrente'] or 0
     rc00 = aggregated_data['total_receita_2000'] or 0
 
-    delta_pop_agg = queryset.filter(populacao00__gt=0).annotate(
-        dp=(F('populacao24') * 1.0 / F('populacao00') - 1) * 100
+    delta_pop_agg = queryset.filter(dados_2000__populacao_00__gt=0).annotate(
+        dp=(F('dados_atuais__populacao_atual') * 1.0 / F('dados_2000__populacao_00') - 1) * 100
     ).aggregate(avg_dp=Avg('dp'))
     delta_pop = round(delta_pop_agg['avg_dp'], 2) if delta_pop_agg['avg_dp'] is not None else 0
     
-    avg_rc_24 = _group_pc_media(queryset, 'rc_2024')
-    avg_rc_00 = _group_pc_media(queryset, 'rc_2000')
+    avg_rc_24 = _group_pc_media(queryset, 'dados_atuais__rc_atual')
+    avg_rc_00 = _group_pc_media(queryset, 'dados_2000__rc_00')
 
     rc_pc_24 = avg_rc_24
     rc_pc_00 = avg_rc_00
     
-    delta_rc_pc_agg = queryset.filter(rc_24_pc__gt=0, rc_00_pc__gt=0).annotate(
-        d=(F('rc_24_pc') / F('rc_00_pc') - 1) * 100
+    delta_rc_pc_agg = queryset.filter(dados_atuais__rc_atual_pc__gt=0, dados_2000__rc_00_pc__gt=0).annotate(
+        d=(F('dados_atuais__rc_atual_pc') / F('dados_2000__rc_00_pc') - 1) * 100
     ).aggregate(avg_d=Avg('d'))
     delta_rc_pc = round(delta_rc_pc_agg['avg_d'], 2) if delta_rc_pc_agg['avg_d'] is not None else 0
 

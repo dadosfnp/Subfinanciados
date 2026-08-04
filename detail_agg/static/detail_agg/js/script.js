@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
           trackHTML = `<div class="w-full h-2.5 rounded-full" style="background: linear-gradient(to right, #A81C21, #E47326, #F4D01D, #6AC074, #1C9148);"></div>`;
           pos00 = val00; pos24 = val24;
           txt00 = `${val00}% <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-          txt24 = `${val24}% <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+          txt24 = `${val24}% <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
           scaleMarkers = `
             <span class="absolute -left-7 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">0%</span>
             <span class="absolute -right-9 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">100%</span>`;
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>`;
           pos00 = (val00 - 0.5) * 20; pos24 = (val24 - 0.5) * 20;
           txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-          txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+          txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
           color24 = FNP_RANK_COLORS[val24];
       } else if (mode === 'decil') {
           trackHTML = `<div class="w-full h-2.5 flex rounded-full overflow-hidden gap-[1px]">
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>`;
           pos00 = (val00 - 0.5) * 10; pos24 = (val24 - 0.5) * 10;
           txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-          txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+          txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
           color24 = FNP_DECIL_COLORS[val24];
       }
 
@@ -310,7 +310,7 @@ function updateTimelineColors(mode) {
               const val24 = parseInt(num24[0]);
               
               if (val24 === val00) {
-                  summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa do conjunto <strong class="text-slate-700">se manteve</strong> no ${val00}º ${mode}.`;
+                  summaryContainer.innerHTML = `Entre 2000 e 2025, a posição relativa do conjunto <strong class="text-slate-700">se manteve</strong> no ${val00}º ${mode}.`;
               } else if (mode === 'percentil') {
                   const statusAcao = val24 > val00 ? 'AVANÇOU' : 'RECUOU';
                   const statusColor = val24 > val00 ? 'text-emerald-600' : 'text-rose-600';
@@ -319,7 +319,7 @@ function updateTimelineColors(mode) {
                   const isMelhor = val24 > val00;
                   const statusAcao = isMelhor ? 'SUBIU' : 'CAIU';
                   const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
-                  summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa do conjunto <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${val00}º ${mode}</span> para o <span class="${corStatus} font-black">${val24}º ${mode}</span>.`;
+                  summaryContainer.innerHTML = `Entre 2000 e 2025, a posição relativa do conjunto <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${val00}º ${mode}</span> para o <span class="${corStatus} font-black">${val24}º ${mode}</span>.`;
               }
               
               const c00 = document.getElementById('circle-container-2000');

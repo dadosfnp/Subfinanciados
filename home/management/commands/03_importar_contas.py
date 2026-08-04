@@ -6,7 +6,7 @@ ContaDetalhada.objects.all().delete()  # Limpa os dados antigos
 ContaDetalhadaPercentil.objects.all().delete()  # Limpa os dados antigos
 
 contas = pd.read_excel(
-    "base_datas/receitas_correntes_2024.xlsx",
+    "base_datas/receitas_correntes_2025.xlsx",
     usecols=["cod_ibge", "itc", "con", "trf", "our"]
     )
 

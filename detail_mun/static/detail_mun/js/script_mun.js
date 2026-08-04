@@ -695,7 +695,7 @@ function renderTimelineRuler(mode, val00, val24) {
         pos24 = val24;
         
         txt00 = `${val00}% <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-        txt24 = `${val24}% <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        txt24 = `${val24}% <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
         
         scaleMarkers = `
             <span class="absolute -left-7 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">0%</span>
@@ -712,7 +712,7 @@ function renderTimelineRuler(mode, val00, val24) {
         pos00 = (val00 - 0.5) * 20; 
         pos24 = (val24 - 0.5) * 20;
         txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
         color24 = FNP_RANK_COLORS[val24];
         
     } else if (mode === 'decil') {
@@ -722,7 +722,7 @@ function renderTimelineRuler(mode, val00, val24) {
         pos00 = (val00 - 0.5) * 10;
         pos24 = (val24 - 0.5) * 10;
         txt00 = `${val00}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        txt24 = `${val24}º <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
         color24 = FNP_DECIL_COLORS[val24];
     } else if (mode === 'ranking') {
         const circle00 = document.getElementById('circle-2000');
@@ -735,7 +735,7 @@ function renderTimelineRuler(mode, val00, val24) {
         pos24 = ((t24 - val24) / t24) * 100;
 
         txt00 = `${val00.toLocaleString('pt-BR')}º <span class="font-normal text-[11px] opacity-75">(2000)</span>`;
-        txt24 = `${val24.toLocaleString('pt-BR')}º <span class="font-normal text-[11px] opacity-80">(2024)</span>`;
+        txt24 = `${val24.toLocaleString('pt-BR')}º <span class="font-normal text-[11px] opacity-80">(2025)</span>`;
 
         scaleMarkers = `
             <span class="absolute -left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">0</span>
@@ -842,7 +842,7 @@ function updateTimelineColors(mode) {
             const val24 = parseInt(num24Match[0]);
             
             if (val24 === val00) {
-                summaryContainer.innerHTML = `Entre 2000 e 2024, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
+                summaryContainer.innerHTML = `Entre 2000 e 2025, <strong class="text-slate-700">a posição relativa do município no Brasil se manteve</strong>.`;
             } 
             // --- RESUMO PARA RANKING ---
             else if (mode === 'ranking') {
@@ -851,7 +851,7 @@ function updateTimelineColors(mode) {
                 const subiu = val24 < val00; // No ranking, menor número = melhor posição
                 const statusAcao = subiu ? 'SUBIU' : 'CAIU';
                 const statusColor = subiu ? 'text-emerald-600' : 'text-rose-600';
-                summaryContainer.innerHTML = `Em 2000, <strong class="text-slate-700">${muniName}</strong> estava no <span class="font-bold text-slate-400">${val00.toLocaleString('pt-BR')}º</span> lugar de ${t00.toLocaleString('pt-BR')} e <span class="${statusColor} font-black">${statusAcao}</span> para a posição <span class="${statusColor} font-black">${val24.toLocaleString('pt-BR')}º</span> de ${t24.toLocaleString('pt-BR')} no ano de 2024.`;
+                summaryContainer.innerHTML = `Em 2000, <strong class="text-slate-700">${muniName}</strong> estava no <span class="font-bold text-slate-400">${val00.toLocaleString('pt-BR')}º</span> lugar de ${t00.toLocaleString('pt-BR')} e <span class="${statusColor} font-black">${statusAcao}</span> para a posição <span class="${statusColor} font-black">${val24.toLocaleString('pt-BR')}º</span> de ${t24.toLocaleString('pt-BR')} no ano de 2025.`;
             }
             // --- RESUMOS ORIGINAIS PRESERVADOS ---
             else if (mode === 'percentil') {
@@ -865,7 +865,7 @@ function updateTimelineColors(mode) {
                 const corStatus = isMelhor ? 'text-emerald-600' : 'text-rose-600';
                 const text00 = `${val00}º ${mode}`;
                 const text24 = `${val24}º ${mode}`;
-                summaryContainer.innerHTML = `Entre 2000 e 2024, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
+                summaryContainer.innerHTML = `Entre 2000 e 2025, a posição relativa de <strong class="text-slate-700">${muniName}</strong> <span class="${corStatus} font-black">${statusAcao}</span> do <span class="font-bold text-slate-400">${text00}</span> para o <span class="${corStatus} font-black">${text24}</span>.`;
             }
             
             const c00 = document.getElementById('circle-container-2000');
@@ -1226,7 +1226,7 @@ timelineBtns.forEach(btn => {
         const isPos = munValue >= 0;
         arrow = isPos ? '▲' : '▼';
         statusClass = isPos ? 'positive' : 'negative';
-        shortMsg = "Evolução populacional 2000-2024.";
+        shortMsg = "Evolução populacional 2000-2025.";
     } else {
         if (compValue !== 0 && !isNaN(compValue)) {
             const fPct = (munValue / compValue - 1) * 100;

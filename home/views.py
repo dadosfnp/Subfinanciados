@@ -1,7 +1,7 @@
-# home/views.py - v1.0.1 - Deploy Fix 17/03/2026 15:45
+# home/views.py - v1.0.3 - Fix SQLite StdDev compatibility
 import re
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Avg, StdDev, Count
+from django.db.models import Avg, Count
 from django.http import JsonResponse
 from django.db import connection
 from .models import Municipio, ContaDetalhada, Noticia
@@ -19,14 +19,14 @@ def _format_brl(value):
 
 def _medias_por_grupo(field, prefix):
     """
-    Agrega Avg(rc_24_pc) por quintil/decil e devolve dict
+    Agrega Avg(rc_atual_pc) por quintil/decil e devolve dict
     {<prefix><n>: 'R$ X.XXX'} indexado pelo número do grupo (q1, q2, ..., d1, d2, ...).
     """
     qs = (Municipio.objects
           .exclude(**{f'{field}__isnull': True})
-          .exclude(rc_24_pc__isnull=True)
+          .exclude(dados_atuais__rc_atual_pc__isnull=True)
           .values(field)
-          .annotate(media=Avg('rc_24_pc')))
+          .annotate(media=Avg('dados_atuais__rc_atual_pc')))
     out = {}
     for row in qs:
         match = re.match(r'(\d+)', row[field] or '')
@@ -49,9 +49,9 @@ def index(request):
     # Busca as notícias cadastradas no Admin
     noticias = Noticia.objects.all().order_by('-data')
 
-    # Médias per capita por grupo, exibidas dentro de cada box da seção Metodologia
-    medias_quintis = _medias_por_grupo('quintil24', 'q')
-    medias_decis = _medias_por_grupo('decil24', 'd')
+    # Médias per capita por grupo, acessando via 'dados_atuais'
+    medias_quintis = _medias_por_grupo('dados_atuais__quintil_atual', 'q')
+    medias_decis = _medias_por_grupo('dados_atuais__decil_atual', 'd')
 
     return render(request, 'ifem/index.html', {
         'noticias': noticias,
@@ -59,7 +59,7 @@ def index(request):
         'medias_decis': medias_decis,
     })
 
-# --- FUNÇÕES DE API (MANTIDAS IGUAIS) ---
+# --- FUNÇÕES DE API ---
 def api_get_dependent_filters(request):
     regiao_selecionada = request.GET.get('regiao')
     uf_selecionada = request.GET.get('uf')
@@ -69,7 +69,7 @@ def api_get_dependent_filters(request):
     classification_filter = request.GET.get('classification', 'quintil')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
 
-    queryset = Municipio.objects.all()
+    queryset = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
 
     if rm_selecionada and rm_selecionada != 'todos':
         queryset = queryset.filter(rm__nome=rm_selecionada)
@@ -78,37 +78,37 @@ def api_get_dependent_filters(request):
     if uf_selecionada and uf_selecionada != 'todos':
         queryset = queryset.filter(uf=uf_selecionada)
 
-    # Porte populacional — mesma lógica aplicada no mapa (map/views.py)
+    # Porte populacional
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=5000, dados_atuais__populacao_atual__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=10000, dados_atuais__populacao_atual__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=20000, dados_atuais__populacao_atual__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=50000, dados_atuais__populacao_atual__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=100000, dados_atuais__populacao_atual__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=200000, dados_atuais__populacao_atual__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=500000)
         elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gt=80000)
         elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lte=80000)
 
-    # Subgrupo (quintil/decil/natural) — espelha o mapa pra cascata funcionar
+    # Subgrupo
     if subgroup_filter and subgroup_filter != 'todos':
         if quantil_calculation == 'por_filtro' and classification_filter in ('quintil', 'decil'):
             num_quantiles = 5 if classification_filter == 'quintil' else 10
             rc_values = np.array([
-                m['rc_24_pc']
-                for m in queryset.values('rc_24_pc')
-                if m.get('rc_24_pc') is not None
+                m['dados_atuais__rc_atual_pc']
+                for m in queryset.values('dados_atuais__rc_atual_pc')
+                if m.get('dados_atuais__rc_atual_pc') is not None
             ])
             if len(rc_values) > 0:
                 try:
@@ -121,26 +121,26 @@ def api_get_dependent_filters(request):
                         min_val = bounds[target_idx - 1] if target_idx > 0 else None
                         max_val = bounds[target_idx] if target_idx < num_quantiles - 1 else None
                         if min_val is None:
-                            queryset = queryset.filter(rc_24_pc__lt=max_val)
+                            queryset = queryset.filter(dados_atuais__rc_atual_pc__lt=max_val)
                         elif max_val is None:
-                            queryset = queryset.filter(rc_24_pc__gte=min_val)
+                            queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
                         else:
-                            queryset = queryset.filter(rc_24_pc__gte=min_val, rc_24_pc__lt=max_val)
+                            queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
                 except ValueError:
                     pass
         elif classification_filter == 'quintil':
-            queryset = queryset.filter(quintil24=f'{subgroup_filter}º quintil')
+            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
         elif classification_filter == 'decil':
-            queryset = queryset.filter(decil24=f'{subgroup_filter}º decil')
+            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
         elif classification_filter == 'natural':
             try:
                 min_str, max_str = subgroup_filter.split('-')
                 min_val = int(min_str)
                 if max_str.lower() == '999999':
-                    queryset = queryset.filter(rc_24_pc__gte=min_val)
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
                 else:
                     max_val = int(max_str)
-                    queryset = queryset.filter(rc_24_pc__gte=min_val, rc_24_pc__lt=max_val)
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
             except ValueError:
                 pass
 
@@ -157,7 +157,7 @@ def api_get_dependent_filters(request):
     })
 
 def api_get_dashboard_data(request):
-    queryset = Municipio.objects.all()
+    queryset = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
     regiao_filtro = request.GET.get('regiao')
     uf_filtro = request.GET.get('uf')
     rm_filtro = request.GET.get('rm')
@@ -175,28 +175,28 @@ def api_get_dashboard_data(request):
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
 
-    # --- NOVO: Filtragem de Porte Populacional ---
+    # Filtragem de Porte Populacional
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(populacao24__lt=5000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lt=5000)
         elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(populacao24__gte=5000, populacao24__lt=10000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=5000, dados_atuais__populacao_atual__lt=10000)
         elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(populacao24__gte=10000, populacao24__lt=20000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=10000, dados_atuais__populacao_atual__lt=20000)
         elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(populacao24__gte=20000, populacao24__lt=50000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=20000, dados_atuais__populacao_atual__lt=50000)
         elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(populacao24__gte=50000, populacao24__lt=100000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=50000, dados_atuais__populacao_atual__lt=100000)
         elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(populacao24__gte=100000, populacao24__lt=200000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=100000, dados_atuais__populacao_atual__lt=200000)
         elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(populacao24__gte=200000, populacao24__lt=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=200000, dados_atuais__populacao_atual__lt=500000)
         elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(populacao24__gte=500000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gte=500000)
         elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(populacao24__gt=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__gt=80000)
         elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(populacao24__lte=80000)
+            queryset = queryset.filter(dados_atuais__populacao_atual__lte=80000)
 
     if classification_filter == 'quintil':
         num_quantiles = 5
@@ -208,14 +208,14 @@ def api_get_dashboard_data(request):
 
     base_classification_labels = [f'{i+1}º {classification_filter}' for i in range(num_quantiles)]
     try:
-        # --- Lógica 2024 ---
+        # --- Lógica 2025 (dados_atuais) ---
         aggregated_data_list_24 = []
         field_for_aggregation_24 = ''
         classification_map_24 = {}
 
         if quantil_calculation == 'por_filtro':
-            municipios_raw_data_24 = list(queryset.values('id', 'populacao24', 'rc_24_pc'))
-            rc_values_24 = np.array([muni['rc_24_pc'] for muni in municipios_raw_data_24 if muni.get('rc_24_pc') is not None])
+            municipios_raw_data_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc'))
+            rc_values_24 = np.array([muni['dados_atuais__rc_atual_pc'] for muni in municipios_raw_data_24 if muni.get('dados_atuais__rc_atual_pc') is not None])
             
             if len(rc_values_24) > 0:
                 field_for_aggregation_24 = 'dynamic_quantile_val'
@@ -223,67 +223,71 @@ def api_get_dashboard_data(request):
                 quantiles_to_calculate = np.linspace(0, 1, num_quantiles + 1)[1:-1]
                 quantile_boundaries = np.quantile(rc_values_24, quantiles_to_calculate)
                 for muni in municipios_raw_data_24:
-                    if muni.get('rc_24_pc') is not None:
-                        quantile_group_idx = np.searchsorted(quantile_boundaries, muni['rc_24_pc'])
+                    if muni.get('dados_atuais__rc_atual_pc') is not None:
+                        quantile_group_idx = np.searchsorted(quantile_boundaries, muni['dados_atuais__rc_atual_pc'])
                         muni[field_for_aggregation_24] = int(quantile_group_idx + 1)
                     else:
                         muni[field_for_aggregation_24] = None
                     aggregated_data_list_24.append(muni)
             else:
-                field_for_aggregation_24 = f'{classification_filter}24'
+                field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
                 classification_map_24 = {label: label for label in base_classification_labels}
-                aggregated_data_list_24 = list(queryset.values('id', 'populacao24', 'rc_24_pc', field_for_aggregation_24))
+                aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24))
         else:
-            field_for_aggregation_24 = f'{classification_filter}24'
+            field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
             classification_map_24 = {label: label for label in base_classification_labels}
-            aggregated_data_list_24 = list(queryset.values('id', 'populacao24', 'rc_24_pc', field_for_aggregation_24))
+            aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24))
 
-        # --- Lógica 2000 ---
+        # --- Lógica 2000 (dados_2000) ---
         aggregated_data_list_00 = []
         field_for_aggregation_00 = ''
         classification_map_00 = {} 
 
         if quantil_calculation == 'por_filtro':
-            municipios_raw_data_00 = list(queryset.values('id', 'populacao00', 'rc_00_pc'))
-            rc_values_00 = np.array([muni['rc_00_pc'] for muni in municipios_raw_data_00 if muni.get('rc_00_pc') is not None])
+            municipios_raw_data_00 = list(queryset.values('cod_ibge', 'dados_2000__populacao_00', 'dados_2000__rc_00_pc'))
+            rc_values_00 = np.array([muni['dados_2000__rc_00_pc'] for muni in municipios_raw_data_00 if muni.get('dados_2000__rc_00_pc') is not None])
             if len(rc_values_00) > 0:
                 field_for_aggregation_00 = 'dynamic_quantile_val'
                 classification_map_00 = {i + 1: base_classification_labels[i] for i in range(num_quantiles)}
                 quantiles_to_calculate = np.linspace(0, 1, num_quantiles + 1)[1:-1]
                 quantile_boundaries_00 = np.quantile(rc_values_00, quantiles_to_calculate)
                 for muni in municipios_raw_data_00:
-                    if muni.get('rc_00_pc') is not None:
-                        quantile_group_idx = np.searchsorted(quantile_boundaries_00, muni['rc_00_pc'])
+                    if muni.get('dados_2000__rc_00_pc') is not None:
+                        quantile_group_idx = np.searchsorted(quantile_boundaries_00, muni['dados_2000__rc_00_pc'])
                         muni[field_for_aggregation_00] = int(quantile_group_idx + 1)
                     else:
                         muni[field_for_aggregation_00] = None
                     aggregated_data_list_00.append(muni)
             else:
-                field_for_aggregation_00 = f'{classification_filter}00'
+                field_for_aggregation_00 = f'dados_2000__{classification_filter}_00'
                 classification_map_00 = {label: label for label in base_classification_labels}
-                aggregated_data_list_00 = list(queryset.values('id', 'populacao00', 'rc_00_pc', field_for_aggregation_00))
+                aggregated_data_list_00 = list(queryset.values('cod_ibge', 'dados_2000__populacao_00', 'dados_2000__rc_00_pc', field_for_aggregation_00))
         else:
-            field_for_aggregation_00 = f'{classification_filter}00'
+            field_for_aggregation_00 = f'dados_2000__{classification_filter}_00'
             classification_map_00 = {label: label for label in base_classification_labels}
-            aggregated_data_list_00 = list(queryset.values('id', 'populacao00', 'rc_00_pc', field_for_aggregation_00))
+            aggregated_data_list_00 = list(queryset.values('cod_ibge', 'dados_2000__populacao_00', 'dados_2000__rc_00_pc', field_for_aggregation_00))
 
-        # --- Resumo e Gráficos (Mantido igual) ---
+        # --- Resumo e Gráficos ---
         total_municipios = queryset.count()
-        media_receita_per_capita = queryset.aggregate(Avg('rc_24_pc'))['rc_24_pc__avg'] or 0
+        media_receita_per_capita = queryset.aggregate(Avg('dados_atuais__rc_atual_pc'))['dados_atuais__rc_atual_pc__avg'] or 0
         
-        std_dev_res = queryset.aggregate(std_dev_rc_24_pc=StdDev('rc_24_pc'))['std_dev_rc_24_pc']
+        # Correção Crítica para o SQLite (Cálculo de Desvio Padrão com NumPy)
+        rc_values_for_std = list(queryset.values_list('dados_atuais__rc_atual_pc', flat=True))
+        rc_values_for_std = [v for v in rc_values_for_std if v is not None]
+        std_dev_res = np.std(rc_values_for_std) if rc_values_for_std else 0
+        
         coeficiente_de_variacao = 0
-        if media_receita_per_capita > 0 and std_dev_res is not None:
+        if media_receita_per_capita > 0:
             coeficiente_de_variacao = std_dev_res / media_receita_per_capita
         
-        _nacional_stats = Municipio.objects.aggregate(total=Count('id'), media_rc=Avg('rc_24_pc'))
+        _nacional_stats = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False).aggregate(total=Count('cod_ibge'), media_rc=Avg('dados_atuais__rc_atual_pc'))
         nacional_total_municipios_base = _nacional_stats['total'] or 0
         nacional_media_receita_per_capita_base = _nacional_stats['media_rc'] or 1
         gini_index = 0.202 
         perc_municipios_selecao = (total_municipios / nacional_total_municipios_base * 100) if nacional_total_municipios_base > 0 else 0
         diff_media_nacional = ((media_receita_per_capita - nacional_media_receita_per_capita_base) / nacional_media_receita_per_capita_base * 100) if nacional_media_receita_per_capita_base > 0 else 0
 
-        total_pop_for_chart_percentage_24 = sum(item.get('populacao24', 0) for item in aggregated_data_list_24 if item.get('populacao24') is not None)
+        total_pop_for_chart_percentage_24 = sum(item.get('dados_atuais__populacao_atual', 0) for item in aggregated_data_list_24 if item.get('dados_atuais__populacao_atual') is not None)
         chart_y_axis_label = 'População (milhões)'
         chart_value_multiplier_24 = 1_000_000
         if display_format == 'porcentagem':
@@ -295,7 +299,7 @@ def api_get_dashboard_data(request):
             key = item.get(field_for_aggregation_24)
             label = classification_map_24.get(key)
             if label:
-                pop_by_group_24[label] += item.get('populacao24', 0) if item.get('populacao24') is not None else 0
+                pop_by_group_24[label] += item.get('dados_atuais__populacao_atual', 0) if item.get('dados_atuais__populacao_atual') is not None else 0
         
         chart_labels = list(classification_map_24.values())
         chart_data_values_24 = [
@@ -305,7 +309,7 @@ def api_get_dashboard_data(request):
         
         chart_data_values_00 = []
         if include_2000_data:
-            total_pop_for_chart_percentage_00 = sum(item.get('populacao00', 0) for item in aggregated_data_list_00 if item.get('populacao00') is not None)
+            total_pop_for_chart_percentage_00 = sum(item.get('dados_2000__populacao_00', 0) for item in aggregated_data_list_00 if item.get('dados_2000__populacao_00') is not None)
             chart_value_multiplier_00 = 1_000_000 
             if display_format == 'porcentagem':
                 chart_value_multiplier_00 = total_pop_for_chart_percentage_00 / 100 if total_pop_for_chart_percentage_00 > 0 else 1
@@ -315,7 +319,7 @@ def api_get_dashboard_data(request):
                 key = item.get(field_for_aggregation_00)
                 label_00 = classification_map_00.get(key)
                 if label_00:
-                    pop_by_group_00[label_00] += item.get('populacao00', 0) if item.get('populacao00') is not None else 0
+                    pop_by_group_00[label_00] += item.get('dados_2000__populacao_00', 0) if item.get('dados_2000__populacao_00') is not None else 0
             
             chart_data_values_00 = [
                 (pop_by_group_00.get(label, 0) / chart_value_multiplier_00) if chart_value_multiplier_00 != 0 else 0
@@ -336,7 +340,7 @@ def api_get_dashboard_data(request):
 
         for range_label, min_pop, max_pop in population_ranges:
             row_data = {'Faixas': range_label}
-            range_data_24_filtered = [m for m in aggregated_data_list_24 if m.get('populacao24') is not None and (min_pop <= m['populacao24'] < max_pop if max_pop != float('inf') else m['populacao24'] >= min_pop)]
+            range_data_24_filtered = [m for m in aggregated_data_list_24 if m.get('dados_atuais__populacao_atual') is not None and (min_pop <= m['dados_atuais__populacao_atual'] < max_pop if max_pop != float('inf') else m['dados_atuais__populacao_atual'] >= min_pop)]
             
             raw_counts_in_row_24 = defaultdict(int)
             for muni in range_data_24_filtered:
@@ -373,7 +377,7 @@ def api_get_dashboard_data(request):
             raw_grand_total_classification_counts_00 = defaultdict(int)
             for range_label, min_pop, max_pop in population_ranges:
                 row_data = {'Faixas': range_label}
-                range_data_00_filtered = [m for m in aggregated_data_list_00 if m.get('populacao00') is not None and (min_pop <= m['populacao00'] < max_pop if max_pop != float('inf') else m['populacao00'] >= min_pop)]
+                range_data_00_filtered = [m for m in aggregated_data_list_00 if m.get('dados_2000__populacao_00') is not None and (min_pop <= m['dados_2000__populacao_00'] < max_pop if max_pop != float('inf') else m['dados_2000__populacao_00'] >= min_pop)]
                 
                 raw_counts_in_row_00 = defaultdict(int)
                 for muni in range_data_00_filtered:
@@ -403,7 +407,7 @@ def api_get_dashboard_data(request):
             table_data_00.append(grand_total_row_00)
             table_headers_00 = ['Faixas'] + classification_columns + ['Total']
 
-        datasets_to_send = [{"label": chart_y_axis_label + ' (2024)', "data": chart_data_values_24}]
+        datasets_to_send = [{"label": chart_y_axis_label + ' (2025)', "data": chart_data_values_24}]
         if include_2000_data:
             datasets_to_send.append({"label": chart_y_axis_label + ' (2000)', "data": chart_data_values_00})
 

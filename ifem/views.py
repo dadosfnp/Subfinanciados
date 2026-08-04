@@ -15,11 +15,14 @@ def busca_municipio_simples_api(request):
     if len(query) < 3:
         return JsonResponse({'results': [], 'national_avg': 0})
 
-    # Busca até 10 municípios que contenham o termo digitado
-    qs = Municipio.objects.filter(name_muni_uf__icontains=query).order_by('name_muni_uf')[:10]
+    # Busca até 10 municípios que contenham o termo digitado e possuam receita atual
+    qs = Municipio.objects.filter(
+        name_muni_uf__icontains=query, 
+        dados_atuais__rc_atual_pc__isnull=False
+    ).order_by('name_muni_uf')[:10]
 
     # Média nacional de Receita per Capita
-    national_avg = Municipio.objects.aggregate(avg_rc=Avg('rc_24_pc'))['avg_rc'] or 0
+    national_avg = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False).aggregate(avg_rc=Avg('dados_atuais__rc_atual_pc'))['avg_rc'] or 0
 
     results = []
     for m in qs:

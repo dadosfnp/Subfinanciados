@@ -19,52 +19,18 @@ class Percentis(models.Model):
     def __str__(self):
         return f"{self.percentil}º Percentil"
 
+
 class Municipio(models.Model):
-    cod_ibge = models.CharField(max_length=7, unique=True)
+    # Chave primária natural
+    cod_ibge = models.CharField(max_length=7, primary_key=True)
     name_muni = models.CharField(max_length=255)
     name_muni_uf = models.CharField(max_length=255)
     uf = models.CharField(max_length=2, db_index=True)
-    coordx = models.FloatField()
-    coordy = models.FloatField()
-    populacao24 = models.IntegerField(null=True, db_index=True)
-    populacao24_rank_nacional = models.IntegerField(null=True, blank=True)
-    populacao24_total_nacional = models.IntegerField(null=True, blank=True)
-    populacao24_rank_estadual = models.IntegerField(null=True, blank=True)
-    populacao24_total_estadual = models.IntegerField(null=True, blank=True)
-    populacao24_rank_faixa = models.IntegerField(null=True, blank=True)
-    populacao24_total_faixa = models.IntegerField(null=True, blank=True)
-    populacao00 = models.IntegerField(null=True, blank=True)
-    rc_2024 = models.FloatField(null=True, blank=True)
-    rc_2000 = models.FloatField(null=True, blank=True)
-    rc_24_pc = models.FloatField(null=True, blank=True, db_index=True)
-    rc_00_pc = models.FloatField(null=True, blank=True)
-    quintil24 = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    decil24 = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    quintil00 = models.CharField(max_length=50, null=True, blank=True)
-    decil00 = models.CharField(max_length=50, null=True, blank=True)
-    percentil24 = models.CharField(max_length=50, null=True, blank=True)
-    percentil24_n = models.IntegerField(null=True, blank=True)
-    percentil00 = models.CharField(max_length=50, null=True, blank=True)
-    percentil00_n = models.IntegerField(null=True, blank=True)
+    coordx = models.FloatField(null=True, blank=True)
+    coordy = models.FloatField(null=True, blank=True)
     regiao = models.CharField(max_length=255, db_index=True)
-    rank_nacional = models.IntegerField(null=True, blank=True)
-    total_nacional = models.IntegerField(null=True, blank=True)
-    rank_nacional_00 = models.IntegerField(null=True, blank=True)
-    total_nacional_00 = models.IntegerField(null=True, blank=True)
-    rank_estadual = models.IntegerField(null=True, blank=True)
-    total_estadual = models.IntegerField(null=True, blank=True)
-    rank_faixa = models.IntegerField(null=True, blank=True)
-    total_faixa = models.IntegerField(null=True, blank=True)
-    sus_dependente = models.FloatField(null=True, blank=True)
-    cadunico = models.IntegerField(null=True, blank=True)
-    cadunico_rank_nacional = models.IntegerField(null=True, blank=True)
-    cadunico_total_nacional = models.IntegerField(null=True, blank=True)
-    cadunico_rank_estadual = models.IntegerField(null=True, blank=True)
-    cadunico_total_estadual = models.IntegerField(null=True, blank=True)
-    cadunico_rank_faixa = models.IntegerField(null=True, blank=True)
-    cadunico_total_faixa = models.IntegerField(null=True, blank=True)
     rm = models.ForeignKey(
-        RegiaoMetropolitana, 
+        'RegiaoMetropolitana', 
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -73,6 +39,239 @@ class Municipio(models.Model):
 
     def __str__(self):
         return f"{self.name_muni} ({self.uf})"
+
+    # ---- Propriedades de compatibilidade: dados atuais (IndicadoresAtuais) ----
+    def _da(self):
+        """Retorna dados_atuais ou None sem gerar exceção."""
+        try:
+            return self.dados_atuais
+        except Exception:
+            return None
+
+    def _d2(self):
+        """Retorna dados_2000 ou None sem gerar exceção."""
+        try:
+            return self.dados_2000
+        except Exception:
+            return None
+
+    @property
+    def populacao24(self):
+        da = self._da()
+        return da.populacao_atual if da else None
+
+    @property
+    def populacao24_rank_nacional(self):
+        da = self._da()
+        return da.populacao_atual_rank_nacional if da else None
+
+    @property
+    def populacao24_total_nacional(self):
+        da = self._da()
+        return da.populacao_atual_total_nacional if da else None
+
+    @property
+    def populacao24_rank_estadual(self):
+        da = self._da()
+        return da.populacao_atual_rank_estadual if da else None
+
+    @property
+    def populacao24_total_estadual(self):
+        da = self._da()
+        return da.populacao_atual_total_estadual if da else None
+
+    @property
+    def populacao24_rank_faixa(self):
+        da = self._da()
+        return da.populacao_atual_rank_faixa if da else None
+
+    @property
+    def populacao24_total_faixa(self):
+        da = self._da()
+        return da.populacao_atual_total_faixa if da else None
+
+    @property
+    def rc_24_pc(self):
+        da = self._da()
+        return da.rc_atual_pc if da else None
+
+    @property
+    def rc_2024(self):
+        da = self._da()
+        return da.rc_atual if da else None
+
+    @property
+    def quintil24(self):
+        da = self._da()
+        return da.quintil_atual if da else None
+
+    @property
+    def decil24(self):
+        da = self._da()
+        return da.decil_atual if da else None
+
+    @property
+    def percentil24_n(self):
+        da = self._da()
+        return da.percentil_atual_n if da else None
+
+    @property
+    def percentil24(self):
+        da = self._da()
+        return da.percentil_atual if da else None
+
+    @property
+    def rank_nacional(self):
+        da = self._da()
+        return da.rank_nacional if da else None
+
+    @property
+    def total_nacional(self):
+        da = self._da()
+        return da.total_nacional if da else None
+
+    @property
+    def rank_estadual(self):
+        da = self._da()
+        return da.rank_estadual if da else None
+
+    @property
+    def total_estadual(self):
+        da = self._da()
+        return da.total_estadual if da else None
+
+    @property
+    def rank_faixa(self):
+        da = self._da()
+        return da.rank_faixa if da else None
+
+    @property
+    def total_faixa(self):
+        da = self._da()
+        return da.total_faixa if da else None
+
+    # ---- Propriedades de compatibilidade: dados 2000 (Indicadores2000) ----
+    @property
+    def populacao00(self):
+        d2 = self._d2()
+        return d2.populacao_00 if d2 else None
+
+    @property
+    def rc_00_pc(self):
+        d2 = self._d2()
+        return d2.rc_00_pc if d2 else None
+
+    @property
+    def rc_2000(self):
+        d2 = self._d2()
+        return d2.rc_00 if d2 else None
+
+    @property
+    def quintil00(self):
+        d2 = self._d2()
+        return d2.quintil_00 if d2 else None
+
+    @property
+    def decil00(self):
+        d2 = self._d2()
+        return d2.decil_00 if d2 else None
+
+    @property
+    def percentil00_n(self):
+        d2 = self._d2()
+        return d2.percentil_00_n if d2 else None
+
+    @property
+    def rank_nacional_00(self):
+        d2 = self._d2()
+        return d2.rank_nacional_00 if d2 else None
+
+    @property
+    def total_nacional_00(self):
+        d2 = self._d2()
+        return d2.total_nacional_00 if d2 else None
+
+
+class Indicadores2000(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='dados_2000'
+    )
+    populacao_00 = models.IntegerField(null=True, blank=True)
+    rc_00 = models.FloatField(null=True, blank=True)
+    rc_00_pc = models.FloatField(null=True, blank=True)
+    quintil_00 = models.CharField(max_length=50, null=True, blank=True)
+    decil_00 = models.CharField(max_length=50, null=True, blank=True)
+    percentil_00 = models.CharField(max_length=50, null=True, blank=True)
+    percentil_00_n = models.IntegerField(null=True, blank=True)
+    rank_nacional_00 = models.IntegerField(null=True, blank=True)
+    total_nacional_00 = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Dados 2000 - {self.municipio.name_muni}"
+
+class SusDependente(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='sus_dependente'
+    )
+    sus_dependente = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Dependência SUS - {self.municipio.name_muni}"
+
+class Cadunico(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='cadunico'
+    )
+    cadunico = models.IntegerField(null=True, blank=True)
+    cadunico_rank_nacional = models.IntegerField(null=True, blank=True)
+    cadunico_total_nacional = models.IntegerField(null=True, blank=True)
+    cadunico_rank_estadual = models.IntegerField(null=True, blank=True)
+    cadunico_total_estadual = models.IntegerField(null=True, blank=True)
+    cadunico_rank_faixa = models.IntegerField(null=True, blank=True)
+    cadunico_total_faixa = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"CadÚnico - {self.municipio.name_muni}"
+
+class IndicadoresAtuais(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='dados_atuais'
+    )
+    populacao_atual = models.IntegerField(null=True, db_index=True)
+    populacao_atual_rank_nacional = models.IntegerField(null=True, blank=True)
+    populacao_atual_total_nacional = models.IntegerField(null=True, blank=True)
+    populacao_atual_rank_estadual = models.IntegerField(null=True, blank=True)
+    populacao_atual_total_estadual = models.IntegerField(null=True, blank=True)
+    populacao_atual_rank_faixa = models.IntegerField(null=True, blank=True)
+    populacao_atual_total_faixa = models.IntegerField(null=True, blank=True)
+    rc_atual = models.FloatField(null=True, blank=True)
+    rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
+    quintil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    decil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    percentil_atual = models.CharField(max_length=50, null=True, blank=True)
+    percentil_atual_n = models.IntegerField(null=True, blank=True)
+    rank_nacional = models.IntegerField(null=True, blank=True)
+    total_nacional = models.IntegerField(null=True, blank=True)
+    rank_estadual = models.IntegerField(null=True, blank=True)
+    total_estadual = models.IntegerField(null=True, blank=True)
+    rank_faixa = models.IntegerField(null=True, blank=True)
+    total_faixa = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Dados Atuais - {self.municipio.name_muni}"
+
 
 class ContaDetalhada(models.Model):
     municipio = models.OneToOneField(
@@ -88,9 +287,14 @@ class ContaDetalhada(models.Model):
     outras_receita = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
-            return valor / self.municipio.populacao24
+        try:
+            pop = self.municipio.dados_atuais.populacao_atual
+        except Exception:
+            pop = None
+        if pop and pop > 0:
+            return valor / pop
         return 0
+
     
     @property
     def imposto_taxas_contribuicoes_pc(self): return self._calcular_pc(self.imposto_taxas_contribuicoes)
@@ -152,9 +356,14 @@ class ContaEspecifica(models.Model):
     outras_receitas = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
-            return valor / self.municipio.populacao24
+        try:
+            pop = self.municipio.dados_atuais.populacao_atual
+        except Exception:
+            pop = None
+        if pop and pop > 0:
+            return valor / pop
         return 0
+
 
     @property
     def imposto_pc(self): return self._calcular_pc(self.imposto)
@@ -283,9 +492,14 @@ class ContaMaisEspecifica(models.Model):
     outras_transferencias_estado = models.FloatField()
 
     def _calcular_pc(self, valor):
-        if self.municipio.populacao24 and self.municipio.populacao24 > 0:
-            return valor / self.municipio.populacao24
+        try:
+            pop = self.municipio.dados_atuais.populacao_atual
+        except Exception:
+            pop = None
+        if pop and pop > 0:
+            return valor / pop
         return 0
+
     
     # --- Propriedades Impostos ---
     @property

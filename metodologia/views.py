@@ -10,8 +10,8 @@ def metodologia_page(request):
     Passa números REAIS (média nacional e distribuição de municípios por faixa
     populacional) para a página exibir dados oficiais, não ilustrativos.
     """
-    media = Municipio.objects.filter(rc_24_pc__isnull=False).aggregate(m=Avg('rc_24_pc'))['m'] or 0
-    pop_qs = Municipio.objects.filter(populacao24__isnull=False)
+    media = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False).aggregate(m=Avg('dados_atuais__rc_atual_pc'))['m'] or 0
+    pop_qs = Municipio.objects.filter(dados_atuais__populacao_atual__isnull=False)
 
     # Quantidade real de municípios por faixa de porte (a altura da barra reflete
     # a CONTAGEM — por isso as faixas pequenas dominam, como na realidade brasileira).
@@ -23,7 +23,7 @@ def metodologia_page(request):
     ]
     faixas, counts = [], []
     for label, lo, hi in faixas_def:
-        cond = Q(populacao24__gte=lo) & (Q(populacao24__lt=hi) if hi else Q())
+        cond = Q(dados_atuais__populacao_atual__gte=lo) & (Q(dados_atuais__populacao_atual__lt=hi) if hi else Q())
         c = pop_qs.filter(cond).count()
         counts.append(c)
         faixas.append({'label': label, 'count': c})
@@ -32,13 +32,13 @@ def metodologia_page(request):
         item['h'] = max(6, round(item['count'] / mx * 130))  # altura proporcional (px)
 
     total = sum(counts) or 1
-    abaixo = pop_qs.filter(populacao24__lte=80000).count()
+    abaixo = pop_qs.filter(dados_atuais__populacao_atual__lte=80000).count()
     acima = total - abaixo
 
     # Médias nacionais dos indicadores sociais (média dos municípios).
-    media_sus = pop_qs.filter(sus_dependente__isnull=False).aggregate(m=Avg('sus_dependente'))['m'] or 0
-    media_cad = pop_qs.filter(cadunico__isnull=False, populacao24__gt=0).annotate(
-        pct=ExpressionWrapper(F('cadunico') * 100.0 / F('populacao24'), output_field=FloatField())
+    media_sus = pop_qs.filter(sus_dependente__sus_dependente__isnull=False).aggregate(m=Avg('sus_dependente__sus_dependente'))['m'] or 0
+    media_cad = pop_qs.filter(cadunico__cadunico__isnull=False, dados_atuais__populacao_atual__gt=0).annotate(
+        pct=ExpressionWrapper(F('cadunico__cadunico') * 100.0 / F('dados_atuais__populacao_atual'), output_field=FloatField())
     ).aggregate(m=Avg('pct'))['m'] or 0
 
     ctx = {

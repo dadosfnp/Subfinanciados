@@ -16,16 +16,16 @@ let formatPorcentagemRadio;
 let calcModeTotalRadio;
 let calcModeFilteredRadio;
 
-let toggle2024;
-let toggle2000e2024;
+let toggle2025;
+let toggle2000e2025;
 
 let populacaoQuintilCtx;
 let populacaoQuintilChart;
 
 // Variáveis das tabelas
-let tableCard2024;
-let table2024Head;
-let table2024Body;
+let tableCard2025;
+let table2025Head;
+let table2025Body;
 
 let tableCard2000;
 let table2000Head;
@@ -139,8 +139,8 @@ async function atualizarFiltros() {
     const calculationMode = calcModeFilteredRadio.checked ? 'por_filtro' : 'total';
 
     const selectedYearOptionElement = document.querySelector('.toggle-option.active');
-    const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2024';
-    const include2000Data = (selectedYearOption === '2000 e 2024');
+    const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2025';
+    const include2000Data = (selectedYearOption === '2000 e 2025');
 
     const apiUrl =
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
@@ -245,10 +245,10 @@ async function atualizarFiltros() {
 
             data.chartData.datasets.forEach((dataset) => {
                 const barColors = getColors(dataset.data.length);
-                const is2024 = dataset.label.toString().includes('2024');
+                const is2025 = dataset.label.toString().includes('2025');
 
                 const backgroundColors = barColors.map(color => 
-                    is2024 ? color : createDiagonalPattern(color) 
+                    is2025 ? color : createDiagonalPattern(color) 
                 );
 
                 populacaoQuintilChart.data.datasets.push({
@@ -278,11 +278,11 @@ async function atualizarFiltros() {
         populacaoQuintilChart.update();
 
         // ==== Tabelas ====
-        if (data.tableData24 && tableCard2024) {
-            tableCard2024.classList.remove('d-none');
-            renderTable(table2024Head, table2024Body, data.tableHeaders24, data.tableData24);
-        } else if (tableCard2024) {
-            tableCard2024.classList.add('d-none');
+        if (data.tableData24 && tableCard2025) {
+            tableCard2025.classList.remove('d-none');
+            renderTable(table2025Head, table2025Body, data.tableHeaders24, data.tableData24);
+        } else if (tableCard2025) {
+            tableCard2025.classList.add('d-none');
         }
 
         if (include2000Data && data.tableData00 && data.tableHeaders00 && tableCard2000) {
@@ -292,7 +292,7 @@ async function atualizarFiltros() {
             tableCard2000.classList.add('d-none');
         }
 
-        enableSynchronizedHover('#table-2024', '#table-2000');
+        enableSynchronizedHover('#table-2025', '#table-2000');
 
     } catch (error) {
         console.error('Erro ao atualizar filtros:', error);
@@ -317,12 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
     calcModeTotalRadio = document.getElementById('calcModeTotal');
     calcModeFilteredRadio = document.getElementById('calcModeFiltered');
 
-    toggle2024 = document.querySelector('.toggle-option[data-option="2024"]');
-    toggle2000e2024 = document.querySelector('.toggle-option[data-option="2000 e 2024"]');
+    toggle2025 = document.querySelector('.toggle-option[data-option="2025"]');
+    toggle2000e2025 = document.querySelector('.toggle-option[data-option="2000 e 2025"]');
 
-    tableCard2024 = document.getElementById('table-card-2024');
-    table2024Head = document.querySelector('#table-2024 thead');
-    table2024Body = document.querySelector('#table-2024 tbody');
+    tableCard2025 = document.getElementById('table-card-2025');
+    table2025Head = document.querySelector('#table-2025 thead');
+    table2025Body = document.querySelector('#table-2025 tbody');
 
     tableCard2000 = document.getElementById('table-card-2000');
     table2000Head = document.querySelector('#table-2000 thead');
@@ -428,18 +428,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (radio) radio.addEventListener('change', atualizarFiltros);
     });
 
-    if (toggle2024) {
-        toggle2024.addEventListener('click', () => {
+    if (toggle2025) {
+        toggle2025.addEventListener('click', () => {
             document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
-            toggle2024.classList.add('active');
+            toggle2025.classList.add('active');
             atualizarFiltros();
         });
     }
 
-    if (toggle2000e2024) {
-        toggle2000e2024.addEventListener('click', () => {
+    if (toggle2000e2025) {
+        toggle2000e2025.addEventListener('click', () => {
             document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
-            toggle2000e2024.classList.add('active');
+            toggle2000e2025.classList.add('active');
             atualizarFiltros();
         });
     }
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (calcModeTotalRadio) calcModeTotalRadio.checked = true;
 
             document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
-            if (toggle2024) toggle2024.classList.add('active');
+            if (toggle2025) toggle2025.classList.add('active');
 
             updateDependentFilters(true).then(atualizarFiltros);
         });
@@ -466,9 +466,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDependentFilters(true).then(atualizarFiltros);
 });
 
-// Hover sincronizado entre tabelas 2024 e 2000
+// Hover sincronizado entre tabelas 2025 e 2000
 function enableSynchronizedHover(tableId1, tableId2) {
-    const table1 = document.querySelector(tableId1); // 2024
+    const table1 = document.querySelector(tableId1); // 2025
     const table2 = document.querySelector(tableId2); // 2000
     if (!table1 || !table2) return;
 
