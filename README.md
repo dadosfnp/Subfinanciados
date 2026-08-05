@@ -206,25 +206,63 @@ O IFEM está publicado em **https://ifem.fnp.org.br**. Em produção o app roda 
     ssh -L 8003:localhost:8003 <usuario>@<ip-do-droplet>
     ```
 
-### Deploy automático (em transição)
+### Deploy automático (ATIVO desde 2026-08-05)
 
-O **GitHub Actions** (`.github/workflows/deploy.yml`) já está na `main` e dispara **a cada push nela**: o runner conecta no droplet via SSH e roda o `deploy.sh`.
+**Todo push na `main` publica em produção sozinho.** O GitHub Actions
+(`.github/workflows/deploy.yml`) conecta no droplet via SSH e roda o `deploy.sh`. Não é
+preciso fazer nada além do merge — mas **confira o resultado do job**, porque ele pode
+barrar o deploy de propósito (veja abaixo).
 
-> 🚨 **O auto-deploy ainda não funciona de verdade.** Os secrets `DROPLET_SSH_HOST`,
-> `DROPLET_SSH_USER`, `DROPLET_SSH_KEY` e `DROPLET_SSH_KNOWN_HOSTS` **não estão configurados**
-> no repositório. Sem eles o job cai num guard de segurança, **não faz nada e mesmo assim
-> termina verde** (`✅` em poucos segundos, com um `::notice` explicando o motivo). É uma
-> armadilha conhecida: já houve push na `main` dado como publicado que nunca chegou ao ar.
-> Enquanto os secrets não existirem, **todo deploy é manual** — siga a seção acima.
->
-> Para conferir se um deploy realmente rodou:
-> `gh run view <id> --repo dadosfnp/subfinanciados --log | tail -5`
+Acompanhe em **Actions → Deploy produção (droplet)**, ou pelo terminal:
 
-> **Atenção à branch de produção:** confirme sempre a branch ativa no droplet com
-> `git branch --show-current` antes de deployar. O droplet acompanhou por muito tempo a
-> branch **`feat/pagina-metodologia`**, e não a `main` — se ele ainda estiver nela, um push
-> na `main` não aparece em produção por mais correto que esteja. Para migrar:
-> `git checkout main && git branch --set-upstream-to=<remote>/main main`.
+```bash
+gh run list --repo dadosfnp/subfinanciados --limit 3
+gh run view <id> --repo dadosfnp/subfinanciados --log | grep "\[deploy\]"
+```
+
+#### Os dois desfechos possíveis
+
+| Resultado | O que aconteceu | O que fazer |
+| :--- | :--- | :--- |
+| ✅ verde | Publicado. O log termina em `[deploy] Concluido`. | Nada. |
+| ❌ vermelho com `SCHEMA INCOMPATÍVEL` | O banco não suporta o código novo. **O deploy foi abortado e o site anterior continua no ar, intacto.** | Rodar o `recriar_banco` (abaixo) e disparar o deploy de novo. |
+
+O segundo caso é esperado sempre que a atualização mexe no schema — o que acontece toda
+vez que as migrations são regeradas. Não é bug: é o deploy se recusando a publicar um site
+que serviria erro em toda página.
+
+```bash
+ssh root@<ip-do-droplet>
+cd /var/www/ifem
+docker compose exec ifem python manage.py recriar_banco              # confira o plano
+docker compose exec ifem python manage.py recriar_banco --confirmar  # execute
+```
+
+Depois é só reexecutar o job em **Actions → Re-run jobs** (ou dar um novo push).
+
+> 🚨 **Tire um backup do banco antes do `recriar_banco`.** No droplet, use a versão do
+> `pg_dump` que casa com o servidor (o do host é 16, o Managed é 18):
+> ```bash
+> docker run --rm -e PGURL="$(tr -d '\r\n' < /root/.ifem_db_url)" -v /root/backups:/backup \
+>   postgres:18-alpine sh -c 'pg_dump "$PGURL" -Fc -f /backup/ifem-$(date +%F-%H%M).dump'
+> ```
+
+#### Como o acesso do CI está montado
+
+O Actions entra como `root` por uma chave dedicada, restrita no `authorized_keys` do droplet
+a `command="/var/www/ifem/deploy.sh"` (mais `no-pty` e os `no-*-forwarding`). Na prática a
+chave **só consegue disparar o deploy** — não abre shell, não lê arquivo, não roda outro
+comando, mesmo que vaze. Os secrets são `DROPLET_SSH_HOST`, `DROPLET_SSH_USER`,
+`DROPLET_SSH_KEY` e `DROPLET_SSH_KNOWN_HOSTS`.
+
+> Se um dia os secrets forem removidos, o job volta a cair num guard e **termina verde sem
+> publicar nada** (com um `::notice` explicando). Foi assim durante semanas, e já houve push
+> dado como publicado que nunca chegou ao ar — se o site não mudou, confira o log do job
+> antes de procurar o problema em outro lugar.
+
+> **Branch de produção:** o droplet acompanha a **`main`** desde 2026-08-05. Antes disso
+> seguia a `feat/pagina-metodologia`, e por isso pushes na `main` não apareciam em produção.
+> Para conferir: `git branch --show-current` em `/var/www/ifem`.
 
 *   **Decisões de arquitetura e passo a passo da migração:** ver `tasks/plan-migracao-droplet.md`, `tasks/runbook-migracao-droplet.md` e o ADR-001 na pasta TIC da FNP.
 
