@@ -224,10 +224,13 @@ Uma das duas coisas vai acontecer:
 Aqui você entra no servidor. **São 3 comandos:**
 
 ```bash
-ssh root@142.93.205.222
+ssh <usuario>@<ip-do-droplet>
 cd /var/www/ifem
 ./atualizar-banco.sh
 ```
+
+> 🔑 **Este repositório é público**, então o IP e o usuário do servidor não ficam escritos
+> aqui. Peça ao responsável pela infra e guarde no cofre de senhas da FNP.
 
 O script mostra o que vai fazer e pede para você digitar `sim` antes de mexer em qualquer coisa. Depois ele:
 
@@ -257,7 +260,7 @@ O job vermelho no GitHub continua vermelho — ele registra a tentativa que foi 
 <summary>Deploy manual — use só se o Actions estiver fora do ar</summary>
 
 ```bash
-ssh root@142.93.205.222
+ssh <usuario>@<ip-do-droplet>
 cd /var/www/ifem
 ./deploy.sh
 ```
@@ -270,7 +273,7 @@ O `deploy.sh` atualiza o código, reconstrói a imagem, **confere se o banco é 
 Para ver o site sem expor publicamente, abra um túnel e acesse http://localhost:8003:
 
 ```bash
-ssh -L 8003:localhost:8003 root@142.93.205.222
+ssh -L 8003:localhost:8003 <usuario>@<ip-do-droplet>
 ```
 
 </details>
