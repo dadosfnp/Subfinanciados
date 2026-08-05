@@ -15,8 +15,17 @@ substituídos a cada carga, a saída correta não é escrever migration de trans
 é derrubar o schema e reconstruir. É o que este comando faz, na ordem certa.
 
 O QUE É PRESERVADO
-Apenas Noticia — é o único modelo alimentado pelo admin, não por planilha. É
-exportado antes do drop e reimportado no fim. Todo o resto é reconstruído.
+Só o que não vem de planilha e se perderia para sempre: as Notícias (cadastradas
+no admin) e as contas de acesso ao admin (usuários e grupos). Tudo isso é
+exportado antes do drop e reimportado no fim; o resto é reconstruído.
+
+O drop atinge todas as tabelas do database, inclusive auth_user — sem esta
+exportação, recriar o banco custaria o acesso ao próprio admin.
+
+ESCOPO DO DROP
+Apenas o database ao qual esta aplicação está conectada (em produção, `ifem`).
+Outros databases do mesmo cluster PostgreSQL — como o `fnp_sistema` — são
+isolados e não são tocados.
 
 USO
     python manage.py recriar_banco                 # mostra o plano e aborta (dry-run)
@@ -30,6 +39,7 @@ Idempotente: pode rodar quantas vezes precisar, o resultado é sempre o mesmo.
 import tempfile
 from pathlib import Path
 
+from django.apps import apps
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
@@ -53,11 +63,16 @@ from home.models import (
     MedianaPorteReceita,
     MedianaUfReceita,
     Municipio,
-    Noticia,
     Percentis,
     RegiaoMetropolitana,
     SusDependente,
 )
+
+# Tudo que não vem das planilhas e não pode ser reconstruído: conteúdo do admin e
+# as próprias contas de acesso a ele. Grupos antes de usuários, porque o usuário
+# referencia o grupo. As permissões não entram na lista — o migrate as recria, e o
+# dump usa natural keys justamente para reencontrá-las mesmo com IDs diferentes.
+MODELOS_A_PRESERVAR = ["auth.Group", "auth.User", "home.Noticia"]
 
 # Ordem obrigatória: 01 cria os Municipio que todos os demais referenciam por FK,
 # e 02 depende de 01 para associar as RMs.
@@ -111,14 +126,17 @@ class Command(BaseCommand):
             help="Executa de fato. Sem esta flag o comando só mostra o plano e sai.",
         )
         parser.add_argument(
-            "--sem-preservar-noticias",
+            "--sem-preservar-conteudo",
             action="store_true",
-            help="Não exporta/reimporta as Notícias cadastradas no admin (elas serão perdidas).",
+            help=(
+                "Não exporta/reimporta o conteúdo do admin (notícias, usuários e grupos). "
+                "Eles serão perdidos."
+            ),
         )
 
     def handle(self, *args, **options):
         confirmado = options["confirmar"]
-        preservar_noticias = not options["sem_preservar_noticias"]
+        preservar = not options["sem_preservar_conteudo"]
 
         db = connection.settings_dict
         alvo = f"{db.get('ENGINE', '').split('.')[-1]} · {db.get('NAME')}"
@@ -128,8 +146,12 @@ class Command(BaseCommand):
         if not confirmado:
             self.stdout.write(self.style.WARNING("MODO DE VERIFICAÇÃO — nada será alterado.\n"))
             self.stdout.write(f"Banco alvo         : {alvo}")
+            self.stdout.write("                     (só este database; outros do mesmo cluster não são tocados)")
             self.stdout.write(f"Tabelas a derrubar : {len(connection.introspection.table_names())}")
-            self.stdout.write(f"Notícias a preservar: {Noticia.objects.count() if preservar_noticias else 0}")
+            if preservar:
+                self.stdout.write("A preservar        : " + ", ".join(f"{r} ({t})" for r, t in self._inventario()))
+            else:
+                self.stdout.write(self.style.WARNING("A preservar        : NADA (--sem-preservar-conteudo)"))
             self.stdout.write("Imports que rodarão : " + ", ".join(COMANDOS_DE_IMPORTACAO))
             self.stdout.write(self.style.WARNING("\nPara executar de verdade: --confirmar"))
             return
@@ -137,7 +159,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING(f"Recriando o banco: {alvo}"))
 
         backup_noticias = None
-        if preservar_noticias:
+        if preservar:
             backup_noticias = self._exportar_noticias()
 
         self._derrubar_tabelas()
@@ -158,35 +180,51 @@ class Command(BaseCommand):
 
         self._validar()
 
+    def _inventario(self) -> list[tuple[str, int]]:
+        """Quantas linhas existem hoje em cada modelo preservado."""
+        return [(rotulo, apps.get_model(rotulo).objects.count()) for rotulo in MODELOS_A_PRESERVAR]
+
     def _exportar_noticias(self) -> Path | None:
-        """Serializa as Notícias para um arquivo temporário antes do drop.
+        """Serializa o conteúdo do admin para um arquivo temporário antes do drop.
 
         Retorna None quando não há nada a preservar, para o passo de restauração
         ser pulado sem precisar de flag extra.
         """
-        total = Noticia.objects.count()
+        inventario = self._inventario()
+        total = sum(quantidade for _, quantidade in inventario)
         if total == 0:
-            self.stdout.write("[1/4] Nenhuma notícia cadastrada — nada a preservar.")
+            self.stdout.write("[1/4] Nada a preservar (sem notícias e sem usuários).")
             return None
 
-        destino = Path(tempfile.gettempdir()) / "ifem_noticias_backup.json"
+        destino = Path(tempfile.gettempdir()) / "ifem_conteudo_backup.json"
         with destino.open("w", encoding="utf-8") as arquivo:
-            call_command("dumpdata", "home.Noticia", indent=2, stdout=arquivo)
-        self.stdout.write(f"[1/4] {total} notícia(s) exportada(s) para {destino}")
+            # natural_foreign: grava as permissões por (codename, app_label) em vez de
+            # por ID. O migrate recria as permissões com IDs novos, então referenciar
+            # por ID devolveria permissões trocadas — ou nenhuma — aos usuários.
+            call_command(
+                "dumpdata",
+                *MODELOS_A_PRESERVAR,
+                natural_foreign=True,
+                indent=2,
+                stdout=arquivo,
+            )
+        resumo = ", ".join(f"{quantidade} de {rotulo}" for rotulo, quantidade in inventario if quantidade)
+        self.stdout.write(f"[1/4] Exportado para {destino}: {resumo}")
         return destino
 
     def _restaurar_noticias(self, backup: Path) -> None:
-        self.stdout.write("\n[4/4] Restaurando notícias...")
+        self.stdout.write("\n[4/4] Restaurando conteúdo do admin...")
         try:
             call_command("loaddata", str(backup), verbosity=0)
         except Exception as erro:
             # O backup em disco é a rede de segurança: sem apontar onde ele está,
-            # a falha aqui significaria perder as notícias silenciosamente.
+            # a falha aqui significaria perder notícias e usuários em silêncio.
             raise CommandError(
-                f"Falha ao restaurar as notícias a partir de {backup}: {erro}. "
+                f"Falha ao restaurar o conteúdo a partir de {backup}: {erro}. "
                 f"O arquivo foi mantido — recarregue com: manage.py loaddata {backup}"
             ) from erro
-        self.stdout.write(self.style.SUCCESS(f"  {Noticia.objects.count()} notícia(s) restaurada(s)."))
+        restaurado = ", ".join(f"{quantidade} de {rotulo}" for rotulo, quantidade in self._inventario() if quantidade)
+        self.stdout.write(self.style.SUCCESS(f"  {restaurado}."))
 
     def _derrubar_tabelas(self) -> None:
         """Remove todas as tabelas, inclusive django_migrations.

@@ -246,10 +246,15 @@ python manage.py recriar_banco              # mostra o plano e sai, sem alterar 
 python manage.py recriar_banco --confirmar  # executa
 ```
 
-Ele preserva as **Notícias** (único conteúdo cadastrado pelo admin, e não por planilha):
-exporta antes de derrubar e reimporta no fim. No encerramento confere a contagem de todas
+Ele preserva o que não vem de planilha e se perderia para sempre: as **Notícias** e as
+**contas de acesso ao admin** (usuários, grupos e permissões, com as senhas intactas).
+Exporta antes de derrubar e reimporta no fim. No encerramento confere a contagem de todas
 as 21 tabelas e **falha** se alguma vier abaixo do piso esperado — carga parcial é o modo
 de falha perigoso, porque o site sobe servindo dados incompletos sem sinal de erro.
+
+> **Escopo do drop:** apenas o database ao qual a aplicação está conectada — em produção,
+> o `ifem`. Os outros databases do mesmo cluster PostgreSQL (como o `fnp_sistema`, do
+> sistema da FNP) são isolados e não são afetados.
 
 > **Por que derrubar o schema em vez de migrar?** O fluxo de atualização de dados deste
 > projeto regera as migrations do zero (apaga `home/migrations/*` e roda `makemigrations`).
