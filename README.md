@@ -208,9 +208,23 @@ O IFEM está publicado em **https://ifem.fnp.org.br**. Em produção o app roda 
 
 ### Deploy automático (em transição)
 
-Há um **GitHub Actions** (`.github/workflows/deploy.yml`, na branch de infra `chore/deploy-script-e-runbook`, ainda **não mergeada** na `main`) que dispara o deploy sozinho **a cada push na `main`**: o runner conecta no droplet via SSH e roda o `deploy.sh`. Enquanto os secrets `DROPLET_SSH_*` não estiverem configurados no repositório, o job passa sem fazer nada (guard de segurança).
+O **GitHub Actions** (`.github/workflows/deploy.yml`) já está na `main` e dispara **a cada push nela**: o runner conecta no droplet via SSH e roda o `deploy.sh`.
 
-> **Atenção à branch de produção:** hoje o droplet acompanha a branch **`feat/pagina-metodologia`** (deploy manual). Quando o auto-deploy entrar em vigor, a branch de produção passa a ser a **`main`**. Sempre confirme a branch ativa no droplet com `git branch --show-current` antes de deployar.
+> 🚨 **O auto-deploy ainda não funciona de verdade.** Os secrets `DROPLET_SSH_HOST`,
+> `DROPLET_SSH_USER`, `DROPLET_SSH_KEY` e `DROPLET_SSH_KNOWN_HOSTS` **não estão configurados**
+> no repositório. Sem eles o job cai num guard de segurança, **não faz nada e mesmo assim
+> termina verde** (`✅` em poucos segundos, com um `::notice` explicando o motivo). É uma
+> armadilha conhecida: já houve push na `main` dado como publicado que nunca chegou ao ar.
+> Enquanto os secrets não existirem, **todo deploy é manual** — siga a seção acima.
+>
+> Para conferir se um deploy realmente rodou:
+> `gh run view <id> --repo dadosfnp/subfinanciados --log | tail -5`
+
+> **Atenção à branch de produção:** confirme sempre a branch ativa no droplet com
+> `git branch --show-current` antes de deployar. O droplet acompanhou por muito tempo a
+> branch **`feat/pagina-metodologia`**, e não a `main` — se ele ainda estiver nela, um push
+> na `main` não aparece em produção por mais correto que esteja. Para migrar:
+> `git checkout main && git branch --set-upstream-to=<remote>/main main`.
 
 *   **Decisões de arquitetura e passo a passo da migração:** ver `tasks/plan-migracao-droplet.md`, `tasks/runbook-migracao-droplet.md` e o ADR-001 na pasta TIC da FNP.
 
@@ -218,14 +232,71 @@ Há um **GitHub Actions** (`.github/workflows/deploy.yml`, na branch de infra `c
 
 ## 📈 Processamento de Dados
 
-O sistema utiliza comandos customizados para digerir as planilhas localizadas em `base_datas/`.
+Todos os dados do sistema vêm das planilhas em `base_datas/` (versionadas no git) e são
+carregados por comandos customizados. Cada comando **apaga e recarrega** as suas tabelas,
+então rodar duas vezes é seguro.
 
-| Comando | Descrição |
-| :--- | :--- |
-| `import_accounts` | Importação das contas gerais e estruturais. |
-| `import_detail_accounts` | Dados detalhados de receitas por município. |
-| `import_rm` | Composição das Regiões Metropolitanas. |
-| `calculate_percentiles` | Processamento estatístico de rankings nacionais. |
+### Atualizar os dados (o caminho normal)
+
+Um comando só faz tudo — derruba o schema, aplica as migrations e recarrega as 9 etapas
+na ordem correta:
+
+```bash
+python manage.py recriar_banco              # mostra o plano e sai, sem alterar nada
+python manage.py recriar_banco --confirmar  # executa
+```
+
+Ele preserva o que não vem de planilha e se perderia para sempre: as **Notícias** e as
+**contas de acesso ao admin** (usuários, grupos e permissões, com as senhas intactas).
+Exporta antes de derrubar e reimporta no fim. No encerramento confere a contagem de todas
+as 21 tabelas e **falha** se alguma vier abaixo do piso esperado — carga parcial é o modo
+de falha perigoso, porque o site sobe servindo dados incompletos sem sinal de erro.
+
+> **Escopo do drop:** apenas o database ao qual a aplicação está conectada — em produção,
+> o `ifem`. Os outros databases do mesmo cluster PostgreSQL (como o `fnp_sistema`, do
+> sistema da FNP) são isolados e não são afetados.
+
+> **Por que derrubar o schema em vez de migrar?** O fluxo de atualização de dados deste
+> projeto regera as migrations do zero (apaga `home/migrations/*` e roda `makemigrations`).
+> Isso produz um `0001_initial` novo que o banco já considera aplicado — `migrate` não faz
+> nada, enquanto o código passa a esperar colunas renomeadas, tabelas novas e outra primary
+> key. O app sobe e quebra com `ProgrammingError: column ... does not exist`. Como todos os
+> dados vêm das planilhas e são substituídos por inteiro a cada carga, reconstruir é mais
+> simples e mais seguro do que escrever migrations de transição.
+
+### Os comandos individuais
+
+Rodar um a um só é necessário para recarregar uma parte específica. **A ordem importa:** o
+`01` cria os `Municipio` que todos os demais referenciam por chave estrangeira.
+
+| Ordem | Comando | O que carrega |
+| :--- | :--- | :--- |
+| 1 | `01_importar_municipios` | Municípios, população, receitas e os indicadores (SUS, CadÚnico, rankings). |
+| 2 | `02_importar_rm` | Composição das Regiões Metropolitanas. |
+| 3 | `03_importar_contas` | Contas detalhadas (nível 0) e seus percentis. |
+| 4 | `04_importar_contas_01` | Contas específicas (nível 1) e seus percentis. |
+| 5 | `05_importar_contas_02` | Contas mais específicas (nível 2) e seus percentis. |
+| 6 | `06_percentil` | Limites dos percentis nacionais. |
+| 7 | `07_media_nacional_detalhamento` | Médias nacional, por UF e por porte. |
+| 8 | `08_mediana_nacional_detalhamento` | Medianas nacional, por UF e por porte. |
+| 9 | `09_crescimento_medio` | Crescimento médio de receita e população. |
+
+> ⚠️ Nunca rode esses comandos com `manage.py shell < arquivo`. Nesse modo o Python
+> interrompe blocos indentados em linhas vazias e **engole exceções** — a carga fica pela
+> metade e o exit code ainda vem `0`. Use sempre `manage.py <comando>`.
+
+### Atualizando os dados em produção
+
+As planilhas de `base_datas/` entram na imagem Docker, então não é preciso copiar arquivo:
+
+```bash
+cd /var/www/ifem && ./deploy.sh                              # sobe o código novo
+docker compose exec ifem python manage.py recriar_banco       # confira o plano
+docker compose exec ifem python manage.py recriar_banco --confirmar
+```
+
+> 🚨 **Tire um backup do banco antes** (snapshot no painel da DigitalOcean ou `pg_dump`).
+> O comando derruba todas as tabelas — não há desfazer.
 
 ---
 
