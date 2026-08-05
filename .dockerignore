@@ -24,6 +24,11 @@ export_folheto/
 *.xlsx
 *.log
 
+# Exceção: as planilhas-fonte de base_datas/ (~6MB) PRECISAM entrar na imagem —
+# são a entrada dos comandos de import (01..09), que rodam dentro do container.
+# Sem isto, o reimport exigiria um `docker compose cp` manual a cada carga de dados.
+!base_datas/
+
 # Caches Python
 __pycache__/
 *.pyc
