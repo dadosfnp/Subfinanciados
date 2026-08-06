@@ -6,8 +6,10 @@ class Command(BaseCommand):
     help = 'Lê o arquivo Excel de RMs e associa aos municípios no banco de dados'
 
     def handle(self, *args, **options):
-        # Caminho para o seu arquivo Excel
-        path_arquivo_rm = 'base_datas\Composicao_RM_2023.xls'
+        # Barra normal, nunca invertida: em Linux (o container de produção) a barra
+        # invertida vira parte literal do nome do arquivo e o read_excel estoura
+        # FileNotFoundError. Os demais comandos de import já usam este formato.
+        path_arquivo_rm = 'base_datas/Composicao_RM_2023.xls'
         
         self.stdout.write(f'Lendo o arquivo: {path_arquivo_rm}')
         df = pd.read_excel(path_arquivo_rm)
