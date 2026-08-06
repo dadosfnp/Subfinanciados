@@ -129,6 +129,8 @@
 .met-formula__bot { font-size: clamp(1rem,1.7vw,1.3rem); font-weight: 700; }
 .met-formula__eq { margin-top: .7rem; font-size: 1rem; color: var(--m-mut); }
 .met-formula__eq b { color: var(--m-green); font-weight: 900; }
+.met-formula__op { font-size: clamp(1rem, 1.7vw, 1.3rem); font-weight: 800; color: var(--m-ink); }
+.met-formula__bracket { font-size: clamp(3rem, 5vw, 4rem); font-weight: 300; color: var(--m-ink); line-height: 0.8; margin: 0 0.1rem; }
 
 /* ---------- Donut ---------- */
 .met-legend { list-style: none; padding: 0; margin: 1.8rem 0 0; display: flex; flex-direction: column; gap: .55rem; }

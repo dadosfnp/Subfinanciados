@@ -661,3 +661,52 @@ body .map-page.popup-active .map-overlay-container {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     white-space: nowrap;
 }
+
+
+/* Container do tooltip */
+.capag-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* O balão de texto (oculto por padrão) */
+.capag-tooltip .capag-tooltip-text {
+  visibility: hidden;
+  width: 320px; /* Largura suficiente para acomodar o texto longo */
+  background-color: #1e293b; /* Fundo escuro */
+  color: #f8fafc; /* Texto claro */
+  text-align: left;
+  border-radius: 6px;
+  padding: 12px;
+  position: absolute;
+  z-index: 9999;
+  bottom: 150%; /* Posiciona acima do ícone */
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+  font-size: 11px; /* Fonte reduzida para não ocupar muito espaço */
+  font-weight: normal;
+  line-height: 1.4;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+  pointer-events: none; /* Evita que o tooltip interfira no mouse */
+}
+
+/* Seta apontando para baixo */
+.capag-tooltip .capag-tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+/* Mostra o balão de texto quando passar o mouse no wrapper */
+.capag-tooltip:hover .capag-tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}

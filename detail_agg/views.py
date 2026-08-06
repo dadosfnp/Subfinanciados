@@ -68,9 +68,20 @@ def _get_filtered_municipios(request):
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(dados_atuais__quintil_atual=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
         elif classification_filter == 'decil':
-            queryset = queryset.filter(dados_atuais__decil_atual=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
+        elif classification_filter == 'natural':
+            try:
+                min_str, max_str = subgroup_filter.split('-')
+                min_val = int(min_str)
+                if max_str.lower() == '999999':
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
+                else:
+                    max_val = int(max_str)
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
+            except ValueError:
+                pass
 
     return queryset, True
 
@@ -321,9 +332,21 @@ def conjunto_detalhe_view(request):
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(dados_atuais__quintil_atual=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
         elif classification_filter == 'decil':
-            queryset = queryset.filter(dados_atuais__decil_atual=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
+        elif classification_filter == 'natural':
+            try:
+                min_str, max_str = subgroup_filter.split('-')
+                min_val = int(min_str)
+                if max_str.lower() == '999999':
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
+                else:
+                    max_val = int(max_str)
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
+            except ValueError:
+                pass
+
 
     # --- agregações ---
     aggregated_data = queryset.aggregate(
@@ -1063,9 +1086,56 @@ def conjunto_detalhe_view(request):
         .order_by("cod_ibge")
     )
 
-    data_f = list(qsf)  # ~5.570 linhas é tranquilo
-    print(data_f)
-    print("a")
+    data_f = list(qsf)
+
+    # ---------------------------
+    # ADAPTA BRASIL (médias do grupo)
+    # ---------------------------
+    AB_INDICATORS = [
+        ("Biodiversidade", "Integridade do bioma", "dados_adapta_brasil__bio_int_bio"),
+        ("Desastres geo-hidrológicos", "Deslizamento de terra", "dados_adapta_brasil__des_des_ter"),
+        ("Desastres geo-hidrológicos", "Inundações, enxurradas e alagamentos", "dados_adapta_brasil__des_in_enx_ala"),
+        ("Recursos hídricos", "Risco de estresse hídrico", "dados_adapta_brasil__rec_ris_est_hid"),
+        ("Saúde", "Arboviroses dengue, zika e chikungunya", "dados_adapta_brasil__sau_arb"),
+        ("Saúde", "Leishmaniose tegumentar americana", "dados_adapta_brasil__sau_lei_teg_ame"),
+        ("Saúde", "Leishmaniose visceral", "dados_adapta_brasil__sau_lei_vis"),
+        ("Saúde", "Malária", "dados_adapta_brasil__sau_mal"),
+        ("Segurança alimentar", "Acesso e consumo de alimentos", "dados_adapta_brasil__seg_ali_ace_con_ali"),
+        ("Segurança alimentar", "Disponibilidade de alimentos", "dados_adapta_brasil__seg_ali_dis"),
+        ("Segurança energética", "Acesso", "dados_adapta_brasil__seg_ene_ace"),
+        ("Segurança energética", "Disponibilidade", "dados_adapta_brasil__seg_ene_dis"),
+    ]
+
+    ab_aggregate_kwargs = {
+        campo.split("__")[-1]: Avg(campo, filter=Q(**{f'{campo}__isnull': False}))
+        for _, _, campo in AB_INDICATORS
+    }
+    ab_avgs = queryset.aggregate(**ab_aggregate_kwargs)
+
+    adapta_brasil_data = []
+    for setor, subsetor, campo in AB_INDICATORS:
+        chave = campo.split("__")[-1]
+        valor = ab_avgs.get(chave)
+        if valor is not None:
+            if valor >= 0.8:
+                grau, cor = "Muito alto", "bg-[#d73027]"
+            elif valor >= 0.6:
+                grau, cor = "Alto", "bg-[#f46d43]"
+            elif valor >= 0.4:
+                grau, cor = "Médio", "bg-[#fdae61]"
+            elif valor >= 0.2:
+                grau, cor = "Baixo", "bg-[#66bd63]"
+            else:
+                grau, cor = "Muito baixo", "bg-[#1a9850]"
+            adapta_brasil_data.append({
+                'setor': setor,
+                'subsetor': subsetor,
+                'valor': round(valor, 3),
+                'grau': grau,
+                'cor': cor,
+            })
+    adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
+
     context = {
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
@@ -1089,9 +1159,9 @@ def conjunto_detalhe_view(request):
         },
         'media_nacional_rc_pc': 316.74,
         'media_nacional_pop': 16.04,
+        'adapta_brasil_data': adapta_brasil_data,
     }
 
-    print(revenue_tree)
     return render(request, 'detail_agg/detalhe_conjunto.html', context)
 
 
@@ -1765,11 +1835,59 @@ def conjunto_fiscal_api(request):
         )
         revenue_tree.append(outras_receitas_item)
 
-    # Renderiza o template parcial e retorna como JSON
+    # ADAPTA BRASIL
+    AB_INDICATORS = [
+        ("Biodiversidade", "Integridade do bioma", "dados_adapta_brasil__bio_int_bio"),
+        ("Desastres geo-hidrológicos", "Deslizamento de terra", "dados_adapta_brasil__des_des_ter"),
+        ("Desastres geo-hidrológicos", "Inundações, enxurradas e alagamentos", "dados_adapta_brasil__des_in_enx_ala"),
+        ("Recursos hídricos", "Risco de estresse hídrico", "dados_adapta_brasil__rec_ris_est_hid"),
+        ("Saúde", "Arboviroses dengue, zika e chikungunya", "dados_adapta_brasil__sau_arb"),
+        ("Saúde", "Leishmaniose tegumentar americana", "dados_adapta_brasil__sau_lei_teg_ame"),
+        ("Saúde", "Leishmaniose visceral", "dados_adapta_brasil__sau_lei_vis"),
+        ("Saúde", "Malária", "dados_adapta_brasil__sau_mal"),
+        ("Segurança alimentar", "Acesso e consumo de alimentos", "dados_adapta_brasil__seg_ali_ace_con_ali"),
+        ("Segurança alimentar", "Disponibilidade de alimentos", "dados_adapta_brasil__seg_ali_dis"),
+        ("Segurança energética", "Acesso", "dados_adapta_brasil__seg_ene_ace"),
+        ("Segurança energética", "Disponibilidade", "dados_adapta_brasil__seg_ene_dis"),
+    ]
+
+    ab_aggregate_kwargs = {
+        campo.split("__")[-1]: Avg(campo, filter=Q(**{f'{campo}__isnull': False}))
+        for _, _, campo in AB_INDICATORS
+    }
+    ab_avgs = queryset.aggregate(**ab_aggregate_kwargs)
+
+    adapta_brasil_data = []
+    for setor, subsetor, campo in AB_INDICATORS:
+        chave = campo.split("__")[-1]
+        valor = ab_avgs.get(chave)
+        if valor is not None:
+            if valor >= 0.8:
+                grau, cor = "Muito alto", "bg-[#d73027]"
+            elif valor >= 0.6:
+                grau, cor = "Alto", "bg-[#f46d43]"
+            elif valor >= 0.4:
+                grau, cor = "Médio", "bg-[#fdae61]"
+            elif valor >= 0.2:
+                grau, cor = "Baixo", "bg-[#66bd63]"
+            else:
+                grau, cor = "Muito baixo", "bg-[#1a9850]"
+            adapta_brasil_data.append({
+                'setor': setor,
+                'subsetor': subsetor,
+                'valor': round(valor, 3),
+                'grau': grau,
+                'cor': cor,
+            })
+    adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
+
+    # Renderiza os templates parciais e retorna como JSON
     rendered_html = render_to_string('detail_agg/partials/_fiscal_details.html', {'revenue_tree': revenue_tree, 'level': 0})
+    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data})
     
     return JsonResponse({
         'html': rendered_html,
+        'adapta_html': adapta_html,
         'hist_data': {
             'pop24': population,
             'pop00': pop00,

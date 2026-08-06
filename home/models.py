@@ -224,6 +224,28 @@ class SusDependente(models.Model):
     def __str__(self):
         return f"Dependência SUS - {self.municipio.name_muni}"
 
+class AdaptaBrasil(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='dados_adapta_brasil'
+    )
+    bio_int_bio = models.FloatField(null=True, blank=True)
+    des_des_ter = models.FloatField(null=True, blank=True)
+    des_in_enx_ala = models.FloatField(null=True, blank=True)
+    rec_ris_est_hid = models.FloatField(null=True, blank=True)
+    sau_arb = models.FloatField(null=True, blank=True)
+    sau_lei_teg_ame = models.FloatField(null=True, blank=True)
+    sau_lei_vis = models.FloatField(null=True, blank=True)
+    sau_mal = models.FloatField(null=True, blank=True)
+    seg_ali_ace_con_ali = models.FloatField(null=True, blank=True)
+    seg_ali_dis = models.FloatField(null=True, blank=True)
+    seg_ene_ace = models.FloatField(null=True, blank=True)
+    seg_ene_dis = models.FloatField(null=True, blank=True)
+    def __str__(self):
+        return f"Dados AdaptaBrasil - {self.municipio.name_muni}"
+
 class Cadunico(models.Model):
     municipio = models.OneToOneField(
         Municipio,
@@ -256,6 +278,7 @@ class IndicadoresAtuais(models.Model):
     populacao_atual_total_estadual = models.IntegerField(null=True, blank=True)
     populacao_atual_rank_faixa = models.IntegerField(null=True, blank=True)
     populacao_atual_total_faixa = models.IntegerField(null=True, blank=True)
+    capag = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     rc_atual = models.FloatField(null=True, blank=True)
     rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
     quintil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)

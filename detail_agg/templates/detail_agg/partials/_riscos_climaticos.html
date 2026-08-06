@@ -1,0 +1,32 @@
+{% if adapta_brasil_data %}
+    <div class="section-heading mb-1">
+      <span>Riscos Climáticos AdaptaBrasil</span>
+      <span class="text-xs text-slate-400 font-normal ml-2">(média do conjunto de municípios)</span>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-[#103758] font-semibold border-b border-slate-200">
+            <tr>
+              <th scope="col" class="px-6 py-4">Setor Estratégico</th>
+              <th scope="col" class="px-6 py-4">Subsetor</th>
+              <th scope="col" class="px-6 py-4">Valor Médio</th>
+              <th scope="col" class="px-6 py-4">Grau de Risco</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for item in adapta_brasil_data %}
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">{{ item.setor }}</td>
+              <td class="px-6 py-4">{{ item.subsetor }}</td>
+              <td class="px-6 py-4 whitespace-nowrap font-mono text-slate-700">{{ item.valor }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="{{ item.cor }} text-white text-xs font-semibold px-2.5 py-1 rounded-md">{{ item.grau }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+{% endif %}

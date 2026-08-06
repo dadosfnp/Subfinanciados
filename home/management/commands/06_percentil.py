@@ -6,6 +6,7 @@ class Command(BaseCommand):
     help = 'Importa dados de municípios do arquivo Excel, limpando os nomes das colunas.'
 
     def handle(self, *args, **kwargs):
+        Percentis.objects.all().delete() # Limpa a tabela antes de popular
         percentis = pd.read_excel('base_datas/percentis_limites.xlsx')
         
 

@@ -110,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const filtroUf     = document.getElementById('filtro-uf');
   const filtroPorte  = document.getElementById('filtro-porte');
   const filtroRm     = document.getElementById('filtro-rm');
+  const filtroClassificacao = document.getElementById('filtro-classificacao');
+  const filtroSubgrupo      = document.getElementById('filtro-subgrupo');
 
   let initialChartData=null;
   try{
@@ -143,6 +145,8 @@ document.addEventListener('DOMContentLoaded', function () {
     p.set('rm', filtroRm?.value || 'todos');
     p.set('regiao', filtroRegiao?.value || 'todos');
     p.set('uf', filtroUf?.value || 'todos');
+    p.set('classification', filtroClassificacao?.value || 'quintil');
+    p.set('subgrupo', filtroSubgrupo?.value || 'todos');
     return p;
   };
 
@@ -502,15 +506,20 @@ function updateTimelineColors(mode) {
   }
 
   async function updateFiscalDetails(){
+    const el = document.getElementById('main-revenue-details-container');
+    const adaptaEl = document.getElementById('riscos-climaticos-container');
+    if(!el) return;
     try{
       const resp = await fetch(`/api/fiscal-details/?${buildParams()}`);
       if(!resp.ok) throw new Error('Falha ao buscar detalhes fiscais.');
       const data = await resp.json();
       
-      const cont = document.getElementById('main-revenue-details-container');
-      cont.innerHTML = data.html;
+      el.innerHTML = data.html;
+      if (adaptaEl && data.adapta_html) {
+          adaptaEl.innerHTML = data.adapta_html;
+      }
       
-      initializeToggleListeners(cont);
+      initializeToggleListeners(el);
       setValorMode(isShowingPerCapita ? 'percapita' : 'real');
       sortAllRevenueSections(isShowingPerCapita);
       buildHeadingIndex(document);
@@ -861,6 +870,50 @@ function updateTimelineColors(mode) {
     await Promise.all([updateKPIs(), updateFiscalDetails(), updateChart()]); 
   }
 
+  function updateSubgrupoOptions() {
+      if(!filtroClassificacao || !filtroSubgrupo) return;
+      const val = filtroClassificacao.value;
+      const subgrupoLabel = document.querySelector('label[for="filtro-subgrupo"]');
+      const currentVal = filtroSubgrupo.value;
+      
+      filtroSubgrupo.innerHTML = '<option value="todos">Todos</option>';
+      switch (val) {
+        case 'decil':
+          if (subgrupoLabel) subgrupoLabel.textContent = 'Decil:';
+          ['1','2','3','4','5','6','7','8','9','10'].forEach(v => filtroSubgrupo.add(new Option(`${v}º decil`, v)));
+          break;
+        case 'natural':
+          if (subgrupoLabel) subgrupoLabel.textContent = 'Faixa de Receita:';
+          const naturalOptions = {
+            'Menos de R$ 2.500': '0-2500',
+            'R$ 2.500 a 4.000': '2500-4000',
+            'R$ 4.000 a 6.000': '4000-6000',
+            'R$ 6.000 a 10.000': '6000-10000',
+            'Acima de R$ 10.000': '10000-999999'
+          };
+          Object.entries(naturalOptions).forEach(([txt, v]) => filtroSubgrupo.add(new Option(txt, v)));
+          break;
+        case 'quintil':
+        default:
+          if (subgrupoLabel) subgrupoLabel.textContent = 'Quintil:';
+          ['1','2','3','4','5'].forEach(v => filtroSubgrupo.add(new Option(`${v}º quintil`, v)));
+          break;
+      }
+      
+      const hasOption = Array.from(filtroSubgrupo.options).some(o => o.value === currentVal);
+      filtroSubgrupo.value = hasOption ? currentVal : 'todos';
+  }
+
+  if(filtroClassificacao) {
+      filtroClassificacao.addEventListener('change', () => {
+          updateSubgrupoOptions();
+          applyFiltersAndData();
+      });
+  }
+  if(filtroSubgrupo) {
+      filtroSubgrupo.addEventListener('change', applyFiltersAndData);
+  }
+
   if(filtroRegiao) filtroRegiao.addEventListener('change', applyFiltersAndData);
   if(filtroUf)     filtroUf.addEventListener('change',     applyFiltersAndData);
   if(filtroRm)     filtroRm.addEventListener('change',     applyFiltersAndData);
@@ -873,10 +926,14 @@ function updateTimelineColors(mode) {
       if(filtroRm)     filtroRm.value='todos';
       if(filtroUf)     filtroUf.value='todos';
       if(filtroPorte)  filtroPorte.value='todos';
+      if(filtroClassificacao) filtroClassificacao.value='quintil';
+      updateSubgrupoOptions();
+      if(filtroSubgrupo) filtroSubgrupo.value='todos';
       applyFiltersAndData();
     });
   }
 
+  updateSubgrupoOptions();
   applyFiltersAndData();
   buildHeadingIndex(document);
 });

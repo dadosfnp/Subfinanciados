@@ -68,10 +68,20 @@ def _get_filtered_municipios(request):
 
     if subgroup_filter and subgroup_filter != "todos":
         if classification_filter == 'quintil':
-            queryset = queryset.filter(dados_atuais__quintil_atual=subgroup_filter)
+            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
         elif classification_filter == 'decil':
-            queryset = queryset.filter(dados_atuais__decil_atual=subgroup_filter)
-
+            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
+        elif classification_filter == 'natural':
+            try:
+                min_str, max_str = subgroup_filter.split('-')
+                min_val = int(min_str)
+                if max_str.lower() == '999999':
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
+                else:
+                    max_val = int(max_str)
+                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
+            except ValueError:
+                pass
     return queryset, True
 
 def _group_pc_media(queryset, fields):
@@ -169,7 +179,8 @@ def municipio_detalhe_view(request, municipio_id):
     municipio = get_object_or_404(Municipio.objects.prefetch_related(
         'dados_atuais', 'dados_2000',
         'conta_detalhada', 'conta_especifica', 'conta_mais_especifica',
-        'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil'
+        'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil',
+        'dados_adapta_brasil'
     ), cod_ibge=municipio_id)
 
     try:
@@ -603,6 +614,54 @@ def municipio_detalhe_view(request, municipio_id):
     trend_quintil = _trend_grupo(media_quintil_pc, municipio.dados_atuais.quintil_atual)
     trend_decil = _trend_grupo(media_decil_pc, municipio.dados_atuais.decil_atual)
 
+    # AdaptaBrasil data preparation
+    adapta_brasil_data = []
+    if hasattr(municipio, 'dados_adapta_brasil') and municipio.dados_adapta_brasil:
+        ab = municipio.dados_adapta_brasil
+        indicators_map = [
+            ("Biodiversidade", "Integridade do bioma", ab.bio_int_bio),
+            ("Desastres geo-hidrológicos", "Deslizamento de terra", ab.des_des_ter),
+            ("Desastres geo-hidrológicos", "Inundações, enxurradas e alagamentos", ab.des_in_enx_ala),
+            ("Recursos hídricos", "Risco de estresse hídrico", ab.rec_ris_est_hid),
+            ("Saúde", "Arboviroses dengue, zika e chikungunya", ab.sau_arb),
+            ("Saúde", "Leishmaniose tegumentar americana", ab.sau_lei_teg_ame),
+            ("Saúde", "Leishmaniose visceral", ab.sau_lei_vis),
+            ("Saúde", "Malária", ab.sau_mal),
+            ("Segurança alimentar", "Acesso e consumo de alimentos", ab.seg_ali_ace_con_ali),
+            ("Segurança alimentar", "Disponibilidade de alimentos", ab.seg_ali_dis),
+            ("Segurança energética", "Acesso", ab.seg_ene_ace),
+            ("Segurança energética", "Disponibilidade", ab.seg_ene_dis),
+        ]
+        
+        for setor, subsetor, valor in indicators_map:
+            if valor is not None:
+                if valor >= 0.8:
+                    grau = "Muito alto"
+                    cor = "bg-[#d73027]" 
+                elif valor >= 0.6:
+                    grau = "Alto"
+                    cor = "bg-[#f46d43]"
+                elif valor >= 0.4:
+                    grau = "Médio"
+                    cor = "bg-[#fdae61]"
+                elif valor >= 0.2:
+                    grau = "Baixo"
+                    cor = "bg-[#66bd63]"
+                else:
+                    grau = "Muito baixo"
+                    cor = "bg-[#1a9850]"
+                
+                adapta_brasil_data.append({
+                    'setor': setor,
+                    'subsetor': subsetor,
+                    'valor': valor,
+                    'grau': grau,
+                    'cor': cor
+                })
+                
+        # Sort by risk (valor) from highest to lowest
+        adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
+
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
@@ -623,6 +682,7 @@ def municipio_detalhe_view(request, municipio_id):
         'media_decil_pc': round(media_decil_pc, 2) if media_decil_pc is not None else None,
         'trend_quintil': trend_quintil,
         'trend_decil': trend_decil,
+        'adapta_brasil_data': adapta_brasil_data,
     }
 
     return render(request, 'detail_mun/detalhe_municipio.html', context)

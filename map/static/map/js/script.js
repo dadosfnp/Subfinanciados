@@ -24,6 +24,8 @@ const filtroMunicipio      = document.getElementById('filtro-municipio');
 const filtroPorte          = document.getElementById('filtro-porte');
 const filtroSubgrupo       = document.getElementById('filtro-subgrupo');
 const filtroRm             = document.getElementById('filtro-rm');
+const filtroCapag          = document.getElementById('filtro-capag');
+const filtroRiscos         = document.getElementById('filtro-riscos');
 const filtroClassificacao  = document.getElementById('filtro-classificacao');
 const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
 const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
@@ -61,6 +63,8 @@ function paramsKeyFromSelects() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    capag: filtroCapag.value,
+    risco_climatico: filtroRiscos.value,
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value,
     modo_analise: filtroModoAnalise ? filtroModoAnalise.value : 'receita',
@@ -77,12 +81,15 @@ async function updateDependentFilters() {
   const ufAtual        = filtroUf.value;
   const rmAtual        = filtroRm.value;
   const municipioAtual = filtroMunicipio.value;
+  const capagAtual     = filtroCapag.value;
 
   /* Monta os parametros com o estado atual para o backend retornar apenas itens validos */
   const params = {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
+    capag: capagAtual,
+    risco_climatico: filtroRiscos.value,
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     classification: filtroClassificacao.value,
@@ -109,6 +116,12 @@ async function updateDependentFilters() {
     filtroMunicipio.innerHTML = '<option value="todos">Todos</option>';
     data.municipios.forEach(v => filtroMunicipio.add(new Option(v, v)));
     restoreSelectValue(filtroMunicipio, municipioAtual);
+
+    filtroCapag.innerHTML = '<option value="todos">Todos</option>';
+    if (data.capags) {
+        data.capags.forEach(v => filtroCapag.add(new Option(v, v)));
+    }
+    restoreSelectValue(filtroCapag, capagAtual);
   } catch (err) {
     console.error("Erro ao atualizar filtros dependentes:", err);
   }
@@ -128,6 +141,8 @@ async function atualizarMapa() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    capag: filtroCapag.value,
+    risco_climatico: filtroRiscos.value,
     classification: classificacaoAtual,
     calculation_mode: filtroModoCalculo.value,
     analise: analiseAtual
@@ -482,9 +497,11 @@ function abrirPopupDoMunicipioSelecionado(feature) {
   const icons = {
     pop: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>`,
     money: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px; color:#103758;"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+    capag: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-award-icon lucide-award"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/></svg>`,
     sus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>`,
     card: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect></svg>`,
-    rank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>`
+    rank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>`,
+    riscos: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
   };
 
   /* Frase de Sintese (Logica de cores mantida) */
@@ -523,6 +540,47 @@ function abrirPopupDoMunicipioSelecionado(feature) {
           <div class="popup-info-content">
             <span class="popup-label">Receita p/c</span>
             <span class="popup-value" style="color:#103758; font-size:18px; font-weight:900;">${(+props.rc_24_pc).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.capag}
+          <div class="popup-info-content">
+            <span class="popup-label" style="display: flex; align-items: center;">
+              Capag
+              <span class="capag-tooltip">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="margin-left: 5px; cursor: help; color: #64748b;">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <div class="capag-tooltip-text">
+                  <div style="font-weight: bold; margin-bottom: 8px;">Impactos da Classificação Capag (Notas C ou D)</div>
+                  <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Veto à Garantia da União:</strong> Impossibilidade de obter aval federal, o que encarece o custo de capital e restringe o acesso a linhas de crédito favoráveis.</li>
+                    <li><strong>Supressão do Espaço Fiscal:</strong> O limite regulatório para a contratação de novas operações de crédito é reduzido a zero ou a margens residuais.</li>
+                    <li><strong>Bloqueio Institucional:</strong> O ente federativo fica impedido de captar novos financiamentos até sanear as inconsistências contábeis ou aderir a um plano oficial de ajuste fiscal.</li>
+                  </ul>
+                </div>
+              </span>
+            </span>
+            <span class="popup-value">${props.capag || 'N/D'}</span>
+          </div>
+        </div>
+
+        <div class="popup-data-row">
+          ${icons.riscos}
+          <div class="popup-info-content">
+            <span class="popup-label" style="display: flex; align-items: center;">
+              Riscos Climáticos Altos:
+              <span class="capag-tooltip">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="margin-left: 5px; cursor: help; color: #64748b;">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <div class="capag-tooltip-text">
+                  <div style="font-weight: bold; margin-bottom: 8px;">Subsetores do AdaptaBrasil com valor acima de 0,6</div>
+                </div>
+              </span>
+            </span>
+            <span class="popup-value">${props.riscos_climaticos !== undefined ? props.riscos_climaticos : '0'} / 12</span>
           </div>
         </div>
 
@@ -814,12 +872,14 @@ function atualizarClassificacao() {
 
 // ===================== Listeners =====================
 document.getElementById('btn-limpar-filtros').addEventListener('click', async () => {
-  filtroRegiao.value = 'todos';
-  filtroRm.value = 'todos';
-  filtroUf.value = 'todos';
-  filtroMunicipio.value = 'todos';
-  filtroPorte.value = 'todos';
-  filtroSubgrupo.value = 'todos';
+    filtroRegiao.value = 'todos';
+    filtroRm.value = 'todos';
+    filtroUf.value = 'todos';
+    filtroMunicipio.value = 'todos';
+    filtroPorte.value = 'todos';
+    filtroSubgrupo.value = 'todos';
+    filtroCapag.value = 'todos';
+    filtroRiscos.value = 'todos';
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
   if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
@@ -833,7 +893,7 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 }
 });
 
-[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo]
+[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroCapag, filtroRiscos]
   .forEach(sel => sel.addEventListener('change', async () => {
     
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
@@ -1061,7 +1121,9 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         boldIfNotAll("Região Metropolitana", document.getElementById("filtro-rm").value),
         boldIfNotAll("Região", document.getElementById("filtro-regiao").value),
         boldIfNotAll("UF", document.getElementById("filtro-uf").value),
-        boldIfNotAll("Município", document.getElementById("filtro-municipio").value)
+        boldIfNotAll("Município", document.getElementById("filtro-municipio").value),
+        boldIfNotAll("Capag", document.getElementById("filtro-capag").value),
+        boldIfNotAll("Riscos Climáticos", document.getElementById("filtro-riscos").options[document.getElementById("filtro-riscos").selectedIndex].text)
     ];
 
     ctx.font = "24px Arial";

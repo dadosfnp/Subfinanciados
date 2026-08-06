@@ -69,8 +69,25 @@ def api_get_dependent_filters(request):
     rm_selecionada = request.GET.get('rm')
     porte_filtro = request.GET.get('porte')
     subgroup_filter = request.GET.get('subgrupo')
+    capag_filtro = request.GET.get('capag')
+    risco_filtro = request.GET.get('risco_climatico')
     classification_filter = request.GET.get('classification', 'quintil')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
+
+    RISCO_CAMPO = {
+        'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
+        'des_des_ter': 'dados_adapta_brasil__des_des_ter',
+        'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
+        'rec_ris_est_hid': 'dados_adapta_brasil__rec_ris_est_hid',
+        'sau_arb': 'dados_adapta_brasil__sau_arb',
+        'sau_lei_teg_ame': 'dados_adapta_brasil__sau_lei_teg_ame',
+        'sau_lei_vis': 'dados_adapta_brasil__sau_lei_vis',
+        'sau_mal': 'dados_adapta_brasil__sau_mal',
+        'seg_ali_ace_con_ali': 'dados_adapta_brasil__seg_ali_ace_con_ali',
+        'seg_ali_dis': 'dados_adapta_brasil__seg_ali_dis',
+        'seg_ene_ace': 'dados_adapta_brasil__seg_ene_ace',
+        'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
+    }
 
     queryset = Municipio.objects.exclude(dados_atuais__rc_atual_pc__isnull=True)
 
@@ -80,6 +97,11 @@ def api_get_dependent_filters(request):
         queryset = queryset.filter(regiao=regiao_selecionada)
     if uf_selecionada and uf_selecionada != 'todos':
         queryset = queryset.filter(uf=uf_selecionada)
+    if capag_filtro and capag_filtro != 'todos':
+        queryset = queryset.filter(dados_atuais__capag=capag_filtro)
+    if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
+        campo = RISCO_CAMPO[risco_filtro]
+        queryset = queryset.filter(**{f'{campo}__gte': 0.6})
 
     # Porte populacional
     if porte_filtro and porte_filtro != 'todos':
@@ -151,12 +173,14 @@ def api_get_dependent_filters(request):
     ufs = queryset.values_list('uf', flat=True).distinct().order_by('uf')
     municipios = queryset.values_list('name_muni_uf', flat=True).distinct().order_by('name_muni_uf')
     rms = queryset.exclude(rm=None).values_list('rm__nome', flat=True).distinct().order_by('rm__nome')
+    capags = queryset.exclude(dados_atuais__capag__isnull=True).values_list('dados_atuais__capag', flat=True).distinct().order_by('dados_atuais__capag')
 
     return JsonResponse({
         'regioes': list(regioes),
         'ufs': list(ufs),
         'municipios': list(municipios),
-        'rms': list(rms)
+        'rms': list(rms),
+        'capags': list(capags)
     })
 
 def api_get_dashboard_data(request):
@@ -164,6 +188,8 @@ def api_get_dashboard_data(request):
     regiao_filtro = request.GET.get('regiao')
     uf_filtro = request.GET.get('uf')
     rm_filtro = request.GET.get('rm')
+    capag_filtro = request.GET.get('capag')
+    riscos_filtro = request.GET.get('riscos_climaticos')
     porte_filtro = request.GET.get('porte')
     classification_filter = request.GET.get('classification', 'quintil')
     display_format = request.GET.get('display_format', 'numero')
@@ -176,6 +202,27 @@ def api_get_dashboard_data(request):
         queryset = queryset.filter(uf=uf_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    if capag_filtro and capag_filtro != 'todos':
+        queryset = queryset.filter(dados_atuais__capag=capag_filtro)
+        
+    if riscos_filtro and riscos_filtro != 'todos':
+        from django.db.models import IntegerField, Case, When
+        ab_fields = [
+            'dados_adapta_brasil__bio_int_bio', 'dados_adapta_brasil__des_des_ter', 'dados_adapta_brasil__des_in_enx_ala',
+            'dados_adapta_brasil__rec_ris_est_hid', 'dados_adapta_brasil__sau_arb', 'dados_adapta_brasil__sau_lei_teg_ame',
+            'dados_adapta_brasil__sau_lei_vis', 'dados_adapta_brasil__sau_mal', 'dados_adapta_brasil__seg_ali_ace_con_ali',
+            'dados_adapta_brasil__seg_ali_dis', 'dados_adapta_brasil__seg_ene_ace', 'dados_adapta_brasil__seg_ene_dis'
+        ]
+        annotation = sum(Case(When(**{f'{f}__gte': 0.6}, then=1), default=0, output_field=IntegerField()) for f in ab_fields)
+        queryset = queryset.annotate(riscos_altos=annotation)
+        if riscos_filtro == '0':
+            queryset = queryset.filter(riscos_altos=0)
+        elif riscos_filtro == '1-3':
+            queryset = queryset.filter(riscos_altos__gte=1, riscos_altos__lte=3)
+        elif riscos_filtro == '4-7':
+            queryset = queryset.filter(riscos_altos__gte=4, riscos_altos__lte=7)
+        elif riscos_filtro == '8-12':
+            queryset = queryset.filter(riscos_altos__gte=8)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -437,6 +484,24 @@ def municipios_geojson_api(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    capag_filtro = request.GET.get('capag')
+    risco_filtro = request.GET.get('risco_climatico')
+    
+    # Mapeamento de nome legível para campo do banco
+    RISCO_CAMPO = {
+        'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
+        'des_des_ter': 'dados_adapta_brasil__des_des_ter',
+        'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
+        'rec_ris_est_hid': 'dados_adapta_brasil__rec_ris_est_hid',
+        'sau_arb': 'dados_adapta_brasil__sau_arb',
+        'sau_lei_teg_ame': 'dados_adapta_brasil__sau_lei_teg_ame',
+        'sau_lei_vis': 'dados_adapta_brasil__sau_lei_vis',
+        'sau_mal': 'dados_adapta_brasil__sau_mal',
+        'seg_ali_ace_con_ali': 'dados_adapta_brasil__seg_ali_ace_con_ali',
+        'seg_ali_dis': 'dados_adapta_brasil__seg_ali_dis',
+        'seg_ene_ace': 'dados_adapta_brasil__seg_ene_ace',
+        'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
+    }
     
     classification_filter = request.GET.get('classification', 'quintil')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
@@ -450,6 +515,11 @@ def municipios_geojson_api(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    if capag_filtro and capag_filtro != 'todos':
+        queryset = queryset.filter(dados_atuais__capag=capag_filtro)
+    if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
+        campo = RISCO_CAMPO[risco_filtro]
+        queryset = queryset.filter(**{f'{campo}__gte': 0.6})
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -530,8 +600,15 @@ def municipios_geojson_api(request):
         'cod_ibge', 'name_muni', 'name_muni_uf', 'uf', 'coordx', 'coordy',
         'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', 
         'cadunico__cadunico', 'sus_dependente__sus_dependente', 
+        'dados_atuais__capag',
         'dados_atuais__quintil_atual', 'dados_atuais__decil_atual',
         'dados_atuais__percentil_atual', 'dados_atuais__percentil_atual_n', 
+        'dados_adapta_brasil__bio_int_bio', 'dados_adapta_brasil__des_des_ter',
+        'dados_adapta_brasil__des_in_enx_ala', 'dados_adapta_brasil__rec_ris_est_hid',
+        'dados_adapta_brasil__sau_arb', 'dados_adapta_brasil__sau_lei_teg_ame',
+        'dados_adapta_brasil__sau_lei_vis', 'dados_adapta_brasil__sau_mal',
+        'dados_adapta_brasil__seg_ali_ace_con_ali', 'dados_adapta_brasil__seg_ali_dis',
+        'dados_adapta_brasil__seg_ene_ace', 'dados_adapta_brasil__seg_ene_dis',
     )
     if analise == 'crescimento':
         _fields = _fields + (
@@ -556,6 +633,22 @@ def municipios_geojson_api(request):
         pop = municipio['dados_atuais__populacao_atual'] or 0
         cadunico = municipio['cadunico__cadunico'] or 0
         perc_cadunico = min((cadunico / pop * 100) if pop > 0 else 0, 100)
+        
+        adapta_brasil_fields = [
+            municipio.get('dados_adapta_brasil__bio_int_bio'),
+            municipio.get('dados_adapta_brasil__des_des_ter'),
+            municipio.get('dados_adapta_brasil__des_in_enx_ala'),
+            municipio.get('dados_adapta_brasil__rec_ris_est_hid'),
+            municipio.get('dados_adapta_brasil__sau_arb'),
+            municipio.get('dados_adapta_brasil__sau_lei_teg_ame'),
+            municipio.get('dados_adapta_brasil__sau_lei_vis'),
+            municipio.get('dados_adapta_brasil__sau_mal'),
+            municipio.get('dados_adapta_brasil__seg_ali_ace_con_ali'),
+            municipio.get('dados_adapta_brasil__seg_ali_dis'),
+            municipio.get('dados_adapta_brasil__seg_ene_ace'),
+            municipio.get('dados_adapta_brasil__seg_ene_dis'),
+        ]
+        riscos_altos = sum(1 for val in adapta_brasil_fields if val is not None and val >= 0.6)
 
         feature = {
             "type": "Feature",
@@ -572,11 +665,13 @@ def municipios_geojson_api(request):
                 'rc_24_pc': rc,
                 'perc_pop_cadunico': perc_cadunico,
                 'sus_dependente': municipio['sus_dependente__sus_dependente'],
+                'capag': municipio['dados_atuais__capag'],
                 'quintil24_pre_calculado': municipio['dados_atuais__quintil_atual'],
                 'decil24_pre_calculado': municipio['dados_atuais__decil_atual'],
                 'percentil24': municipio['dados_atuais__percentil_atual'],
                 'percentil24_n': municipio['dados_atuais__percentil_atual_n'],
-                'dynamic_quantile': current_muni_quantile
+                'dynamic_quantile': current_muni_quantile,
+                'riscos_climaticos': riscos_altos
             }
         }
 
