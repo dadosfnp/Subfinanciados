@@ -73,6 +73,26 @@ class Command(BaseCommand):
 
         return self._relatar(compativeis, tabelas_faltando, colunas_faltando, colunas_extras)
 
+    def _migrations_pendentes(self):
+        """Migrations que existem no disco e ainda não foram aplicadas no banco.
+
+        Distinguir isto é o que evita mandar apagar o banco à toa. Há dois motivos
+        muito diferentes para o schema divergir:
+
+    - migrations novas ainda não aplicadas -> `migrate` resolve em segundos,
+      sem perder nada;
+    - migrations regeradas do zero -> `migrate` não faz nada e só o
+      recriar_banco resolve.
+
+        Sem essa distinção, o comando manda recriar o banco (10 minutos, tudo
+        apagado) mesmo quando bastava um migrate.
+        """
+        from django.db.migrations.executor import MigrationExecutor
+
+        executor = MigrationExecutor(connection)
+        alvos = executor.loader.graph.leaf_nodes()
+        return [migration for migration, _ in executor.migration_plan(alvos)]
+
     def _relatar(self, compativeis, tabelas_faltando, colunas_faltando, colunas_extras):
         """Imprime o resultado. Levanta SystemExit(1) se o banco estiver incompatível."""
         if tabelas_faltando:
@@ -93,16 +113,38 @@ class Command(BaseCommand):
         incompativel = bool(tabelas_faltando or colunas_faltando)
 
         if incompativel:
+            pendentes = self._migrations_pendentes()
             self.stdout.write(
                 self.style.ERROR(
                     "\nSCHEMA INCOMPATÍVEL — subir este código quebraria o site com\n"
-                    "ProgrammingError em toda página que tocar nessas tabelas.\n\n"
-                    "Para resolver (derruba e recarrega os dados das planilhas):\n"
-                    "    docker compose exec ifem python manage.py recriar_banco\n"
-                    "    docker compose exec ifem python manage.py recriar_banco --confirmar\n\n"
-                    "Tire um backup do banco antes."
+                    "ProgrammingError em toda página que tocar nessas tabelas."
                 )
             )
+            if pendentes:
+                # Caso fácil: alguém escreveu migrations novas e elas ainda não rodaram.
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"\nExistem {len(pendentes)} migration(s) ainda não aplicada(s):\n  "
+                        + "\n  ".join(str(m) for m in pendentes)
+                        + "\n\nProvavelmente é só isso. Aplique-as e rode o deploy de novo:\n"
+                        "    cd /var/www/ifem && ./deploy.sh\n\n"
+                        "O deploy aplica as migrations sozinho. Se depois disso o erro\n"
+                        "continuar, aí sim o banco precisa ser recriado:\n"
+                        "    cd /var/www/ifem && ./atualizar-banco.sh"
+                    )
+                )
+            else:
+                # Caso difícil: não há migration para aplicar e mesmo assim o schema
+                # está errado — assinatura de migrations regeradas do zero.
+                self.stdout.write(
+                    self.style.ERROR(
+                        "\nNão há migrations pendentes: o banco está no formato antigo e\n"
+                        "não existe migration que o leve ao formato novo. Isso acontece\n"
+                        "quando a pasta home/migrations/ é apagada e recriada.\n\n"
+                        "Recrie o banco (faz backup antes, recarrega as planilhas):\n"
+                        "    cd /var/www/ifem && ./atualizar-banco.sh"
+                    )
+                )
             # SystemExit em vez de CommandError: o deploy.sh testa o exit code, e o
             # CommandError imprimiria um traceback que só atrapalha a leitura do log.
             raise SystemExit(1)
