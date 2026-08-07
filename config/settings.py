@@ -186,6 +186,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ==========================================
+# CACHE
+# ==========================================
+# LocMemCache em vez de Redis: o único consumidor pesado é a API de GeoJSON do
+# mapa, cujos dados só mudam em reimportação da base. Não há estado a
+# sincronizar entre workers (cada um pode reconstruir a sua cópia sozinho), e o
+# droplet de 2GB não tem folga para subir mais um serviço.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ifem-default',
+    },
+    # Alias dedicado ao mapa para que o MAX_ENTRIES baixo não afete outros usos
+    # do cache. Cada entrada é o GeoJSON já serializado — ~2,8MB na visão sem
+    # filtro, bem menos nas filtradas. 30 entradas cobrem as combinações de
+    # filtro mais usadas sem estourar a RAM do droplet.
+    'mapa': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ifem-mapa',
+        'TIMEOUT': 60 * 60 * 6,
+        'OPTIONS': {'MAX_ENTRIES': 30, 'CULL_FREQUENCY': 3},
+    },
+}
+
+
+# ==========================================
 # SECURITY SETTINGS
 # ==========================================
 # Redireciona HTTP para HTTPS - Ativado apenas em produção via Variável de Ambiente
