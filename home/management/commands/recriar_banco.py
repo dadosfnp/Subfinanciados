@@ -31,8 +31,9 @@ USO
     python manage.py recriar_banco                 # mostra o plano e aborta (dry-run)
     python manage.py recriar_banco --confirmar     # executa
 
-    # dentro do container, em produção:
-    docker compose exec ifem python manage.py recriar_banco --confirmar
+    # em produção, NÃO chame direto: use o script, que faz o backup antes e roda a
+    # partir da imagem nova (um `docker compose exec` pegaria o container antigo):
+    cd /var/www/ifem && ./atualizar-banco.sh
 
 Idempotente: pode rodar quantas vezes precisar, o resultado é sempre o mesmo.
 """
@@ -45,6 +46,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 
 from home.models import (
+    AdaptaBrasil,
     Cadunico,
     ContaDetalhada,
     ContaDetalhadaPercentil,
@@ -88,12 +90,30 @@ COMANDOS_DE_IMPORTACAO = [
     "09_crescimento_medio",
     "10_adapta_brasil"
 ]
+def descobrir_comandos_de_importacao():
+    """Lista os comandos de import na ordem do prefixo numérico (01, 02, ... 10).
+
+    Descoberta automática, e não lista fixa, porque comandos novos aparecem a cada
+    atualização de dados. Uma lista fixa aqui significaria que o próximo comando
+    criado seria silenciosamente ignorado, e a tabela dele ficaria vazia depois de
+    um recriar_banco — o tipo de falha que só se descobre com o site no ar.
+
+    O prefixo com zero à esquerda faz a ordenação alfabética coincidir com a
+    numérica, que é obrigatória: o 01 cria os Municipio que os demais referenciam.
+    """
+    pasta = Path(__file__).parent
+    return sorted(
+        arquivo.stem
+        for arquivo in pasta.glob("[0-9][0-9]_*.py")
+        if not arquivo.stem.startswith("_")
+    )
 
 # Piso de sanidade por tabela. Não são contagens exatas — a cobertura varia a cada
 # ano de dados — mas qualquer valor abaixo disto significa carga parcial, que é o
 # modo de falha perigoso: o site sobe e serve dados incompletos sem sinal de erro.
 MINIMOS_ESPERADOS = {
     Municipio: 5000,
+    AdaptaBrasil: 5000,
     RegiaoMetropolitana: 50,
     Percentis: 90,
     Indicadores2000: 5000,
@@ -153,7 +173,7 @@ class Command(BaseCommand):
                 self.stdout.write("A preservar        : " + ", ".join(f"{r} ({t})" for r, t in self._inventario()))
             else:
                 self.stdout.write(self.style.WARNING("A preservar        : NADA (--sem-preservar-conteudo)"))
-            self.stdout.write("Imports que rodarão : " + ", ".join(COMANDOS_DE_IMPORTACAO))
+            self.stdout.write("Imports que rodarão : " + ", ".join(descobrir_comandos_de_importacao()))
             self.stdout.write(self.style.WARNING("\nPara executar de verdade: --confirmar"))
             return
 
@@ -169,8 +189,9 @@ class Command(BaseCommand):
         call_command("migrate", interactive=False, verbosity=1)
 
         self.stdout.write("\n[3/4] Carregando dados das planilhas...")
-        for i, comando in enumerate(COMANDOS_DE_IMPORTACAO, start=1):
-            self.stdout.write(f"  ({i}/{len(COMANDOS_DE_IMPORTACAO)}) {comando}")
+        comandos = descobrir_comandos_de_importacao()
+        for i, comando in enumerate(comandos, start=1):
+            self.stdout.write(f"  ({i}/{len(comandos)}) {comando}")
             # Sem try/except de propósito: se um import falha, parar aqui é o
             # comportamento correto. Seguir adiante produziria um banco parcial,
             # e os comandos seguintes dependem dos Municipio criados pelo 01.
