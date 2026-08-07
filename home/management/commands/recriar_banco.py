@@ -86,6 +86,7 @@ COMANDOS_DE_IMPORTACAO = [
     "07_media_nacional_detalhamento",
     "08_mediana_nacional_detalhamento",
     "09_crescimento_medio",
+    "10_adapta_brasil"
 ]
 
 # Piso de sanidade por tabela. Não são contagens exatas — a cobertura varia a cada

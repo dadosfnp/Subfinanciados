@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
         pop = pop.merge(rec24.drop(columns=['uf', 'faixas'], errors='ignore'), on='cod_ibge', how='left')
         pop = pop.merge(rec00, on='cod_ibge', how='left')
-        pop = pop.merge(capag[['cod_ibge', 'capag']], on='cod_ibge', how='left')
+        pop = pop.merge(capag[['cod_ibge', 'capag', 'indicador_i', 'indicador_ii', 'indicador_iii', 'qualidade_fiscal']], on='cod_ibge', how='left')
 
         pop['name_muni_uf'] = pop['nome_muni'] + ' - ' + pop['uf']
 
@@ -85,6 +85,10 @@ class Command(BaseCommand):
                     populacao_atual_rank_faixa=row['rank_pop_faixas'],
                     populacao_atual_total_faixa=row['total_fax_pop'],
                     capag=row['capag'],
+                    capag_indicador_I=row['indicador_i'],
+                    capag_indicador_II=row['indicador_ii'],
+                    capag_indicador_III=row['indicador_iii'],
+                    capag_qualidade_fiscal=row['qualidade_fiscal'],
                     rc_atual=row['receita'],
                     rc_atual_pc=row['receita_pc'],
                     quintil_atual=row['quintil'],

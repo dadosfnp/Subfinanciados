@@ -392,35 +392,170 @@
 
     </section>
 
-    {% if adapta_brasil_data %}
+    {% if adapta_brasil_data or capag_data %}
     <section class="mb-12">
+        <div class="grid grid-cols-1 {% if adapta_brasil_data and capag_data %}lg:grid-cols-2{% else %}max-w-4xl mx-auto{% endif %} gap-6 items-stretch">
+            
+            {% if capag_data %}
+            <div class="flex flex-col h-full">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex-1 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-6">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avaliação de Capacidade de Pagamento</h4>
+                        <div class="px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wider">CAPAG</div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-6 items-stretch flex-1">
+                        <!-- Main Note -->
+                        <div class="w-full sm:w-1/3 rounded-xl flex flex-col items-center justify-center p-6 border {% if 'A' in capag_data.nota or 'B' in capag_data.nota or capag_data.nota == 'BICF' %}bg-emerald-50 border-emerald-100 text-emerald-700{% else %}bg-rose-50 border-rose-100 text-rose-700{% endif %}">
+                            <span class="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Nota Final</span>
+                            <span class="text-7xl font-black leading-none">{{ capag_data.nota }}</span>
+                        </div>
+                        
+                        <!-- Indicators -->
+                        <div class="w-full sm:w-2/3 flex flex-col gap-2.5 justify-center">
+                            <!-- Ind I -->
+                            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Endividamento</span>
+                                    <span class="text-xs font-medium text-slate-600">Dívida Consolidada / RCL</span>
+                                </div>
+                                <div class="px-2.5 py-1 rounded-md text-xs font-bold border {% if 'A' in capag_data.indicador_i or 'B' in capag_data.indicador_i %}bg-emerald-100 border-emerald-200 text-emerald-800{% else %}bg-rose-100 border-rose-200 text-rose-800{% endif %}">{{ capag_data.indicador_i }}</div>
+                            </div>
+                            
+                            <!-- Ind II -->
+                            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Poupança Corrente</span>
+                                    <span class="text-xs font-medium text-slate-600">Despesa Corrente / Rec. Ajustada</span>
+                                </div>
+                                <div class="px-2.5 py-1 rounded-md text-xs font-bold border {% if 'A' in capag_data.indicador_ii or 'B' in capag_data.indicador_ii %}bg-emerald-100 border-emerald-200 text-emerald-800{% else %}bg-rose-100 border-rose-200 text-rose-800{% endif %}">{{ capag_data.indicador_ii }}</div>
+                            </div>
 
-        <div class="section-heading mb-1">
-                <span>Riscos Climáticos AdaptaBrasil</span>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-[#103758] font-semibold border-b border-slate-200">
-                        <tr>
-                            <th scope="col" class="px-6 py-4">Setor Estratégico</th>
-                            <th scope="col" class="px-6 py-4">Subsetor</th>
-                            <th scope="col" class="px-6 py-4">Grau de Risco</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for item in adapta_brasil_data %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ item.setor }}</td>
-                            <td class="px-6 py-4">{{ item.subsetor }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="{{ item.cor }} text-white text-xs font-semibold px-2.5 py-1 rounded-md">{{ item.grau }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            <!-- Ind III -->
+                            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Liquidez Relativa</span>
+                                    <span class="text-xs font-medium text-slate-600">Disponibilidade de Caixa / RCL</span>
+                                </div>
+                                <div class="px-2.5 py-1 rounded-md text-xs font-bold border {% if 'A' in capag_data.indicador_iii or 'B' in capag_data.indicador_iii %}bg-emerald-100 border-emerald-200 text-emerald-800{% else %}bg-rose-100 border-rose-200 text-rose-800{% endif %}">{{ capag_data.indicador_iii }}</div>
+                            </div>
+                            
+                            <!-- Qualidade Fiscal -->
+                            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 mt-1">
+                                <span class="text-[11px] font-bold text-[#103758] uppercase tracking-widest">Ranking da Qualidade Fiscal</span>
+                                <span class="text-xs font-bold text-slate-700 bg-slate-200 border border-slate-300 px-2.5 py-1 rounded-md">{{ capag_data.qualidade_fiscal }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+            {% endif %}
+
+            {% if adapta_brasil_data %}
+            <div class="flex flex-col h-full">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex-1 flex flex-col h-full relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Riscos Climáticos</h4>
+                        {% if adapta_brasil_media %}
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                Média Geral
+                                <i class="fa-solid fa-circle-info text-slate-300 hover:text-slate-500 transition-colors cursor-help" title="Média Ponderada da Metodologia de Risco (AdaptaBrasil)"></i>
+                            </span>
+                            <span class="{{ adapta_brasil_media.cor }} text-white text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                                {{ adapta_brasil_media.grau }} 
+                                <span class="bg-white/20 px-1 rounded">{{ adapta_brasil_media.valor|floatformat:2 }}</span>
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col">
+                        <div class="overflow-hidden flex-1 border border-slate-100 rounded-xl mb-3">
+                            <table class="w-full text-left text-xs text-slate-600">
+                                <thead class="bg-slate-50/80 backdrop-blur text-[#103758] font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">Setor Estratégico</th>
+                                        <th scope="col" class="px-4 py-3">Subsetor</th>
+                                        <th scope="col" class="px-4 py-3 text-right">Risco</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="adapta-brasil-tbody">
+                                    {% for item in adapta_brasil_data %}
+                                    <tr class="hover:bg-slate-50/50 transition-colors ab-row hidden">
+                                        <td class="px-4 py-3 font-medium">{{ item.setor }}</td>
+                                        <td class="px-4 py-3 text-slate-500">{{ item.subsetor }}</td>
+                                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                                            <span class="{{ item.cor }} text-white font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm">{{ item.grau }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex items-center justify-between mt-auto">
+                            <span class="text-xs text-slate-400 font-medium" id="ab-page-info">Mostrando 1-5</span>
+                            <div class="flex gap-1">
+                                <button type="button" id="ab-btn-prev" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                <button type="button" id="ab-btn-next" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const rows = document.querySelectorAll('.ab-row');
+                            if (!rows.length) return;
+                            
+                            const itemsPerPage = 5;
+                            let currentPage = 1;
+                            const totalPages = Math.ceil(rows.length / itemsPerPage);
+                            
+                            const btnPrev = document.getElementById('ab-btn-prev');
+                            const btnNext = document.getElementById('ab-btn-next');
+                            const pageInfo = document.getElementById('ab-page-info');
+                            
+                            function showPage(page) {
+                                const start = (page - 1) * itemsPerPage;
+                                const end = start + itemsPerPage;
+                                
+                                rows.forEach((row, index) => {
+                                    if (index >= start && index < end) {
+                                        row.classList.remove('hidden');
+                                    } else {
+                                        row.classList.add('hidden');
+                                    }
+                                });
+                                
+                                btnPrev.disabled = page === 1;
+                                btnNext.disabled = page === totalPages;
+                                
+                                const actualEnd = Math.min(end, rows.length);
+                                pageInfo.textContent = `Mostrando ${start + 1}-${actualEnd} de ${rows.length}`;
+                            }
+                            
+                            btnPrev.addEventListener('click', () => {
+                                if (currentPage > 1) {
+                                    currentPage--;
+                                    showPage(currentPage);
+                                }
+                            });
+                            
+                            btnNext.addEventListener('click', () => {
+                                if (currentPage < totalPages) {
+                                    currentPage++;
+                                    showPage(currentPage);
+                                }
+                            });
+                            
+                            // Initialize
+                            showPage(1);
+                        });
+                    </script>
+                </div>
+            </div>
+            {% endif %}
+            
         </div>
     </section>
     {% endif %}

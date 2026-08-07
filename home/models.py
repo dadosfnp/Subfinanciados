@@ -243,6 +243,7 @@ class AdaptaBrasil(models.Model):
     seg_ali_dis = models.FloatField(null=True, blank=True)
     seg_ene_ace = models.FloatField(null=True, blank=True)
     seg_ene_dis = models.FloatField(null=True, blank=True)
+    media_ponderada = models.FloatField(null=True, blank=True)
     def __str__(self):
         return f"Dados AdaptaBrasil - {self.municipio.name_muni}"
 
@@ -279,6 +280,10 @@ class IndicadoresAtuais(models.Model):
     populacao_atual_rank_faixa = models.IntegerField(null=True, blank=True)
     populacao_atual_total_faixa = models.IntegerField(null=True, blank=True)
     capag = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_I = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_II = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_III = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_qualidade_fiscal = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     rc_atual = models.FloatField(null=True, blank=True)
     rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
     quintil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)

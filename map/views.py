@@ -206,23 +206,16 @@ def api_get_dashboard_data(request):
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
         
     if riscos_filtro and riscos_filtro != 'todos':
-        from django.db.models import IntegerField, Case, When
-        ab_fields = [
-            'dados_adapta_brasil__bio_int_bio', 'dados_adapta_brasil__des_des_ter', 'dados_adapta_brasil__des_in_enx_ala',
-            'dados_adapta_brasil__rec_ris_est_hid', 'dados_adapta_brasil__sau_arb', 'dados_adapta_brasil__sau_lei_teg_ame',
-            'dados_adapta_brasil__sau_lei_vis', 'dados_adapta_brasil__sau_mal', 'dados_adapta_brasil__seg_ali_ace_con_ali',
-            'dados_adapta_brasil__seg_ali_dis', 'dados_adapta_brasil__seg_ene_ace', 'dados_adapta_brasil__seg_ene_dis'
-        ]
-        annotation = sum(Case(When(**{f'{f}__gte': 0.6}, then=1), default=0, output_field=IntegerField()) for f in ab_fields)
-        queryset = queryset.annotate(riscos_altos=annotation)
-        if riscos_filtro == '0':
-            queryset = queryset.filter(riscos_altos=0)
-        elif riscos_filtro == '1-3':
-            queryset = queryset.filter(riscos_altos__gte=1, riscos_altos__lte=3)
-        elif riscos_filtro == '4-7':
-            queryset = queryset.filter(riscos_altos__gte=4, riscos_altos__lte=7)
-        elif riscos_filtro == '8-12':
-            queryset = queryset.filter(riscos_altos__gte=8)
+        if riscos_filtro == 'muito_baixo':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0, dados_adapta_brasil__media_ponderada__lt=0.2)
+        elif riscos_filtro == 'baixo':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.2, dados_adapta_brasil__media_ponderada__lt=0.4)
+        elif riscos_filtro == 'medio':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.4, dados_adapta_brasil__media_ponderada__lt=0.6)
+        elif riscos_filtro == 'alto':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.6, dados_adapta_brasil__media_ponderada__lt=0.8)
+        elif riscos_filtro == 'muito_alto':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.8)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -486,23 +479,6 @@ def municipios_geojson_api(request):
     rm_filtro = request.GET.get('rm')
     capag_filtro = request.GET.get('capag')
     risco_filtro = request.GET.get('risco_climatico')
-    
-    # Mapeamento de nome legível para campo do banco
-    RISCO_CAMPO = {
-        'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
-        'des_des_ter': 'dados_adapta_brasil__des_des_ter',
-        'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
-        'rec_ris_est_hid': 'dados_adapta_brasil__rec_ris_est_hid',
-        'sau_arb': 'dados_adapta_brasil__sau_arb',
-        'sau_lei_teg_ame': 'dados_adapta_brasil__sau_lei_teg_ame',
-        'sau_lei_vis': 'dados_adapta_brasil__sau_lei_vis',
-        'sau_mal': 'dados_adapta_brasil__sau_mal',
-        'seg_ali_ace_con_ali': 'dados_adapta_brasil__seg_ali_ace_con_ali',
-        'seg_ali_dis': 'dados_adapta_brasil__seg_ali_dis',
-        'seg_ene_ace': 'dados_adapta_brasil__seg_ene_ace',
-        'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
-    }
-    
     classification_filter = request.GET.get('classification', 'quintil')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
     subgroup_filter = request.GET.get('subgrupo')
@@ -517,9 +493,18 @@ def municipios_geojson_api(request):
         queryset = queryset.filter(rm__nome=rm_filtro)
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
-    if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
-        campo = RISCO_CAMPO[risco_filtro]
-        queryset = queryset.filter(**{f'{campo}__gte': 0.6})
+
+    if risco_filtro and risco_filtro != 'todos':
+        if risco_filtro == 'muito_baixo':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0, dados_adapta_brasil__media_ponderada__lt=0.2)
+        elif risco_filtro == 'baixo':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.2, dados_adapta_brasil__media_ponderada__lt=0.4)
+        elif risco_filtro == 'medio':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.4, dados_adapta_brasil__media_ponderada__lt=0.6)
+        elif risco_filtro == 'alto':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.6, dados_adapta_brasil__media_ponderada__lt=0.8)
+        elif risco_filtro == 'muito_alto':
+            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.8)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -603,12 +588,7 @@ def municipios_geojson_api(request):
         'dados_atuais__capag',
         'dados_atuais__quintil_atual', 'dados_atuais__decil_atual',
         'dados_atuais__percentil_atual', 'dados_atuais__percentil_atual_n', 
-        'dados_adapta_brasil__bio_int_bio', 'dados_adapta_brasil__des_des_ter',
-        'dados_adapta_brasil__des_in_enx_ala', 'dados_adapta_brasil__rec_ris_est_hid',
-        'dados_adapta_brasil__sau_arb', 'dados_adapta_brasil__sau_lei_teg_ame',
-        'dados_adapta_brasil__sau_lei_vis', 'dados_adapta_brasil__sau_mal',
-        'dados_adapta_brasil__seg_ali_ace_con_ali', 'dados_adapta_brasil__seg_ali_dis',
-        'dados_adapta_brasil__seg_ene_ace', 'dados_adapta_brasil__seg_ene_dis',
+        'dados_adapta_brasil__media_ponderada'
     )
     if analise == 'crescimento':
         _fields = _fields + (
@@ -634,21 +614,7 @@ def municipios_geojson_api(request):
         cadunico = municipio['cadunico__cadunico'] or 0
         perc_cadunico = min((cadunico / pop * 100) if pop > 0 else 0, 100)
         
-        adapta_brasil_fields = [
-            municipio.get('dados_adapta_brasil__bio_int_bio'),
-            municipio.get('dados_adapta_brasil__des_des_ter'),
-            municipio.get('dados_adapta_brasil__des_in_enx_ala'),
-            municipio.get('dados_adapta_brasil__rec_ris_est_hid'),
-            municipio.get('dados_adapta_brasil__sau_arb'),
-            municipio.get('dados_adapta_brasil__sau_lei_teg_ame'),
-            municipio.get('dados_adapta_brasil__sau_lei_vis'),
-            municipio.get('dados_adapta_brasil__sau_mal'),
-            municipio.get('dados_adapta_brasil__seg_ali_ace_con_ali'),
-            municipio.get('dados_adapta_brasil__seg_ali_dis'),
-            municipio.get('dados_adapta_brasil__seg_ene_ace'),
-            municipio.get('dados_adapta_brasil__seg_ene_dis'),
-        ]
-        riscos_altos = sum(1 for val in adapta_brasil_fields if val is not None and val >= 0.6)
+        riscos_altos = municipio.get('dados_adapta_brasil__media_ponderada') 
 
         feature = {
             "type": "Feature",

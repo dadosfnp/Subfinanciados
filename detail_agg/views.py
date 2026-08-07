@@ -1136,6 +1136,21 @@ def conjunto_detalhe_view(request):
             })
     adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
 
+    # Compute media_ponderada average
+    media_geral_val = queryset.aggregate(media_geral=Avg('dados_adapta_brasil__media_ponderada', filter=Q(dados_adapta_brasil__media_ponderada__isnull=False)))['media_geral']
+    adapta_brasil_media = None
+    if media_geral_val is not None:
+        if media_geral_val >= 0.8:
+            adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.6:
+            adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.4:
+            adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.2:
+            adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_geral_val}
+        else:
+            adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_geral_val}
+
     context = {
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
@@ -1160,6 +1175,7 @@ def conjunto_detalhe_view(request):
         'media_nacional_rc_pc': 316.74,
         'media_nacional_pop': 16.04,
         'adapta_brasil_data': adapta_brasil_data,
+        'adapta_brasil_media': adapta_brasil_media,
     }
 
     return render(request, 'detail_agg/detalhe_conjunto.html', context)
@@ -1881,9 +1897,24 @@ def conjunto_fiscal_api(request):
             })
     adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
 
+    # Compute media_ponderada average
+    media_geral_val = queryset.aggregate(media_geral=Avg('dados_adapta_brasil__media_ponderada', filter=Q(dados_adapta_brasil__media_ponderada__isnull=False)))['media_geral']
+    adapta_brasil_media = None
+    if media_geral_val is not None:
+        if media_geral_val >= 0.8:
+            adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.6:
+            adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.4:
+            adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.2:
+            adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_geral_val}
+        else:
+            adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_geral_val}
+
     # Renderiza os templates parciais e retorna como JSON
     rendered_html = render_to_string('detail_agg/partials/_fiscal_details.html', {'revenue_tree': revenue_tree, 'level': 0})
-    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data})
+    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data, 'adapta_brasil_media': adapta_brasil_media})
     
     return JsonResponse({
         'html': rendered_html,

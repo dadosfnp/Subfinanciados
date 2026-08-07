@@ -1,32 +1,57 @@
 {% if adapta_brasil_data %}
-    <div class="section-heading mb-1">
-      <span>Riscos Climáticos AdaptaBrasil</span>
-      <span class="text-xs text-slate-400 font-normal ml-2">(média do conjunto de municípios)</span>
-    </div>
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600">
-          <thead class="bg-slate-50 text-[#103758] font-semibold border-b border-slate-200">
-            <tr>
-              <th scope="col" class="px-6 py-4">Setor Estratégico</th>
-              <th scope="col" class="px-6 py-4">Subsetor</th>
-              <th scope="col" class="px-6 py-4">Valor Médio</th>
-              <th scope="col" class="px-6 py-4">Grau de Risco</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            {% for item in adapta_brasil_data %}
-            <tr class="hover:bg-slate-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap">{{ item.setor }}</td>
-              <td class="px-6 py-4">{{ item.subsetor }}</td>
-              <td class="px-6 py-4 whitespace-nowrap font-mono text-slate-700">{{ item.valor }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="{{ item.cor }} text-white text-xs font-semibold px-2.5 py-1 rounded-md">{{ item.grau }}</span>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="w-full bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Riscos Climáticos AdaptaBrasil</h4>
+                <span class="text-[9px] text-slate-400 font-normal ml-2 tracking-wide">(média do conjunto de municípios)</span>
+            </div>
+            {% if adapta_brasil_media %}
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    Média Geral
+                    <i class="fa-solid fa-circle-info text-slate-300 hover:text-slate-500 transition-colors cursor-help" title="Média Ponderada da Metodologia de Risco (AdaptaBrasil)"></i>
+                </span>
+                <span class="{{ adapta_brasil_media.cor }} text-white text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                    {{ adapta_brasil_media.grau }} 
+                    <span class="bg-white/20 px-1 rounded">{{ adapta_brasil_media.valor|floatformat:2 }}</span>
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="flex flex-col">
+            <div class="overflow-hidden border border-slate-100 rounded-xl mb-3">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50/80 backdrop-blur text-[#103758] font-bold border-b border-slate-200">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">Setor Estratégico</th>
+                            <th scope="col" class="px-4 py-3">Subsetor</th>
+                            <th scope="col" class="px-4 py-3 text-right">Risco (Valor Médio)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100" id="adapta-brasil-tbody-agg">
+                        {% for item in adapta_brasil_data %}
+                        <tr class="hover:bg-slate-50/50 transition-colors ab-row-agg hidden">
+                            <td class="px-4 py-3 font-medium">{{ item.setor }}</td>
+                            <td class="px-4 py-3 text-slate-500">{{ item.subsetor }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                <span class="{{ item.cor }} text-white font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-end gap-1.5 w-max ml-auto">
+                                    {{ item.grau }}
+                                    <span class="bg-white/20 px-1 rounded">{{ item.valor|floatformat:3 }}</span>
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex items-center justify-between mt-auto">
+                <span class="text-xs text-slate-400 font-medium" id="ab-page-info-agg">Mostrando 1-5</span>
+                <div class="flex gap-1">
+                    <button type="button" id="ab-btn-prev-agg" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <button type="button" id="ab-btn-next-agg" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                </div>
+            </div>
+        </div>
     </div>
 {% endif %}
