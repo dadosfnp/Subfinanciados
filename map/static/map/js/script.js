@@ -503,6 +503,23 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     rank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>`,
     riscos: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
   };
+  // 1. Declare a função antes de montar o HTML
+  function formatarRisco(valor) {
+    if (valor === undefined || valor === null) return '0,00';
+    
+    const num = Number(valor);
+    // Formata para 2 casas e troca o ponto pela vírgula
+    const formatado = num.toFixed(2).replace('.', ','); 
+    
+    let classe = '';
+    if (num < 0.2) classe = 'risco muito baixo';
+    else if (num < 0.4) classe = 'risco baixo';
+    else if (num < 0.6) classe = 'risco médio';
+    else if (num < 0.8) classe = 'risco alto';
+    else classe = 'risco muito alto';
+
+    return `${formatado} (${classe})`;
+  }
 
   /* Frase de Sintese (Logica de cores mantida) */
   let summaryHTML = '';
@@ -570,17 +587,31 @@ function abrirPopupDoMunicipioSelecionado(feature) {
           ${icons.riscos}
           <div class="popup-info-content">
             <span class="popup-label" style="display: flex; align-items: center;">
-              Riscos Climáticos Altos:
+              Riscos Climáticos Médio
               <span class="capag-tooltip">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="margin-left: 5px; cursor: help; color: #64748b;">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
                 </svg>
                 <div class="capag-tooltip-text">
-                  <div style="font-weight: bold; margin-bottom: 8px;">Subsetores do AdaptaBrasil com valor acima de 0,6</div>
+                  <div style="font-weight: bold; margin-bottom: 8px;">Metodologia de Risco (AdaptaBrasil)</div>
+                  <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Base de Dados:</strong> Consolida as avaliações de 12 subsetores da plataforma AdaptaBrasil.</li>
+                    <li><strong>Cálculo:</strong> Média ponderada das notas dos 12 subsetores, atribuindo pesos iguais para cada setor estratégico.</li>
+                    <li><strong>Normalização:</strong> O valor resultante foi ajustado e normalizado para uma escala de 0 a 1.</li>
+                    <li><strong>Classificação:</strong>
+                      <ul style="margin-top: 4px; padding-left: 16px; display: flex; flex-direction: column; gap: 4px;">
+                        <li>Abaixo de 0,2: Muito baixo</li>
+                        <li>De 0,2 a 0,4: Baixo</li>
+                        <li>De 0,4 a 0,6: Médio</li>
+                        <li>De 0,6 a 0,8: Alto</li>
+                        <li>Acima de 0,8: Muito alto</li>
+                      </ul>
+                    </li>
+                  </ul>
                 </div>
               </span>
             </span>
-            <span class="popup-value">${props.riscos_climaticos !== undefined ? props.riscos_climaticos : '0'} / 12</span>
+            <span class="popup-value">${formatarRisco(props.riscos_climaticos)}</span>
           </div>
         </div>
 

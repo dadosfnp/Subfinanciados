@@ -616,7 +616,8 @@ def municipio_detalhe_view(request, municipio_id):
 
     # AdaptaBrasil data preparation
     adapta_brasil_data = []
-    if hasattr(municipio, 'dados_adapta_brasil') and municipio.dados_adapta_brasil:
+    adapta_brasil_media = None
+    if getattr(municipio, 'dados_adapta_brasil', None) and municipio.dados_adapta_brasil:
         ab = municipio.dados_adapta_brasil
         indicators_map = [
             ("Biodiversidade", "Integridade do bioma", ab.bio_int_bio),
@@ -661,12 +662,52 @@ def municipio_detalhe_view(request, municipio_id):
                 
         # Sort by risk (valor) from highest to lowest
         adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
+        
+        # Get media ponderada (geral)
+        media_val = ab.media_ponderada
+        if media_val is not None:
+            if media_val >= 0.8:
+                adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_val}
+            elif media_val >= 0.6:
+                adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_val}
+            elif media_val >= 0.4:
+                adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_val}
+            elif media_val >= 0.2:
+                adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_val}
+            else:
+                adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_val}
+
+    capag_data = None
+    if getattr(municipio, 'dados_atuais', None) and getattr(municipio.dados_atuais, 'capag', None):
+        def get_capag_color(val):
+            if not val:
+                return "bg-slate-500"
+            val_str = str(val).strip().upper()
+            if val_str.startswith('A') or val_str.startswith('B') or val_str == 'BICF':
+                return "bg-[#2f5c29]" # Green
+            return "bg-[#9a331c]" # Red
+
+        capag_data = {
+            'nota': municipio.dados_atuais.capag,
+            'nota_color': get_capag_color(municipio.dados_atuais.capag),
+            'indicador_i': municipio.dados_atuais.capag_indicador_I or '-',
+            'indicador_i_color': get_capag_color(municipio.dados_atuais.capag_indicador_I),
+            'indicador_ii': municipio.dados_atuais.capag_indicador_II or '-',
+            'indicador_ii_color': get_capag_color(municipio.dados_atuais.capag_indicador_II),
+            'indicador_iii': municipio.dados_atuais.capag_indicador_III or '-',
+            'indicador_iii_color': get_capag_color(municipio.dados_atuais.capag_indicador_III),
+            'qualidade_fiscal': municipio.dados_atuais.capag_qualidade_fiscal or '-',
+            'qualidade_fiscal_color': get_capag_color(municipio.dados_atuais.capag_qualidade_fiscal),
+        }
 
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
+        'capag_data': capag_data,
+        'adapta_brasil_data': adapta_brasil_data,
+        'adapta_brasil_media': adapta_brasil_media,
         'data': data,
         'evolucao_historica': evolucao_historica,
 

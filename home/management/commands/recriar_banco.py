@@ -76,6 +76,20 @@ from home.models import (
 # dump usa natural keys justamente para reencontrá-las mesmo com IDs diferentes.
 MODELOS_A_PRESERVAR = ["auth.Group", "auth.User", "home.Noticia"]
 
+# Ordem obrigatória: 01 cria os Municipio que todos os demais referenciam por FK,
+# e 02 depende de 01 para associar as RMs.
+COMANDOS_DE_IMPORTACAO = [
+    "01_importar_municipios",
+    "02_importar_rm",
+    "03_importar_contas",
+    "04_importar_contas_01",
+    "05_importar_contas_02",
+    "06_percentil",
+    "07_media_nacional_detalhamento",
+    "08_mediana_nacional_detalhamento",
+    "09_crescimento_medio",
+    "10_adapta_brasil"
+]
 def descobrir_comandos_de_importacao():
     """Lista os comandos de import na ordem do prefixo numérico (01, 02, ... 10).
 

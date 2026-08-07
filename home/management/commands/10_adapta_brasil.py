@@ -20,7 +20,7 @@ class Command(BaseCommand):
         
         # --- CORREÇÃO CRÍTICA 1: Garantir que o IBGE seja texto ---
         # Isso garante que o match com o cod_ibge da model Municipio funcione perfeitamente
-        df['geocod_ibge'] = df['geocod_ibge'].astype(str)
+        df['cod_ibge'] = df['cod_ibge'].astype(str)
 
         # --- CORREÇÃO CRÍTICA 2: Substituir NaN do Pandas por None do Python ---
         # Como os seus campos da model estão com null=True, o Django precisa receber None e não NaN
@@ -38,7 +38,7 @@ class Command(BaseCommand):
         for _, row in df.iterrows():
             # Busca a instância do Município baseando-se no cod_ibge
             # Usamos filter().first() para evitar erros caso um município da planilha não exista no banco
-            muni = Municipio.objects.filter(cod_ibge=row['geocod_ibge']).first()
+            muni = Municipio.objects.filter(cod_ibge=row['cod_ibge']).first()
 
             if muni:
                 # Cria o registro do AdaptaBrasil vinculado ao Município
@@ -55,7 +55,8 @@ class Command(BaseCommand):
                     seg_ali_ace_con_ali=row['seg_ali_ace_con_ali'],
                     seg_ali_dis=row['seg_ali_dis'],
                     seg_ene_ace=row['seg_ene_ace'],
-                    seg_ene_dis=row['seg_ene_dis']
+                    seg_ene_dis=row['seg_ene_dis'],
+                    media_ponderada=row['pontuacao_risco_norm_pond']
                 )
                 registros_criados += 1
             else:
