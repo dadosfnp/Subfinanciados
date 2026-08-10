@@ -20,18 +20,18 @@
         </div>
         
         <div class="flex flex-col">
-            <div class="overflow-hidden border border-slate-100 rounded-xl mb-3">
+            <div class="overflow-y-auto max-h-[320px] border border-slate-100 rounded-xl relative shadow-inner">
                 <table class="w-full text-left text-xs text-slate-600">
-                    <thead class="bg-slate-50/80 backdrop-blur text-[#103758] font-bold border-b border-slate-200">
+                    <thead class="sticky top-0 bg-slate-50 text-[#103758] font-bold border-b border-slate-200 z-10 shadow-sm">
                         <tr>
-                            <th scope="col" class="px-4 py-3">Setor Estratégico</th>
-                            <th scope="col" class="px-4 py-3">Subsetor</th>
-                            <th scope="col" class="px-4 py-3 text-right">Risco (Valor Médio)</th>
+                            <th scope="col" class="px-4 py-3 bg-slate-50">Setor Estratégico</th>
+                            <th scope="col" class="px-4 py-3 bg-slate-50">Subsetor</th>
+                            <th scope="col" class="px-4 py-3 text-right bg-slate-50">Risco (Valor Médio)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100" id="adapta-brasil-tbody-agg">
                         {% for item in adapta_brasil_data %}
-                        <tr class="hover:bg-slate-50/50 transition-colors ab-row-agg hidden">
+                        <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-4 py-3 font-medium">{{ item.setor }}</td>
                             <td class="px-4 py-3 text-slate-500">{{ item.subsetor }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -44,13 +44,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-            <div class="flex items-center justify-between mt-auto">
-                <span class="text-xs text-slate-400 font-medium" id="ab-page-info-agg">Mostrando 1-5</span>
-                <div class="flex gap-1">
-                    <button type="button" id="ab-btn-prev-agg" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                    <button type="button" id="ab-btn-next-agg" class="px-2 py-1 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-                </div>
             </div>
         </div>
     </div>
