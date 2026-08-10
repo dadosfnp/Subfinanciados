@@ -589,7 +589,19 @@ def municipios_geojson_api(request):
         'dados_atuais__capag',
         'dados_atuais__quintil_atual', 'dados_atuais__decil_atual',
         'dados_atuais__percentil_atual', 'dados_atuais__percentil_atual_n', 
-        'dados_adapta_brasil__media_ponderada'
+        'dados_adapta_brasil__media_ponderada',
+        'dados_adapta_brasil__bio_int_bio',
+        'dados_adapta_brasil__des_des_ter',
+        'dados_adapta_brasil__des_in_enx_ala',
+        'dados_adapta_brasil__rec_ris_est_hid',
+        'dados_adapta_brasil__sau_arb',
+        'dados_adapta_brasil__sau_lei_teg_ame',
+        'dados_adapta_brasil__sau_lei_vis',
+        'dados_adapta_brasil__sau_mal',
+        'dados_adapta_brasil__seg_ali_ace_con_ali',
+        'dados_adapta_brasil__seg_ali_dis',
+        'dados_adapta_brasil__seg_ene_ace',
+        'dados_adapta_brasil__seg_ene_dis',
     )
     if analise == 'crescimento':
         _fields = _fields + (
@@ -638,7 +650,19 @@ def municipios_geojson_api(request):
                 'percentil24': municipio['dados_atuais__percentil_atual'],
                 'percentil24_n': municipio['dados_atuais__percentil_atual_n'],
                 'dynamic_quantile': current_muni_quantile,
-                'riscos_climaticos': riscos_altos
+                'riscos_climaticos': riscos_altos,
+                'bio_int_bio': municipio.get('dados_adapta_brasil__bio_int_bio'),
+                'des_des_ter': municipio.get('dados_adapta_brasil__des_des_ter'),
+                'des_in_enx_ala': municipio.get('dados_adapta_brasil__des_in_enx_ala'),
+                'rec_ris_est_hid': municipio.get('dados_adapta_brasil__rec_ris_est_hid'),
+                'sau_arb': municipio.get('dados_adapta_brasil__sau_arb'),
+                'sau_lei_teg_ame': municipio.get('dados_adapta_brasil__sau_lei_teg_ame'),
+                'sau_lei_vis': municipio.get('dados_adapta_brasil__sau_lei_vis'),
+                'sau_mal': municipio.get('dados_adapta_brasil__sau_mal'),
+                'seg_ali_ace_con_ali': municipio.get('dados_adapta_brasil__seg_ali_ace_con_ali'),
+                'seg_ali_dis': municipio.get('dados_adapta_brasil__seg_ali_dis'),
+                'seg_ene_ace': municipio.get('dados_adapta_brasil__seg_ene_ace'),
+                'seg_ene_dis': municipio.get('dados_adapta_brasil__seg_ene_dis'),
             }
         }
 

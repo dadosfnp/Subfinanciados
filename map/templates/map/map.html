@@ -242,7 +242,7 @@
 
         <div class="filter-group">
           <label for="filtro-risco-campo" class="form-label">Risco Climático:</label>
-          <div class="input-group input-group-sm">
+          <div class="input-group input-group-sm mb-1.5">
             <select id="filtro-risco-campo" class="form-select form-select-sm">
               <option value="todos">Todos os Riscos</option>
               <option value="media_ponderada" selected>Risco Climático Médio (Média Geral)</option>
@@ -281,22 +281,18 @@
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
           </div>
-        </div>
 
-        <div class="filter-group">
-          <label for="filtro-riscos" class="form-label">Intensidade do Risco:</label>
-          <div class="input-group input-group-sm">
-            <select id="filtro-riscos" class="form-select form-select-sm">
-              <option value="todos">Todas</option>
-              <option value="muito_baixo">Muito Baixo</option>
-              <option value="baixo">Baixo</option>
-              <option value="medio">Médio</option>
-              <option value="alto">Alto</option>
-              <option value="muito_alto">Muito Alto</option>
-            </select>
-            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-riscos" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
+          <!-- Hidden input keeping value for backend and JS compatibility -->
+          <input type="hidden" id="filtro-riscos" value="todos" />
+
+          <!-- Interactive Intensity Pills -->
+          <div class="mt-1 flex flex-wrap gap-1 items-center justify-between p-1 bg-slate-50 border border-slate-200 rounded-md" id="container-pills-risco">
+            <button type="button" class="btn btn-xs pill-risco active shadow-sm" data-value="todos" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #103758; color: #ffffff; border-radius: 4px;">Todos</button>
+            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="muito_baixo" title="Muito Baixo (< 0,2)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #16a34a; border: 1px solid #dcfce7; border-radius: 4px;">Muito Baixo</button>
+            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="baixo" title="Baixo (0,2 a 0,4)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #65a30d; border: 1px solid #ecfccb; border-radius: 4px;">Baixo</button>
+            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="medio" title="Médio (0,4 a 0,6)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #d97706; border: 1px solid #fef3c7; border-radius: 4px;">Médio</button>
+            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="alto" title="Alto (0,6 a 0,8)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #ea580c; border: 1px solid #ffedd5; border-radius: 4px;">Alto</button>
+            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="muito_alto" title="Muito Alto (≥ 0,8)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #dc2626; border: 1px solid #fee2e2; border-radius: 4px;">Muito Alto</button>
           </div>
         </div>
 

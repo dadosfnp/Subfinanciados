@@ -593,7 +593,26 @@ function abrirPopupDoMunicipioSelecionado(feature) {
           ${icons.riscos}
           <div class="popup-info-content">
             <span class="popup-label" style="display: flex; align-items: center;">
-              Riscos Climáticos Médio
+              ${(() => {
+                const selectedRiskKey = (typeof filtroRiscoCampo !== 'undefined' && filtroRiscoCampo) ? filtroRiscoCampo.value : 'media_ponderada';
+                const RISK_LABELS = {
+                  'todos': 'Risco Climático Médio',
+                  'media_ponderada': 'Risco Climático Médio',
+                  'bio_int_bio': 'Biodiversidade (Integridade do Bioma)',
+                  'des_des_ter': 'Desastres (Deslizamento de Terra)',
+                  'des_in_enx_ala': 'Desastres (Inundações e Alagamentos)',
+                  'rec_ris_est_hid': 'Recursos Hídricos (Estresse Hídrico)',
+                  'sau_arb': 'Saúde (Arboviroses)',
+                  'sau_lei_teg_ame': 'Saúde (Leishmaniose Tegumentar)',
+                  'sau_lei_vis': 'Saúde (Leishmaniose Visceral)',
+                  'sau_mal': 'Saúde (Malária)',
+                  'seg_ali_ace_con_ali': 'Segurança Alimentar (Acesso/Consumo)',
+                  'seg_ali_dis': 'Segurança Alimentar (Disponibilidade)',
+                  'seg_ene_ace': 'Segurança Energética (Acesso)',
+                  'seg_ene_dis': 'Segurança Energética (Disponibilidade)'
+                };
+                return RISK_LABELS[selectedRiskKey] || 'Risco Climático Médio';
+              })()}
               <span class="capag-tooltip">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="margin-left: 5px; cursor: help; color: #64748b;">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
@@ -617,7 +636,14 @@ function abrirPopupDoMunicipioSelecionado(feature) {
                 </div>
               </span>
             </span>
-            <span class="popup-value">${formatarRisco(props.riscos_climaticos)}</span>
+            <span class="popup-value">${formatarRisco((() => {
+                const selectedRiskKey = (typeof filtroRiscoCampo !== 'undefined' && filtroRiscoCampo) ? filtroRiscoCampo.value : 'media_ponderada';
+                let valorRisco = props.riscos_climaticos;
+                if (selectedRiskKey !== 'todos' && selectedRiskKey !== 'media_ponderada' && props[selectedRiskKey] != null) {
+                    valorRisco = props[selectedRiskKey];
+                }
+                return valorRisco;
+            })())}</span>
           </div>
         </div>
 
@@ -917,7 +943,28 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
     filtroSubgrupo.value = 'todos';
     // if (typeof filtroCapag !== 'undefined' && filtroCapag) filtroCapag.value = 'todos';
     if (filtroRiscoCampo) filtroRiscoCampo.value = 'media_ponderada';
-    if (filtroRiscos) filtroRiscos.value = 'todos';
+    if (filtroRiscos) {
+        filtroRiscos.value = 'todos';
+        const containerPillsRisco = document.getElementById('container-pills-risco');
+        if (containerPillsRisco) {
+            containerPillsRisco.querySelectorAll('.pill-risco').forEach(b => {
+                const bVal = b.getAttribute('data-value');
+                if (bVal === 'todos') {
+                    b.classList.add('active');
+                    b.style.backgroundColor = '#103758';
+                    b.style.color = '#ffffff';
+                } else {
+                    b.classList.remove('active');
+                    b.style.backgroundColor = '#ffffff';
+                    if (bVal === 'muito_baixo') b.style.color = '#16a34a';
+                    else if (bVal === 'baixo') b.style.color = '#65a30d';
+                    else if (bVal === 'medio') b.style.color = '#d97706';
+                    else if (bVal === 'alto') b.style.color = '#ea580c';
+                    else if (bVal === 'muito_alto') b.style.color = '#dc2626';
+                }
+            });
+        }
+    }
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
   if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
@@ -931,7 +978,7 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 }
 });
 
-[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo, filtroRiscos]
+[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo]
   .forEach(sel => sel.addEventListener('change', async () => {
     
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
@@ -947,6 +994,39 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 
     scheduleAtualizarMapa();
   }));
+
+const containerPillsRisco = document.getElementById('container-pills-risco');
+if (containerPillsRisco) {
+  containerPillsRisco.querySelectorAll('.pill-risco').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const val = btn.getAttribute('data-value');
+      if (filtroRiscos) filtroRiscos.value = val;
+      
+      containerPillsRisco.querySelectorAll('.pill-risco').forEach(b => {
+        const bVal = b.getAttribute('data-value');
+        b.classList.remove('active');
+        b.style.backgroundColor = '#ffffff';
+        if (bVal === 'todos') b.style.color = '#475569';
+        else if (bVal === 'muito_baixo') b.style.color = '#16a34a';
+        else if (bVal === 'baixo') b.style.color = '#65a30d';
+        else if (bVal === 'medio') b.style.color = '#d97706';
+        else if (bVal === 'alto') b.style.color = '#ea580c';
+        else if (bVal === 'muito_alto') b.style.color = '#dc2626';
+      });
+
+      btn.classList.add('active');
+      if (val === 'todos') { btn.style.backgroundColor = '#103758'; btn.style.color = '#ffffff'; }
+      else if (val === 'muito_baixo') { btn.style.backgroundColor = '#16a34a'; btn.style.color = '#ffffff'; }
+      else if (val === 'baixo') { btn.style.backgroundColor = '#65a30d'; btn.style.color = '#ffffff'; }
+      else if (val === 'medio') { btn.style.backgroundColor = '#d97706'; btn.style.color = '#ffffff'; }
+      else if (val === 'alto') { btn.style.backgroundColor = '#ea580c'; btn.style.color = '#ffffff'; }
+      else if (val === 'muito_alto') { btn.style.backgroundColor = '#dc2626'; btn.style.color = '#ffffff'; }
+
+      await updateDependentFilters();
+      scheduleAtualizarMapa();
+    });
+  });
+}
 
 
 filtroModoCalculo.addEventListener('change', atualizarClassificacao);
@@ -1155,6 +1235,15 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         return `${nome}: **${v}**`;
     }
 
+    const INTENSIDADE_MAP = {
+        'todos': 'todas',
+        'muito_baixo': 'Muito Baixo',
+        'baixo': 'Baixo',
+        'medio': 'Médio',
+        'alto': 'Alto',
+        'muito_alto': 'Muito Alto'
+    };
+
     const filtros = [
         boldIfNotAll("Faixa Populacional", document.getElementById("filtro-porte").value),
         boldIfNotAll("Região Metropolitana", document.getElementById("filtro-rm").value),
@@ -1163,7 +1252,7 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         boldIfNotAll("Município", document.getElementById("filtro-municipio").value),
         // boldIfNotAll("Capag", document.getElementById("filtro-capag") ? document.getElementById("filtro-capag").value : 'todos'),
         boldIfNotAll("Risco Climático", filtroRiscoCampo ? filtroRiscoCampo.options[filtroRiscoCampo.selectedIndex].text : 'todos'),
-        boldIfNotAll("Intensidade", filtroRiscos ? filtroRiscos.options[filtroRiscos.selectedIndex].text : 'todas')
+        boldIfNotAll("Intensidade", INTENSIDADE_MAP[filtroRiscos ? filtroRiscos.value : 'todos'] || 'todas')
     ];
 
     ctx.font = "24px Arial";
