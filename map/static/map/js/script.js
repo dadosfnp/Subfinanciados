@@ -24,7 +24,8 @@ const filtroMunicipio      = document.getElementById('filtro-municipio');
 const filtroPorte          = document.getElementById('filtro-porte');
 const filtroSubgrupo       = document.getElementById('filtro-subgrupo');
 const filtroRm             = document.getElementById('filtro-rm');
-const filtroCapag          = document.getElementById('filtro-capag');
+// const filtroCapag          = document.getElementById('filtro-capag');
+const filtroRiscoCampo     = document.getElementById('filtro-risco-campo');
 const filtroRiscos         = document.getElementById('filtro-riscos');
 const filtroClassificacao  = document.getElementById('filtro-classificacao');
 const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
@@ -63,8 +64,9 @@ function paramsKeyFromSelects() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
-    capag: filtroCapag.value,
-    risco_climatico: filtroRiscos.value,
+    // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value,
     modo_analise: filtroModoAnalise ? filtroModoAnalise.value : 'receita',
@@ -81,15 +83,16 @@ async function updateDependentFilters() {
   const ufAtual        = filtroUf.value;
   const rmAtual        = filtroRm.value;
   const municipioAtual = filtroMunicipio.value;
-  const capagAtual     = filtroCapag.value;
+  // const capagAtual     = typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos';
 
   /* Monta os parametros com o estado atual para o backend retornar apenas itens validos */
   const params = {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
-    capag: capagAtual,
-    risco_climatico: filtroRiscos.value,
+    // capag: capagAtual,
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     classification: filtroClassificacao.value,
@@ -117,11 +120,11 @@ async function updateDependentFilters() {
     data.municipios.forEach(v => filtroMunicipio.add(new Option(v, v)));
     restoreSelectValue(filtroMunicipio, municipioAtual);
 
-    filtroCapag.innerHTML = '<option value="todos">Todos</option>';
-    if (data.capags) {
-        data.capags.forEach(v => filtroCapag.add(new Option(v, v)));
-    }
-    restoreSelectValue(filtroCapag, capagAtual);
+    // filtroCapag.innerHTML = '<option value="todos">Todos</option>';
+    // if (data.capags) {
+    //     data.capags.forEach(v => filtroCapag.add(new Option(v, v)));
+    // }
+    // restoreSelectValue(filtroCapag, capagAtual);
   } catch (err) {
     console.error("Erro ao atualizar filtros dependentes:", err);
   }
@@ -141,8 +144,9 @@ async function atualizarMapa() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
-    capag: filtroCapag.value,
-    risco_climatico: filtroRiscos.value,
+    // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     classification: classificacaoAtual,
     calculation_mode: filtroModoCalculo.value,
     analise: analiseAtual
@@ -560,6 +564,7 @@ function abrirPopupDoMunicipioSelecionado(feature) {
           </div>
         </div>
 
+        ${/*
         <div class="popup-data-row">
           ${icons.capag}
           <div class="popup-info-content">
@@ -582,6 +587,7 @@ function abrirPopupDoMunicipioSelecionado(feature) {
             <span class="popup-value">${props.capag || 'N/D'}</span>
           </div>
         </div>
+        */ ''}
 
         <div class="popup-data-row">
           ${icons.riscos}
@@ -909,8 +915,9 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
     filtroMunicipio.value = 'todos';
     filtroPorte.value = 'todos';
     filtroSubgrupo.value = 'todos';
-    filtroCapag.value = 'todos';
-    filtroRiscos.value = 'todos';
+    // if (typeof filtroCapag !== 'undefined' && filtroCapag) filtroCapag.value = 'todos';
+    if (filtroRiscoCampo) filtroRiscoCampo.value = 'media_ponderada';
+    if (filtroRiscos) filtroRiscos.value = 'todos';
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
   if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
@@ -924,7 +931,7 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 }
 });
 
-[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroCapag, filtroRiscos]
+[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo, filtroRiscos]
   .forEach(sel => sel.addEventListener('change', async () => {
     
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
@@ -1141,10 +1148,11 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
     const headerY = 150;
 
     function boldIfNotAll(nome, valor) {
-        if (!valor || valor.toLowerCase() === "todos" || valor.toLowerCase() === "todas") {
-            return `${nome}: ${valor}`;
+        const v = valor ? valor.trim() : '';
+        if (!v || v.toLowerCase() === "todos" || v.toLowerCase() === "todas" || v.toLowerCase() === "todos os riscos") {
+            return `${nome}: ${v}`;
         }
-        return `${nome}: **${valor}**`;
+        return `${nome}: **${v}**`;
     }
 
     const filtros = [
@@ -1153,8 +1161,9 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
         boldIfNotAll("Região", document.getElementById("filtro-regiao").value),
         boldIfNotAll("UF", document.getElementById("filtro-uf").value),
         boldIfNotAll("Município", document.getElementById("filtro-municipio").value),
-        boldIfNotAll("Capag", document.getElementById("filtro-capag").value),
-        boldIfNotAll("Riscos Climáticos", document.getElementById("filtro-riscos").options[document.getElementById("filtro-riscos").selectedIndex].text)
+        // boldIfNotAll("Capag", document.getElementById("filtro-capag") ? document.getElementById("filtro-capag").value : 'todos'),
+        boldIfNotAll("Risco Climático", filtroRiscoCampo ? filtroRiscoCampo.options[filtroRiscoCampo.selectedIndex].text : 'todos'),
+        boldIfNotAll("Intensidade", filtroRiscos ? filtroRiscos.options[filtroRiscos.selectedIndex].text : 'todas')
     ];
 
     ctx.font = "24px Arial";

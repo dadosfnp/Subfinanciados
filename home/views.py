@@ -72,6 +72,7 @@ def api_get_dependent_filters(request):
     quantil_calculation = request.GET.get('calculation_mode', 'total')
 
     RISCO_CAMPO = {
+        'media_ponderada': 'dados_adapta_brasil__media_ponderada',
         'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
         'des_des_ter': 'dados_adapta_brasil__des_des_ter',
         'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
@@ -96,9 +97,24 @@ def api_get_dependent_filters(request):
         queryset = queryset.filter(uf=uf_selecionada)
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
-    if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
-        campo = RISCO_CAMPO[risco_filtro]
-        queryset = queryset.filter(**{f'{campo}__gte': 0.6})
+    
+    risco_campo = request.GET.get('risco_campo') or request.GET.get('risco_climatico_indicador')
+    risco_intensidade = request.GET.get('risco_intensidade') or request.GET.get('risco_climatico') or request.GET.get('riscos_climaticos')
+    campo_db = RISCO_CAMPO.get(risco_campo, 'dados_adapta_brasil__media_ponderada')
+
+    if risco_intensidade and risco_intensidade != 'todos':
+        if risco_intensidade == 'muito_baixo':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0, f'{campo_db}__lt': 0.2})
+        elif risco_intensidade == 'baixo':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.2, f'{campo_db}__lt': 0.4})
+        elif risco_intensidade == 'medio':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.4, f'{campo_db}__lt': 0.6})
+        elif risco_intensidade == 'alto':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.6, f'{campo_db}__lt': 0.8})
+        elif risco_intensidade == 'muito_alto':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.8})
+    elif risco_campo and risco_campo != 'todos' and risco_campo in RISCO_CAMPO:
+        queryset = queryset.filter(**{f'{campo_db}__isnull': False})
 
     # Porte populacional
     if porte_filtro and porte_filtro != 'todos':

@@ -228,6 +228,7 @@
           </div>
         </div>
 
+        <!--
         <div class="filter-group">
           <label for="filtro-capag" class="form-label">Capag:</label>
           <div class="input-group input-group-sm">
@@ -237,12 +238,56 @@
             </button>
           </div>
         </div>
+        -->
 
         <div class="filter-group">
-          <label for="filtro-riscos" class="form-label">Riscos Climáticos:</label>
+          <label for="filtro-risco-campo" class="form-label">Risco Climático:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-risco-campo" class="form-select form-select-sm">
+              <option value="todos">Todos os Riscos</option>
+              <option value="media_ponderada" selected>Risco Climático Médio (Média Geral)</option>
+
+              <optgroup label="Biodiversidade">
+                <option value="bio_int_bio">&nbsp;&nbsp;&nbsp;&nbsp;Integridade do Bioma</option>
+              </optgroup>
+
+              <optgroup label="Desastres Geo-hidrológicos">
+                <option value="des_des_ter">&nbsp;&nbsp;&nbsp;&nbsp;Deslizamento de Terra</option>
+                <option value="des_in_enx_ala">&nbsp;&nbsp;&nbsp;&nbsp;Inundações e Alagamentos</option>
+              </optgroup>
+
+              <optgroup label="Recursos Hídricos">
+                <option value="rec_ris_est_hid">&nbsp;&nbsp;&nbsp;&nbsp;Risco de Estresse Hídrico</option>
+              </optgroup>
+
+              <optgroup label="Saúde">
+                <option value="sau_arb">&nbsp;&nbsp;&nbsp;&nbsp;Arboviroses (Dengue, Zika, Chikungunya)</option>
+                <option value="sau_lei_teg_ame">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Tegumentar Americana</option>
+                <option value="sau_lei_vis">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Visceral</option>
+                <option value="sau_mal">&nbsp;&nbsp;&nbsp;&nbsp;Malária</option>
+              </optgroup>
+
+              <optgroup label="Segurança Alimentar">
+                <option value="seg_ali_ace_con_ali">&nbsp;&nbsp;&nbsp;&nbsp;Acesso e Consumo de Alimentos</option>
+                <option value="seg_ali_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Alimentos</option>
+              </optgroup>
+
+              <optgroup label="Segurança Energética">
+                <option value="seg_ene_ace">&nbsp;&nbsp;&nbsp;&nbsp;Acesso à Energia</option>
+                <option value="seg_ene_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Energia</option>
+              </optgroup>
+            </select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-risco-campo" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="filtro-riscos" class="form-label">Intensidade do Risco:</label>
           <div class="input-group input-group-sm">
             <select id="filtro-riscos" class="form-select form-select-sm">
-              <option value="todos">Todos</option>
+              <option value="todos">Todas</option>
               <option value="muito_baixo">Muito Baixo</option>
               <option value="baixo">Baixo</option>
               <option value="medio">Médio</option>

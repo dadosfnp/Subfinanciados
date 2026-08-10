@@ -62,6 +62,44 @@ def index(request):
         'medias_decis': medias_decis,
     })
 
+RISCO_CAMPO = {
+    'media_ponderada': 'dados_adapta_brasil__media_ponderada',
+    'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
+    'des_des_ter': 'dados_adapta_brasil__des_des_ter',
+    'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
+    'rec_ris_est_hid': 'dados_adapta_brasil__rec_ris_est_hid',
+    'sau_arb': 'dados_adapta_brasil__sau_arb',
+    'sau_lei_teg_ame': 'dados_adapta_brasil__sau_lei_teg_ame',
+    'sau_lei_vis': 'dados_adapta_brasil__sau_lei_vis',
+    'sau_mal': 'dados_adapta_brasil__sau_mal',
+    'seg_ali_ace_con_ali': 'dados_adapta_brasil__seg_ali_ace_con_ali',
+    'seg_ali_dis': 'dados_adapta_brasil__seg_ali_dis',
+    'seg_ene_ace': 'dados_adapta_brasil__seg_ene_ace',
+    'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
+}
+
+def filtrar_risco_climatico(queryset, request):
+    risco_campo = request.GET.get('risco_campo') or request.GET.get('risco_climatico_indicador')
+    risco_intensidade = request.GET.get('risco_intensidade') or request.GET.get('risco_climatico') or request.GET.get('riscos_climaticos')
+
+    campo_db = RISCO_CAMPO.get(risco_campo, 'dados_adapta_brasil__media_ponderada')
+
+    if risco_intensidade and risco_intensidade != 'todos':
+        if risco_intensidade == 'muito_baixo':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0, f'{campo_db}__lt': 0.2})
+        elif risco_intensidade == 'baixo':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.2, f'{campo_db}__lt': 0.4})
+        elif risco_intensidade == 'medio':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.4, f'{campo_db}__lt': 0.6})
+        elif risco_intensidade == 'alto':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.6, f'{campo_db}__lt': 0.8})
+        elif risco_intensidade == 'muito_alto':
+            queryset = queryset.filter(**{f'{campo_db}__gte': 0.8})
+    elif risco_campo and risco_campo != 'todos' and risco_campo in RISCO_CAMPO:
+        queryset = queryset.filter(**{f'{campo_db}__isnull': False})
+
+    return queryset
+
 # --- FUNÇÕES DE API ---
 def api_get_dependent_filters(request):
     regiao_selecionada = request.GET.get('regiao')
@@ -74,21 +112,6 @@ def api_get_dependent_filters(request):
     classification_filter = request.GET.get('classification', 'quintil')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
 
-    RISCO_CAMPO = {
-        'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
-        'des_des_ter': 'dados_adapta_brasil__des_des_ter',
-        'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
-        'rec_ris_est_hid': 'dados_adapta_brasil__rec_ris_est_hid',
-        'sau_arb': 'dados_adapta_brasil__sau_arb',
-        'sau_lei_teg_ame': 'dados_adapta_brasil__sau_lei_teg_ame',
-        'sau_lei_vis': 'dados_adapta_brasil__sau_lei_vis',
-        'sau_mal': 'dados_adapta_brasil__sau_mal',
-        'seg_ali_ace_con_ali': 'dados_adapta_brasil__seg_ali_ace_con_ali',
-        'seg_ali_dis': 'dados_adapta_brasil__seg_ali_dis',
-        'seg_ene_ace': 'dados_adapta_brasil__seg_ene_ace',
-        'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
-    }
-
     queryset = Municipio.objects.exclude(dados_atuais__rc_atual_pc__isnull=True)
 
     if rm_selecionada and rm_selecionada != 'todos':
@@ -99,9 +122,7 @@ def api_get_dependent_filters(request):
         queryset = queryset.filter(uf=uf_selecionada)
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
-    if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
-        campo = RISCO_CAMPO[risco_filtro]
-        queryset = queryset.filter(**{f'{campo}__gte': 0.6})
+    queryset = filtrar_risco_climatico(queryset, request)
 
     # Porte populacional
     if porte_filtro and porte_filtro != 'todos':
@@ -205,17 +226,7 @@ def api_get_dashboard_data(request):
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
         
-    if riscos_filtro and riscos_filtro != 'todos':
-        if riscos_filtro == 'muito_baixo':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0, dados_adapta_brasil__media_ponderada__lt=0.2)
-        elif riscos_filtro == 'baixo':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.2, dados_adapta_brasil__media_ponderada__lt=0.4)
-        elif riscos_filtro == 'medio':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.4, dados_adapta_brasil__media_ponderada__lt=0.6)
-        elif riscos_filtro == 'alto':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.6, dados_adapta_brasil__media_ponderada__lt=0.8)
-        elif riscos_filtro == 'muito_alto':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.8)
+    queryset = filtrar_risco_climatico(queryset, request)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -494,17 +505,7 @@ def municipios_geojson_api(request):
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
 
-    if risco_filtro and risco_filtro != 'todos':
-        if risco_filtro == 'muito_baixo':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0, dados_adapta_brasil__media_ponderada__lt=0.2)
-        elif risco_filtro == 'baixo':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.2, dados_adapta_brasil__media_ponderada__lt=0.4)
-        elif risco_filtro == 'medio':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.4, dados_adapta_brasil__media_ponderada__lt=0.6)
-        elif risco_filtro == 'alto':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.6, dados_adapta_brasil__media_ponderada__lt=0.8)
-        elif risco_filtro == 'muito_alto':
-            queryset = queryset.filter(dados_adapta_brasil__media_ponderada__gte=0.8)
+    queryset = filtrar_risco_climatico(queryset, request)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
