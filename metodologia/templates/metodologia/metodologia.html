@@ -23,10 +23,12 @@
     <a href="#cap-faixas" data-label="Faixas"></a>
     <a href="#cap-quantis" data-label="Quantis"></a>
     <a href="#cap-ranking" data-label="Ranking"></a>
-    <a href="#cap-tempo" data-label="2000 → 2024"></a>
+    <a href="#cap-tempo" data-label="2000 → 2025"></a>
     <a href="#cap-densidade" data-label="Densidade"></a>
     <a href="#cap-media" data-label="Média × Mediana"></a>
-    <a href="#cap-social" data-label="Vulnerabilidade"></a>
+    <a href="#cap-taxa-pop" data-label="População"></a>
+    <a href="#cap-taxa-rec" data-label="Receita"></a>
+    <a href="#cap-clima" data-label="AdaptaBrasil"></a>
     <a href="#cap-agregada" data-label="Agregada"></a>
     <a href="#cap-dados" data-label="Tratamento"></a>
     <a href="#cap-limites" data-label="Cuidados"></a>
@@ -815,48 +817,65 @@
     </div>
   </section>
 
-  <!-- ============ 13 · VULNERABILIDADE ============ -->
-  <section class="met-sec" id="cap-social" data-bg="soft">
+  <!-- ============ 13 · RISCOS CLIMÁTICOS (ADAPTABRASIL) ============ -->
+  <section class="met-sec" id="cap-clima" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>13 · Quem depende do poder público</p>
-      <h2 class="met-title" data-anim>Receita não vive sozinha.</h2>
+      <p class="met-kick" data-anim>13 · Vulnerabilidade e Risco Climático</p>
+      <h2 class="met-title" data-anim>O indicador AdaptaBrasil.</h2>
+      
       <p class="met-lead" data-anim>
-        No município brasileiro típico, boa parte da população depende diretamente do poder público.
-        Dois indicadores ajudam a dimensionar essa pressão sobre os serviços.
+        O <a href="https://adaptabrasil.mcti.gov.br/" target="_blank" rel="noopener noreferrer" class="met-link">AdaptaBrasil MCTI</a> é um sistema de informação desenvolvido pelo <b>Ministério da Ciência, Tecnologia e Inovação (MCTI)</b>, em parceria com o <b>Instituto Nacional de Pesquisas Espaciais (INPE)</b>, que consolida e disponibiliza indicadores de risco, ameaça e vulnerabilidade dos municípios brasileiros frente às mudanças climáticas.
       </p>
-      <div class="met-vuln" data-anim>
-        <article class="met-vcard">
-          <div class="met-vcard__top">
-            <span class="met-ico met-ico--red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg></span>
-            <h4>População SUS dependente</h4>
-          </div>
-          <div class="met-vcard__big"><b>{{ media_sus }}%</b><span>da população, em média</span></div>
-          <div class="met-vcard__bar"><i data-w="{{ media_sus }}%" style="--c:var(--m-red)"></i></div>
-          <p>Em média, cerca de <b>9 em cada 10 habitantes</b> de um município dependem do SUS, sem plano privado de saúde. Quanto maior, maior a pressão sobre a rede pública.</p>
-          <div class="met-vcard__meta">
-            <span class="met-vcard__calc">Como se calcula: população total menos a população coberta por plano privado de saúde.</span>
-            <span class="met-vcard__src">Fonte: ANS (Agência Nacional de Saúde Suplementar)</span>
-          </div>
-        </article>
-        <article class="met-vcard">
-          <div class="met-vcard__top">
-            <span class="met-ico met-ico--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-            <h4>População no CadÚnico</h4>
-          </div>
-          <div class="met-vcard__big"><b>{{ media_cad }}%</b><span>da população, em média</span></div>
-          <div class="met-vcard__bar"><i data-w="{{ media_cad }}%" style="--c:var(--m-blue)"></i></div>
-          <p>Em média, quase <b>6 em cada 10 habitantes</b> estão inscritos no Cadastro Único, medida de vulnerabilidade social. Inscrição não significa receber benefício.</p>
-          <div class="met-vcard__meta">
-            <span class="met-vcard__calc">Como se calcula: pessoas inscritas no CadÚnico divididas pela população total, multiplicado por 100.</span>
-            <span class="met-vcard__src">Fonte: MDS (Ministério do Desenvolvimento e Assistência Social)</span>
-          </div>
-        </article>
+
+      <p class="met-lead" data-anim>
+        No IFEM, os dados do AdaptaBrasil são integrados para contextualizar a capacidade de financiamento dos municípios em relação aos seus desafios de resiliência e adaptação climática.
+      </p>
+
+      <h3 class="met-h3" data-anim>Setores Estratégicos e Subsetores na Plataforma</h3>
+      <p class="met-lead" data-anim>
+        A plataforma IFEM consolida informações de <b>5 setores estratégicos</b> organizados em <b>12 subsetores</b> de análise:
+      </p>
+
+      <ul class="met-list" data-anim>
+        <li><b>1. Biodiversidade (1 subsetor):</b> <i>Integridade do bioma</i>.</li>
+        <li><b>2. Desastres geo-hidrológicos (2 subsetores):</b> <i>Deslizamento de terra</i> e <i>Inundações, enxurradas e alagamentos</i>.</li>
+        <li><b>3. Recursos hídricos (1 subsetor):</b> <i>Risco de estresse hídrico</i>.</li>
+        <li><b>4. Saúde (4 subsetores):</b> <i>Arboviroses (Dengue, Zika e Chikungunya)</i>, <i>Leishmaniose tegumentar americana</i>, <i>Leishmaniose visceral</i> e <i>Malária</i>.</li>
+        <li><b>5. Segurança alimentar e energética (4 subsetores):</b> <i>Acesso e consumo de alimentos</i>, <i>Disponibilidade de alimentos</i>, <i>Acesso à energia</i> e <i>Disponibilidade de energia</i>.</li>
+      </ul>
+
+      <h3 class="met-h3" data-anim>Cálculo da Média Ponderada</h3>
+      <p class="met-lead" data-anim>
+        Para calcular o indicador sintético de risco climático de cada município ou conjunto de municípios, o IFEM realiza uma <b>média ponderada atribuindo peso 1 para cada um dos 5 setores estratégicos</b>.
+      </p>
+
+      <p class="met-lead" data-anim>
+        Em setores compostos por múltiplos subsetores (como Saúde ou Segurança Alimentar e Energética), calcula-se primeiramente a <b>média simples</b> dos subsetores correspondentes para obter a nota daquele setor. Em seguida, aplica-se a média entre os 5 setores estratégicos. Esse cálculo garante que setores com mais subsetores não desequilibrem a pontuação geral em relação a setores com apenas 1 subsetor (como Biodiversidade ou Recursos Hídricos).
+      </p>
+
+
+      <h3 class="met-h3" data-anim>Escala de Risco e Graduação das Notas (0,00 a 1,00)</h3>
+      <p class="met-lead" data-anim>
+        As notas de risco variam continuamente de <b>0,00 a 1,00</b>. Quanto maior o valor, maior é a exposição e a vulnerabilidade do município. O IFEM adota a seguinte graduação em 5 níveis de severidade:
+      </p>
+
+      <div class="met-mtable" data-anim>
+        <div class="met-mrow head"><span>Faixa de Pontuação</span><span>Classificação de Risco</span><span>Significado</span></div>
+        <div class="met-mrow"><span>Abaixo de 0,2</span><b class="g">Muito Baixo</b><span>Vulnerabilidade e exposição mínimas ou residuais.</span></div>
+        <div class="met-mrow"><span>Entre 0,2 e 0,4</span><b style="color:#66bd63">Baixo</b><span>Risco reduzido, com menor impacto em serviços públicos.</span></div>
+        <div class="met-mrow"><span>Entre 0,4 e 0,6</span><b style="color:#fdae61">Médio</b><span>Risco moderado, exigindo atenção da gestão pública.</span></div>
+        <div class="met-mrow"><span>Entre 0,6 e 0,8</span><b style="color:#f46d43">Alto</b><span>Vulnerabilidade elevada e forte pressão estrutural.</span></div>
+        <div class="met-mrow"><span>Entre 0,8 e 1,0</span><b class="r">Muito Alto</b><span>Risco severo e crítico, necessitando de priorização urgente.</span></div>
+      </div>
+
+      <div class="met-note" data-anim style="margin-top: 2rem;">
+        Para consultar os relatórios completos e a metodologia original desenvolvida pelo governo federal, acesse a plataforma oficial do <a href="https://adaptabrasil.mcti.gov.br/" target="_blank" rel="noopener noreferrer" class="met-link">AdaptaBrasil MCTI</a>.
       </div>
     </div>
   </section>
 
   <!-- ============ 14 · ANÁLISE AGREGADA ============ -->
-  <section class="met-sec" id="cap-agregada" data-bg="light">
+  <section class="met-sec" id="cap-agregada" data-bg="soft">
     <div class="met-box">
       <p class="met-kick" data-anim>14 · O município representativo</p>
       <h2 class="met-title" data-anim>Análise agregada.</h2>
@@ -921,7 +940,7 @@
   </section>
 
   <!-- ============ 15 · COMPARAÇÕES + TRATAMENTO ============ -->
-  <section class="met-sec" id="cap-dados" data-bg="soft">
+  <section class="met-sec" id="cap-dados" data-bg="light">
     <div class="met-box">
       <p class="met-kick" data-anim>15 · Recortes e tratamento</p>
       <h2 class="met-title" data-anim>Mesmos dados,<br>diferentes lentes.</h2>
@@ -975,10 +994,10 @@
     </div>
   </section>
 
-  <!-- ============ 14 · CUIDADOS ============ -->
+  <!-- ============ 16 · CUIDADOS ============ -->
   <section class="met-sec" id="cap-limites" data-bg="soft">
     <div class="met-box">
-      <p class="met-kick" data-anim>14 · Honestidade intelectual</p>
+      <p class="met-kick" data-anim>16 · Honestidade intelectual</p>
       <h2 class="met-title" data-anim>O que o IFEM <span class="r">não</span> diz.</h2>
       <p class="met-lead" data-anim>
         Receita por habitante mede <b>disponibilidade de recursos</b>.<br>
@@ -1012,16 +1031,17 @@
     </div>
   </section>
 
-  <!-- ============ 15 · FONTES + COMO CITAR + CTA ============ -->
+  <!-- ============ 17 · FONTES + COMO CITAR + CTA ============ -->
   <section class="met-sec" id="cap-fontes" data-bg="light">
     <div class="met-box">
-      <p class="met-kick" data-anim>15 · Origem dos dados</p>
+      <p class="met-kick" data-anim>17 · Origem dos dados</p>
       <h2 class="met-title" data-anim>Bases públicas<br>e oficiais.</h2>
       <div class="met-sources" data-anim>
         <div><b>DCA / SICONFI</b><span>Receita corrente e seu detalhamento</span></div>
         <div><b>IBGE / RIPSA</b><span>População e identificação territorial</span></div>
         <div><b>ANS</b><span>População SUS dependente</span></div>
         <div><b>MDS / SAGICAD</b><span>População no CadÚnico</span></div>
+        <div><b>AdaptaBrasil / MCTI</b><span>Riscos e vulnerabilidades climáticas</span></div>
       </div>
 
       <h3 class="met-h3" data-anim>Como citar</h3>

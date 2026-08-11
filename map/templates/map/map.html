@@ -285,14 +285,20 @@
           <!-- Hidden input keeping value for backend and JS compatibility -->
           <input type="hidden" id="filtro-riscos" value="todos" />
 
-          <!-- Interactive Intensity Pills -->
-          <div class="mt-1 flex flex-wrap gap-1 items-center justify-between p-1 bg-slate-50 border border-slate-200 rounded-md" id="container-pills-risco">
-            <button type="button" class="btn btn-xs pill-risco active shadow-sm" data-value="todos" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #103758; color: #ffffff; border-radius: 4px;">Todos</button>
-            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="muito_baixo" title="Muito Baixo (< 0,2)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #16a34a; border: 1px solid #dcfce7; border-radius: 4px;">Muito Baixo</button>
-            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="baixo" title="Baixo (0,2 a 0,4)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #65a30d; border: 1px solid #ecfccb; border-radius: 4px;">Baixo</button>
-            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="medio" title="Médio (0,4 a 0,6)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #d97706; border: 1px solid #fef3c7; border-radius: 4px;">Médio</button>
-            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="alto" title="Alto (0,6 a 0,8)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #ea580c; border: 1px solid #ffedd5; border-radius: 4px;">Alto</button>
-            <button type="button" class="btn btn-xs pill-risco shadow-sm" data-value="muito_alto" title="Muito Alto (≥ 0,8)" style="font-size: 10px; padding: 2px 7px; font-weight: 600; background-color: #ffffff; color: #dc2626; border: 1px solid #fee2e2; border-radius: 4px;">Muito Alto</button>
+          <!-- Interactive Intensity Pills (2 Explicit Rows of 3 Buttons) -->
+          <div class="mt-1 flex flex-col gap-1 p-1 bg-slate-50 border border-slate-200 rounded-md" id="container-pills-risco">
+            <!-- Linha Superior (3 botões) -->
+            <div class="grid grid-cols-3 gap-1 w-full" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important;">
+              <button type="button" class="btn btn-xs pill-risco active shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="todos" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #103758; color: #ffffff; border-radius: 4px; width: 100% !important;">Todos</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="muito_baixo" title="Muito Baixo (< 0,2)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #16a34a; border: 1px solid #dcfce7; border-radius: 4px; width: 100% !important;">Muito Baixo</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="baixo" title="Baixo (0,2 a 0,4)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #65a30d; border: 1px solid #ecfccb; border-radius: 4px; width: 100% !important;">Baixo</button>
+            </div>
+            <!-- Linha Inferior (3 botões) -->
+            <div class="grid grid-cols-3 gap-1 w-full" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important;">
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="medio" title="Médio (0,4 a 0,6)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #d97706; border: 1px solid #fef3c7; border-radius: 4px; width: 100% !important;">Médio</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="alto" title="Alto (0,6 a 0,8)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #ea580c; border: 1px solid #ffedd5; border-radius: 4px; width: 100% !important;">Alto</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="muito_alto" title="Muito Alto (≥ 0,8)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #dc2626; border: 1px solid #fee2e2; border-radius: 4px; width: 100% !important;">Muito Alto</button>
+            </div>
           </div>
         </div>
 
