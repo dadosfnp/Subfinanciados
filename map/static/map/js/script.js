@@ -29,13 +29,16 @@ const filtroRiscoCampo     = document.getElementById('filtro-risco-campo');
 const filtroRiscos         = document.getElementById('filtro-riscos');
 const filtroClassificacao  = document.getElementById('filtro-classificacao');
 const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
-const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
-const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescimento');
+// DESATIVADO: filtro-modo-analise removido da UX
+// const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
+// const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescimento');
+const filtroModoAnalise        = null; // desativado
+const filtroMetricaCrescimento = null; // desativado
 const blocoReceita             = document.getElementById('bloco-receita');
 const blocoCrescimento         = document.getElementById('bloco-crescimento');
 
-// True quando o usuário está no modo "Crescimento 2000→2025".
-const modoCrescimentoAtivo = () => filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
+// True quando o usuário está no modo "Crescimento 2000→2025" (sempre false enquanto desativado).
+const modoCrescimentoAtivo = () => false; // filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
 
 let debounceTimer = null;
 let lastRequestId = 0;
@@ -69,8 +72,8 @@ function paramsKeyFromSelects() {
     risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value,
-    modo_analise: filtroModoAnalise ? filtroModoAnalise.value : 'receita',
-    metrica: filtroMetricaCrescimento ? filtroMetricaCrescimento.value : ''
+    modo_analise: 'receita', // filtroModoAnalise desativado, forçado para 'receita'
+    // metrica: filtroMetricaCrescimento ? filtroMetricaCrescimento.value : ''  // desativado
   };
   const cleaned = {};
   Object.entries(raw).forEach(([k, v]) => { if (v && v !== 'todos') cleaned[k] = v; });
@@ -882,15 +885,15 @@ function updateLegendCrescimento(metricaKey) {
 // Despachante central: aplica a visualização conforme o modo de análise ativo.
 function refrescarVisualizacao() {
   if (modoCrescimentoAtivo()) {
-    blocoReceita.style.display = 'none';
-    blocoCrescimento.style.display = '';
+    if (blocoReceita)     blocoReceita.style.display = 'none';
+    if (blocoCrescimento) blocoCrescimento.style.display = '';
     const metrica = filtroMetricaCrescimento.value;
     map.setPaintProperty('populacao-circulos', 'circle-color', getCrescimentoPaint(metrica));
     updateLegendCrescimento(metrica);
     scheduleAtualizarMapa();
   } else {
-    blocoReceita.style.display = '';
-    blocoCrescimento.style.display = 'none';
+    if (blocoReceita)     blocoReceita.style.display = '';
+    if (blocoCrescimento) blocoCrescimento.style.display = 'none'; // elemento pode estar comentado no HTML
     atualizarClassificacao(); // seta cores + legenda + subgrupo e agenda o refetch
   }
 }
@@ -967,8 +970,8 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
     }
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
-  if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
-  if (filtroMetricaCrescimento) filtroMetricaCrescimento.value = 'cresc_pop_pct';
+  // if (filtroModoAnalise) filtroModoAnalise.value = 'receita';         // desativado
+  // if (filtroMetricaCrescimento) filtroMetricaCrescimento.value = 'cresc_pop_pct'; // desativado
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
   await updateDependentFilters();
   refrescarVisualizacao();
@@ -1031,8 +1034,8 @@ if (containerPillsRisco) {
 
 filtroModoCalculo.addEventListener('change', atualizarClassificacao);
 filtroClassificacao.addEventListener('change', atualizarClassificacao);
-if (filtroModoAnalise) filtroModoAnalise.addEventListener('change', refrescarVisualizacao);
-if (filtroMetricaCrescimento) filtroMetricaCrescimento.addEventListener('change', refrescarVisualizacao);
+// if (filtroModoAnalise) filtroModoAnalise.addEventListener('change', refrescarVisualizacao);     // desativado
+// if (filtroMetricaCrescimento) filtroMetricaCrescimento.addEventListener('change', refrescarVisualizacao); // desativado
 
 map.on("mouseenter", "populacao-circulos", () => { map.getCanvas().style.cursor = "pointer"; });
 map.on("mouseleave", "populacao-circulos", () => { map.getCanvas().style.cursor = ""; });
