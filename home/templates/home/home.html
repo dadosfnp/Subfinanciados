@@ -607,17 +607,21 @@
 
         <div class="d-flex align-items-center">
 
-          <h5 id="chart-main-title" class="mb-0 me-1 d-flex align-items-center">
+          <h5 id="chart-main-title" class="mb-0 me-1 d-flex flex-wrap align-items-center gap-2">
             Distribuição 
-            <select id="variavelAnalisadaSelect" name="variavelAnalisada" class="form-select form-select-sm d-inline-block w-auto ms-2 fw-medium text-secondary shadow-none" style="font-size: 0.95rem; cursor: pointer;">
+            <select id="variavelAnalisadaSelect" name="variavelAnalisada" class="form-select form-select-sm d-inline-block w-auto text-primary bg-light shadow-sm" style="font-size: 0.95rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; padding-right: 30px;">
               <option value="populacao">da População Municipal</option>
               <option value="capag">por Nota CAPAG</option>
               <option value="risco_climatico">por Risco Climático</option>
             </select>
+            
+            <select id="subVariavelAnalisadaSelect" class="form-select form-select-sm d-none w-auto text-secondary shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <option value="todos">Todas as Notas/Riscos</option>
+            </select>
           </h5>
 
           <button type="button"
-
+                  id="chart-info-tooltip"
                   class="btn-info-tooltip"
 
                   data-bs-toggle="tooltip"

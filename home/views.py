@@ -349,14 +349,17 @@ def api_get_dashboard_data(request):
             if val >= 0.2: return 'Baixo'
             return 'Muito baixo'
 
+        sub_variavel_analisada = request.GET.get('sub_variavel_analisada', 'todos')
+        
         if variavel_analisada == 'capag':
             row_configs = [
                 ('A', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'A'),
                 ('B', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'B'),
                 ('C', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'C'),
-                ('D', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'D'),
-                ('Sem Nota', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'Sem Nota'),
+                ('D e outros', lambda m: get_capag_grade(m.get('dados_atuais__capag')) in ['D', 'Sem Nota']),
             ]
+            if sub_variavel_analisada != 'todos':
+                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
             y_axis_title = 'Quantidade de Municípios'
             table_row_header = 'Notas CAPAG'
             chart_title = 'Distribuição de Municípios por Nota CAPAG'
@@ -368,8 +371,9 @@ def api_get_dashboard_data(request):
                 ('Médio', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Médio'),
                 ('Alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Alto'),
                 ('Muito alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Muito alto'),
-                ('Sem Dados', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Sem Dados'),
             ]
+            if sub_variavel_analisada != 'todos':
+                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
             y_axis_title = 'Quantidade de Municípios'
             table_row_header = 'Níveis de Risco Climático'
             chart_title = 'Distribuição de Municípios por Risco Climático'

@@ -144,6 +144,9 @@ async function atualizarFiltros() {
     const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2025';
     const include2000Data = (selectedYearOption === '2000 e 2025');
 
+    const subVariavelAnalisadaSelect = document.getElementById('subVariavelAnalisadaSelect');
+    const subVariavelAnalisada = subVariavelAnalisadaSelect ? subVariavelAnalisadaSelect.value : 'todos';
+
     const apiUrl =
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
         `&uf=${selectedUf}` +
@@ -153,7 +156,8 @@ async function atualizarFiltros() {
         `&display_format=${displayFormat}` +
         `&calculation_mode=${calculationMode}` +
         `&include_2000_data=${include2000Data}` +
-        `&variavel_analisada=${variavelAnalisada}`;
+        `&variavel_analisada=${variavelAnalisada}` +
+        `&sub_variavel_analisada=${subVariavelAnalisada}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -217,8 +221,7 @@ async function atualizarFiltros() {
             'A': '#2D8A4E',
             'B': '#72BA6A',
             'C': '#E8C83E',
-            'D': '#A33242',
-            'Sem Nota': '#9E9E9E'
+            'D e outros': '#A33242'
         };
 
         const RISCO_PALETTE = {
@@ -226,8 +229,7 @@ async function atualizarFiltros() {
             'Baixo': '#72BA6A',
             'Médio': '#E8C83E',
             'Alto': '#D97636',
-            'Muito alto': '#A33242',
-            'Sem Dados': '#9E9E9E'
+            'Muito alto': '#A33242'
         };
 
         /* Retorna a paleta correta baseada no número de grupos (5 para Quintil, 10 para Decil) */
@@ -485,6 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const variavelAnalisadaSelect = document.getElementById('variavelAnalisadaSelect');
+    const subVariavelAnalisadaSelect = document.getElementById('subVariavelAnalisadaSelect');
+
     if (variavelAnalisadaSelect) {
         variavelAnalisadaSelect.addEventListener('change', (e) => {
             if (e.target.value !== 'populacao') {
@@ -500,8 +504,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     toggle2000e2025.classList.remove('d-none');
                 }
             }
+
+            if (subVariavelAnalisadaSelect) {
+                if (e.target.value === 'populacao') {
+                    subVariavelAnalisadaSelect.classList.add('d-none');
+                    subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
+                } else if (e.target.value === 'capag') {
+                    subVariavelAnalisadaSelect.classList.remove('d-none');
+                    subVariavelAnalisadaSelect.innerHTML = `
+                        <option value="todos">Todas as Notas</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D e outros">D e outros</option>
+                    `;
+                } else if (e.target.value === 'risco_climatico') {
+                    subVariavelAnalisadaSelect.classList.remove('d-none');
+                    subVariavelAnalisadaSelect.innerHTML = `
+                        <option value="todos">Todos os Riscos</option>
+                        <option value="Muito baixo">Muito baixo</option>
+                        <option value="Baixo">Baixo</option>
+                        <option value="Médio">Médio</option>
+                        <option value="Alto">Alto</option>
+                        <option value="Muito alto">Muito alto</option>
+                    `;
+                }
+            }
+
+            const chartTooltip = document.getElementById('chart-info-tooltip');
+            if (chartTooltip) {
+                let tooltipText = "O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2025 ou na comparação entre 2000 e 2025. <br>O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. <br>A lógica se repete nos demais quintis, até o último quintil, que representa os municípios com maior receita per capita.<br> Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.";
+                if (e.target.value === 'capag') {
+                    tooltipText = "O gráfico apresenta a quantidade de municípios em cada categoria de nota CAPAG, distribuídos por quintil de receita per capita. <br>O primeiro quintil inclui os municípios com menor receita per capita, enquanto o último representa aqueles com maior receita. <br>Isso permite visualizar se as melhores notas de Capacidade de Pagamento estão concentradas nos municípios mais ricos ou se distribuem de forma uniforme.";
+                } else if (e.target.value === 'risco_climatico') {
+                    tooltipText = "O gráfico apresenta a quantidade de municípios em cada nível de Risco Climático, distribuídos por quintil de receita per capita. <br>O primeiro quintil inclui os municípios com menor receita per capita, enquanto o último agrupa os de maior receita. <br>Isso permite observar como os municípios mais vulneráveis a eventos climáticos estão distribuídos em relação à sua capacidade de arrecadação.";
+                }
+                chartTooltip.setAttribute('data-bs-original-title', tooltipText);
+                const bsTooltip = bootstrap.Tooltip.getInstance(chartTooltip);
+                if (bsTooltip) {
+                    bsTooltip.setContent({ '.tooltip-inner': tooltipText });
+                }
+            }
+
             atualizarFiltros();
         });
+    }
+
+    if (subVariavelAnalisadaSelect) {
+        subVariavelAnalisadaSelect.addEventListener('change', atualizarFiltros);
     }
 
     if (toggle2025) {
