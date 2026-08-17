@@ -207,6 +207,7 @@ def api_get_dashboard_data(request):
     quantil_calculation = request.GET.get('calculation_mode', 'total')
     include_2000_data_str = request.GET.get('include_2000_data', 'false')
     include_2000_data = (include_2000_data_str.lower() == 'true')
+    variavel_analisada = request.GET.get('variavel_analisada', 'populacao')
     
     if regiao_filtro and regiao_filtro != 'todos':
         queryset = queryset.filter(regiao=regiao_filtro)
@@ -254,7 +255,7 @@ def api_get_dashboard_data(request):
         classification_map_24 = {}
 
         if quantil_calculation == 'por_filtro':
-            municipios_raw_data_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc'))
+            municipios_raw_data_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
             rc_values_24 = np.array([muni['dados_atuais__rc_atual_pc'] for muni in municipios_raw_data_24 if muni.get('dados_atuais__rc_atual_pc') is not None])
             
             if len(rc_values_24) > 0:
@@ -272,11 +273,11 @@ def api_get_dashboard_data(request):
             else:
                 field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
                 classification_map_24 = {label: label for label in base_classification_labels}
-                aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24))
+                aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24, 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
         else:
             field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
             classification_map_24 = {label: label for label in base_classification_labels}
-            aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24))
+            aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24, 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
 
         # --- Lógica 2000 (dados_2000) ---
         aggregated_data_list_00 = []
@@ -327,62 +328,157 @@ def api_get_dashboard_data(request):
         perc_municipios_selecao = (total_municipios / nacional_total_municipios_base * 100) if nacional_total_municipios_base > 0 else 0
         diff_media_nacional = ((media_receita_per_capita - nacional_media_receita_per_capita_base) / nacional_media_receita_per_capita_base * 100) if nacional_media_receita_per_capita_base > 0 else 0
 
-        total_pop_for_chart_percentage_24 = sum(item.get('dados_atuais__populacao_atual', 0) for item in aggregated_data_list_24 if item.get('dados_atuais__populacao_atual') is not None)
-        chart_y_axis_label = 'População (milhões)'
-        chart_value_multiplier_24 = 1_000_000
-        if display_format == 'porcentagem':
-            chart_y_axis_label = 'População (%)'
-            chart_value_multiplier_24 = total_pop_for_chart_percentage_24 / 100 if total_pop_for_chart_percentage_24 > 0 else 1
+        chart_labels = list(classification_map_24.values())
+        classification_columns = list(classification_map_24.values())
+        
+        # Helpers para variáveis
+        def get_capag_grade(capag_val):
+            if not capag_val: return 'Sem Nota'
+            val = capag_val.strip().upper()
+            if val.startswith('A'): return 'A'
+            if val.startswith('B'): return 'B'
+            if val.startswith('C'): return 'C'
+            if val.startswith('D'): return 'D'
+            return 'Sem Nota'
 
-        pop_by_group_24 = defaultdict(int)
+        def get_risco_climatico(val):
+            if val is None: return 'Sem Dados'
+            if val >= 0.8: return 'Muito alto'
+            if val >= 0.6: return 'Alto'
+            if val >= 0.4: return 'Médio'
+            if val >= 0.2: return 'Baixo'
+            return 'Muito baixo'
+
+        sub_variavel_analisada = request.GET.get('sub_variavel_analisada', 'todos')
+        
+        if variavel_analisada == 'capag':
+            row_configs = [
+                ('A', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'A'),
+                ('B', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'B'),
+                ('C', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'C'),
+                ('D e outros', lambda m: get_capag_grade(m.get('dados_atuais__capag')) in ['D', 'Sem Nota']),
+            ]
+            if sub_variavel_analisada != 'todos':
+                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
+            y_axis_title = 'Quantidade de Municípios'
+            table_row_header = 'Notas CAPAG'
+            chart_title = 'Distribuição de Municípios por Nota CAPAG'
+            is_count = True
+        elif variavel_analisada == 'risco_climatico':
+            row_configs = [
+                ('Muito baixo', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Muito baixo'),
+                ('Baixo', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Baixo'),
+                ('Médio', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Médio'),
+                ('Alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Alto'),
+                ('Muito alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Muito alto'),
+            ]
+            if sub_variavel_analisada != 'todos':
+                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
+            y_axis_title = 'Quantidade de Municípios'
+            table_row_header = 'Níveis de Risco Climático'
+            chart_title = 'Distribuição de Municípios por Risco Climático'
+            is_count = True
+        else: # populacao
+            row_configs = [
+                (label, lambda m, min_p=min_p, max_p=max_p: min_p <= (m.get('dados_atuais__populacao_atual') or 0) < max_p if max_p != float('inf') else (m.get('dados_atuais__populacao_atual') or 0) >= min_p)
+                for label, min_p, max_p in [
+                    ('Até 5 mil', 0, 5000), ('5 mil a 10 mil', 5000, 10000), ('10 mil a 20 mil', 10000, 20000),
+                    ('20 mil a 50 mil', 20000, 50000), ('50 mil a 100 mil', 50000, 100000),
+                    ('100 mil a 200 mil', 100000, 200000), ('200 mil a 500 mil', 200000, 500000),
+                    ('Acima de 500 mil', 500000, float('inf')),
+                ]
+            ]
+            y_axis_title = 'População (milhões)'
+            if display_format == 'porcentagem':
+                 y_axis_title = 'População (%)'
+            table_row_header = 'Faixas Populacionais'
+            chart_title = 'Distribuição da População Municipal'
+            is_count = False
+
+        # --- Gráfico ---
+        datasets_to_send = []
+        column_totals_24 = {col: 0 for col in classification_columns}
         for item in aggregated_data_list_24:
             key = item.get(field_for_aggregation_24)
             label = classification_map_24.get(key)
             if label:
-                pop_by_group_24[label] += item.get('dados_atuais__populacao_atual', 0) if item.get('dados_atuais__populacao_atual') is not None else 0
-        
-        chart_labels = list(classification_map_24.values())
-        chart_data_values_24 = [
-            (pop_by_group_24.get(label, 0) / chart_value_multiplier_24) if chart_value_multiplier_24 != 0 else 0
-            for label in chart_labels
-        ]
-        
-        chart_data_values_00 = []
-        if include_2000_data:
-            total_pop_for_chart_percentage_00 = sum(item.get('dados_2000__populacao_00', 0) for item in aggregated_data_list_00 if item.get('dados_2000__populacao_00') is not None)
-            chart_value_multiplier_00 = 1_000_000 
-            if display_format == 'porcentagem':
-                chart_value_multiplier_00 = total_pop_for_chart_percentage_00 / 100 if total_pop_for_chart_percentage_00 > 0 else 1
+                column_totals_24[label] += 1
 
-            pop_by_group_00 = defaultdict(int)
-            for item in aggregated_data_list_00:
-                key = item.get(field_for_aggregation_00)
-                label_00 = classification_map_00.get(key)
-                if label_00:
-                    pop_by_group_00[label_00] += item.get('dados_2000__populacao_00', 0) if item.get('dados_2000__populacao_00') is not None else 0
+        if is_count:
+            # Multiples datasets para o ano atual, contando municípios
+            for row_label, condition in row_configs:
+                group_counts = {label: 0 for label in chart_labels}
+                for item in aggregated_data_list_24:
+                    if condition(item):
+                        key = item.get(field_for_aggregation_24)
+                        label = classification_map_24.get(key)
+                        if label:
+                            group_counts[label] += 1
+                
+                data_array = []
+                for l in chart_labels:
+                    val = group_counts.get(l, 0)
+                    if display_format == 'porcentagem':
+                        total_col = column_totals_24.get(l, 0)
+                        data_array.append((val / total_col * 100) if total_col > 0 else 0)
+                    else:
+                        data_array.append(val)
+                
+                datasets_to_send.append({
+                    "label": f"{row_label} (2025)",
+                    "data": data_array
+                })
             
-            chart_data_values_00 = [
-                (pop_by_group_00.get(label, 0) / chart_value_multiplier_00) if chart_value_multiplier_00 != 0 else 0
-                for label in chart_labels
-            ]
+            # Reverte a ordem dos datasets para que o primeiro item da tabela (ex: A) fique no topo do gráfico empilhado
+            datasets_to_send.reverse()
+        else:
+            # Um único dataset somando população
+            total_pop_for_chart_percentage_24 = sum(item.get('dados_atuais__populacao_atual', 0) for item in aggregated_data_list_24 if item.get('dados_atuais__populacao_atual') is not None)
+            chart_value_multiplier_24 = 1_000_000
+            if display_format == 'porcentagem':
+                chart_value_multiplier_24 = total_pop_for_chart_percentage_24 / 100 if total_pop_for_chart_percentage_24 > 0 else 1
+
+            pop_by_group_24 = {label: 0 for label in chart_labels}
+            for item in aggregated_data_list_24:
+                key = item.get(field_for_aggregation_24)
+                label = classification_map_24.get(key)
+                if label:
+                    pop_by_group_24[label] += item.get('dados_atuais__populacao_atual', 0) if item.get('dados_atuais__populacao_atual') is not None else 0
+            
+            datasets_to_send.append({
+                "label": f"{y_axis_title} (2025)",
+                "data": [(pop_by_group_24.get(l, 0) / chart_value_multiplier_24) for l in chart_labels]
+            })
+
+            # Gráfico 2000
+            if include_2000_data:
+                total_pop_for_chart_percentage_00 = sum(item.get('dados_2000__populacao_00', 0) for item in aggregated_data_list_00 if item.get('dados_2000__populacao_00') is not None)
+                chart_value_multiplier_00 = 1_000_000 
+                if display_format == 'porcentagem':
+                    chart_value_multiplier_00 = total_pop_for_chart_percentage_00 / 100 if total_pop_for_chart_percentage_00 > 0 else 1
+
+                pop_by_group_00 = {label: 0 for label in chart_labels}
+                for item in aggregated_data_list_00:
+                    key = item.get(field_for_aggregation_00)
+                    label_00 = classification_map_00.get(key)
+                    if label_00:
+                        pop_by_group_00[label_00] += item.get('dados_2000__populacao_00', 0) if item.get('dados_2000__populacao_00') is not None else 0
+                
+                datasets_to_send.append({
+                    "label": f"{y_axis_title} (2000)",
+                    "data": [(pop_by_group_00.get(l, 0) / chart_value_multiplier_00) for l in chart_labels]
+                })
 
         # --- Tabela Dinâmica ---
-        population_ranges = [
-            ('Até 5 mil', 0, 5000), ('5 mil a 10 mil', 5000, 10000), ('10 mil a 20 mil', 10000, 20000),
-            ('20 mil a 50 mil', 20000, 50000), ('50 mil a 100 mil', 50000, 100000),
-            ('100 mil a 200 mil', 100000, 200000), ('200 mil a 500 mil', 200000, 500000),
-            ('Acima de 500 mil', 500000, float('inf')),
-        ]
-        classification_columns = list(classification_map_24.values())
-
         table_data_24 = []
-        raw_grand_total_classification_counts_24 = defaultdict(int)
+        raw_grand_total_classification_counts_24 = {col: 0 for col in classification_columns}
+        total_municipios_24 = sum(column_totals_24.values())
 
-        for range_label, min_pop, max_pop in population_ranges:
-            row_data = {'Faixas': range_label}
-            range_data_24_filtered = [m for m in aggregated_data_list_24 if m.get('dados_atuais__populacao_atual') is not None and (min_pop <= m['dados_atuais__populacao_atual'] < max_pop if max_pop != float('inf') else m['dados_atuais__populacao_atual'] >= min_pop)]
+        for row_label, condition in row_configs:
+            row_data = {table_row_header: row_label}
+            range_data_24_filtered = [m for m in aggregated_data_list_24 if condition(m)]
             
-            raw_counts_in_row_24 = defaultdict(int)
+            raw_counts_in_row_24 = {col: 0 for col in classification_columns}
             for muni in range_data_24_filtered:
                 classification_key = muni.get(field_for_aggregation_24)
                 column_label = classification_map_24.get(classification_key)
@@ -392,34 +488,82 @@ def api_get_dashboard_data(request):
             current_range_total_raw_24 = len(range_data_24_filtered)
             for col_label in classification_columns:
                 val = raw_counts_in_row_24.get(col_label, 0)
-                row_data[col_label] = f"{(val / current_range_total_raw_24 * 100):.1f}%" if display_format == 'porcentagem' and current_range_total_raw_24 > 0 else (val if display_format != 'porcentagem' else "0.0%")
+                if display_format == 'porcentagem' and is_count:
+                    col_total = column_totals_24.get(col_label, 0)
+                    row_data[col_label] = f"{(val / col_total * 100):.1f}%" if col_total > 0 else "0.0%"
+                elif display_format == 'porcentagem':
+                    row_data[col_label] = f"{(val / current_range_total_raw_24 * 100):.1f}%" if current_range_total_raw_24 > 0 else "0.0%"
+                else:
+                    row_data[col_label] = val
+                
                 raw_grand_total_classification_counts_24[col_label] += val
 
-            row_data['Total'] = f"100.0%" if display_format == 'porcentagem' else current_range_total_raw_24
+            if display_format == 'porcentagem' and is_count:
+                row_data['Total'] = f"{(current_range_total_raw_24 / total_municipios_24 * 100):.1f}%" if total_municipios_24 > 0 else "0.0%"
+            elif display_format == 'porcentagem':
+                row_data['Total'] = "100.0%"
+            else:
+                row_data['Total'] = current_range_total_raw_24
+            
             table_data_24.append(row_data)
 
-        grand_total_row_24 = {'Faixas': 'Total Geral'}
+        grand_total_row_24 = {table_row_header: 'Total Geral'}
         raw_grand_total_rows_total_24 = sum(raw_grand_total_classification_counts_24.values())
         total_municipios_for_table_24 = len(aggregated_data_list_24)
 
         for col_label in classification_columns:
             count = raw_grand_total_classification_counts_24.get(col_label, 0)
-            grand_total_row_24[col_label] = f"{(count / total_municipios_for_table_24 * 100):.1f}%" if display_format == 'porcentagem' and total_municipios_for_table_24 > 0 else (count if display_format != 'porcentagem' else "0.0%")
+            if display_format == 'porcentagem' and is_count:
+                grand_total_row_24[col_label] = "100.0%"
+            elif display_format == 'porcentagem':
+                grand_total_row_24[col_label] = f"{(count / total_municipios_for_table_24 * 100):.1f}%" if total_municipios_for_table_24 > 0 else "0.0%"
+            else:
+                grand_total_row_24[col_label] = count
 
-        grand_total_row_24['Total'] = "100.0%" if display_format == 'porcentagem' else raw_grand_total_rows_total_24
+        if display_format == 'porcentagem' and is_count:
+            grand_total_row_24['Total'] = "100.0%"
+        elif display_format == 'porcentagem':
+            grand_total_row_24['Total'] = "100.0%"
+        else:
+            grand_total_row_24['Total'] = raw_grand_total_rows_total_24
+            
         table_data_24.append(grand_total_row_24)
-        table_headers_24 = ['Faixas'] + classification_columns + ['Total']
+        table_headers_24 = [table_row_header] + classification_columns + ['Total']
 
-        # --- Tabela 2000 ---
+        # --- Tabela 2000 (Apenas se for população e houver include_2000_data) ---
         table_data_00 = []
         table_headers_00 = []
-        if include_2000_data:
-            raw_grand_total_classification_counts_00 = defaultdict(int)
-            for range_label, min_pop, max_pop in population_ranges:
-                row_data = {'Faixas': range_label}
-                range_data_00_filtered = [m for m in aggregated_data_list_00 if m.get('dados_2000__populacao_00') is not None and (min_pop <= m['dados_2000__populacao_00'] < max_pop if max_pop != float('inf') else m['dados_2000__populacao_00'] >= min_pop)]
+        if include_2000_data and not is_count:
+            raw_grand_total_classification_counts_00 = {col: 0 for col in classification_columns}
+            for row_label, condition in row_configs:
+                row_data = {table_row_header: row_label}
+                # Na tabela 2000 as faixas são baseadas na população_00. Precisamos de uma condition_00.
+                # Como a lógica `condition` pode acessar `dados_atuais__populacao_atual`, precisamos usar uma variação:
+                # Mas para simplificar, usaremos o approach nativo:
+                try:
+                    min_pop_00 = float(row_label.split('a')[0].replace('Até', '').replace('mil', '').strip()) * 1000 if 'mil' in row_label and 'Acima' not in row_label and 'Até' not in row_label else (0 if 'Até' in row_label else (500000 if 'Acima' in row_label else 0))
+                    # Fallback simplificado se der erro:
+                except Exception:
+                    min_pop_00 = 0
                 
-                raw_counts_in_row_00 = defaultdict(int)
+                # Solução robusta: em vez de fazer parser da string, iterar pela list original de faixas
+                
+                # Mas para evitar complicações no 2000, iteramos pelas population_ranges:
+                population_ranges_for_2000 = [
+                    ('Até 5 mil', 0, 5000), ('5 mil a 10 mil', 5000, 10000), ('10 mil a 20 mil', 10000, 20000),
+                    ('20 mil a 50 mil', 20000, 50000), ('50 mil a 100 mil', 50000, 100000),
+                    ('100 mil a 200 mil', 100000, 200000), ('200 mil a 500 mil', 200000, 500000),
+                    ('Acima de 500 mil', 500000, float('inf')),
+                ]
+                
+                found_range = [pr for pr in population_ranges_for_2000 if pr[0] == row_label]
+                if found_range:
+                    _, min_pop, max_pop = found_range[0]
+                    range_data_00_filtered = [m for m in aggregated_data_list_00 if m.get('dados_2000__populacao_00') is not None and (min_pop <= m['dados_2000__populacao_00'] < max_pop if max_pop != float('inf') else m['dados_2000__populacao_00'] >= min_pop)]
+                else:
+                    range_data_00_filtered = []
+
+                raw_counts_in_row_00 = {col: 0 for col in classification_columns}
                 for muni in range_data_00_filtered:
                     classification_key = muni.get(field_for_aggregation_00)
                     column_label = classification_map_00.get(classification_key)
@@ -435,7 +579,7 @@ def api_get_dashboard_data(request):
                 row_data['Total'] = f"100.0%" if display_format == 'porcentagem' else current_range_total_raw_00
                 table_data_00.append(row_data)
 
-            grand_total_row_00 = {'Faixas': 'Total Geral'}
+            grand_total_row_00 = {table_row_header: 'Total Geral'}
             raw_grand_total_rows_total_00 = sum(raw_grand_total_classification_counts_00.values())
             total_municipios_for_table_00 = len(aggregated_data_list_00)
 
@@ -445,11 +589,8 @@ def api_get_dashboard_data(request):
 
             grand_total_row_00['Total'] = "100.0%" if display_format == 'porcentagem' else raw_grand_total_rows_total_00
             table_data_00.append(grand_total_row_00)
-            table_headers_00 = ['Faixas'] + classification_columns + ['Total']
+            table_headers_00 = [table_row_header] + classification_columns + ['Total']
 
-        datasets_to_send = [{"label": chart_y_axis_label + ' (2025)', "data": chart_data_values_24}]
-        if include_2000_data:
-            datasets_to_send.append({"label": chart_y_axis_label + ' (2000)', "data": chart_data_values_00})
 
         response_data = {
             "summaryCards": {
@@ -459,12 +600,13 @@ def api_get_dashboard_data(request):
                 "diffMediaNacional": round(diff_media_nacional, 2),
                 "giniIndex": round(coeficiente_de_variacao*100, 2)
             },
-            "chartData": {"labels": chart_labels, "datasets": datasets_to_send, "yAxisTitle": chart_y_axis_label, "xAxisTitle": classification_filter.capitalize()},
-            "tableData24": table_data_24, "tableHeaders24": table_headers_24,
+            "chartData": {"labels": chart_labels, "datasets": datasets_to_send, "yAxisTitle": y_axis_title, "xAxisTitle": classification_filter.capitalize(), "chartTitle": chart_title},
+            "tableData24": table_data_24, "tableHeaders24": table_headers_24, "tableTitle24": f"Distribuição de Municípios por {table_row_header} (2025)",
         }
-        if include_2000_data:
+        if include_2000_data and not is_count:
             response_data["tableData00"] = table_data_00
             response_data["tableHeaders00"] = table_headers_00
+            response_data["tableTitle00"] = f"Distribuição de Municípios por {table_row_header} (2000)"
         return JsonResponse(response_data)
     except Exception as e:
         import traceback
