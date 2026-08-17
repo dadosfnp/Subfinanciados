@@ -296,6 +296,8 @@
 
         
 
+
+
         <div class="filter-section mb-4">
 
           <h6>Base de Visualização</h6>
@@ -605,7 +607,14 @@
 
         <div class="d-flex align-items-center">
 
-          <h5 class="mb-0 me-1">Distribuição da População Municipal</h5>
+          <h5 id="chart-main-title" class="mb-0 me-1 d-flex align-items-center">
+            Distribuição 
+            <select id="variavelAnalisadaSelect" name="variavelAnalisada" class="form-select form-select-sm d-inline-block w-auto ms-2 fw-medium text-secondary shadow-none" style="font-size: 0.95rem; cursor: pointer;">
+              <option value="populacao">da População Municipal</option>
+              <option value="capag">por Nota CAPAG</option>
+              <option value="risco_climatico">por Risco Climático</option>
+            </select>
+          </h5>
 
           <button type="button"
 
@@ -657,7 +666,7 @@
 
       <div class="d-flex align-items-center mb-1">
 
-            <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2025)</h5>
+            <h5 id="table-2025-title" class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2025)</h5>
 
             <button type="button"
 
@@ -695,7 +704,7 @@
 
       <div class="d-flex align-items-center mb-1">
 
-        <h5 class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2000)</h5>
+        <h5 id="table-2000-title" class="mb-0 me-1">Distribuição de Municípios por Faixa Populacional (2000)</h5>
 
         <button type="button"
 
