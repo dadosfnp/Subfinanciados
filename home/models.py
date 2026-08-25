@@ -12,6 +12,31 @@ class RegiaoMetropolitana(models.Model):
         verbose_name = "Região Metropolitana"
         verbose_name_plural = "Regiões Metropolitanas"
 
+class Consorcio(models.Model):
+    """Agrupamento voluntário de municípios (consórcio intermunicipal).
+
+    Relação muitos-para-muitos, e não FK como em RegiaoMetropolitana: um município
+    pertence a no máximo uma RM, mas participa de quantos consórcios quiser (saúde,
+    resíduos, desenvolvimento). A planilha de hoje não tem sobreposição; o modelo
+    não depende disso continuar verdadeiro.
+    """
+    nome = models.CharField(max_length=255, unique=True, help_text="Nome único do consórcio, como aparece no filtro")
+    municipios = models.ManyToManyField(
+        'Municipio',
+        related_name='consorcios',
+        blank=True,
+        help_text="Municípios que compõem o consórcio",
+    )
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Consórcio"
+        verbose_name_plural = "Consórcios"
+        ordering = ['nome']
+
+
 class Percentis(models.Model):
     percentil = models.IntegerField(unique=True, help_text="Valor do percentil (0-100)")
     valor = models.FloatField()

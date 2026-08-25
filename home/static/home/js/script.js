@@ -4,6 +4,7 @@
 let filtroRegiao;
 let filtroUf;
 let filtroRm;
+let filtroConsorcio;
 let filtroPorte;
 let btnLimpar;
 
@@ -60,6 +61,7 @@ function buildHomeParams() {
     const p = new URLSearchParams();
     p.set('porte', filtroPorte?.value || 'todos');
     p.set('rm', filtroRm?.value || 'todos');
+    p.set('consorcio', filtroConsorcio?.value || 'todos');
     p.set('regiao', filtroRegiao?.value || 'todos');
     p.set('uf', filtroUf?.value || 'todos');
     return p;
@@ -74,6 +76,7 @@ async function updateDependentFilters(initial = false) {
     const regiaoAtual = filtroRegiao.value;
     const ufAtual     = filtroUf.value;
     const rmAtual     = filtroRm.value;
+    const consorcioAtual = filtroConsorcio ? filtroConsorcio.value : 'todos';
 
     try {
         const resp = await fetch(`/api/get-dependent-filters/?${buildHomeParams().toString()}`);
@@ -87,6 +90,12 @@ async function updateDependentFilters(initial = false) {
         filtroRm.innerHTML = '<option value="todos">Todos</option>';
         (data.rms || []).forEach(v => filtroRm.add(new Option(v, v)));
         restoreSelectValue(filtroRm, rmAtual);
+
+        if (filtroConsorcio) {
+            filtroConsorcio.innerHTML = '<option value="todos">Todos</option>';
+            (data.consorcios || []).forEach(v => filtroConsorcio.add(new Option(v, v)));
+            restoreSelectValue(filtroConsorcio, consorcioAtual);
+        }
 
         filtroUf.innerHTML = '<option value="todos">Todas</option>';
         (data.ufs || []).forEach(v => filtroUf.add(new Option(v, v)));
@@ -132,6 +141,7 @@ async function atualizarFiltros() {
     const selectedRegiao = filtroRegiao.value;
     const selectedUf = filtroUf.value;
     const selectedRm = filtroRm.value;
+    const selectedConsorcio = filtroConsorcio ? filtroConsorcio.value : 'todos';
     const selectedPorte = filtroPorte ? filtroPorte.value : 'todos';
 
     const classificationFilter = quantilDecilRadio?.checked ? 'decil' : 'quintil';
@@ -151,6 +161,7 @@ async function atualizarFiltros() {
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
         `&uf=${selectedUf}` +
         `&rm=${selectedRm}` +
+        `&consorcio=${encodeURIComponent(selectedConsorcio)}` +
         `&porte=${selectedPorte}` +
         `&classification=${classificationFilter}` +
         `&display_format=${displayFormat}` +
@@ -356,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     filtroRegiao = document.getElementById('filtro-regiao');
     filtroUf = document.getElementById('filtro-uf');
     filtroRm = document.getElementById('filtro-rm');
+    filtroConsorcio = document.getElementById('filtro-consorcio');
     filtroPorte = document.getElementById('filtro-porte');
     btnLimpar = document.getElementById('btn-limpar-filtros');
 
@@ -477,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Apenas os selects estruturais disparam a cascata inteira
-    [filtroRegiao, filtroUf, filtroRm, filtroPorte].forEach(select => {
+    [filtroRegiao, filtroUf, filtroRm, filtroConsorcio, filtroPorte].forEach(select => {
         if (select) select.addEventListener('change', handleHomeFilterChange);
     });
 
@@ -575,6 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filtroRegiao) filtroRegiao.value = 'todos';
             if (filtroUf) filtroUf.value = 'todos';
             if (filtroRm) filtroRm.value = 'todos';
+            if (filtroConsorcio) filtroConsorcio.value = 'todos';
             if (filtroPorte) filtroPorte.value = 'todos';
 
             if (quantilQuintilRadio) quantilQuintilRadio.checked = true;

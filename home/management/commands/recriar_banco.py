@@ -48,6 +48,7 @@ from django.db import connection
 from home.models import (
     AdaptaBrasil,
     Cadunico,
+    Consorcio,
     ContaDetalhada,
     ContaDetalhadaPercentil,
     ContaEspecifica,
@@ -115,6 +116,9 @@ MINIMOS_ESPERADOS = {
     Municipio: 5000,
     AdaptaBrasil: 5000,
     RegiaoMetropolitana: 50,
+    # Piso baixo de propósito: a lista de consórcios é curta (6 hoje) e pode encolher
+    # legitimamente. O que este piso pega é a falha real — planilha não lida, tabela vazia.
+    Consorcio: 5,
     Percentis: 90,
     Indicadores2000: 5000,
     IndicadoresAtuais: 5000,

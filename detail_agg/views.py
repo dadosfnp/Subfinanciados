@@ -20,6 +20,7 @@ def _get_filtered_municipios(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
@@ -29,6 +30,7 @@ def _get_filtered_municipios(request):
         municipio_filtro and municipio_filtro != 'todos',
         porte_filtro and porte_filtro != 'todos',
         rm_filtro and rm_filtro != 'todos',
+        consorcio_filtro and consorcio_filtro != 'todos',
         subgroup_filter and subgroup_filter != 'todos'
     ])
 
@@ -43,6 +45,10 @@ def _get_filtered_municipios(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -295,6 +301,7 @@ def conjunto_detalhe_view(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
@@ -306,6 +313,10 @@ def conjunto_detalhe_view(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     # --- faixas de porte ---
     if porte_filtro and porte_filtro != 'todos':

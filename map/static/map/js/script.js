@@ -24,6 +24,7 @@ const filtroMunicipio      = document.getElementById('filtro-municipio');
 const filtroPorte          = document.getElementById('filtro-porte');
 const filtroSubgrupo       = document.getElementById('filtro-subgrupo');
 const filtroRm             = document.getElementById('filtro-rm');
+const filtroConsorcio      = document.getElementById('filtro-consorcio');
 // const filtroCapag          = document.getElementById('filtro-capag');
 const filtroRiscoCampo     = document.getElementById('filtro-risco-campo');
 const filtroRiscos         = document.getElementById('filtro-riscos');
@@ -67,6 +68,7 @@ function paramsKeyFromSelects() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    consorcio: filtroConsorcio.value,
     // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
     risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
     risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
@@ -85,6 +87,7 @@ async function updateDependentFilters() {
   const regiaoAtual    = filtroRegiao.value;
   const ufAtual        = filtroUf.value;
   const rmAtual        = filtroRm.value;
+  const consorcioAtual = filtroConsorcio.value;
   const municipioAtual = filtroMunicipio.value;
   // const capagAtual     = typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos';
 
@@ -93,6 +96,7 @@ async function updateDependentFilters() {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
+    consorcio: consorcioAtual,
     // capag: capagAtual,
     risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
     risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
@@ -114,6 +118,10 @@ async function updateDependentFilters() {
     filtroRm.innerHTML = '<option value="todos">Todas</option>';
     data.rms.forEach(v => filtroRm.add(new Option(v, v)));
     restoreSelectValue(filtroRm, rmAtual);
+
+    filtroConsorcio.innerHTML = '<option value="todos">Todos</option>';
+    (data.consorcios || []).forEach(v => filtroConsorcio.add(new Option(v, v)));
+    restoreSelectValue(filtroConsorcio, consorcioAtual);
 
     filtroUf.innerHTML = '<option value="todos">Todas</option>';
     data.ufs.forEach(v => filtroUf.add(new Option(v, v)));
@@ -147,6 +155,7 @@ async function atualizarMapa() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    consorcio: filtroConsorcio.value,
     // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
     risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
     risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
@@ -432,6 +441,7 @@ function applyZoom(geojsonData) {
   }
 
   if (filtroUf.value !== 'todos' || filtroRm.value !== 'todos' ||
+      filtroConsorcio.value !== 'todos' ||
       filtroRegiao.value !== 'todos' || filtroPorte.value !== 'todos' ||
       filtroSubgrupo.value !== 'todos') {
     const bbox = getGeoJSONBounds(geojsonData);
@@ -940,6 +950,7 @@ function atualizarClassificacao() {
 document.getElementById('btn-limpar-filtros').addEventListener('click', async () => {
     filtroRegiao.value = 'todos';
     filtroRm.value = 'todos';
+    filtroConsorcio.value = 'todos';
     filtroUf.value = 'todos';
     filtroMunicipio.value = 'todos';
     filtroPorte.value = 'todos';
@@ -981,7 +992,7 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 }
 });
 
-[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo]
+[filtroRegiao, filtroUf, filtroRm, filtroConsorcio, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo]
   .forEach(sel => sel.addEventListener('change', async () => {
     
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
@@ -1049,6 +1060,7 @@ async function downloadTableData() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    consorcio: filtroConsorcio.value,
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value
   });
@@ -1250,6 +1262,7 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
     const filtros = [
         boldIfNotAll("Faixa Populacional", document.getElementById("filtro-porte").value),
         boldIfNotAll("Região Metropolitana", document.getElementById("filtro-rm").value),
+        boldIfNotAll("Agrupamento", document.getElementById("filtro-consorcio").value),
         boldIfNotAll("Região", document.getElementById("filtro-regiao").value),
         boldIfNotAll("UF", document.getElementById("filtro-uf").value),
         boldIfNotAll("Município", document.getElementById("filtro-municipio").value),
