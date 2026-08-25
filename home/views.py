@@ -60,10 +60,111 @@ def index(request):
     })
 
 # --- FUNÇÕES DE API ---
+# Faixas de porte populacional, na ordem em que aparecem no select. None = sem limite.
+FAIXAS_DE_PORTE = {
+    'Até 5 mil': (None, 5000),
+    '5 mil a 10 mil': (5000, 10000),
+    '10 mil a 20 mil': (10000, 20000),
+    '20 mil a 50 mil': (20000, 50000),
+    '50 mil a 100 mil': (50000, 100000),
+    '100 mil a 200 mil': (100000, 200000),
+    '200 mil a 500 mil': (200000, 500000),
+    'Acima de 500 mil': (500000, None),
+    'Acima de 80 mil': (80000, None),
+    'Abaixo de 80 mil': (None, 80000),
+}
+
+
+def _filtrar_por_porte(queryset, porte):
+    """Aplica a faixa populacional ao queryset. Porte desconhecido não filtra nada."""
+    if not porte or porte == 'todos' or porte not in FAIXAS_DE_PORTE:
+        return queryset
+
+    minimo, maximo = FAIXAS_DE_PORTE[porte]
+    # 'Acima de 80 mil' é estritamente maior e 'Abaixo de 80 mil' inclui o limite:
+    # é o que faz as duas faixas serem complementares em vez de contarem o município
+    # de exatamente 80 mil habitantes duas vezes. As demais faixas usam [mín, máx).
+    if minimo is not None:
+        lookup = 'gt' if porte == 'Acima de 80 mil' else 'gte'
+        queryset = queryset.filter(**{f'dados_atuais__populacao_atual__{lookup}': minimo})
+    if maximo is not None:
+        lookup = 'lte' if porte == 'Abaixo de 80 mil' else 'lt'
+        queryset = queryset.filter(**{f'dados_atuais__populacao_atual__{lookup}': maximo})
+    return queryset
+
+
+def _filtrar_por_subgrupo(queryset, subgroup_filter, classification_filter, quantil_calculation):
+    """Restringe o queryset ao quintil/decil/faixa natural selecionado.
+
+    No modo 'por_filtro' os limites do quantil são recalculados sobre o próprio
+    queryset recebido — por isso esta função é chamada uma vez por dimensão de
+    filtro, e não uma única vez para todas.
+    """
+    if not subgroup_filter or subgroup_filter == 'todos':
+        return queryset
+
+    if quantil_calculation == 'por_filtro' and classification_filter in ('quintil', 'decil'):
+        num_quantiles = 5 if classification_filter == 'quintil' else 10
+        rc_values = np.array([
+            m['dados_atuais__rc_atual_pc']
+            for m in queryset.values('dados_atuais__rc_atual_pc')
+            if m.get('dados_atuais__rc_atual_pc') is not None
+        ])
+        if len(rc_values) == 0:
+            return queryset
+        try:
+            target_idx = int(subgroup_filter) - 1
+        except ValueError:
+            return queryset
+        if not (0 <= target_idx < num_quantiles):
+            return queryset
+
+        bounds = np.quantile(rc_values, np.linspace(0, 1, num_quantiles + 1)[1:-1])
+        min_val = bounds[target_idx - 1] if target_idx > 0 else None
+        max_val = bounds[target_idx] if target_idx < num_quantiles - 1 else None
+        if min_val is None:
+            return queryset.filter(dados_atuais__rc_atual_pc__lt=max_val)
+        if max_val is None:
+            return queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
+        return queryset.filter(
+            dados_atuais__rc_atual_pc__gte=min_val,
+            dados_atuais__rc_atual_pc__lt=max_val,
+        )
+
+    if classification_filter == 'quintil':
+        return queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
+    if classification_filter == 'decil':
+        return queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
+    if classification_filter == 'natural':
+        try:
+            min_str, max_str = subgroup_filter.split('-')
+            min_val = int(min_str)
+            if max_str.lower() == '999999':
+                return queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
+            return queryset.filter(
+                dados_atuais__rc_atual_pc__gte=min_val,
+                dados_atuais__rc_atual_pc__lt=int(max_str),
+            )
+        except ValueError:
+            return queryset
+
+    return queryset
+
+
 def api_get_dependent_filters(request):
+    """Devolve as opções de cada select de filtro já considerando os demais filtros.
+
+    Cada lista é montada aplicando todos os filtros ativos MENOS o da própria
+    dimensão. Sem isso, selecionar UF=PE reduzia o queryset a Pernambuco e a lista
+    de UFs voltava só com PE — para trocar de estado o usuário tinha que passar por
+    "Todas" primeiro. Ignorando a própria dimensão, a lista continua completa, e as
+    outras seleções seguem valendo (UF=PE com Região=Nordeste ainda lista só as 9
+    UFs do Nordeste, que é a cascata útil).
+    """
     regiao_selecionada = request.GET.get('regiao')
     uf_selecionada = request.GET.get('uf')
     rm_selecionada = request.GET.get('rm')
+    consorcio_selecionado = request.GET.get('consorcio')
     porte_filtro = request.GET.get('porte')
     subgroup_filter = request.GET.get('subgrupo')
     capag_filtro = request.GET.get('capag')
@@ -72,7 +173,6 @@ def api_get_dependent_filters(request):
     quantil_calculation = request.GET.get('calculation_mode', 'total')
 
     RISCO_CAMPO = {
-        'media_ponderada': 'dados_adapta_brasil__media_ponderada',
         'bio_int_bio': 'dados_adapta_brasil__bio_int_bio',
         'des_des_ter': 'dados_adapta_brasil__des_des_ter',
         'des_in_enx_ala': 'dados_adapta_brasil__des_in_enx_ala',
@@ -87,112 +187,55 @@ def api_get_dependent_filters(request):
         'seg_ene_dis': 'dados_adapta_brasil__seg_ene_dis',
     }
 
-    queryset = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
+    # Dimensão -> (valor selecionado, lookup do ORM). São os filtros que têm lista
+    # própria e por isso precisam ser ignorados ao montar a lista deles mesmos.
+    dimensoes = {
+        'regiao': (regiao_selecionada, 'regiao'),
+        'uf': (uf_selecionada, 'uf'),
+        'rm': (rm_selecionada, 'rm__nome'),
+        'consorcio': (consorcio_selecionado, 'consorcios__nome'),
+        'capag': (capag_filtro, 'dados_atuais__capag'),
+    }
 
-    if rm_selecionada and rm_selecionada != 'todos':
-        queryset = queryset.filter(rm__nome=rm_selecionada)
-    if regiao_selecionada and regiao_selecionada != 'todos':
-        queryset = queryset.filter(regiao=regiao_selecionada)
-    if uf_selecionada and uf_selecionada != 'todos':
-        queryset = queryset.filter(uf=uf_selecionada)
-    if capag_filtro and capag_filtro != 'todos':
-        queryset = queryset.filter(dados_atuais__capag=capag_filtro)
-    
-    risco_campo = request.GET.get('risco_campo') or request.GET.get('risco_climatico_indicador')
-    risco_intensidade = request.GET.get('risco_intensidade') or request.GET.get('risco_climatico') or request.GET.get('riscos_climaticos')
-    campo_db = RISCO_CAMPO.get(risco_campo, 'dados_adapta_brasil__media_ponderada')
+    def montar_queryset(ignorar=None):
+        """Queryset com todos os filtros ativos, exceto o da dimensão `ignorar`."""
+        queryset = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
 
-    if risco_intensidade and risco_intensidade != 'todos':
-        if risco_intensidade == 'muito_baixo':
-            queryset = queryset.filter(**{f'{campo_db}__gte': 0, f'{campo_db}__lt': 0.2})
-        elif risco_intensidade == 'baixo':
-            queryset = queryset.filter(**{f'{campo_db}__gte': 0.2, f'{campo_db}__lt': 0.4})
-        elif risco_intensidade == 'medio':
-            queryset = queryset.filter(**{f'{campo_db}__gte': 0.4, f'{campo_db}__lt': 0.6})
-        elif risco_intensidade == 'alto':
-            queryset = queryset.filter(**{f'{campo_db}__gte': 0.6, f'{campo_db}__lt': 0.8})
-        elif risco_intensidade == 'muito_alto':
-            queryset = queryset.filter(**{f'{campo_db}__gte': 0.8})
-    elif risco_campo and risco_campo != 'todos' and risco_campo in RISCO_CAMPO:
-        queryset = queryset.filter(**{f'{campo_db}__isnull': False})
+        for dimensao, (valor, lookup) in dimensoes.items():
+            if dimensao == ignorar:
+                continue
+            if valor and valor != 'todos':
+                queryset = queryset.filter(**{lookup: valor})
 
-    # Porte populacional
-    if porte_filtro and porte_filtro != 'todos':
-        if porte_filtro == 'Até 5 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__lt=5000)
-        elif porte_filtro == '5 mil a 10 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=5000, dados_atuais__populacao_atual__lt=10000)
-        elif porte_filtro == '10 mil a 20 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=10000, dados_atuais__populacao_atual__lt=20000)
-        elif porte_filtro == '20 mil a 50 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=20000, dados_atuais__populacao_atual__lt=50000)
-        elif porte_filtro == '50 mil a 100 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=50000, dados_atuais__populacao_atual__lt=100000)
-        elif porte_filtro == '100 mil a 200 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=100000, dados_atuais__populacao_atual__lt=200000)
-        elif porte_filtro == '200 mil a 500 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=200000, dados_atuais__populacao_atual__lt=500000)
-        elif porte_filtro == 'Acima de 500 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gte=500000)
-        elif porte_filtro == 'Acima de 80 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__gt=80000)
-        elif porte_filtro == 'Abaixo de 80 mil':
-            queryset = queryset.filter(dados_atuais__populacao_atual__lte=80000)
+        if risco_filtro and risco_filtro != 'todos' and risco_filtro in RISCO_CAMPO:
+            queryset = queryset.filter(**{f'{RISCO_CAMPO[risco_filtro]}__gte': 0.6})
 
-    # Subgrupo
-    if subgroup_filter and subgroup_filter != 'todos':
-        if quantil_calculation == 'por_filtro' and classification_filter in ('quintil', 'decil'):
-            num_quantiles = 5 if classification_filter == 'quintil' else 10
-            rc_values = np.array([
-                m['dados_atuais__rc_atual_pc']
-                for m in queryset.values('dados_atuais__rc_atual_pc')
-                if m.get('dados_atuais__rc_atual_pc') is not None
-            ])
-            if len(rc_values) > 0:
-                try:
-                    target_idx = int(subgroup_filter) - 1
-                    if 0 <= target_idx < num_quantiles:
-                        bounds = np.quantile(
-                            rc_values,
-                            np.linspace(0, 1, num_quantiles + 1)[1:-1]
-                        )
-                        min_val = bounds[target_idx - 1] if target_idx > 0 else None
-                        max_val = bounds[target_idx] if target_idx < num_quantiles - 1 else None
-                        if min_val is None:
-                            queryset = queryset.filter(dados_atuais__rc_atual_pc__lt=max_val)
-                        elif max_val is None:
-                            queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
-                        else:
-                            queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
-                except ValueError:
-                    pass
-        elif classification_filter == 'quintil':
-            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
-        elif classification_filter == 'decil':
-            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
-        elif classification_filter == 'natural':
-            try:
-                min_str, max_str = subgroup_filter.split('-')
-                min_val = int(min_str)
-                if max_str.lower() == '999999':
-                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
-                else:
-                    max_val = int(max_str)
-                    queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val, dados_atuais__rc_atual_pc__lt=max_val)
-            except ValueError:
-                pass
+        queryset = _filtrar_por_porte(queryset, porte_filtro)
+        return _filtrar_por_subgrupo(
+            queryset, subgroup_filter, classification_filter, quantil_calculation
+        )
 
-    regioes = queryset.values_list('regiao', flat=True).distinct().order_by('regiao')
-    ufs = queryset.values_list('uf', flat=True).distinct().order_by('uf')
-    municipios = queryset.values_list('name_muni_uf', flat=True).distinct().order_by('name_muni_uf')
-    rms = queryset.exclude(rm=None).values_list('rm__nome', flat=True).distinct().order_by('rm__nome')
-    capags = queryset.exclude(dados_atuais__capag__isnull=True).values_list('dados_atuais__capag', flat=True).distinct().order_by('dados_atuais__capag')
+    regioes = (montar_queryset(ignorar='regiao')
+               .values_list('regiao', flat=True).distinct().order_by('regiao'))
+    ufs = (montar_queryset(ignorar='uf')
+           .values_list('uf', flat=True).distinct().order_by('uf'))
+    rms = (montar_queryset(ignorar='rm').exclude(rm=None)
+           .values_list('rm__nome', flat=True).distinct().order_by('rm__nome'))
+    consorcios = (montar_queryset(ignorar='consorcio').exclude(consorcios=None)
+                  .values_list('consorcios__nome', flat=True).distinct().order_by('consorcios__nome'))
+    capags = (montar_queryset(ignorar='capag').exclude(dados_atuais__capag__isnull=True)
+              .values_list('dados_atuais__capag', flat=True).distinct().order_by('dados_atuais__capag'))
+    # Município é a dimensão mais fina e não filtra o queryset deste endpoint: a lista
+    # é sempre a dos municípios que sobrevivem a todos os outros filtros.
+    municipios = (montar_queryset()
+                  .values_list('name_muni_uf', flat=True).distinct().order_by('name_muni_uf'))
 
     return JsonResponse({
         'regioes': list(regioes),
         'ufs': list(ufs),
         'municipios': list(municipios),
         'rms': list(rms),
+        'consorcios': list(consorcios),
         'capags': list(capags)
     })
 
@@ -201,6 +244,7 @@ def api_get_dashboard_data(request):
     regiao_filtro = request.GET.get('regiao')
     uf_filtro = request.GET.get('uf')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     porte_filtro = request.GET.get('porte')
     classification_filter = request.GET.get('classification', 'quintil')
     display_format = request.GET.get('display_format', 'numero')
@@ -215,6 +259,10 @@ def api_get_dashboard_data(request):
         queryset = queryset.filter(uf=uf_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     # Filtragem de Porte Populacional
     if porte_filtro and porte_filtro != 'todos':

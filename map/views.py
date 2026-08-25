@@ -488,6 +488,7 @@ def municipios_geojson_api(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     capag_filtro = request.GET.get('capag')
     risco_filtro = request.GET.get('risco_climatico')
     classification_filter = request.GET.get('classification', 'quintil')
@@ -502,6 +503,10 @@ def municipios_geojson_api(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
     if capag_filtro and capag_filtro != 'todos':
         queryset = queryset.filter(dados_atuais__capag=capag_filtro)
 
