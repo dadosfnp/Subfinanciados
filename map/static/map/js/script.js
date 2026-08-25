@@ -173,13 +173,22 @@ async function atualizarMapa() {
   const myId = ++lastRequestId;
 
   try {
-    const [respMapa, respResumo] = await Promise.all([
-      fetch(buildApiUrl('/api/dados-municipios/', paramsMapa)),
-      fetch(buildApiUrl('/api/dados-municipios/', paramsResumo))
-    ]);
+    const urlMapa   = buildApiUrl('/api/dados-municipios/', paramsMapa);
+    const urlResumo = buildApiUrl('/api/dados-municipios/', paramsResumo);
 
-    const geojsonMapa   = await respMapa.json();
-    const geojsonResumo = await respResumo.json();
+    /* paramsMapa e paramsResumo só diferem no município, e buildApiUrl descarta
+       valores 'todos' — então sem município selecionado (o caso padrão) as duas
+       URLs são idênticas. Buscar as duas ocupava os dois workers do Gunicorn com
+       a mesma consulta de 5,5k linhas. Uma requisição só, resposta reaproveitada:
+       nenhum consumidor abaixo muta o GeoJSON, então compartilhar o objeto é seguro. */
+    let geojsonMapa, geojsonResumo;
+    if (urlMapa === urlResumo) {
+      geojsonMapa = geojsonResumo = await (await fetch(urlMapa)).json();
+    } else {
+      const [respMapa, respResumo] = await Promise.all([fetch(urlMapa), fetch(urlResumo)]);
+      geojsonMapa   = await respMapa.json();
+      geojsonResumo = await respResumo.json();
+    }
 
     if (myId !== lastRequestId) return;
     if (paramsKeyFromSelects() !== desiredKey) return;
@@ -263,8 +272,16 @@ map.on("load", async () => {
   });
 
   hideBaseMunicipalityLayers();
-  await updateDependentFilters();
+
+  /* A cascata de filtros e o GeoJSON são independentes: uma preenche os <select>,
+     o outro pinta o mapa. Serializar as duas (await antes de refrescar) somava um
+     round-trip inteiro ao primeiro desenho, então disparamos em paralelo.
+     O scheduleAtualizarMapa(0) substitui o debounce de 150ms que refrescarVisualizacao
+     agenda — proteger contra rajada de cliques só faz sentido depois do load. */
+  const filtrosProntos = updateDependentFilters();
   refrescarVisualizacao(); // aplica o modo de análise (receita por padrão): cores + legenda + refetch
+  scheduleAtualizarMapa(0);
+  await filtrosProntos;
 
 // =========================================================
   // LOGICA UNIFICADA: Xambioá e Varginha

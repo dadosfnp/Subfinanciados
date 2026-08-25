@@ -1,13 +1,136 @@
 # home/views.py - v1.0.4 - Ajustes robustos de Classificação e Mapa
+import hashlib
+import json
+import logging
 import re
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Avg, Count
-from django.http import JsonResponse
-from django.db import connection
-from home.models import Municipio, ContaDetalhada, Noticia
+from django.core.cache import caches
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Avg, Count, Sum
+from django.http import HttpResponse, JsonResponse
+from django.db import connection, DatabaseError
+from django.utils.cache import patch_cache_control
+from django.views.decorators.http import condition
+from home.models import Municipio, ContaDetalhada, IndicadoresAtuais, Noticia
 import numpy as np
 import math
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
+
+# Cache dedicado do mapa (ver CACHES em config/settings.py).
+_cache_mapa = caches['mapa']
+
+# Por quanto tempo confiamos na "impressão digital" da base sem reconsultá-la.
+# É a janela máxima em que o mapa pode servir dados velhos depois de uma
+# reimportação — 5 min é aceitável para uma base que muda algumas vezes por ano.
+_TTL_VERSAO_DADOS = 300
+
+# Parâmetros que a API do mapa realmente lê. A chave de cache é montada só com
+# eles, em ordem fixa: sem isso '?uf=SP&porte=todos' e '?porte=todos&uf=SP'
+# gerariam entradas distintas para a mesma resposta, e parâmetros irrelevantes
+# na URL (utm_*, etc.) furariam o cache.
+_PARAMS_RELEVANTES_MAPA = (
+    'uf', 'regiao', 'municipio', 'porte', 'rm', 'consorcio', 'capag', 'risco_climatico',
+    'classification', 'calculation_mode', 'subgrupo', 'analise',
+)
+
+
+def _versao_dados():
+    """Identificador da versão atual da base, usado na chave de cache e no ETag.
+
+    Contagem + soma de `rc_atual_pc` é um agregado sobre coluna indexada
+    (sub-milissegundo em 5,5k linhas) que muda em qualquer reimportação — assim
+    o cache se invalida sozinho, sem depender de bump manual no deploy.
+
+    Retorna None se o banco não responder: nesse caso o chamador desliga o
+    cache em vez de arriscar servir uma resposta sob uma chave errada.
+    """
+    versao = _cache_mapa.get('versao_dados')
+    if versao is not None:
+        return versao
+
+    try:
+        agg = IndicadoresAtuais.objects.aggregate(n=Count('pk'), soma=Sum('rc_atual_pc'))
+    except DatabaseError as error:
+        logger.warning(
+            'Não foi possível calcular a versão dos dados; cache do mapa desativado nesta requisição',
+            exc_info=error,
+        )
+        return None
+
+    versao = f"{agg['n'] or 0}:{agg['soma'] or 0:.0f}"
+    _cache_mapa.set('versao_dados', versao, _TTL_VERSAO_DADOS)
+    return versao
+
+
+def _hash_cache_mapa(request):
+    """Hash canônico de (versão da base + filtros). Serve de chave de cache e de ETag.
+
+    Depende só da querystring — nunca do corpo da resposta — para que o ETag
+    possa ser calculado antes da view rodar e um 304 saia sem tocar no banco.
+    """
+    versao = _versao_dados()
+    if versao is None:
+        return None
+    filtros = '&'.join(f'{p}={request.GET.get(p, "")}' for p in _PARAMS_RELEVANTES_MAPA)
+    return hashlib.md5(f'{versao}|{filtros}'.encode('utf-8')).hexdigest()
+
+
+def _etag_mapa(request, *args, **kwargs):
+    """etag_func do decorator @condition: permite responder 304 sem executar a view."""
+    hash_atual = _hash_cache_mapa(request)
+    return f'"{hash_atual}"' if hash_atual else None
+
+
+def _resposta_geojson(corpo):
+    """Devolve o GeoJSON já serializado.
+
+    Recebe str em vez de dict porque o cache guarda o JSON pronto — reaproveitar
+    a serialização é parte do ganho. A compressão fica com o GZipMiddleware.
+    """
+    resposta = HttpResponse(corpo, content_type='application/json')
+    # Dados públicos e praticamente estáticos: vale deixar o browser reusar a
+    # cópia local. max_age casado com _TTL_VERSAO_DADOS para que a janela de
+    # dado velho seja a mesma nas duas pontas.
+    patch_cache_control(resposta, public=True, max_age=_TTL_VERSAO_DADOS)
+    return resposta
+
+
+def _limites_quantil(valores_rc, num_quantiles):
+    """Fronteiras internas dos quantis (4 valores para quintil, 9 para decil)."""
+    rc_values = np.fromiter((v for v in valores_rc if v is not None), dtype=float)
+    if rc_values.size == 0:
+        return np.array([])
+    return np.quantile(rc_values, np.linspace(0, 1, num_quantiles + 1)[1:-1])
+
+
+def _limites_quantil_nacional(num_quantiles):
+    """Fronteiras de quantil sobre a base nacional inteira (modo 'total', o padrão).
+
+    O resultado é constante entre requisições: 4 ou 9 floats derivados das mesmas
+    5,5k linhas. Sem cache, cada request pagava um scan completo da tabela só
+    para recalculá-los. A consulta vai direto em IndicadoresAtuais (dispensa o
+    JOIN com Municipio, seguro porque a OneToOne é primary_key/CASCADE) e filtra
+    os nulos no SQL em vez de no Python.
+    """
+    versao = _versao_dados()
+    chave = f'quantis:{versao}:{num_quantiles}' if versao else None
+
+    if chave:
+        limites = _cache_mapa.get(chave)
+        if limites is not None:
+            return np.array(limites)
+
+    limites = _limites_quantil(
+        IndicadoresAtuais.objects
+        .filter(rc_atual_pc__isnull=False)
+        .values_list('rc_atual_pc', flat=True),
+        num_quantiles,
+    )
+    if chave:
+        _cache_mapa.set(chave, limites.tolist())
+    return limites
 
 
 def _format_brl(value):
@@ -476,11 +599,23 @@ def api_get_dashboard_data(request):
         return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
 
 
+@condition(etag_func=_etag_mapa)
 def municipios_geojson_api(request):
     """
     Retorna dados GeoJSON para o Mapa.
     Exclui municípios sem dados de receita atual per capita (rc_atual_pc nulo).
+
+    A resposta é cacheada por (versão da base + filtros): montar o GeoJSON custa
+    duas consultas que trazem 5,5k linhas, e o resultado é idêntico para todos
+    os visitantes até a base ser reimportada. O @condition ainda responde 304
+    sem executar nada quando o browser já tem a cópia atual.
     """
+    hash_cache = _hash_cache_mapa(request)
+    if hash_cache:
+        corpo_cacheado = _cache_mapa.get(f'geojson:{hash_cache}')
+        if corpo_cacheado is not None:
+            return _resposta_geojson(corpo_cacheado)
+
     queryset = Municipio.objects.exclude(dados_atuais__rc_atual_pc__isnull=True)
 
     uf_filtro = request.GET.get('uf')
@@ -535,25 +670,22 @@ def municipios_geojson_api(request):
             queryset = queryset.filter(dados_atuais__populacao_atual__lte=80000)
 
     num_quantiles = 5 if classification_filter == 'quintil' else 10
-    quantile_boundaries = []
-    
-    if quantil_calculation == 'total':
-        base_queryset_for_quantile = Municipio.objects.all()
-    else: 
-        base_queryset_for_quantile = queryset
-    
-    rc_values = np.array([
-        muni['dados_atuais__rc_atual_pc']
-        for muni in base_queryset_for_quantile.values('dados_atuais__rc_atual_pc')
-        if muni.get('dados_atuais__rc_atual_pc') is not None
-    ])
 
-    if len(rc_values) > 0:
-        quantiles_to_calculate = np.linspace(0, 1, num_quantiles + 1)[1:-1]
-        quantile_boundaries = np.quantile(rc_values, quantiles_to_calculate)
-    
+    if quantil_calculation == 'total':
+        # Base nacional: limites constantes, servidos do cache.
+        quantile_boundaries = _limites_quantil_nacional(num_quantiles)
+    else:
+        # Modo 'por_filtro': os limites dependem da seleção, então não há o que
+        # cachear aqui — quem absorve a repetição é o cache da resposta inteira.
+        quantile_boundaries = _limites_quantil(
+            queryset.values_list('dados_atuais__rc_atual_pc', flat=True),
+            num_quantiles,
+        )
+
     if subgroup_filter and subgroup_filter != "todos":
-        if quantil_calculation == 'por_filtro' and len(rc_values) > 0:
+        # len(quantile_boundaries) > 0 equivale ao antigo len(rc_values) > 0:
+        # np.quantile só devolve lista vazia quando não havia valor algum.
+        if quantil_calculation == 'por_filtro' and len(quantile_boundaries) > 0:
             try:
                 target_quantile_idx = int(subgroup_filter) - 1
                 if 0 <= target_quantile_idx < num_quantiles:
@@ -569,15 +701,19 @@ def municipios_geojson_api(request):
             except ValueError:
                 pass
         
+        # Igualdade exata, não `icontains`: os valores são strings como
+        # "1º decil"/"10º decil", então `icontains='1'` casava com os dois e o
+        # 1º decil vinha com o dobro de municípios. De quebra, a igualdade usa o
+        # índice de quintil_atual/decil_atual, que o LIKE '%...%' descartava.
         elif classification_filter == 'quintil':
-            queryset = queryset.filter(dados_atuais__quintil_atual__icontains=f'{subgroup_filter}')
+            queryset = queryset.filter(dados_atuais__quintil_atual=f'{subgroup_filter}º quintil')
         elif classification_filter == 'decil':
-            queryset = queryset.filter(dados_atuais__decil_atual__icontains=f'{subgroup_filter}')
+            queryset = queryset.filter(dados_atuais__decil_atual=f'{subgroup_filter}º decil')
         elif classification_filter == 'natural':
             try:
                 min_str, max_str = subgroup_filter.split('-')
                 min_val = int(min_str)
-                if max_str.lower() == '999999': 
+                if max_str.lower() == '999999':
                     queryset = queryset.filter(dados_atuais__rc_atual_pc__gte=min_val)
                 else:
                     max_val = int(max_str)
@@ -703,4 +839,9 @@ def municipios_geojson_api(request):
         "features": features
     }
 
-    return JsonResponse(geojson_data)
+    # Serializa aqui (em vez de delegar ao JsonResponse) para guardar no cache o
+    # JSON pronto — assim um hit devolve bytes sem refazer dumps de 5,5k features.
+    corpo = json.dumps(geojson_data, cls=DjangoJSONEncoder)
+    if hash_cache:
+        _cache_mapa.set(f'geojson:{hash_cache}', corpo)
+    return _resposta_geojson(corpo)
