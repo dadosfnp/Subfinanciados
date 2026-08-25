@@ -31,7 +31,7 @@ _TTL_VERSAO_DADOS = 300
 # gerariam entradas distintas para a mesma resposta, e parâmetros irrelevantes
 # na URL (utm_*, etc.) furariam o cache.
 _PARAMS_RELEVANTES_MAPA = (
-    'uf', 'regiao', 'municipio', 'porte', 'rm', 'capag', 'risco_climatico',
+    'uf', 'regiao', 'municipio', 'porte', 'rm', 'consorcio', 'capag', 'risco_climatico',
     'classification', 'calculation_mode', 'subgrupo', 'analise',
 )
 
