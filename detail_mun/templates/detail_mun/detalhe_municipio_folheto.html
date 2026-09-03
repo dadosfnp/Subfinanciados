@@ -1,39 +1,44 @@
 {% extends "global/head.html" %}
 {% comment %}
-PREVIEW — Detalhe do município no layout editorial do folheto IFEM.
+PREVIEW - Detalhe do municipio no layout editorial do folheto IFEM.
 
 Rota: /preview/municipio/<cod_ibge>/  (name: municipio_detalhe_folheto)
-Serve para aprovação da diretoria. A página pública segue em
-detalhe_municipio.html, intocada — as duas usam a MESMA view
-(detail_mun.views.municipio_detalhe_view), só muda o template.
+Para aprovacao da diretoria. A pagina publica (detalhe_municipio.html) segue
+intocada - as duas usam a MESMA view, so muda o template.
 
-Diferenças em relação à página pública:
-  1. Os 4 toggles espalhados viram uma barra de controle única e sticky.
-  2. Hero responde em texto ("supera X% dos municípios") antes de qualquer
-     gráfico, com régua de quintis no lugar dos dois KPI cards.
+PRINCIPIO: reaproveitar, nao reescrever.
+  - Os blocos de Composicao, Densidade, Sintese Fiscal e Riscos sao os MESMOS
+    da pagina publica, com os mesmos IDs. Quem os anima e o script_mun.js
+    original; aqui eles so recebem estilo novo por CSS.
+  - Os toggles usam os IDs que o script_mun.js ja espera
+    (#global-base-toggle, #valor-toggle, #estatistica-toggle), entao trocar de
+    base/valor/estatistica continua sendo responsabilidade dele.
+  - script_mun_folheto.js cuida apenas do que e novo: a tabela de barras, o
+    hero e a impressao.
+
+O QUE MUDA em relacao a pagina publica:
+  1. Os 4 toggles espalhados por 3 pontos viram uma barra unica e rotulada.
+  2. Hero responde em texto ("supera X%") com regua de quintis.
   3. Estrutura de Receitas sai dos cards e vira a tabela de barras do folheto.
-  4. Plano cartesiano + 2 gráficos de barra viram um slopegraph.
-  5. Seções em faixas full-bleed alternadas, em vez de pilha de cards iguais.
-
-JS próprio (script_mun_folheto.js): o script_mun.js está acoplado aos IDs do
-layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
+  4. Secoes em faixas full-bleed alternadas.
+  5. Botao de baixar (PDF pela caixa de impressao do navegador).
 {% endcomment %}
 {% load static %}
 {% load currency_filters %}
 {% load l10n %}
 
 {% block extra_head %}
-    <title>{{ municipio.name_muni_uf }} · Preview IFEM</title>
+    <title>{{ municipio.name_muni_uf }} - Preview IFEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 
     {% comment %}
-    Barlow Condensed é a fonte de números e títulos do folheto impresso.
-    O site usa só Inter; trazer a segunda família é o que aproxima a tela
-    da publicação.
+    O CSS da pagina publica entra antes do da preview: os blocos reaproveitados
+    (sintese, graficos) dependem dele. style_mun_folheto.css so acrescenta.
     {% endcomment %}
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun.css' %}">
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
 {% endblock extra_head %}
 
@@ -41,36 +46,52 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
 <div class="fx-page">
 
     {# ==================== BARRA DE CONTROLE ==================== #}
+    {% comment %}
+    IDs iguais aos da pagina publica de proposito: o script_mun.js ja escuta
+    #global-base-toggle, #valor-toggle e #estatistica-toggle. Reaproveitar os
+    IDs evita duplicar a logica de filtro em outro arquivo.
+    {% endcomment %}
     <div class="fx-controles">
         <div class="fx-controles-inner">
             <span class="fx-controles-muni">{{ municipio.name_muni_uf }}</span>
 
             <div class="fx-controle">
                 <span class="fx-controle-label">Comparar com</span>
-                <div class="fx-seg" id="fx-base-toggle" role="group" aria-label="Base de comparação">
-                    <button type="button" class="active" data-base="nacional">Brasil</button>
+                <div class="fx-seg" id="global-base-toggle" role="group" aria-label="Base de comparação">
+                    <button class="segmented-option active" type="button" data-base="nacional">Brasil</button>
                     {% if municipio.cod_ibge != '5300108' %}
-                    <button type="button" data-base="estadual">{{ municipio.uf|upper }}</button>
+                    <button class="segmented-option" type="button" data-base="estadual">{{ municipio.uf|upper }}</button>
                     {% endif %}
-                    <button type="button" data-base="faixa">Porte</button>
+                    <button class="segmented-option" type="button" data-base="faixa">Porte</button>
                 </div>
             </div>
 
             <div class="fx-controle">
                 <span class="fx-controle-label">Valores em</span>
-                <div class="fx-seg" id="fx-valor-toggle" role="group" aria-label="Tipo de valor">
-                    <button type="button" class="active" data-mode="pc">Por habitante</button>
-                    <button type="button" data-mode="vr">Totais</button>
+                <div class="fx-seg" id="valor-toggle" role="group" aria-label="Tipo de valor">
+                    <button class="segmented-option active" type="button" data-mode="pc">Por habitante</button>
+                    <button class="segmented-option" type="button" data-mode="vr">Totais</button>
                 </div>
             </div>
 
             <div class="fx-controle">
                 <span class="fx-controle-label">Referência</span>
-                <div class="fx-seg" id="fx-est-toggle" role="group" aria-label="Estatística de referência">
-                    <button type="button" class="active" data-est="media">Média</button>
-                    <button type="button" data-est="mediana">Mediana</button>
+                <div class="fx-seg" id="estatistica-toggle" role="group" aria-label="Estatística de referência">
+                    <button class="segmented-option active" type="button" data-est="media">Média</button>
+                    <button class="segmented-option" type="button" data-est="mediana">Mediana</button>
                 </div>
             </div>
+
+            <button type="button" class="fx-btn-baixar" id="fx-baixar"
+                    title="Abre a caixa de impressao do navegador; escolha &quot;Salvar como PDF&quot;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Baixar</span>
+            </button>
         </div>
     </div>
 
@@ -78,12 +99,11 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
     <section class="fx-faixa fx-faixa--escura fx-hero">
         <div class="fx-container">
             <div class="fx-hero-grid">
-
                 <div>
                     <p class="fx-eyebrow">Perfil fiscal · 2025</p>
                     <h1 class="fx-hero-nome">{{ municipio.name_muni_uf }}</h1>
 
-                    {# O veredito é montado no JS porque muda com a base escolhida. #}
+                    {# Montado no JS: o texto muda com a base escolhida. #}
                     <p class="fx-hero-veredito" id="fx-veredito">
                         <span class="fx-hero-destaque" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
                         <span id="fx-veredito-texto">por habitante em receita corrente.</span>
@@ -111,7 +131,7 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
                         <span class="fx-stat-valor">{{ municipio.populacao24|br_integer }}</span>
                         {% if evolucao_historica.has_2000_data %}
                         <span class="fx-stat-sub {% if evolucao_historica.delta_populacao >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
-                            {% if evolucao_historica.delta_populacao >= 0 %}▲{% else %}▼{% endif %}
+                            {% if evolucao_historica.delta_populacao >= 0 %}&#9650;{% else %}&#9660;{% endif %}
                             {{ evolucao_historica.delta_populacao|br_float }}% desde 2000
                         </span>
                         {% endif %}
@@ -119,21 +139,20 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
 
                     <div>
                         <span class="fx-stat-label" id="fx-rank-label">Posição no Brasil</span>
-                        <span class="fx-stat-valor" id="fx-rank-valor">—</span>
+                        <span class="fx-stat-valor" id="fx-rank-valor">&mdash;</span>
                         <span class="fx-stat-sub" id="fx-rank-sub">em receita por habitante</span>
                     </div>
 
                     {% if evolucao_historica.has_2000_data %}
                     <div>
                         <span class="fx-stat-label">Cresc. da receita</span>
-                        <span class="fx-stat-valor {% if evolucao_historica.delta_rc_pc >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
+                        <span class="fx-stat-valor">
                             {% if evolucao_historica.delta_rc_pc >= 0 %}+{% endif %}{{ evolucao_historica.delta_rc_pc|br_float }}%
                         </span>
-                        <span class="fx-stat-sub" id="fx-cresc-sub">—</span>
+                        <span class="fx-stat-sub" id="fx-cresc-sub">&mdash;</span>
                     </div>
                     {% endif %}
                 </div>
-
             </div>
         </div>
     </section>
@@ -145,26 +164,28 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
                 <p class="fx-eyebrow">De onde vem a receita</p>
                 <h2 class="fx-titulo">Estrutura de Receitas</h2>
                 <p class="fx-dek">
-                    A barra e o percentual mostram quanto dos municípios este supera naquela
-                    rubrica: <strong>vermelho supera poucos, verde supera muitos</strong>.
-                    Clique em uma linha para abrir o detalhamento.
+                    A coluna <strong>Supera</strong> diz quantos municípios este supera em
+                    cada rubrica. Clique em uma linha para abrir o detalhamento.
                 </p>
             </div>
 
             <div class="fx-receitas-grid">
-
-                <div>
+                <div id="receitas-section">
                     {% if revenue_tree %}
                     <div class="fx-tabela">
                         <div class="fx-head">
                             <div class="fx-head-rot">Rubrica</div>
+                            <div class="fx-head-rot">
+                                Supera
+                                <span class="fx-head-sub" id="fx-head-escopo">% dos municípios do país</span>
+                            </div>
                             <div class="fx-head-rot fx-head-muni">
                                 Município
                                 <span class="fx-head-sub" id="fx-head-unidade">R$ por habitante</span>
                             </div>
                             <div class="fx-head-medias">
                                 <div class="fx-head-rot">
-                                    <span id="fx-head-medias-rot">Média</span> · <span id="fx-head-medias-unidade">R$ por habitante</span>
+                                    <span id="fx-head-medias-rot">Média</span> · R$ por habitante
                                 </div>
                                 <div class="fx-head-medias-rule"></div>
                                 <div class="fx-head-medias-cols">
@@ -174,124 +195,304 @@ layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
                             </div>
                         </div>
 
-                        {% for item in revenue_tree %}
-                            {% include "detail_mun/_revenue_item_folheto.html" with item=item level=0 %}
-                        {% endfor %}
-                    </div>
-
-                    <div class="fx-legenda">
-                        <span>Supera</span>
-                        <span class="fx-legenda-escala">
-                            <span class="fx-legenda-swatch" style="background: var(--fx-q1);"></span>
-                            <span class="fx-legenda-swatch" style="background: var(--fx-q2);"></span>
-                            <span class="fx-legenda-swatch" style="background: var(--fx-q3);"></span>
-                            <span class="fx-legenda-swatch" style="background: var(--fx-q4);"></span>
-                            <span class="fx-legenda-swatch" style="background: var(--fx-q5);"></span>
-                        </span>
-                        <span>poucos → muitos municípios</span>
+                        <div id="main-revenue-details-container">
+                            {% for item in revenue_tree %}
+                                {% include "detail_mun/_revenue_item_folheto.html" with item=item level=0 %}
+                            {% endfor %}
+                        </div>
                     </div>
                     {% else %}
                     <div class="fx-vazio">Nenhum detalhamento de receita encontrado para este município.</div>
                     {% endif %}
+
+                    <div class="fx-card fx-como-ler">
+                        <h3 class="fx-card-titulo">Como ler a barra</h3>
+                        <p class="fx-como-ler-frase">
+                            Uma barra de <strong class="fx-exemplo-pct">65%</strong> em Impostos quer
+                            dizer que {{ municipio.name_muni|title }} arrecada
+                            <strong>mais que 65%</strong> <span id="fx-como-ler-escopo">dos municípios do país</span>
+                            nessa rubrica &mdash; e <strong>menos que os outros 35%</strong>.
+                        </p>
+                        <div class="fx-escala">
+                            <div class="fx-escala-barras">
+                                <span class="fx-escala-item" style="--c: var(--fx-q1);"><i></i><b>0&ndash;20</b></span>
+                                <span class="fx-escala-item" style="--c: var(--fx-q2);"><i></i><b>20&ndash;40</b></span>
+                                <span class="fx-escala-item" style="--c: var(--fx-q3);"><i></i><b>40&ndash;60</b></span>
+                                <span class="fx-escala-item" style="--c: var(--fx-q4);"><i></i><b>60&ndash;80</b></span>
+                                <span class="fx-escala-item" style="--c: var(--fx-q5);"><i></i><b>80&ndash;100</b></span>
+                            </div>
+                            <div class="fx-escala-pontas">
+                                <span>arrecada menos que quase todos</span>
+                                <span>arrecada mais que quase todos</span>
+                            </div>
+                        </div>
+                        <p class="fx-como-ler-nota">
+                            As duas colunas da direita mostram quanto o município <em>médio</em>
+                            arrecada na mesma rubrica, para comparação.
+                        </p>
+                    </div>
                 </div>
 
-                <div class="fx-card">
-                    <h3 class="fx-card-titulo">Composição</h3>
-                    <p class="fx-card-dek">Participação de cada rubrica no total. Clique numa fatia para abrir o nível seguinte.</p>
+                <div class="fx-coluna-lateral">
+    <div class="lg:col-span-5 flex flex-col gap-6">
+        <div class="flex flex-col">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Composição da Receita</h4>
+                </div>
+                <div class="text-[11px] font-medium text-slate-400 mb-6 leading-relaxed">
+                    Veja a proporção de cada tipo de receita.
+                </div>
+                <select id="chart-category-select" class="select-clean mb-6 bg-slate-50 border-slate-200 text-sm font-semibold text-slate-700 rounded-lg w-full p-2.5 outline-none transition-colors focus:border-[#103758]">
+                    <option value="main_categories">Carregando categorias...</option>
+                </select>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-                    <div class="fx-trilha" id="fx-trilha"></div>
+        <div class="flex flex-col">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Densidade Fiscal Nacional</h4>
+                </div>
+                <div class="text-[11px] font-medium text-slate-400 mb-6 leading-relaxed">
+                    A linha tracejada mostra a posição do município. Quanto mais alta a curva, maior o volume de cidades nesta faixa de valor.
+                </div>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="densidadeReceita"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                    <div class="fx-donut-wrap">
-                        <canvas id="fx-donut"></canvas>
-                        <div class="fx-donut-centro">
-                            <span class="fx-donut-centro-label" id="fx-donut-label">Total</span>
-                            <span class="fx-donut-centro-valor" id="fx-donut-total">—</span>
+    {# ============ SINTESE FISCAL (bloco reaproveitado da pagina publica) ============ #}
+    <section class="fx-faixa fx-faixa--branca fx-legado">
+        <div class="fx-container">
+    <section>
+        <div class="mb-6">
+            <div class="section-heading mb-1">
+                <span>Síntese Fiscal e Demográfica (2000 - 2025)</span>
+            </div>
+            <div class="text-[16px] font-medium text-slate-400 flex items-center gap-1.5 ml-1">
+                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                * Valores financeiros corrigidos pela inflação para 2025
+            </div>
+        </div>
+{% if evolucao_historica.has_2000_data and evolucao_historica.delta_rc_pc != 0 and evolucao_historica.delta_rc_pc != '0' and evolucao_historica.delta_rc_pc != 'N/A' and evolucao_historica.delta_populacao != 0 and evolucao_historica.delta_populacao != '0' and evolucao_historica.delta_populacao != 'N/A' %}
+        <section class="mb-12">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div class="lg:col-span-7 bg-[#f8fafc] rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    
+                    <div class="mb-8">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-money-bill-trend-up text-emerald-600 text-sm"></i>
+                            </div>
+                            <p class="text-slate-600 leading-relaxed text-sm">
+                                A <strong class="text-slate-800">Receita por Habitante</strong> 
+                                {% if evolucao_historica.delta_rc_pc >= 0 %}
+                                    cresceu <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-100">+{{ evolucao_historica.delta_rc_pc|floatformat:1 }}%</span>
+                                {% else %}
+                                    caiu <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_rc_pc|floatformat:1 }}%</span>
+                                {% endif %}
+                                entre 2000 e 2025.<br><span class="text-[0.8rem] opacity-80">No mesmo período, a média dos municípios variou <strong class="text-slate-700" id="val-media-rc">316%</strong>.</span>
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-[#103758]/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-users text-[#103758] text-[0.8rem]"></i>
+                            </div>
+                            <p class="text-slate-600 leading-relaxed text-sm">
+                                A <strong class="text-slate-800">População</strong> do município 
+                                {% if evolucao_historica.delta_populacao >= 0 %}
+                                    aumentou <span class="bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-100">+{{ evolucao_historica.delta_populacao|floatformat:1 }}%</span>
+                                {% else %}
+                                    teve queda de <span class="bg-rose-50 text-rose-700 font-bold px-1.5 py-0.5 rounded border border-rose-100">{{ evolucao_historica.delta_populacao|floatformat:1 }}%</span>
+                                {% endif %}
+                                neste intervalo de tempo.<br><span class="text-[0.8rem] opacity-80">Enquanto o crescimento populacional médio dos municípios foi de <strong class="text-slate-700" id="val-media-pop">15%</strong>.</span>
+                            </p>
                         </div>
                     </div>
 
-                    <div class="fx-legenda-donut" id="fx-donut-legenda"></div>
+                    <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Base para Ranking</h4>
+                                <div id="timeline-toggle" class="segmented">
+                                    <button class="segmented-option active" type="button" data-mode="ranking">Ranking</button>
+                                    <button class="segmented-option" type="button" data-mode="percentil">Percentil</button>
+                                    <button class="segmented-option" type="button" data-mode="quintil">Quintil</button>
+                                    <button class="segmented-option" type="button" data-mode="decil">Decil</button>
+                                </div>
+                        </div>
+
+                        <div class="relative w-full h-[320px] mt-12 mb-8 mx-auto border-l-2 border-b-2 border-slate-200" id="cartesian-plane">
+                            <div class="absolute w-full h-px bg-slate-100 top-1/4"></div>
+                            <div class="absolute w-full h-px bg-slate-100 top-2/4"></div>
+                            <div class="absolute w-full h-px bg-slate-100 top-3/4"></div>
+
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                                <line id="cartesian-line" x1="25%" y1="50%" x2="75%" y2="50%" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 4" />
+                            </svg>
+
+                            <div id="circle-container-2000" class="absolute transform -translate-x-1/2 translate-y-1/2 flex flex-col items-center transition-all duration-700 ease-out z-10" style="left: 25%; bottom: 50%;">
+                                <span class="absolute bottom-full mb-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 rounded-full">2000</span>
+                                <div id="circle-2000" class="timeline-circle-dynamic w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
+                                    data-quintil="{{ municipio.quintil00|default:'-' }}" 
+                                    data-decil="{{ municipio.decil00|default:'-' }}"
+                                    data-percentil="{{ municipio.percentil00_n|default:'0' }}"
+                                    data-ranking="{{ municipio.rank_nacional_00|unlocalize|default:'' }}"
+                                    data-total-rank="{{ municipio.total_nacional_00|unlocalize|default:'5570' }}">
+                                    <span class="dynamic-value text-lg sm:text-2xl font-black leading-none"></span>
+                                    <span class="dynamic-label text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 mt-0.5 leading-none"></span>
+                                </div>
+                            </div>
+
+                            <div id="circle-container-2024" class="absolute transform -translate-x-1/2 translate-y-1/2 flex flex-col items-center transition-all duration-700 ease-out z-10" style="left: 75%; bottom: 50%;">
+                                <span class="absolute bottom-full mb-1 text-xs font-bold text-[var(--fnp-dark-blue)] uppercase tracking-widest bg-white/80 px-2 rounded-full">2025</span>
+                                <div id="circle-2024" class="timeline-circle-dynamic w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300" 
+                                    data-quintil="{{ municipio.quintil24|default:'-' }}" 
+                                    data-decil="{{ municipio.decil24|default:'-' }}"
+                                    data-percentil="{{ municipio.percentil24_n|default:'0' }}"
+                                    data-ranking="{{ municipio.rank_nacional|unlocalize|default:'' }}"
+                                    data-total-rank="{{ municipio.total_nacional|unlocalize|default:'5479' }}">
+                                    <span class="dynamic-value text-lg sm:text-2xl font-black leading-none"></span>
+                                    <span class="dynamic-label text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 mt-0.5 leading-none"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p id="timeline-dynamic-summary" class="text-center text-sm text-slate-500 mt-6 px-4 leading-relaxed bg-white p-3 rounded-lg border border-slate-100" data-muni-name="{{ municipio.name_muni|escapejs }}"></p>
+
+                        <div id="timeline-ruler-container" class="mt-8 px-4 w-full max-w-sm mx-auto hidden relative h-16"></div>
+
+                    </div>
+
                 </div>
 
             </div>
+
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da Receita por Habitante (2000-2025)</h4>
+                    <div class="flex-1 relative min-h-[160px]">
+                        <canvas id="chartReceita"></canvas>
+                    </div>
+                    <div class="flex items-center justify-center gap-4 mt-3 text-[10px] font-bold text-slate-400 uppercase">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#103758] inline-block"></span>{{ municipio.name_muni }}</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#647080] inline-block"></span><span class="lbl-media-base-chart">Média dos municípios (Nacional)</span></span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex-1 flex flex-col">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Variação da População (2000-2025)</h4>
+                    <div class="flex-1 relative min-h-[160px]">
+                        <canvas id="chartPop"></canvas>
+                    </div>
+                    <div class="flex items-center justify-center gap-4 mt-3 text-[10px] font-bold text-slate-400 uppercase">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#EEAF19] inline-block"></span>{{ municipio.name_muni }}</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#647080] inline-block"></span><span class="lbl-media-base-chart">Média dos municípios (Nacional)</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script id="evolution-compare-data" type="application/json">
+        {
+            "nome_muni": "{{ municipio.name_muni|escapejs }}",
+            "receita": {
+                "mun": "{{ evolucao_historica.delta_rc_pc|default:'0' }}",
+                "est": "{{ media_estadual_rc_pc|default:'0' }}",
+                "nac": "{{ media_nacional_rc_pc|default:'0' }}",
+                "faixa": "{{ media_faixa_rc_pc|default:'0' }}"
+            },
+            "populacao": {
+                "mun": "{{ evolucao_historica.delta_populacao|default:'0' }}",
+                "est": "{{ media_estadual_pop|default:'0' }}",
+                "nac": "{{ media_nacional_pop|default:'0' }}",
+                "faixa": "{{ media_faixa_pop|default:'0' }}"
+            }
+        }
+        </script>
+        </section>
+
+        {% else %}
+        <section class="mb-12">
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl py-12 px-6 flex flex-col items-center justify-center gap-3 text-center text-slate-400 shadow-sm">
+                <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="font-medium">Dados base do ano 2000 ou 2025 não encontrados ou inválidos para gerar o histórico comparativo.</span>
+            </div>
+        </section>
+        {% endif %}
+
+    </section>
         </div>
     </section>
 
-    {# ==================== TRAJETÓRIA 2000 → 2025 ==================== #}
-    {% if evolucao_historica.has_2000_data %}
-    <section class="fx-faixa fx-faixa--branca">
+    {# ============ RISCOS CLIMATICOS (bloco reaproveitado da pagina publica) ============ #}
+    <section class="fx-faixa fx-faixa--creme fx-legado">
         <div class="fx-container">
-            <div class="fx-secao-head">
-                <p class="fx-eyebrow">Um quarto de século</p>
-                <h2 class="fx-titulo">Trajetória 2000 → 2025</h2>
-                <p class="fx-dek">
-                    Cada linha parte de 100 no ano 2000. A inclinação é o crescimento
-                    acumulado — quanto mais íngreme, mais cresceu. A pergunta que importa
-                    não é quanto o município cresceu, mas se cresceu mais ou menos que os outros.
-                </p>
-            </div>
-
-            <div class="fx-slope-grid">
-                <div class="fx-card">
-                    <h3 class="fx-card-titulo">Receita por habitante</h3>
-                    <p class="fx-card-dek">Índice 100 = valor de 2000, corrigido.</p>
-                    <div class="fx-slope-wrap"><canvas id="fx-slope-receita"></canvas></div>
-                    <p class="fx-slope-nota" id="fx-nota-receita"></p>
-                </div>
-
-                <div class="fx-card">
-                    <h3 class="fx-card-titulo">População</h3>
-                    <p class="fx-card-dek">Índice 100 = população de 2000.</p>
-                    <div class="fx-slope-wrap"><canvas id="fx-slope-pop"></canvas></div>
-                    <p class="fx-slope-nota" id="fx-nota-pop"></p>
-                </div>
-            </div>
-        </div>
-    </section>
-    {% endif %}
-
-    {# ==================== RISCOS CLIMÁTICOS ==================== #}
     {% if adapta_brasil_data %}
-    <section class="fx-faixa fx-faixa--creme">
-        <div class="fx-container">
-            <div class="fx-secao-head">
-                <p class="fx-eyebrow">AdaptaBrasil</p>
-                <h2 class="fx-titulo">Riscos Climáticos</h2>
-                <p class="fx-dek">Grau de risco por setor estratégico, do mais ao menos exposto.</p>
-            </div>
+    <section class="mb-12">
 
-            <div class="fx-card" style="padding: 0; overflow: hidden;">
-                <div style="overflow-x: auto;">
-                    <table class="fx-riscos-tabela">
-                        <thead>
-                            <tr>
-                                <th scope="col">Setor estratégico</th>
-                                <th scope="col">Subsetor</th>
-                                <th scope="col">Grau de risco</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in adapta_brasil_data %}
-                            <tr>
-                                <td>{{ item.setor }}</td>
-                                <td>{{ item.subsetor }}</td>
-                                <td><span class="fx-risco-tag {{ item.cor }}">{{ item.grau }}</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+        <div class="section-heading mb-1">
+                <span>Riscos Climáticos AdaptaBrasil</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-[#103758] font-semibold border-b border-slate-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-4">Setor Estratégico</th>
+                            <th scope="col" class="px-6 py-4">Subsetor</th>
+                            <th scope="col" class="px-6 py-4">Grau de Risco</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for item in adapta_brasil_data %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">{{ item.setor }}</td>
+                            <td class="px-6 py-4">{{ item.subsetor }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="{{ item.cor }} text-white text-xs font-semibold px-2.5 py-1 rounded-md">{{ item.grau }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </section>
     {% endif %}
+        </div>
+    </section>
 
 </div>
 
-{% comment %}
-==================== DADOS PARA O JS ====================
-localize off: sem isso o Django escreveria "4812,5" (vírgula decimal) e o
-JSON.parse quebraria.
-{% endcomment %}
+{# ==================== DADOS ==================== #}
+{{ chart_data_json|json_script:"chart-data" }}
+{{ percentile_data_json|json_script:"percentile-data" }}
+{{ data|json_script:"mun-data" }}
+
+<script id="municipio-data" type="application/json">
+{
+    "rank_nacional": {{ municipio.rank_nacional|default_if_none:"null" }},
+    "total_nacional": {{ municipio.total_nacional|default_if_none:"null" }},
+    "rank_estadual": {{ municipio.rank_estadual|default_if_none:"null" }},
+    "total_estadual": {{ municipio.total_estadual|default_if_none:"null" }},
+    "rank_faixa": {{ municipio.rank_faixa|default_if_none:"null" }},
+    "total_faixa": {{ municipio.total_faixa|default_if_none:"null" }}
+}
+</script>
+
 {% localize off %}
 <script id="fx-data" type="application/json">
 {
@@ -311,17 +512,17 @@ JSON.parse quebraria.
         "receita_mun": {{ evolucao_historica.delta_rc_pc|default_if_none:"null" }},
         "receita_nac": {{ media_nacional_rc_pc|default_if_none:"null" }},
         "receita_est": {{ media_estadual_rc_pc|default_if_none:"null" }},
-        "receita_faixa": {{ media_faixa_rc_pc|default_if_none:"null" }},
-        "pop_mun": {{ evolucao_historica.delta_populacao|default_if_none:"null" }},
-        "pop_nac": {{ media_nacional_pop|default_if_none:"null" }},
-        "pop_est": {{ media_estadual_pop|default_if_none:"null" }},
-        "pop_faixa": {{ media_faixa_pop|default_if_none:"null" }}
+        "receita_faixa": {{ media_faixa_rc_pc|default_if_none:"null" }}
     }
 }
 </script>
 {% endlocalize %}
 
-{{ chart_data_json|json_script:"fx-chart-data" }}
-
-<script defer src="{% static 'detail_mun/js/script_mun_folheto.js' %}"></script>
+{% comment %}
+Ordem importa: script_mun.js primeiro (monta graficos e filtros),
+script_mun_folheto.js depois, so acrescentando o comportamento novo.
+{% endcomment %}
+<script src="{% static 'detail_mun/js/script_mun.js' %}"></script>
+<script src="{% static 'detail_mun/js/script_density_mun.js' %}"></script>
+<script src="{% static 'detail_mun/js/script_mun_folheto.js' %}"></script>
 {% endblock content %}

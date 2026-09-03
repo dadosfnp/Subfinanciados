@@ -1,23 +1,28 @@
 /* ============================================================================
- * script_mun_folheto.js — página de preview do detalhe do município
+ * script_mun_folheto.js — complemento da página de preview do município
  * ----------------------------------------------------------------------------
- * Autônomo de propósito. O script_mun.js está acoplado aos IDs do layout
- * antigo (kpi-card, cartesian-plane, timeline-ruler, chart-category-select) e
- * lançaria erros nesta página, que não tem nenhum deles.
+ * NÃO substitui o script_mun.js: roda DEPOIS dele e cuida apenas do que é novo
+ * nesta página. Tudo que já existia continua sendo responsabilidade do script
+ * original, de propósito:
  *
- * Responsabilidades:
- *   1. Estado único (base / modo de valor / estatística) e os 3 toggles
- *   2. Tabela de receitas — cor das barras e árvore expansível
- *   3. Hero — veredito, régua de quintis e ranking
- *   4. Donut de composição com drill-down
- *   5. Slopegraphs de trajetória 2000 → 2025
+ *   script_mun.js  → toggles (base / per capita / média-mediana), gráficos de
+ *                    composição, densidade, síntese fiscal, ordenação das
+ *                    rubricas por valor, sticky header, rankings.
+ *   este arquivo   → tabela de barras do folheto, hero com régua de quintis,
+ *                    e o botão de baixar.
+ *
+ * A tabela reaproveita as classes que o script original já manipula
+ * (.valor-per-capita / .valor-absoluto / .estatistica-media / .estatistica-mediana),
+ * então os toggles de valor e de estatística funcionam aqui sem uma linha extra.
  * ========================================================================== */
 (function () {
   'use strict';
 
   // ─── Paleta ───────────────────────────────────────────────────────────────
-  // Espelha FNP_Q1..Q5 (folheto-ifem/python/core/tokens.py). `txt` é a variante
-  // escurecida para texto — ver comentário no topo de style_mun_folheto.css.
+  // Espelha FNP_Q1..Q5 (folheto-ifem/python/core/tokens.py) e o REVENUE_COLORS
+  // do script_mun.js. `txt` é a variante escurecida para texto: no papel o
+  // número sai na cor da barra, mas amarelo e verde-claro sobre branco ficam
+  // em ~2:1 de contraste. Ver o topo de style_mun_folheto.css.
   var QUINTIS = [
     { bar: '#A81C21', txt: '#A81C21' }, // 1 — supera até 20%
     { bar: '#E47326', txt: '#B0530E' }, // 2 — até 40%
@@ -27,13 +32,10 @@
   ];
   var SEM_DADO = { bar: '#B9BFC7', txt: '#6B7280' };
 
-  var AZUL_ESCURO = '#122747';
-  var AZUL_MEDIO = '#3D6FA8';
-
   /**
-   * Converte um percentil (0–100) no par de cores do quintil correspondente.
-   * Faixas idênticas às de `cor_por_percentil` no folheto: <=20, <=40, <=60,
-   * <=80, resto. Fora de faixa ou sem valor cai no cinza de "sem dado".
+   * Converte um percentil (0–100) no par de cores do quintil.
+   * Faixas idênticas às de `cor_por_percentil` do folheto: <=20, <=40, <=60,
+   * <=80, resto. Sem valor ou negativo cai no cinza de "sem dado".
    */
   function corPorPercentil(pct) {
     if (pct === null || pct === undefined || isNaN(pct) || pct < 0) return SEM_DADO;
@@ -44,11 +46,9 @@
     return QUINTIS[4];
   }
 
-  // ─── Formatação ───────────────────────────────────────────────────────────
   var fmtInt = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   var fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-  /** R$ com abreviação de milhar/milhão, como `_reais` do folheto. */
   function reais(v) {
     if (v === null || v === undefined || isNaN(v)) return '—';
     var abs = Math.abs(v);
@@ -57,58 +57,38 @@
     return 'R$ ' + fmtInt.format(v);
   }
 
-  // ─── Dados vindos do template ─────────────────────────────────────────────
-  /**
-   * Lê um <script type="application/json"> por id.
-   *
-   * Tolera dupla codificação: a view entrega `chart_data_json` já serializado
-   * com json.dumps() e o filtro |json_script serializa de novo, então o
-   * primeiro parse devolve uma string em vez do objeto. Parseia de novo
-   * nesse caso em vez de exigir mudança na view, que é compartilhada com a
-   * página pública.
-   */
-  function lerJSON(id) {
-    var el = document.getElementById(id);
+  var DADOS = (function () {
+    var el = document.getElementById('fx-data');
     if (!el) return null;
     try {
-      var valor = JSON.parse(el.textContent);
-      if (typeof valor === 'string') valor = JSON.parse(valor);
-      return valor;
+      return JSON.parse(el.textContent);
     } catch (erro) {
-      console.error('[folheto] JSON inválido em #' + id, erro);
+      console.error('[folheto] #fx-data inválido', erro);
       return null;
     }
-  }
+  })();
 
-  var DADOS = lerJSON('fx-data');
-  var COMPOSICAO = lerJSON('fx-chart-data') || {};
+  if (!DADOS) return;
 
-  if (!DADOS) {
-    console.error('[folheto] #fx-data ausente — a página não pode ser montada.');
-    return;
-  }
-
-  // ─── Estado ───────────────────────────────────────────────────────────────
-  var estado = { base: 'nacional', modo: 'pc', est: 'media' };
-
-  var ROTULO_BASE = {
-    nacional: { escopo: 'dos municípios do país', posicao: 'Posição no Brasil', curto: 'Brasil' },
-    estadual: { escopo: 'dos municípios do estado', posicao: 'Posição em ' + (DADOS.uf || '').toUpperCase(), curto: (DADOS.uf || '').toUpperCase() },
-    faixa: { escopo: 'dos municípios do mesmo porte', posicao: 'Posição no porte', curto: 'mesmo porte' }
+  var ESCOPO = {
+    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', posicao: 'Posição no Brasil', grupo: 'Brasil' },
+    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', posicao: 'Posição em ' + (DADOS.uf || '').toUpperCase(), grupo: (DADOS.uf || '').toUpperCase() },
+    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', posicao: 'Posição no porte', grupo: 'mesmo porte' }
   };
+
+  var baseAtual = 'nacional';
 
   // ==========================================================================
   // 1. TABELA DE RECEITAS
   // ==========================================================================
-  var linhas = Array.prototype.slice.call(document.querySelectorAll('.fx-row'));
-
   /**
-   * Repinta uma linha conforme a base ativa: barra, número do percentil e
-   * valor em R$ compartilham a mesma cor, então basta escrever duas custom
-   * properties no elemento e deixar o CSS distribuir.
+   * Repinta uma linha conforme a base ativa. Barra, percentual e valor em R$
+   * compartilham a cor, então basta escrever duas custom properties na linha e
+   * deixar o CSS distribuir.
    */
   function pintarLinha(linha) {
-    var bruto = linha.getAttribute('data-pct-' + estado.base);
+    var bruto = linha.getAttribute('data-pct-' + baseAtual);
+    // Com L10N ligado o Django escreve "66,0"; normaliza antes de converter.
     var pct = bruto === null || bruto === '' ? null : parseFloat(String(bruto).replace(',', '.'));
     var temDado = pct !== null && !isNaN(pct) && pct >= 0;
     var cor = corPorPercentil(temDado ? pct : null);
@@ -119,10 +99,23 @@
 
     var elPct = linha.querySelector('.fx-pct');
     var elBarra = linha.querySelector('.fx-bar-fill');
+    var elSupera = linha.querySelector('.fx-supera');
+    var nome = ((linha.querySelector('.fx-nome') || {}).textContent || 'esta rubrica').trim();
 
     if (elPct) elPct.textContent = temDado ? Math.round(pct) + '%' : '—';
     if (elBarra) elBarra.style.width = temDado ? Math.max(pct, 0) + '%' : '0%';
+
+    // Tooltip com as DUAS leituras: o percentual sozinho contava metade da
+    // história — "supera 66%" não deixa claro que 34% ficam acima.
+    if (elSupera) {
+      elSupera.title = temDado
+        ? 'Em ' + nome + ', arrecada mais que ' + Math.round(pct) + '% e menos que ' +
+          (100 - Math.round(pct)) + '% ' + ESCOPO[baseAtual].frase + '.'
+        : 'Sem dado comparativo para esta rubrica.';
+    }
   }
+
+  var linhas = Array.prototype.slice.call(document.querySelectorAll('.fx-row'));
 
   function pintarTabela() {
     linhas.forEach(pintarLinha);
@@ -144,12 +137,10 @@
   linhas.forEach(function (linha) {
     if (!linha.classList.contains('fx-clickable')) return;
 
-    linha.addEventListener('click', function () {
-      alternarLinha(linha);
-    });
+    linha.addEventListener('click', function () { alternarLinha(linha); });
 
-    // Teclado: a linha é role="button", então Enter e Espaço precisam agir
-    // como clique — sem isso a árvore fica inacessível fora do mouse.
+    // A linha é role="button": Enter e Espaço precisam agir como clique, senão
+    // a árvore fica inacessível fora do mouse.
     linha.addEventListener('keydown', function (evento) {
       if (evento.key !== 'Enter' && evento.key !== ' ') return;
       evento.preventDefault();
@@ -167,22 +158,24 @@
   var elRankValor = document.getElementById('fx-rank-valor');
   var elRankSub = document.getElementById('fx-rank-sub');
   var elCrescSub = document.getElementById('fx-cresc-sub');
+  var elHeadEscopo = document.getElementById('fx-head-escopo');
+  var elComoLerEscopo = document.getElementById('fx-como-ler-escopo');
   var quintisRegua = Array.prototype.slice.call(document.querySelectorAll('.fx-regua-q'));
 
   /**
    * Percentil geral do município na base ativa.
    *
-   * O model só expõe o percentil nacional (percentil24_n). Para estado e porte
-   * derivamos da posição no ranking pela regra oficial do IFEM
+   * O model só expõe o percentil nacional (percentil24_n). Estado e porte saem
+   * da posição no ranking pela regra oficial do IFEM
    * (folheto-ifem/python/core/paleta_ranking.py):
    *     percentil = (total - posição) / total * 100
    * Posição 1 = maior receita por habitante, logo percentil ~100.
    */
   function percentilGeral() {
-    if (estado.base === 'nacional' && DADOS.percentil_nacional !== null && DADOS.percentil_nacional !== undefined) {
+    if (baseAtual === 'nacional' && DADOS.percentil_nacional !== null && DADOS.percentil_nacional !== undefined) {
       return DADOS.percentil_nacional;
     }
-    var r = (DADOS.rank || {})[estado.base];
+    var r = (DADOS.rank || {})[baseAtual];
     if (!r || !r.total || !r.pos) return null;
     return (r.total - r.pos) / r.total * 100;
   }
@@ -191,26 +184,20 @@
     var pct = percentilGeral();
     var temDado = pct !== null && !isNaN(pct);
     var cor = corPorPercentil(temDado ? pct : null);
-    var rotulos = ROTULO_BASE[estado.base];
+    var esc = ESCOPO[baseAtual];
 
-    // Valor em destaque acompanha o toggle de per capita / total.
-    if (elVeredValor) {
-      elVeredValor.textContent = estado.modo === 'pc'
-        ? reais(DADOS.receita.pc)
-        : reais(DADOS.receita.total);
-    }
+    if (elHeadEscopo) elHeadEscopo.textContent = esc.curto;
+    if (elComoLerEscopo) elComoLerEscopo.textContent = esc.frase;
+    if (elVeredValor) elVeredValor.textContent = reais(DADOS.receita.pc);
 
     if (elVeredito) {
-      var unidade = estado.modo === 'pc' ? 'por habitante em receita corrente' : 'de receita corrente';
       if (temDado) {
-        var arredondado = Math.round(pct);
-        // "apenas" só entra abaixo da mediana: acima dela a palavra soaria
-        // como ressalva onde o dado é, na verdade, bom.
-        var adverbio = arredondado > 50 ? '' : 'apenas ';
-        elVeredito.innerHTML = unidade + '. Supera <strong style="color:' + cor.bar + '">' +
-          adverbio + arredondado + '%</strong> ' + rotulos.escopo + '.';
+        var n = Math.round(pct);
+        elVeredito.innerHTML = 'por habitante em receita corrente. Arrecada mais que ' +
+          '<strong style="color:' + cor.bar + '">' + n + '%</strong> ' + esc.frase +
+          ' <span class="fx-veredito-inverso">e menos que os outros ' + (100 - n) + '%</span>.';
       } else {
-        elVeredito.innerHTML = unidade + '. <span style="opacity:.7">Sem dado comparativo para esta base.</span>';
+        elVeredito.innerHTML = 'por habitante em receita corrente. <span style="opacity:.7">Sem dado comparativo para esta base.</span>';
       }
     }
 
@@ -219,34 +206,24 @@
       elMarcador.style.display = temDado ? '' : 'none';
     }
 
-    // Acende só o quintil em que o município caiu; os outros ficam esmaecidos.
     var quintilAtivo = temDado ? Math.min(Math.floor(pct / 20) + 1, 5) : 0;
     quintisRegua.forEach(function (q) {
       q.classList.toggle('is-ativo', Number(q.getAttribute('data-q')) === quintilAtivo);
     });
 
-    var r = (DADOS.rank || {})[estado.base];
-    if (elRankLabel) elRankLabel.textContent = rotulos.posicao;
-    if (elRankValor) {
-      elRankValor.textContent = r && r.pos && r.total
-        ? fmtInt.format(r.pos) + 'º'
-        : '—';
-    }
-    if (elRankSub) {
-      elRankSub.textContent = r && r.total
-        ? 'de ' + fmtInt.format(r.total) + ' municípios'
-        : 'sem ranking disponível';
-    }
+    var r = (DADOS.rank || {})[baseAtual];
+    if (elRankLabel) elRankLabel.textContent = esc.posicao;
+    if (elRankValor) elRankValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : '—';
+    if (elRankSub) elRankSub.textContent = r && r.total ? 'de ' + fmtInt.format(r.total) + ' municípios' : 'sem ranking disponível';
 
-    // Comparação do crescimento contra o grupo da base ativa.
     if (elCrescSub) {
       var c = DADOS.crescimento || {};
-      var mediaGrupo = { nacional: c.receita_nac, estadual: c.receita_est, faixa: c.receita_faixa }[estado.base];
+      var mediaGrupo = { nacional: c.receita_nac, estadual: c.receita_est, faixa: c.receita_faixa }[baseAtual];
       if (c.receita_mun !== null && mediaGrupo !== null && mediaGrupo !== undefined && !isNaN(mediaGrupo)) {
-        var diferenca = c.receita_mun - mediaGrupo;
-        elCrescSub.textContent = (diferenca >= 0 ? 'acima' : 'abaixo') + ' da média ' +
-          rotulos.curto + ' (' + fmt1.format(mediaGrupo) + '%)';
-        elCrescSub.className = 'fx-stat-sub ' + (diferenca >= 0 ? 'is-positivo' : 'is-negativo');
+        var dif = c.receita_mun - mediaGrupo;
+        elCrescSub.textContent = (dif >= 0 ? 'acima' : 'abaixo') + ' da média ' + esc.grupo +
+          ' (' + fmt1.format(mediaGrupo) + '%)';
+        elCrescSub.className = 'fx-stat-sub ' + (dif >= 0 ? 'is-positivo' : 'is-negativo');
       } else {
         elCrescSub.textContent = 'sem comparativo';
         elCrescSub.className = 'fx-stat-sub';
@@ -255,418 +232,92 @@
   }
 
   // ==========================================================================
-  // 3. DONUT DE COMPOSIÇÃO
-  // ==========================================================================
-  var TITULO_CHAVE = {
-    main_categories: 'Receita corrente',
-    imposto_taxas_contribuicoes: 'Impostos, Taxas e Contrib.',
-    imposto: 'Impostos',
-    taxas: 'Taxas',
-    contribuicoes_melhoria: 'Contribuições de Melhoria',
-    contribuicoes: 'Contribuições',
-    transferencias_correntes: 'Transferências Correntes',
-    transferencias_uniao: 'Transferências da União',
-    transferencias_estado: 'Transferências dos Estados',
-    outras_receitas: 'Outras Receitas'
-  };
-
-  // Qual fatia abre qual nível. Só as combinações que existem em chart_data —
-  // fatia sem entrada aqui simplesmente não é clicável.
-  var DRILL = {
-    main_categories: {
-      'Impostos, Taxas e Contribuições de Melhoria': 'imposto_taxas_contribuicoes',
-      'Contribuições': 'contribuicoes',
-      'Transf. Correntes': 'transferencias_correntes',
-      'Outras': 'outras_receitas'
-    },
-    imposto_taxas_contribuicoes: {
-      'Impostos': 'imposto',
-      'Taxas': 'taxas',
-      'Contrib. Melhoria': 'contribuicoes_melhoria'
-    },
-    transferencias_correntes: {
-      'União': 'transferencias_uniao',
-      'Estados': 'transferencias_estado'
-    }
-  };
-
-  // Paleta do donut: azuis do folheto em degradê, com o amarelo da marca para
-  // a última fatia. Categórica de verdade — a escala de quintis é semântica
-  // (bom/ruim) e não pode ser reaproveitada onde a cor só separa rubricas.
-  var CORES_DONUT = ['#1B3A6B', '#3D6FA8', '#6E9BC9', '#A8C3DE', '#C99A1F', '#E4C05F', '#8FA8BF', '#5C7A99'];
-
-  var canvasDonut = document.getElementById('fx-donut');
-  var elTrilha = document.getElementById('fx-trilha');
-  var elLegenda = document.getElementById('fx-donut-legenda');
-  var elTotal = document.getElementById('fx-donut-total');
-  var elTotalLabel = document.getElementById('fx-donut-label');
-  var donut = null;
-  var caminho = ['main_categories']; // pilha de navegação do drill-down
-
-  function temDados(chave) {
-    var d = COMPOSICAO[chave];
-    return !!(d && Array.isArray(d.labels) && d.labels.length);
-  }
-
-  function renderTrilha() {
-    if (!elTrilha) return;
-    elTrilha.innerHTML = '';
-
-    caminho.forEach(function (chave, indice) {
-      if (indice > 0) {
-        var sep = document.createElement('span');
-        sep.className = 'fx-trilha-sep';
-        sep.textContent = '›';
-        elTrilha.appendChild(sep);
-      }
-
-      var ultimo = indice === caminho.length - 1;
-      if (ultimo) {
-        var atual = document.createElement('span');
-        atual.className = 'fx-trilha-atual';
-        atual.textContent = TITULO_CHAVE[chave] || chave;
-        elTrilha.appendChild(atual);
-      } else {
-        var botao = document.createElement('button');
-        botao.type = 'button';
-        botao.textContent = TITULO_CHAVE[chave] || chave;
-        botao.addEventListener('click', function () {
-          caminho = caminho.slice(0, indice + 1);
-          renderDonut();
-        });
-        elTrilha.appendChild(botao);
-      }
-    });
-  }
-
-  function entrarEm(chaveFilha) {
-    if (!temDados(chaveFilha)) return;
-    caminho.push(chaveFilha);
-    renderDonut();
-  }
-
-  function renderLegenda(labels, valores, total, chaveAtual) {
-    if (!elLegenda) return;
-    elLegenda.innerHTML = '';
-
-    labels.forEach(function (label, i) {
-      var filha = (DRILL[chaveAtual] || {})[label];
-      var clicavel = !!(filha && temDados(filha));
-
-      var item = document.createElement(clicavel ? 'button' : 'div');
-      item.className = 'fx-legenda-item' + (clicavel ? ' is-clicavel' : '');
-      if (clicavel) {
-        item.type = 'button';
-        item.addEventListener('click', function () { entrarEm(filha); });
-      }
-
-      var cor = document.createElement('span');
-      cor.className = 'fx-legenda-cor';
-      cor.style.background = CORES_DONUT[i % CORES_DONUT.length];
-
-      var nome = document.createElement('span');
-      nome.className = 'fx-legenda-nome';
-      nome.textContent = label;
-
-      var valor = document.createElement('span');
-      valor.className = 'fx-legenda-valor';
-      valor.textContent = reais(valores[i]);
-
-      var pct = document.createElement('span');
-      pct.className = 'fx-legenda-pct';
-      pct.textContent = total > 0 ? fmt1.format(valores[i] / total * 100) + '%' : '—';
-
-      item.appendChild(cor);
-      item.appendChild(nome);
-      item.appendChild(valor);
-      item.appendChild(pct);
-      elLegenda.appendChild(item);
-    });
-  }
-
-  function renderDonut() {
-    if (!canvasDonut || !window.Chart) return;
-
-    var chaveAtual = caminho[caminho.length - 1];
-    var dados = COMPOSICAO[chaveAtual] || { labels: [], values: [] };
-    var labels = dados.labels || [];
-    var valores = dados.values || [];
-    var total = valores.reduce(function (a, b) { return a + (b || 0); }, 0);
-
-    renderTrilha();
-    renderLegenda(labels, valores, total, chaveAtual);
-
-    if (elTotal) elTotal.textContent = reais(total);
-    if (elTotalLabel) elTotalLabel.textContent = TITULO_CHAVE[chaveAtual] || 'Total';
-
-    if (donut) donut.destroy();
-
-    if (!labels.length) {
-      if (elTotal) elTotal.textContent = '—';
-      return;
-    }
-
-    donut = new window.Chart(canvasDonut.getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: valores,
-          backgroundColor: labels.map(function (_, i) { return CORES_DONUT[i % CORES_DONUT.length]; }),
-          borderColor: '#ffffff',
-          borderWidth: 2,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: {
-          legend: { display: false }, // a lista abaixo do gráfico já é a legenda
-          tooltip: {
-            backgroundColor: AZUL_ESCURO,
-            padding: 10,
-            titleFont: { size: 12 },
-            bodyFont: { size: 12 },
-            callbacks: {
-              label: function (ctx) {
-                var v = ctx.raw || 0;
-                var p = total > 0 ? fmt1.format(v / total * 100) + '%' : '—';
-                return ' ' + reais(v) + ' · ' + p;
-              }
-            }
-          }
-        },
-        onClick: function (_evento, elementos) {
-          if (!elementos.length) return;
-          var label = labels[elementos[0].index];
-          var filha = (DRILL[chaveAtual] || {})[label];
-          if (filha) entrarEm(filha);
-        },
-        onHover: function (evento, elementos) {
-          if (!evento.native) return;
-          var label = elementos.length ? labels[elementos[0].index] : null;
-          var filha = label ? (DRILL[chaveAtual] || {})[label] : null;
-          evento.native.target.style.cursor = filha && temDados(filha) ? 'pointer' : 'default';
-        }
-      }
-    });
-  }
-
-  // ==========================================================================
-  // 4. SLOPEGRAPHS — trajetória 2000 → 2025
+  // 3. SINCRONIA COM O TOGGLE DE BASE
   // ==========================================================================
   /*
-   * Por que índice base 100 e não os valores em R$:
-   * o contexto da view entrega o CRESCIMENTO percentual do município e a média
-   * de crescimento do grupo (media_nacional_rc_pc = 316,73% etc.), mas não a
-   * média nacional em R$ de 2000 e de 2025. Normalizar as duas séries em 100
-   * responde exatamente a pergunta da seção — quem cresceu mais — sem
-   * inventar valores nem exigir query nova. O R$ real do município aparece
-   * na nota abaixo do gráfico.
+   * O script_mun.js é dono do #global-base-toggle e já reage ao clique, mas a
+   * função dele (updateGlobalBase) é interna ao escopo do arquivo e não emite
+   * evento. Em vez de duplicar a lógica, escutamos o mesmo clique: cada script
+   * atualiza o que é seu, sem um chamar o outro.
    */
-  function montarSlope(canvasId, notaId, deltaMun, deltaGrupo, unidade) {
-    var canvas = document.getElementById(canvasId);
-    if (!canvas || !window.Chart) return null;
-    if (deltaMun === null || deltaMun === undefined || isNaN(deltaMun)) return null;
-
-    var temGrupo = deltaGrupo !== null && deltaGrupo !== undefined && !isNaN(deltaGrupo);
-    var finalMun = 100 * (1 + deltaMun / 100);
-    var finalGrupo = temGrupo ? 100 * (1 + deltaGrupo / 100) : null;
-    var acima = temGrupo ? deltaMun >= deltaGrupo : true;
-
-    var datasets = [{
-      label: DADOS.nome,
-      data: [100, finalMun],
-      borderColor: acima ? '#1C9148' : '#A81C21',
-      backgroundColor: acima ? '#1C9148' : '#A81C21',
-      borderWidth: 3,
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      tension: 0
-    }];
-
-    if (temGrupo) {
-      datasets.push({
-        label: 'Média ' + ROTULO_BASE[estado.base].curto,
-        data: [100, finalGrupo],
-        borderColor: AZUL_MEDIO,
-        backgroundColor: AZUL_MEDIO,
-        borderWidth: 2,
-        borderDash: [5, 4],
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        tension: 0
-      });
-    }
-
-    var nota = document.getElementById(notaId);
-    if (nota) {
-      if (temGrupo) {
-        var dif = deltaMun - deltaGrupo;
-        nota.innerHTML = '<strong>' + DADOS.nome + '</strong> cresceu ' + fmt1.format(deltaMun) +
-          '% em ' + unidade + ', ' + (dif >= 0 ? 'acima' : 'abaixo') + ' da média ' +
-          ROTULO_BASE[estado.base].curto + ' (' + fmt1.format(deltaGrupo) + '%) — uma diferença de ' +
-          fmt1.format(Math.abs(dif)) + ' pontos percentuais.';
-      } else {
-        nota.innerHTML = '<strong>' + DADOS.nome + '</strong> cresceu ' + fmt1.format(deltaMun) +
-          '% em ' + unidade + '. Sem média comparável para esta base.';
-      }
-    }
-
-    return new window.Chart(canvas.getContext('2d'), {
-      type: 'line',
-      data: { labels: ['2000', '2025'], datasets: datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: { padding: { right: 12, top: 8 } },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'bottom',
-            labels: { boxWidth: 12, boxHeight: 2, font: { size: 11 }, color: '#6B6B6B' }
-          },
-          tooltip: {
-            backgroundColor: AZUL_ESCURO,
-            padding: 10,
-            callbacks: {
-              label: function (ctx) {
-                return ' ' + ctx.dataset.label + ': índice ' + fmtInt.format(ctx.raw);
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#6B6B6B', font: { size: 12, weight: '600' } }
-          },
-          y: {
-            grid: { color: '#EFEAE0' },
-            border: { display: false },
-            ticks: { color: '#9AA3AE', font: { size: 10 }, maxTicksLimit: 5 }
-          }
-        }
-      }
+  document.querySelectorAll('#global-base-toggle .segmented-option').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+      var base = botao.getAttribute('data-base');
+      if (!base || base === baseAtual) return;
+      baseAtual = base;
+      pintarTabela();
+      atualizarHero();
     });
-  }
-
-  var slopeReceita = null;
-  var slopePop = null;
-
-  function renderSlopes() {
-    var c = DADOS.crescimento || {};
-    var mediaReceita = { nacional: c.receita_nac, estadual: c.receita_est, faixa: c.receita_faixa }[estado.base];
-    var mediaPop = { nacional: c.pop_nac, estadual: c.pop_est, faixa: c.pop_faixa }[estado.base];
-
-    if (slopeReceita) slopeReceita.destroy();
-    if (slopePop) slopePop.destroy();
-
-    slopeReceita = montarSlope('fx-slope-receita', 'fx-nota-receita', c.receita_mun, mediaReceita, 'receita por habitante');
-    slopePop = montarSlope('fx-slope-pop', 'fx-nota-pop', c.pop_mun, mediaPop, 'população');
-  }
-
-  // ==========================================================================
-  // 5. TOGGLES
-  // ==========================================================================
-  var elHeadUnidade = document.getElementById('fx-head-unidade');
-  var elHeadMediasRot = document.getElementById('fx-head-medias-rot');
-  var elHeadMediasUnidade = document.getElementById('fx-head-medias-unidade');
-
-  /** Marca o botão ativo dentro de um grupo e devolve o valor escolhido. */
-  function ativar(container, botao) {
-    Array.prototype.forEach.call(container.querySelectorAll('button'), function (b) {
-      b.classList.toggle('active', b === botao);
-    });
-  }
-
-  function aplicarModoValor() {
-    var perCapita = estado.modo === 'pc';
-
-    document.querySelectorAll('.valor-per-capita').forEach(function (el) {
-      el.classList.toggle('hidden', !perCapita);
-    });
-    document.querySelectorAll('.valor-absoluto').forEach(function (el) {
-      el.classList.toggle('hidden', perCapita);
-    });
-
-    // Em valores totais as colunas de média saem: comparar a média per capita
-    // dos municípios com o valor absoluto deste não diria nada.
-    document.querySelectorAll('.fx-media').forEach(function (el) {
-      el.style.display = perCapita ? '' : 'none';
-    });
-
-    if (elHeadUnidade) elHeadUnidade.textContent = perCapita ? 'R$ por habitante' : 'R$ total';
-    if (elHeadMediasUnidade) elHeadMediasUnidade.textContent = 'R$ por habitante';
-  }
-
-  function aplicarEstatistica() {
-    var media = estado.est === 'media';
-
-    document.querySelectorAll('.estatistica-media').forEach(function (el) {
-      el.classList.toggle('invisible-by-est', !media);
-    });
-    document.querySelectorAll('.estatistica-mediana').forEach(function (el) {
-      el.classList.toggle('invisible-by-est', media);
-    });
-
-    if (elHeadMediasRot) elHeadMediasRot.textContent = media ? 'Média' : 'Mediana';
-
-    // O modo de valor decide se as colunas aparecem; reaplicar evita que a
-    // troca de estatística ressuscite colunas escondidas por "Totais".
-    aplicarModoValor();
-  }
-
-  function ligarToggle(id, chave, aoMudar) {
-    var container = document.getElementById(id);
-    if (!container) return;
-
-    container.addEventListener('click', function (evento) {
-      var botao = evento.target.closest('button');
-      if (!botao || botao.classList.contains('active')) return;
-
-      estado[chave] = botao.getAttribute('data-base') ||
-                      botao.getAttribute('data-mode') ||
-                      botao.getAttribute('data-est');
-      ativar(container, botao);
-      aoMudar();
-    });
-  }
-
-  ligarToggle('fx-base-toggle', 'base', function () {
-    pintarTabela();
-    atualizarHero();
-    renderSlopes();
   });
 
-  ligarToggle('fx-valor-toggle', 'modo', function () {
-    aplicarModoValor();
-    atualizarHero();
-  });
-
-  ligarToggle('fx-est-toggle', 'est', aplicarEstatistica);
-
   // ==========================================================================
-  // 6. BOOT
+  // 4. BAIXAR
   // ==========================================================================
   /*
-   * Abre as rubricas de nível 0 já na carga.
-   *
-   * Duas razões: o folheto impresso mostra os níveis 1 e 2 juntos, sem exigir
-   * interação; e com tudo fechado a tabela fica com 4 linhas ao lado de um
-   * card de composição duas vezes mais alto, deixando um vazio grande na
-   * coluna da esquerda. Os níveis mais profundos seguem fechados.
+   * window.print() em vez de html2canvas/jsPDF: o navegador gera PDF com texto
+   * selecionável e vetorial, respeitando o @media print do CSS, sem carregar
+   * duas bibliotecas nem rasterizar a página. O mapa usa html2canvas porque
+   * precisa capturar o canvas do Mapbox — aqui não é o caso.
+   */
+  var btnBaixar = document.getElementById('fx-baixar');
+  if (btnBaixar) {
+    btnBaixar.addEventListener('click', function () {
+      // Abre a árvore inteira antes de imprimir: o que está recolhido não sai
+      // no papel, e um PDF com metade das rubricas ocultas seria pior que inútil.
+      document.querySelectorAll('.fx-row.fx-clickable').forEach(function (linha) {
+        var alvo = document.getElementById(linha.getAttribute('data-target'));
+        if (alvo && !alvo.classList.contains('is-open')) alternarLinha(linha);
+      });
+      window.setTimeout(function () { window.print(); }, 350);
+    });
+  }
+
+  // ==========================================================================
+  // 5. BOOT
+  // ==========================================================================
+  /*
+   * Abre as rubricas de nível 0 na carga: o folheto impresso mostra os níveis
+   * 1 e 2 sem exigir interação, e com tudo fechado a tabela fica com 4 linhas
+   * ao lado de uma coluna de cards bem mais alta.
    */
   function abrirPrimeiroNivel() {
     document.querySelectorAll('.fx-row.fx-clickable[data-level="0"]').forEach(alternarLinha);
   }
 
+  /*
+   * A legenda do donut e desenhada DENTRO do canvas pelo Chart.js, entao CSS
+   * nao a alcanca. Na pagina publica o card ocupa 40% de 1180px; aqui a coluna
+   * e mais estreita e a mesma legenda saia desproporcional. Em vez de duplicar
+   * a configuracao do grafico, ajustamos a instancia que o script_mun.js ja
+   * criou.
+   */
+  function ajustarLegendasDosGraficos() {
+    if (!window.Chart || !window.Chart.getChart) return;
+
+    ['myChart', 'densidadeReceita'].forEach(function (id) {
+      var canvas = document.getElementById(id);
+      if (!canvas) return;
+      var grafico = window.Chart.getChart(canvas);
+      if (!grafico || !grafico.options || !grafico.options.plugins) return;
+
+      var legenda = grafico.options.plugins.legend;
+      if (!legenda || legenda.display === false) return;
+
+      legenda.labels = Object.assign({}, legenda.labels, {
+        font: { size: 10.5 },
+        boxWidth: 9,
+        boxHeight: 9,
+        padding: 8
+      });
+      grafico.update('none'); // sem reanimar: o grafico ja esta na tela
+    });
+  }
+
   pintarTabela();
   atualizarHero();
-  aplicarEstatistica();
   abrirPrimeiroNivel();
-  renderDonut();
-  renderSlopes();
+
+  // O script_mun.js cria os graficos no DOMContentLoaded dele; um tick a mais
+  // garante que as instancias existam antes de mexer nelas.
+  window.setTimeout(ajustarLegendasDosGraficos, 600);
 })();

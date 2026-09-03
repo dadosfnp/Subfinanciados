@@ -41,17 +41,19 @@ já operam sobre elas e passam a funcionar aqui sem nenhuma linha extra.
             <span class="fx-nome">{{ item.name }}</span>
         </div>
 
-        {# ---- Percentil + barra + valor do município ---- #}
-        <div class="fx-municipio">
+        {# ---- Coluna SUPERA: percentil + barra ---- #}
+        <div class="fx-supera" title="">
             <span class="fx-pct"></span>
             <div class="fx-bar-track">
                 <div class="fx-bar-fill"></div>
             </div>
-            <span class="fx-valor">
-                <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
-                <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
-            </span>
         </div>
+
+        {# ---- Coluna MUNICÍPIO: o valor ---- #}
+        <span class="fx-valor">
+            <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
+            <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
+        </span>
 
         {% comment %}
         Médias UF e Brasil: duas colunas fixas, como no folheto. O toggle

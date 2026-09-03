@@ -68,8 +68,9 @@
 .fx-head {
   display: grid;
   grid-template-columns:
-    minmax(0, 0.92fr)
-    minmax(0, 1.3fr)
+    minmax(0, 0.95fr)
+    minmax(0, 1fr)
+    var(--fx-col-valor)
     var(--fx-col-caixa)
     var(--fx-col-caixa);
   background: var(--fx-blue);
@@ -102,7 +103,7 @@
 /* "MÉDIA · R$ por habitante" cobre as duas colunas de uma vez, com um fio de
    amarração embaixo — repetir a palavra em cada coluna poluía o cabeçalho. */
 .fx-head-medias {
-  grid-column: 3 / span 2;
+  grid-column: 4 / span 2;
   text-align: center;
 }
 
@@ -125,8 +126,9 @@
 .fx-row {
   display: grid;
   grid-template-columns:
-    minmax(0, 0.92fr)
-    minmax(0, 1.3fr)
+    minmax(0, 0.95fr)
+    minmax(0, 1fr)
+    var(--fx-col-valor)
     var(--fx-col-caixa)
     var(--fx-col-caixa);
   align-items: center;
@@ -215,9 +217,9 @@
 .fx-row[data-level="2"] .fx-rubrica { padding-left: 28px; }
 
 /* ---- 4.2 Coluna: município (percentil + barra + valor) ---- */
-.fx-municipio {
+.fx-supera {
   display: grid;
-  grid-template-columns: var(--fx-col-pct) minmax(0, 1fr) var(--fx-col-valor);
+  grid-template-columns: var(--fx-col-pct) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -425,7 +427,7 @@
 /* Título de seção: chapéu curto + título condensado, como as aberturas do
    folheto. Substitui o .section-heading genérico. */
 .fx-eyebrow {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -435,7 +437,7 @@
 }
 
 .fx-titulo {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
   line-height: 1.02;
@@ -480,7 +482,7 @@
 }
 
 .fx-controles-muni {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 19px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -552,7 +554,7 @@
 }
 
 .fx-hero-nome {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: clamp(40px, 7vw, 66px);
   font-weight: 700;
   line-height: 0.94;
@@ -575,7 +577,7 @@
 }
 
 .fx-hero-destaque {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: clamp(34px, 5vw, 46px);
   font-weight: 700;
   line-height: 1;
@@ -646,7 +648,7 @@
 }
 
 .fx-stat-valor {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 27px;
   font-weight: 700;
   line-height: 1.05;
@@ -680,7 +682,7 @@
 }
 
 .fx-card-titulo {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.09em;
@@ -695,122 +697,6 @@
   line-height: 1.5;
   margin: 0 0 16px;
 }
-
-/* Trilha do donut: substitui o <select> de categorias.
-   O select escondia em que nível o usuário estava; a trilha mostra o caminho
-   e permite voltar em um clique. O drill-down continua existindo, agora
-   clicando na própria fatia ou na legenda. */
-.fx-trilha {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  margin-bottom: 14px;
-  min-height: 20px;
-}
-
-.fx-trilha button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 2px 4px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--fx-blue-mid);
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.fx-trilha button:hover { background: var(--fx-cream); text-decoration: underline; }
-.fx-trilha-atual { font-weight: 700; color: var(--fx-blue-dark); padding: 2px 4px; }
-.fx-trilha-sep { color: #B8BFC7; }
-
-.fx-donut-wrap { position: relative; height: 250px; }
-
-/* Centro do donut: o total, para a rosca não ficar com um buraco vazio. */
-.fx-donut-centro {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  text-align: center;
-}
-
-.fx-donut-centro-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fx-muted);
-  /* O furo da rosca tem ~95px: sem limite, "Transferências Correntes"
-     vazava por cima das fatias. */
-  max-width: 108px;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-
-.fx-donut-centro-valor {
-  font-family: "Barlow Condensed", "Inter", sans-serif;
-  font-size: 25px;
-  font-weight: 700;
-  color: var(--fx-blue-dark);
-  line-height: 1.1;
-}
-
-/* Legenda como lista de valores — rótulo dentro da fatia não cabe nas fatias
-   pequenas, e a lista já serve de tabela de apoio. */
-.fx-legenda-donut { margin-top: 14px; display: flex; flex-direction: column; gap: 1px; }
-
-.fx-legenda-item {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 4px;
-  border-radius: 3px;
-  font-size: 12px;
-  border: 0;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-family: inherit;
-  cursor: default;
-}
-
-.fx-legenda-item.is-clicavel { cursor: pointer; }
-.fx-legenda-item.is-clicavel:hover { background: var(--fx-cream); }
-
-.fx-legenda-cor { width: 10px; height: 10px; border-radius: 2px; }
-.fx-legenda-nome { color: var(--fx-ink); overflow-wrap: anywhere; }
-.fx-legenda-valor { font-weight: 700; color: var(--fx-blue-dark); white-space: nowrap; }
-.fx-legenda-pct { color: var(--fx-muted); font-size: 11px; min-width: 42px; text-align: right; }
-
-/* ---- 8.5 Slopegraph (trajetória 2000 - 2025) ----
-   Substitui o plano cartesiano de dois círculos e os dois gráficos de barra.
-   A pergunta é "cresci mais ou menos que os outros?" e a resposta é a
-   inclinação relativa das duas linhas, que se lê sem decodificar eixo. */
-.fx-slope-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 26px;
-}
-
-.fx-slope-wrap { position: relative; height: 300px; margin-top: 6px; }
-
-.fx-slope-nota {
-  font-size: 11.5px;
-  color: var(--fx-muted);
-  line-height: 1.5;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--fx-rule);
-}
-
-.fx-slope-nota strong { color: var(--fx-blue-dark); }
 
 /* ---- 8.6 Riscos climáticos ---- */
 .fx-riscos-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -889,4 +775,220 @@
   .fx-seg button { padding: 5px 9px; font-size: 11.5px; }
 
   .fx-slope-wrap { height: 260px; }
+}
+
+/* ---- 8.9 Coluna lateral e card "Como ler" ----
+   A coluna direita tinha só o donut e terminava bem antes da tabela, deixando
+   um vazio grande. O card de leitura preenche esse espaço com o que faltava:
+   o significado da barra, que o cabeçalho sozinho não explicava. */
+.fx-coluna-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fx-como-ler-frase {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fx-ink);
+  margin: 0 0 16px;
+}
+
+.fx-como-ler-frase strong { color: var(--fx-blue-dark); font-weight: 600; }
+.fx-exemplo-pct { color: var(--fx-q4-txt) !important; }
+
+.fx-escala { margin-bottom: 14px; }
+
+.fx-escala-barras {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+}
+
+.fx-escala-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--fx-muted);
+  text-align: center;
+}
+
+.fx-escala-item i {
+  display: block;
+  height: 9px;
+  border-radius: 1px;
+  background: var(--c);
+}
+
+.fx-escala-pontas {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--fx-muted);
+}
+
+.fx-escala-pontas span { max-width: 46%; }
+.fx-escala-pontas span:last-child { text-align: right; }
+
+.fx-como-ler-nota {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fx-muted);
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--fx-rule);
+}
+
+/* No mobile a coluna lateral vem depois da tabela; o card de leitura sobe,
+   porque a dúvida aparece ao ler a tabela, não depois do gráfico. */
+@media (max-width: 1024px) {
+  .fx-coluna-lateral { gap: 16px; }
+  .fx-como-ler { order: -1; }
+}
+
+/* ---- 8.10 Botao de baixar ---- */
+.fx-btn-baixar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.fx-btn-baixar:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.5); }
+.fx-btn-baixar:focus-visible { outline: 2px solid #FFC72C; outline-offset: 2px; }
+
+/* A leitura invertida ("e menos que os outros X%") vem em tom menor: completa
+   a frase sem competir com o numero principal. */
+.fx-veredito-inverso { opacity: 0.72; font-size: 0.86em; }
+
+/* ---- 8.11 Blocos reaproveitados da pagina publica ----
+   Sintese Fiscal, Composicao, Densidade e Riscos sao o MESMO HTML da pagina
+   publica, com os mesmos IDs, para que o script_mun.js continue sendo o dono
+   deles. Aqui so recebem o acabamento da preview: as margens de secao saem
+   (quem espaca agora e a faixa) e os cards perdem o raio grande e a sombra,
+   alinhando com a tabela do folheto. */
+.fx-legado .section-heading {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fx-blue-dark);
+  margin-bottom: 4px;
+}
+
+.fx-legado section,
+.fx-legado > .fx-container > section { margin-bottom: 0 !important; }
+.fx-legado .mb-12 { margin-bottom: 0 !important; }
+
+.fx-legado .rounded-2xl,
+.fx-legado .rounded-xl {
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  border-color: var(--fx-rule) !important;
+}
+
+/* A coluna lateral herda o mesmo acabamento dos cards novos. */
+.fx-coluna-lateral .rounded-2xl {
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  border-color: var(--fx-rule) !important;
+  padding: 20px !important;
+}
+
+/* ---- 8.12 Impressao ----
+   O botao Baixar chama window.print(); o PDF sai daqui. Objetivo: caber em
+   retrato sem cortar coluna e sem gastar tinta com cromo de navegacao. */
+@media print {
+  @page { size: A4 portrait; margin: 12mm 10mm; }
+
+  /* Fora do papel: navegacao, controles e tudo que so serve para interagir. */
+  .page-header,
+  .fx-controles,
+  .sticky-header,
+  .segmented,
+  .fx-seg,
+  .fx-btn-baixar { display: none !important; }
+
+  .fx-page { background: #ffffff !important; }
+
+  /* Faixas coloridas viram branco: economiza tinta e melhora o contraste do
+     texto impresso. O hero mantem fundo, porque e a capa do documento. */
+  .fx-faixa { padding: 14px 0 !important; background: #ffffff !important; }
+  .fx-faixa--escura {
+    background: var(--fx-blue-dark) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fx-container { max-width: 100% !important; padding: 0 !important; }
+
+  /* As cores das barras SAO o dado: sem isto o navegador as imprime em cinza. */
+  .fx-bar-fill,
+  .fx-row::before,
+  .fx-regua-q,
+  .fx-escala-item i,
+  .fx-risco-tag,
+  .fx-head {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Nada de quebrar uma rubrica ou um card ao meio entre duas paginas. */
+  .fx-row,
+  .fx-card,
+  .fx-item { break-inside: avoid; page-break-inside: avoid; }
+
+  .fx-faixa { break-before: auto; }
+  .fx-secao-head { break-after: avoid; }
+
+  /* Uma coluna: duas colunas em A4 espremem a tabela a ponto de ilegivel. */
+  .fx-receitas-grid,
+  .fx-hero-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+
+  .fx-legado .lg\:col-span-7,
+  .fx-legado .lg\:col-span-5,
+  .fx-legado .grid { display: block !important; }
+
+  /* Chart.js desenha em canvas: sem limite de altura ele estoura a pagina. */
+  canvas { max-height: 240px !important; }
+
+  a[href]::after { content: ""; }
+}
+
+/* A legenda do Chart.js herdava o tamanho de fonte do card e saia enorme
+   dentro da coluna estreita. Chart.js desenha a legenda no proprio canvas
+   quando configurada la, mas a do donut da pagina publica e HTML — entao o
+   ajuste e por CSS mesmo. */
+.fx-coluna-lateral canvas + div,
+.fx-coluna-lateral .chartjs-legend,
+.fx-coluna-lateral ul.chartjs-legend li {
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+
+.fx-coluna-lateral .fx-legado-legenda { font-size: 11.5px; }
+
+/* O <select> de categoria do donut acompanha o acabamento dos campos da
+   preview, em vez do arredondado grande do layout antigo. */
+.fx-coluna-lateral select {
+  border-radius: 4px !important;
+  border-color: var(--fx-rule) !important;
+  font-size: 12.5px !important;
+  padding: 7px 9px !important;
 }
