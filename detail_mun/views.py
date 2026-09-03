@@ -175,7 +175,14 @@ def _prepare_revenue_item(
 
     return item
 
-def municipio_detalhe_view(request, municipio_id):
+def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/detalhe_municipio.html'):
+    """Monta o detalhe fiscal de um municipio.
+
+    `template_name` existe para que a rota de preview (/preview/municipio/...)
+    reaproveite toda esta view sem duplicar as ~500 linhas de calculo de
+    percentis, medias e arvore de receitas. A unica diferenca entre a pagina
+    publica e a de preview e a camada de apresentacao.
+    """
     municipio = get_object_or_404(Municipio.objects.prefetch_related(
         'dados_atuais', 'dados_2000',
         'conta_detalhada', 'conta_especifica', 'conta_mais_especifica',
@@ -685,7 +692,7 @@ def municipio_detalhe_view(request, municipio_id):
         'adapta_brasil_data': adapta_brasil_data,
     }
 
-    return render(request, 'detail_mun/detalhe_municipio.html', context)
+    return render(request, template_name, context)
 
 
 
