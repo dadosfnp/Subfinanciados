@@ -1,0 +1,892 @@
+/* ============================================================================
+   Estrutura de Receitas — layout "folheto IFEM"
+   ----------------------------------------------------------------------------
+   Tradução para web da tabela de rubricas do folheto impresso
+   (dadosfnp/folheto-ifem → python/core/tokens.py e python/temas/ifem.py).
+
+   Substitui os cards da árvore de receitas por linhas de tabela: barra do
+   percentil + valor do município + médias UF/Brasil. A árvore expansível de
+   3 níveis é preservada; só a apresentação da linha muda.
+
+   Escopo: usado apenas em detalhe_municipio_folheto.html (rota /preview/).
+   ========================================================================== */
+
+/* ============== 1. TOKENS ============== */
+:root {
+  /* Paleta oficial FNP — 5 quintis, do menos ao mais financiado.
+     Espelha FNP_Q1..Q5 de tokens.py e o REVENUE_COLORS de script_mun.js. */
+  --fx-q1: #A81C21;   /*  0–20%  */
+  --fx-q2: #E47326;   /* 20–40%  */
+  --fx-q3: #F4D01D;   /* 40–60%  */
+  --fx-q4: #6AC074;   /* 60–80%  */
+  --fx-q5: #1C9148;   /* 80–100% */
+  --fx-q0: #B9BFC7;   /* sem dado comparativo */
+
+  /* Variantes escurecidas para TEXTO.
+     No papel o número do percentil sai na mesma cor da barra, mas amarelo
+     (#F4D01D) e verde-claro (#6AC074) sobre fundo branco dão ~2:1 de contraste
+     — ilegível em tela. A barra mantém a cor viva do folheto; o texto usa a
+     variante escura, todas acima de 4.5:1 (WCAG AA para texto pequeno). */
+  --fx-q1-txt: #A81C21;
+  --fx-q2-txt: #B0530E;
+  --fx-q3-txt: #8A6A00;
+  --fx-q4-txt: #2E7D45;
+  --fx-q5-txt: #167A3C;
+  --fx-q0-txt: #6B7280;
+
+  /* Neutros e azuis do folheto */
+  --fx-blue-dark:  #122747;
+  --fx-blue:       #1B3A6B;
+  --fx-blue-mid:   #3D6FA8;
+  --fx-blue-light: #AABBCC;
+  --fx-cream:      #F4EFE6;
+  --fx-cream-dark: #F0EBE2;   /* fundo da linha de nível 0 e trilho da barra */
+  --fx-paper:      #FBF8F2;
+  --fx-rule:       #D9D2C3;
+  --fx-muted:      #6B6B6B;
+  --fx-ink:        #1A1A1A;
+
+  /* Proporções das colunas.
+     Derivadas de tokens.py: COL_ROTULO 168pt, COL_MUNI ~207pt e COL_CAIXA 50pt
+     sobre CONTENT_W ~475pt. As caixas de média ficam em px fixos para não
+     esticarem em telas largas — no papel elas têm largura fixa (CAIXA_W). */
+  --fx-col-caixa: 82px;
+  --fx-col-pct: 40px;
+  --fx-col-valor: 92px;
+}
+
+/* ============== 2. CONTAINER ============== */
+.fx-tabela {
+  background: #ffffff;
+  border: 1px solid var(--fx-rule);
+  border-radius: 6px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums; /* números alinham em coluna */
+}
+
+/* ============== 3. CABEÇALHO ============== */
+.fx-head {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.92fr)
+    minmax(0, 1.3fr)
+    var(--fx-col-caixa)
+    var(--fx-col-caixa);
+  background: var(--fx-blue);
+  color: #ffffff;
+  padding: 8px 10px;
+  align-items: end;
+  gap: 8px;
+}
+
+.fx-head-rot {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+.fx-head-sub {
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--fx-blue-light);
+  margin-top: 2px;
+}
+
+.fx-head-muni { text-align: right; }
+
+/* "MÉDIA · R$ por habitante" cobre as duas colunas de uma vez, com um fio de
+   amarração embaixo — repetir a palavra em cada coluna poluía o cabeçalho. */
+.fx-head-medias {
+  grid-column: 3 / span 2;
+  text-align: center;
+}
+
+.fx-head-medias-rule {
+  height: 1px;
+  background: var(--fx-blue-light);
+  opacity: 0.6;
+  margin: 3px 8px 2px;
+}
+
+.fx-head-medias-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* ============== 4. LINHA ============== */
+.fx-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.92fr)
+    minmax(0, 1.3fr)
+    var(--fx-col-caixa)
+    var(--fx-col-caixa);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 14px;
+  position: relative;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(217, 210, 195, 0.55);
+  transition: background-color 0.15s ease;
+}
+
+/* Faixa colorida à esquerda: 4px no nível 0, 2px nos filhos (igual ao papel).
+   É o que dá a leitura vertical de "quais rubricas vão bem" antes de ler
+   qualquer número. */
+.fx-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--fx-cor, var(--fx-q0));
+  transition: background-color 0.3s ease;
+}
+
+.fx-row[data-level="0"] {
+  background: var(--fx-cream-dark);
+  border-top: 1.5px solid var(--fx-blue-dark);
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.fx-row[data-level="0"]::before { width: 4px; }
+
+.fx-row.fx-clickable { cursor: pointer; }
+.fx-row.fx-clickable:hover { background: var(--fx-cream); }
+.fx-row[data-level="0"].fx-clickable:hover { background: #E9E2D6; }
+
+.fx-row.fx-clickable:focus-visible {
+  outline: 2px solid var(--fx-blue-mid);
+  outline-offset: -2px;
+}
+
+/* ---- 4.1 Coluna: rubrica ---- */
+.fx-rubrica {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fx-chevron {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--fx-muted);
+  transition: transform 0.25s ease;
+}
+
+.fx-row.is-open .fx-chevron { transform: rotate(90deg); }
+
+/* Sem filhos: mantém o alinhamento da coluna sem desenhar seta. */
+.fx-chevron-placeholder {
+  width: 13px;
+  flex-shrink: 0;
+}
+
+.fx-nome {
+  font-size: 12.5px;
+  color: var(--fx-ink);
+  line-height: 1.25;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fx-row[data-level="0"] .fx-nome {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fx-blue-dark);
+}
+
+.fx-row[data-level="1"] .fx-nome { font-weight: 500; }
+
+/* Recuo por nível — 12pt no papel, 14px aqui. */
+.fx-row[data-level="1"] .fx-rubrica { padding-left: 14px; }
+.fx-row[data-level="2"] .fx-rubrica { padding-left: 28px; }
+
+/* ---- 4.2 Coluna: município (percentil + barra + valor) ---- */
+.fx-municipio {
+  display: grid;
+  grid-template-columns: var(--fx-col-pct) minmax(0, 1fr) var(--fx-col-valor);
+  align-items: center;
+  gap: 8px;
+}
+
+/* O percentil tem slot próprio e alinhado à direita, em vez de flutuar na
+   ponta da barra: assim a coluna se lê de cima a baixo e uma rubrica de 95%
+   não empurra o rótulo para dentro do valor em R$. */
+.fx-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--fx-cor-txt, var(--fx-q0-txt));
+  transition: color 0.3s ease;
+}
+
+.fx-bar-track {
+  height: 8px;
+  background: var(--fx-cream-dark);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.fx-row[data-level="0"] .fx-bar-track { height: 10px; }
+
+.fx-bar-fill {
+  height: 100%;
+  width: 0;
+  min-width: 3px; /* um percentil medido de 0 não pode virar buraco branco */
+  background: var(--fx-cor, var(--fx-q0));
+  border-radius: 1px;
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+/* Sem dado comparativo: trilho vazio, sem preenchimento fantasma. */
+.fx-row[data-sem-dado="1"] .fx-bar-fill { display: none; }
+
+.fx-valor {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--fx-cor-txt, var(--fx-q0-txt));
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.fx-row[data-level="0"] .fx-valor { font-size: 15.5px; }
+
+/* ---- 4.3 Colunas: médias UF e Brasil ---- */
+.fx-media { display: flex; justify-content: center; }
+
+.fx-box {
+  display: block;
+  width: 100%;
+  padding: 3px 4px;
+  border: 1px solid var(--fx-blue-mid);
+  border-radius: 3px;
+  background: #ffffff;
+  color: var(--fx-blue-mid);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fx-box-br {
+  border-color: var(--fx-blue-dark);
+  color: var(--fx-blue-dark);
+}
+
+/* Valor ausente: mantém a caixa (a coluna não pode "piscar" de largura),
+   mas apagada, para não competir com os números reais. */
+.fx-box:empty::after,
+.fx-box.is-vazio::after {
+  content: "–";
+  color: #B0B7C0;
+}
+
+.fx-box.is-vazio {
+  border-color: #DDE1E6;
+  color: #B0B7C0;
+}
+
+/* ============== 5. FILHOS (árvore) ============== */
+.fx-children {
+  display: none;
+  background: var(--fx-paper);
+}
+
+.fx-children.is-open {
+  display: block;
+  animation: fxFadeIn 0.28s ease-out;
+}
+
+@keyframes fxFadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============== 6. LEGENDA ============== */
+.fx-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--fx-muted);
+}
+
+.fx-legenda-escala {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.fx-legenda-swatch {
+  width: 26px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+/* ============== 7. RESPONSIVO ============== */
+/* Abaixo de 860px a tabela de 4 colunas não cabe sem espremer os números.
+   A linha vira bloco: rubrica em cima, barra no meio, médias embaixo com
+   rótulo próprio (no desktop quem rotula é o cabeçalho, que aqui some). */
+@media (max-width: 860px) {
+  .fx-head { display: none; }
+
+  .fx-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 11px 12px 11px 14px;
+  }
+
+  .fx-municipio {
+    grid-template-columns: var(--fx-col-pct) minmax(0, 1fr) auto;
+  }
+
+  .fx-media {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fx-media::before {
+    content: attr(data-rotulo);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fx-muted);
+  }
+
+  .fx-box { max-width: 110px; }
+
+  .fx-medias-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-bar-fill,
+  .fx-chevron,
+  .fx-row,
+  .fx-children.is-open {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ============================================================================
+   8. PÁGINA — redesign editorial
+   ----------------------------------------------------------------------------
+   O dashboard vira peça editorial: mesma linguagem do folheto impresso, com
+   faixas full-bleed alternadas em vez de uma pilha de cards brancos iguais.
+   ========================================================================== */
+
+/* Compatibilidade com os toggles do script_mun.js, que alternam estas classes.
+   O partial antigo as declarava num <style> inline; aqui elas moram no CSS. */
+.invisible-by-est { display: none !important; }
+
+/* ---- 8.1 Ritmo vertical ----
+   Cada seção é uma faixa de largura total com fundo próprio. A alternância
+   creme/branco/azul é o que separa os blocos — não a margem. */
+.fx-page {
+  background: var(--fx-paper);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.fx-faixa { padding: 44px 0; }
+.fx-faixa--creme  { background: var(--fx-cream); }
+.fx-faixa--branca { background: #ffffff; }
+.fx-faixa--escura { background: var(--fx-blue-dark); color: #ffffff; }
+
+.fx-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Título de seção: chapéu curto + título condensado, como as aberturas do
+   folheto. Substitui o .section-heading genérico. */
+.fx-eyebrow {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fx-blue-mid);
+  margin: 0 0 2px;
+}
+
+.fx-titulo {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--fx-blue-dark);
+  margin: 0;
+}
+
+.fx-faixa--escura .fx-titulo { color: #ffffff; }
+.fx-faixa--escura .fx-eyebrow { color: var(--fx-blue-light); }
+
+.fx-dek {
+  font-size: 13.5px;
+  color: var(--fx-muted);
+  margin: 8px 0 0;
+  max-width: 62ch;
+  line-height: 1.55;
+}
+
+.fx-secao-head { margin-bottom: 22px; }
+
+/* ---- 8.2 Barra de controle unificada ----
+   Os 4 toggles espalhados pela página antiga (hero, sticky header, seção de
+   receitas) viram uma barra só, sempre visível e com rótulo dizendo o que
+   cada grupo controla. Era a principal fonte de confusão do layout anterior. */
+.fx-controles {
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+  background: var(--fx-blue-dark);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fx-controles-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 26px;
+  padding: 10px 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.fx-controles-muni {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-right: auto;
+  white-space: nowrap;
+}
+
+.fx-controle { display: flex; align-items: center; gap: 8px; }
+
+.fx-controle-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fx-blue-light);
+  white-space: nowrap;
+}
+
+/* Segmented control próprio — o .segmented global é claro e sumiria no azul. */
+.fx-seg {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.fx-seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fx-blue-light);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.fx-seg button:hover { color: #ffffff; }
+
+.fx-seg button.active {
+  background: #FFC72C;
+  color: var(--fx-blue-dark);
+}
+
+.fx-seg button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+/* ---- 8.3 Hero: o veredito antes do gráfico ----
+   A pergunta que traz o usuário à página ("este município é bem ou mal
+   financiado?") é respondida em texto e numa régua, antes de qualquer
+   visualização. Os dois KPI cards davam dois números sem conclusão. */
+.fx-hero { padding: 40px 0 46px; }
+
+.fx-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.fx-hero-nome {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: clamp(40px, 7vw, 66px);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: -0.015em;
+  color: #ffffff;
+  margin: 6px 0 0;
+}
+
+.fx-hero-veredito {
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.45;
+  color: #E8EDF4;
+  margin: 18px 0 0;
+  max-width: 46ch;
+}
+
+.fx-hero-veredito strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.fx-hero-destaque {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: clamp(34px, 5vw, 46px);
+  font-weight: 700;
+  line-height: 1;
+  color: #FFC72C;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Régua de quintis: onde o município cai na distribuição nacional.
+   Mesmo gradiente das barras da tabela, então a leitura de cor aprendida
+   aqui vale para a página inteira. */
+.fx-regua { margin-top: 26px; }
+
+.fx-regua-track {
+  position: relative;
+  height: 13px;
+  border-radius: 2px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+}
+
+/* Inativos bem apagados: a 0.45 as cores se misturavam com o azul do fundo e
+   viravam marrom/verde-acinzentado, competindo com o quintil que importa. */
+.fx-regua-q { border-radius: 1px; opacity: 0.26; transition: opacity 0.3s ease; }
+.fx-regua-q.is-ativo { opacity: 1; }
+
+.fx-regua-marcador {
+  position: absolute;
+  top: -7px;
+  bottom: -7px;
+  width: 3px;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(18, 39, 71, 0.55);
+  transform: translateX(-50%);
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fx-regua-escala {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--fx-blue-light);
+}
+
+/* Blocos de número do hero (população, posição) */
+.fx-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.fx-stat-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fx-blue-light);
+  margin-bottom: 3px;
+}
+
+.fx-stat-valor {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #ffffff;
+}
+
+.fx-stat-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--fx-blue-light);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.fx-stat-sub.is-positivo { color: #7FD4A0; }
+.fx-stat-sub.is-negativo { color: #F0A08A; }
+
+/* ---- 8.4 Layout receitas + composição ---- */
+.fx-receitas-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.fx-card {
+  background: #ffffff;
+  border: 1px solid var(--fx-rule);
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.fx-card-titulo {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fx-blue-dark);
+  margin: 0 0 3px;
+}
+
+.fx-card-dek {
+  font-size: 11.5px;
+  color: var(--fx-muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+/* Trilha do donut: substitui o <select> de categorias.
+   O select escondia em que nível o usuário estava; a trilha mostra o caminho
+   e permite voltar em um clique. O drill-down continua existindo, agora
+   clicando na própria fatia ou na legenda. */
+.fx-trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  margin-bottom: 14px;
+  min-height: 20px;
+}
+
+.fx-trilha button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--fx-blue-mid);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.fx-trilha button:hover { background: var(--fx-cream); text-decoration: underline; }
+.fx-trilha-atual { font-weight: 700; color: var(--fx-blue-dark); padding: 2px 4px; }
+.fx-trilha-sep { color: #B8BFC7; }
+
+.fx-donut-wrap { position: relative; height: 250px; }
+
+/* Centro do donut: o total, para a rosca não ficar com um buraco vazio. */
+.fx-donut-centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.fx-donut-centro-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+  /* O furo da rosca tem ~95px: sem limite, "Transferências Correntes"
+     vazava por cima das fatias. */
+  max-width: 108px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.fx-donut-centro-valor {
+  font-family: "Barlow Condensed", "Inter", sans-serif;
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--fx-blue-dark);
+  line-height: 1.1;
+}
+
+/* Legenda como lista de valores — rótulo dentro da fatia não cabe nas fatias
+   pequenas, e a lista já serve de tabela de apoio. */
+.fx-legenda-donut { margin-top: 14px; display: flex; flex-direction: column; gap: 1px; }
+
+.fx-legenda-item {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: default;
+}
+
+.fx-legenda-item.is-clicavel { cursor: pointer; }
+.fx-legenda-item.is-clicavel:hover { background: var(--fx-cream); }
+
+.fx-legenda-cor { width: 10px; height: 10px; border-radius: 2px; }
+.fx-legenda-nome { color: var(--fx-ink); overflow-wrap: anywhere; }
+.fx-legenda-valor { font-weight: 700; color: var(--fx-blue-dark); white-space: nowrap; }
+.fx-legenda-pct { color: var(--fx-muted); font-size: 11px; min-width: 42px; text-align: right; }
+
+/* ---- 8.5 Slopegraph (trajetória 2000 - 2025) ----
+   Substitui o plano cartesiano de dois círculos e os dois gráficos de barra.
+   A pergunta é "cresci mais ou menos que os outros?" e a resposta é a
+   inclinação relativa das duas linhas, que se lê sem decodificar eixo. */
+.fx-slope-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 26px;
+}
+
+.fx-slope-wrap { position: relative; height: 300px; margin-top: 6px; }
+
+.fx-slope-nota {
+  font-size: 11.5px;
+  color: var(--fx-muted);
+  line-height: 1.5;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fx-rule);
+}
+
+.fx-slope-nota strong { color: var(--fx-blue-dark); }
+
+/* ---- 8.6 Riscos climáticos ---- */
+.fx-riscos-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.fx-riscos-tabela thead th {
+  background: var(--fx-blue);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 9px 14px;
+}
+
+.fx-riscos-tabela td {
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(217, 210, 195, 0.55);
+  color: var(--fx-ink);
+}
+
+.fx-riscos-tabela tbody tr:hover { background: var(--fx-cream); }
+
+.fx-risco-tag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* ---- 8.7 Vazio ---- */
+.fx-vazio {
+  padding: 34px 20px;
+  text-align: center;
+  color: var(--fx-muted);
+  font-size: 13px;
+  background: var(--fx-cream);
+  border: 1px dashed var(--fx-rule);
+  border-radius: 6px;
+}
+
+/* ---- 8.8 Responsivo da página ---- */
+@media (max-width: 1024px) {
+  .fx-hero-grid,
+  .fx-receitas-grid { grid-template-columns: minmax(0, 1fr); }
+  .fx-hero-grid { gap: 28px; }
+}
+
+@media (max-width: 860px) {
+  .fx-faixa { padding: 32px 0; }
+
+  /* Ancorar na viewport, e não no pai.
+     O header global (base_templates/global/head.html) estoura a largura da
+     tela em telas estreitas — bug pré-existente, que a página pública também
+     tem. Sem isto o <body> fica mais largo que a viewport e todas as seções
+     daqui são dimensionadas contra essa largura inflada, cortando a régua, os
+     stats do hero e a barra de controle. Corrigir o header resolveria na
+     origem, mas ele é compartilhado com produção e está fora do escopo deste
+     preview. */
+  .fx-container, .fx-controles-inner {
+    width: 100vw;
+    max-width: 100vw;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .fx-page { overflow-x: clip; }
+
+  .fx-controles-inner { gap: 8px 16px; }
+  .fx-controles-muni { width: 100%; margin-right: 0; font-size: 17px; }
+  .fx-controle { flex: 1 1 auto; }
+  .fx-controle-label { display: none; } /* o botão ativo já diz o estado */
+  .fx-seg button { padding: 5px 9px; font-size: 11.5px; }
+
+  .fx-slope-wrap { height: 260px; }
+}

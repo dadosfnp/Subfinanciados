@@ -1,0 +1,327 @@
+{% extends "global/head.html" %}
+{% comment %}
+PREVIEW — Detalhe do município no layout editorial do folheto IFEM.
+
+Rota: /preview/municipio/<cod_ibge>/  (name: municipio_detalhe_folheto)
+Serve para aprovação da diretoria. A página pública segue em
+detalhe_municipio.html, intocada — as duas usam a MESMA view
+(detail_mun.views.municipio_detalhe_view), só muda o template.
+
+Diferenças em relação à página pública:
+  1. Os 4 toggles espalhados viram uma barra de controle única e sticky.
+  2. Hero responde em texto ("supera X% dos municípios") antes de qualquer
+     gráfico, com régua de quintis no lugar dos dois KPI cards.
+  3. Estrutura de Receitas sai dos cards e vira a tabela de barras do folheto.
+  4. Plano cartesiano + 2 gráficos de barra viram um slopegraph.
+  5. Seções em faixas full-bleed alternadas, em vez de pilha de cards iguais.
+
+JS próprio (script_mun_folheto.js): o script_mun.js está acoplado aos IDs do
+layout antigo (kpi-card, cartesian-plane, timeline-ruler...) e quebraria aqui.
+{% endcomment %}
+{% load static %}
+{% load currency_filters %}
+{% load l10n %}
+
+{% block extra_head %}
+    <title>{{ municipio.name_muni_uf }} · Preview IFEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% comment %}
+    Barlow Condensed é a fonte de números e títulos do folheto impresso.
+    O site usa só Inter; trazer a segunda família é o que aproxima a tela
+    da publicação.
+    {% endcomment %}
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="fx-page">
+
+    {# ==================== BARRA DE CONTROLE ==================== #}
+    <div class="fx-controles">
+        <div class="fx-controles-inner">
+            <span class="fx-controles-muni">{{ municipio.name_muni_uf }}</span>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label">Comparar com</span>
+                <div class="fx-seg" id="fx-base-toggle" role="group" aria-label="Base de comparação">
+                    <button type="button" class="active" data-base="nacional">Brasil</button>
+                    {% if municipio.cod_ibge != '5300108' %}
+                    <button type="button" data-base="estadual">{{ municipio.uf|upper }}</button>
+                    {% endif %}
+                    <button type="button" data-base="faixa">Porte</button>
+                </div>
+            </div>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label">Valores em</span>
+                <div class="fx-seg" id="fx-valor-toggle" role="group" aria-label="Tipo de valor">
+                    <button type="button" class="active" data-mode="pc">Por habitante</button>
+                    <button type="button" data-mode="vr">Totais</button>
+                </div>
+            </div>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label">Referência</span>
+                <div class="fx-seg" id="fx-est-toggle" role="group" aria-label="Estatística de referência">
+                    <button type="button" class="active" data-est="media">Média</button>
+                    <button type="button" data-est="mediana">Mediana</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ==================== HERO ==================== #}
+    <section class="fx-faixa fx-faixa--escura fx-hero">
+        <div class="fx-container">
+            <div class="fx-hero-grid">
+
+                <div>
+                    <p class="fx-eyebrow">Perfil fiscal · 2025</p>
+                    <h1 class="fx-hero-nome">{{ municipio.name_muni_uf }}</h1>
+
+                    {# O veredito é montado no JS porque muda com a base escolhida. #}
+                    <p class="fx-hero-veredito" id="fx-veredito">
+                        <span class="fx-hero-destaque" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
+                        <span id="fx-veredito-texto">por habitante em receita corrente.</span>
+                    </p>
+
+                    <div class="fx-regua">
+                        <div class="fx-regua-track" id="fx-regua">
+                            <div class="fx-regua-q" data-q="1" style="background: var(--fx-q1);"></div>
+                            <div class="fx-regua-q" data-q="2" style="background: var(--fx-q2);"></div>
+                            <div class="fx-regua-q" data-q="3" style="background: var(--fx-q3);"></div>
+                            <div class="fx-regua-q" data-q="4" style="background: var(--fx-q4);"></div>
+                            <div class="fx-regua-q" data-q="5" style="background: var(--fx-q5);"></div>
+                            <div class="fx-regua-marcador" id="fx-regua-marcador" style="left: 0%;"></div>
+                        </div>
+                        <div class="fx-regua-escala">
+                            <span>0%</span><span>20%</span><span>40%</span>
+                            <span>60%</span><span>80%</span><span>100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fx-hero-stats">
+                    <div>
+                        <span class="fx-stat-label">Habitantes</span>
+                        <span class="fx-stat-valor">{{ municipio.populacao24|br_integer }}</span>
+                        {% if evolucao_historica.has_2000_data %}
+                        <span class="fx-stat-sub {% if evolucao_historica.delta_populacao >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
+                            {% if evolucao_historica.delta_populacao >= 0 %}▲{% else %}▼{% endif %}
+                            {{ evolucao_historica.delta_populacao|br_float }}% desde 2000
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <span class="fx-stat-label" id="fx-rank-label">Posição no Brasil</span>
+                        <span class="fx-stat-valor" id="fx-rank-valor">—</span>
+                        <span class="fx-stat-sub" id="fx-rank-sub">em receita por habitante</span>
+                    </div>
+
+                    {% if evolucao_historica.has_2000_data %}
+                    <div>
+                        <span class="fx-stat-label">Cresc. da receita</span>
+                        <span class="fx-stat-valor {% if evolucao_historica.delta_rc_pc >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
+                            {% if evolucao_historica.delta_rc_pc >= 0 %}+{% endif %}{{ evolucao_historica.delta_rc_pc|br_float }}%
+                        </span>
+                        <span class="fx-stat-sub" id="fx-cresc-sub">—</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    {# ==================== ESTRUTURA DE RECEITAS ==================== #}
+    <section class="fx-faixa fx-faixa--creme">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">De onde vem a receita</p>
+                <h2 class="fx-titulo">Estrutura de Receitas</h2>
+                <p class="fx-dek">
+                    A barra e o percentual mostram quanto dos municípios este supera naquela
+                    rubrica: <strong>vermelho supera poucos, verde supera muitos</strong>.
+                    Clique em uma linha para abrir o detalhamento.
+                </p>
+            </div>
+
+            <div class="fx-receitas-grid">
+
+                <div>
+                    {% if revenue_tree %}
+                    <div class="fx-tabela">
+                        <div class="fx-head">
+                            <div class="fx-head-rot">Rubrica</div>
+                            <div class="fx-head-rot fx-head-muni">
+                                Município
+                                <span class="fx-head-sub" id="fx-head-unidade">R$ por habitante</span>
+                            </div>
+                            <div class="fx-head-medias">
+                                <div class="fx-head-rot">
+                                    <span id="fx-head-medias-rot">Média</span> · <span id="fx-head-medias-unidade">R$ por habitante</span>
+                                </div>
+                                <div class="fx-head-medias-rule"></div>
+                                <div class="fx-head-medias-cols">
+                                    <span>{{ municipio.uf|upper }}</span>
+                                    <span>Brasil</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% for item in revenue_tree %}
+                            {% include "detail_mun/_revenue_item_folheto.html" with item=item level=0 %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="fx-legenda">
+                        <span>Supera</span>
+                        <span class="fx-legenda-escala">
+                            <span class="fx-legenda-swatch" style="background: var(--fx-q1);"></span>
+                            <span class="fx-legenda-swatch" style="background: var(--fx-q2);"></span>
+                            <span class="fx-legenda-swatch" style="background: var(--fx-q3);"></span>
+                            <span class="fx-legenda-swatch" style="background: var(--fx-q4);"></span>
+                            <span class="fx-legenda-swatch" style="background: var(--fx-q5);"></span>
+                        </span>
+                        <span>poucos → muitos municípios</span>
+                    </div>
+                    {% else %}
+                    <div class="fx-vazio">Nenhum detalhamento de receita encontrado para este município.</div>
+                    {% endif %}
+                </div>
+
+                <div class="fx-card">
+                    <h3 class="fx-card-titulo">Composição</h3>
+                    <p class="fx-card-dek">Participação de cada rubrica no total. Clique numa fatia para abrir o nível seguinte.</p>
+
+                    <div class="fx-trilha" id="fx-trilha"></div>
+
+                    <div class="fx-donut-wrap">
+                        <canvas id="fx-donut"></canvas>
+                        <div class="fx-donut-centro">
+                            <span class="fx-donut-centro-label" id="fx-donut-label">Total</span>
+                            <span class="fx-donut-centro-valor" id="fx-donut-total">—</span>
+                        </div>
+                    </div>
+
+                    <div class="fx-legenda-donut" id="fx-donut-legenda"></div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    {# ==================== TRAJETÓRIA 2000 → 2025 ==================== #}
+    {% if evolucao_historica.has_2000_data %}
+    <section class="fx-faixa fx-faixa--branca">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">Um quarto de século</p>
+                <h2 class="fx-titulo">Trajetória 2000 → 2025</h2>
+                <p class="fx-dek">
+                    Cada linha parte de 100 no ano 2000. A inclinação é o crescimento
+                    acumulado — quanto mais íngreme, mais cresceu. A pergunta que importa
+                    não é quanto o município cresceu, mas se cresceu mais ou menos que os outros.
+                </p>
+            </div>
+
+            <div class="fx-slope-grid">
+                <div class="fx-card">
+                    <h3 class="fx-card-titulo">Receita por habitante</h3>
+                    <p class="fx-card-dek">Índice 100 = valor de 2000, corrigido.</p>
+                    <div class="fx-slope-wrap"><canvas id="fx-slope-receita"></canvas></div>
+                    <p class="fx-slope-nota" id="fx-nota-receita"></p>
+                </div>
+
+                <div class="fx-card">
+                    <h3 class="fx-card-titulo">População</h3>
+                    <p class="fx-card-dek">Índice 100 = população de 2000.</p>
+                    <div class="fx-slope-wrap"><canvas id="fx-slope-pop"></canvas></div>
+                    <p class="fx-slope-nota" id="fx-nota-pop"></p>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ==================== RISCOS CLIMÁTICOS ==================== #}
+    {% if adapta_brasil_data %}
+    <section class="fx-faixa fx-faixa--creme">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">AdaptaBrasil</p>
+                <h2 class="fx-titulo">Riscos Climáticos</h2>
+                <p class="fx-dek">Grau de risco por setor estratégico, do mais ao menos exposto.</p>
+            </div>
+
+            <div class="fx-card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table class="fx-riscos-tabela">
+                        <thead>
+                            <tr>
+                                <th scope="col">Setor estratégico</th>
+                                <th scope="col">Subsetor</th>
+                                <th scope="col">Grau de risco</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in adapta_brasil_data %}
+                            <tr>
+                                <td>{{ item.setor }}</td>
+                                <td>{{ item.subsetor }}</td>
+                                <td><span class="fx-risco-tag {{ item.cor }}">{{ item.grau }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+
+{% comment %}
+==================== DADOS PARA O JS ====================
+localize off: sem isso o Django escreveria "4812,5" (vírgula decimal) e o
+JSON.parse quebraria.
+{% endcomment %}
+{% localize off %}
+<script id="fx-data" type="application/json">
+{
+    "nome": "{{ municipio.name_muni|escapejs }}",
+    "uf": "{{ municipio.uf|escapejs }}",
+    "percentil_nacional": {{ municipio.percentil24_n|default_if_none:"null" }},
+    "rank": {
+        "nacional": {"pos": {{ municipio.rank_nacional|default_if_none:"null" }}, "total": {{ municipio.total_nacional|default_if_none:"null" }}},
+        "estadual": {"pos": {{ municipio.rank_estadual|default_if_none:"null" }}, "total": {{ municipio.total_estadual|default_if_none:"null" }}},
+        "faixa":    {"pos": {{ municipio.rank_faixa|default_if_none:"null" }},    "total": {{ municipio.total_faixa|default_if_none:"null" }}}
+    },
+    "receita": {
+        "pc": {{ municipio.rc_24_pc|default_if_none:"null" }},
+        "total": {{ municipio.rc_2024|default_if_none:"null" }}
+    },
+    "crescimento": {
+        "receita_mun": {{ evolucao_historica.delta_rc_pc|default_if_none:"null" }},
+        "receita_nac": {{ media_nacional_rc_pc|default_if_none:"null" }},
+        "receita_est": {{ media_estadual_rc_pc|default_if_none:"null" }},
+        "receita_faixa": {{ media_faixa_rc_pc|default_if_none:"null" }},
+        "pop_mun": {{ evolucao_historica.delta_populacao|default_if_none:"null" }},
+        "pop_nac": {{ media_nacional_pop|default_if_none:"null" }},
+        "pop_est": {{ media_estadual_pop|default_if_none:"null" }},
+        "pop_faixa": {{ media_faixa_pop|default_if_none:"null" }}
+    }
+}
+</script>
+{% endlocalize %}
+
+{{ chart_data_json|json_script:"fx-chart-data" }}
+
+<script defer src="{% static 'detail_mun/js/script_mun_folheto.js' %}"></script>
+{% endblock content %}
