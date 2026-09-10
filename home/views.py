@@ -1,7 +1,7 @@
 # home/views.py - v1.0.3 - Fix SQLite StdDev compatibility
 import re
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Sum
 from django.http import JsonResponse
 from django.db import connection
 from .models import Municipio, ContaDetalhada, Noticia
@@ -53,10 +53,27 @@ def index(request):
     medias_quintis = _medias_por_grupo('dados_atuais__quintil_atual', 'q')
     medias_decis = _medias_por_grupo('dados_atuais__decil_atual', 'd')
 
+    # Composição da receita nacional: transferências x arrecadação própria (gráfico "O dinheiro na contramão").
+    agg = ContaDetalhada.objects.aggregate(
+        total_transferencias=Sum('transferencias_correntes'),
+        total_impostos=Sum('imposto_taxas_contribuicoes'),
+        total_contribuicoes=Sum('contribuicoes'),
+        total_outras=Sum('outras_receita'),
+    )
+    total_transferencias = agg['total_transferencias'] or 0
+    total_propria = (agg['total_impostos'] or 0) + (agg['total_contribuicoes'] or 0) + (agg['total_outras'] or 0)
+    total_receita = total_transferencias + total_propria
+
+    pct_transferencias = round(total_transferencias / total_receita * 100) if total_receita else 0
+    pct_propria = 100 - pct_transferencias
+
     return render(request, 'ifem/index.html', {
         'noticias': noticias,
         'medias_quintis': medias_quintis,
         'medias_decis': medias_decis,
+        'pct_transferencias': pct_transferencias,
+        'pct_propria': pct_propria,
+        'pie_offset': round(502 * pct_transferencias / 100),
     })
 
 # --- FUNÇÕES DE API ---
@@ -252,7 +269,45 @@ def api_get_dashboard_data(request):
     include_2000_data_str = request.GET.get('include_2000_data', 'false')
     include_2000_data = (include_2000_data_str.lower() == 'true')
     variavel_analisada = request.GET.get('variavel_analisada', 'populacao')
-    
+    # Filtros específicos de risco climático
+    risco_campo = request.GET.get('risco_campo', 'media_ponderada')  # campo do AdaptaBrasil
+    risco_nivel = request.GET.get('risco_nivel', 'todos')           # nível de intensidade
+
+    # Mapeamento de campo simbólico → campo ORM do AdaptaBrasil
+    RISCO_CAMPO_ORM = {
+        'media_ponderada':    'dados_adapta_brasil__media_ponderada',
+        'bio_int_bio':        'dados_adapta_brasil__bio_int_bio',
+        'des_des_ter':        'dados_adapta_brasil__des_des_ter',
+        'des_in_enx_ala':     'dados_adapta_brasil__des_in_enx_ala',
+        'rec_ris_est_hid':    'dados_adapta_brasil__rec_ris_est_hid',
+        'sau_arb':            'dados_adapta_brasil__sau_arb',
+        'sau_lei_teg_ame':    'dados_adapta_brasil__sau_lei_teg_ame',
+        'sau_lei_vis':        'dados_adapta_brasil__sau_lei_vis',
+        'sau_mal':            'dados_adapta_brasil__sau_mal',
+        'seg_ali_ace_con_ali':'dados_adapta_brasil__seg_ali_ace_con_ali',
+        'seg_ali_dis':        'dados_adapta_brasil__seg_ali_dis',
+        'seg_ene_ace':        'dados_adapta_brasil__seg_ene_ace',
+        'seg_ene_dis':        'dados_adapta_brasil__seg_ene_dis',
+    }
+    orm_risco_campo = RISCO_CAMPO_ORM.get(risco_campo, 'dados_adapta_brasil__media_ponderada')
+
+    # Nomes legíveis para o campo selecionado (para título do gráfico)
+    RISCO_CAMPO_LABELS = {
+        'media_ponderada':    'Risco Climático Médio (Média Geral)',
+        'bio_int_bio':        'Biodiversidade – Integridade do Bioma',
+        'des_des_ter':        'Desastres – Deslizamento de Terra',
+        'des_in_enx_ala':     'Desastres – Inundações e Alagamentos',
+        'rec_ris_est_hid':    'Recursos Hídricos – Estresse Hídrico',
+        'sau_arb':            'Saúde – Arboviroses',
+        'sau_lei_teg_ame':    'Saúde – Leishmaniose Tegumentar',
+        'sau_lei_vis':        'Saúde – Leishmaniose Visceral',
+        'sau_mal':            'Saúde – Malária',
+        'seg_ali_ace_con_ali':'Segurança Alimentar – Acesso e Consumo',
+        'seg_ali_dis':        'Segurança Alimentar – Disponibilidade',
+        'seg_ene_ace':        'Segurança Energética – Acesso',
+        'seg_ene_dis':        'Segurança Energética – Disponibilidade',
+    }
+
     if regiao_filtro and regiao_filtro != 'todos':
         queryset = queryset.filter(regiao=regiao_filtro)
     if uf_filtro and uf_filtro != 'todos':
@@ -303,7 +358,11 @@ def api_get_dashboard_data(request):
         classification_map_24 = {}
 
         if quantil_calculation == 'por_filtro':
-            municipios_raw_data_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
+            municipios_raw_data_24 = list(queryset.values(
+                'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
+                'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada',
+                *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+            ))
             rc_values_24 = np.array([muni['dados_atuais__rc_atual_pc'] for muni in municipios_raw_data_24 if muni.get('dados_atuais__rc_atual_pc') is not None])
             
             if len(rc_values_24) > 0:
@@ -321,11 +380,21 @@ def api_get_dashboard_data(request):
             else:
                 field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
                 classification_map_24 = {label: label for label in base_classification_labels}
-                aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24, 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
+                aggregated_data_list_24 = list(queryset.values(
+                    'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
+                    field_for_aggregation_24, 'dados_atuais__capag',
+                    'dados_adapta_brasil__media_ponderada',
+                    *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+                ))
         else:
             field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
             classification_map_24 = {label: label for label in base_classification_labels}
-            aggregated_data_list_24 = list(queryset.values('cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc', field_for_aggregation_24, 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada'))
+            aggregated_data_list_24 = list(queryset.values(
+                'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
+                field_for_aggregation_24, 'dados_atuais__capag',
+                'dados_adapta_brasil__media_ponderada',
+                *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+            ))
 
         # --- Lógica 2000 (dados_2000) ---
         aggregated_data_list_00 = []
@@ -398,7 +467,7 @@ def api_get_dashboard_data(request):
             return 'Muito baixo'
 
         sub_variavel_analisada = request.GET.get('sub_variavel_analisada', 'todos')
-        
+
         if variavel_analisada == 'capag':
             row_configs = [
                 ('A', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'A'),
@@ -413,18 +482,25 @@ def api_get_dashboard_data(request):
             chart_title = 'Distribuição de Municípios por Nota CAPAG'
             is_count = True
         elif variavel_analisada == 'risco_climatico':
-            row_configs = [
-                ('Muito baixo', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Muito baixo'),
-                ('Baixo', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Baixo'),
-                ('Médio', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Médio'),
-                ('Alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Alto'),
-                ('Muito alto', lambda m: get_risco_climatico(m.get('dados_adapta_brasil__media_ponderada')) == 'Muito alto'),
+            # Usa o campo selecionado (tipo de risco ou média ponderada)
+            campo_key = orm_risco_campo
+            campo_label = RISCO_CAMPO_LABELS.get(risco_campo, 'Risco Climático')
+
+            all_row_configs = [
+                ('Muito baixo', lambda m, ck=campo_key: get_risco_climatico(m.get(ck)) == 'Muito baixo'),
+                ('Baixo',       lambda m, ck=campo_key: get_risco_climatico(m.get(ck)) == 'Baixo'),
+                ('Médio',       lambda m, ck=campo_key: get_risco_climatico(m.get(ck)) == 'Médio'),
+                ('Alto',        lambda m, ck=campo_key: get_risco_climatico(m.get(ck)) == 'Alto'),
+                ('Muito alto',  lambda m, ck=campo_key: get_risco_climatico(m.get(ck)) == 'Muito alto'),
             ]
-            if sub_variavel_analisada != 'todos':
-                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
+            # Aplica filtro de nível se selecionado
+            if risco_nivel and risco_nivel != 'todos':
+                row_configs = [rc for rc in all_row_configs if rc[0] == risco_nivel]
+            else:
+                row_configs = all_row_configs
             y_axis_title = 'Quantidade de Municípios'
             table_row_header = 'Níveis de Risco Climático'
-            chart_title = 'Distribuição de Municípios por Risco Climático'
+            chart_title = f'Distribuição por {campo_label}'
             is_count = True
         else: # populacao
             row_configs = [

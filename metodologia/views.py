@@ -35,6 +35,15 @@ def metodologia_page(request):
     abaixo = pop_qs.filter(dados_atuais__populacao_atual__lte=80000).count()
     acima = total - abaixo
 
+    # Segunda leitura do mesmo gráfico: agrupamento em dois grandes grupos (FNP).
+    faixas_fnp = [
+        {'label': 'Abaixo de 80 mil habitantes', 'count': abaixo},
+        {'label': 'Acima de 80 mil habitantes', 'count': acima},
+    ]
+    mx_fnp = max(item['count'] for item in faixas_fnp) or 1
+    for item in faixas_fnp:
+        item['h'] = max(6, round(item['count'] / mx_fnp * 130))
+
     # Médias nacionais dos indicadores sociais (média dos municípios).
     media_sus = pop_qs.filter(sus_dependente__sus_dependente__isnull=False).aggregate(m=Avg('sus_dependente__sus_dependente'))['m'] or 0
     media_cad = pop_qs.filter(cadunico__cadunico__isnull=False, dados_atuais__populacao_atual__gt=0).annotate(
@@ -44,6 +53,7 @@ def metodologia_page(request):
     ctx = {
         'media_nacional': str(round(media)),
         'faixas': faixas,
+        'faixas_fnp': faixas_fnp,
         'abaixo80': abaixo,
         'acima80': acima,
         'pct_abaixo80': round(abaixo / total * 100),
