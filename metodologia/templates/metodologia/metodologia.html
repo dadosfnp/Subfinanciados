@@ -53,7 +53,7 @@
         de forma transparente, passo a passo.
       </p>
       <div class="met-hero__counters">
-        <div><b data-count="5540">0</b><span>municípios analisados</span></div>
+        <div><b data-count="5440">0</b><span>municípios com receita disponível</span></div>
         <div><b data-count="46">0</b><span>fontes de receita</span></div>
       </div>
       <a href="#cap-sobre" class="met-cue" id="heroCue">Comece a explorar <i></i></a>
@@ -219,7 +219,7 @@
       <h2 class="met-title" data-anim>A Composição das Receitas no IFEM</h2>
       <p class="met-lead" data-anim>
         O IFEM permite detalhar a estrutura de receitas de cada município, além da receita corrente total. A plataforma organiza as 
-        receitas em quatro grandes grupos, com suas respectivas subdivisões, ao todo, esse detalhamento abrange 25 tipos de receita. 
+        receitas em quatro grandes grupos, com suas respectivas subdivisões, ao todo, esse detalhamento abrange 46 tipos de receita. 
       </p>  
       <div class="met-tree" data-anim>
         <!-- Nível 1 -->
@@ -415,6 +415,13 @@
           <span>Quantidade de pessoas inscritas no CadÚnico por município.</span>
         </div>
 
+        <!-- Linha 7 -->
+        <div class="met-mrow" style="grid-template-columns: 1.2fr 1fr 2fr;">
+          <span><b>Riscos Climáticos</b></span>
+          <span>AdaptaBrasil / MCTI</span>
+          <span>Risco climático dos 12 subsetores para todos os municípios.</span>
+        </div>
+
       </div>
     </div>
   </section>
@@ -422,8 +429,8 @@
   <!-- ============ 06 · QUANTIS ============ -->
   <section class="met-sec" id="cap-quantis" data-bg="soft">
     <div class="met-box">
-      <p class="met-kick" data-anim>06 · Organizando 5.570 municípios</p>
-      <h2 class="met-title" data-anim>Uma fila,<br>do <span class="r">menor</span> ao <span class="g">maior</span>.</h2>
+      <p class="met-kick" data-anim>06 · quintis de receita</p>
+      <h2 class="met-title" data-anim>Organizando<br>do <span class="r">menor</span> ao <span class="g">maior</span>.</h2>
       <p class="met-lead" data-anim>
         No IFEM, os quantis são utilizados para organizar os municípios em grupos de acordo com sua posição na distribuição 
         nacional da receita corrente por habitante. A lógica é a seguinte: os municípios são ordenados do menor para o maior 
@@ -518,15 +525,34 @@
       <!-- Título do gráfico usando o padrão do seu projeto -->
       <h3 class="met-h3" data-anim>Distribuição de Municípios por Porte</h3>
 
-      <!-- O seu gráfico original logo abaixo -->
-      <div class="met-portes" data-anim>
-        {% for f in faixas %}
-        <div class="met-porte">
-          <b class="met-porte__n">{{ f.count }}</b>
-          <i style="--h:{{ f.h }}px"></i>
-          <span>{{ f.label }}</span>
+      <div class="met-portes-card" data-anim>
+        <div class="met-tabs__head met-portes-toggle" id="faixasTabsHead" role="tablist">
+          <button class="active" data-set="padrao">Faixas populacionais</button>
+          <button data-set="fnp">Faixas populacionais FNP</button>
         </div>
-        {% endfor %}
+
+        <div class="met-portes-pane active" data-set-pane="padrao">
+          <div class="met-portes">
+            {% for f in faixas %}
+            <div class="met-porte">
+              <b class="met-porte__n">{{ f.count }}</b>
+              <i style="--h:{{ f.h }}px"></i>
+              <span>{{ f.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="met-portes-pane" data-set-pane="fnp">
+          <div class="met-portes">
+            {% for f in faixas_fnp %}
+            <div class="met-porte">
+              <b class="met-porte__n">{{ f.count }}</b>
+              <i style="--h:{{ f.h }}px"></i>
+              <span>{{ f.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
       </div>
 
       <p class="met-lead" data-anim>
@@ -745,7 +771,7 @@
           <span class="met-formula__label">Taxa de crescimento =</span>
           <span class="met-formula__bracket">[</span>
           <div class="met-formula__fraction">
-            <span class="met-formula__top">População em 2024</span>
+            <span class="met-formula__top">População em 2025</span>
             <span class="met-formula__bar"></span>
             <span class="met-formula__bot">População em 2000</span>
           </div>
@@ -759,8 +785,8 @@
         Interpretação:
       </p>
       <ul class="met-list" data-anim>
-        <li><b>Crescimento acelerado:</b> Municípios que apresentam taxas de crescimento populacional superiores à média nacional podem enfrentar desafios de financiamento, pois a demanda por serviços públicos (saúde, educação, saneamento) tende a crescer de forma muito rápida.</li>
-        <li><b>Estagnação ou redução:</b> Municípios com crescimento negativo (perda de população) podem ter sua dinâmica econômica alterada, impactando transferências governamentais baseadas em critérios populacionais.</li>
+        <li><b>Crescimento acelerado:</b> Municípios que apresentam taxas de crescimento populacional superiores à média nacional podem enfrentar desafios de financiamento, pois a demanda por serviços públicos (saúde, educação, saneamento) tende a crescer de forma mais rápida.</li>
+        <li><b>Estagnação ou redução:</b> Municípios com crescimento negativo (perda de população) podem ter sua dinâmica econômica alterada, impactando transferências governamentais que tem como base critérios populacionais.</li>
       </ul>
 
       <p class="met-lead" data-anim>
@@ -783,7 +809,7 @@
           <span class="met-formula__label">Taxa de crescimento =</span>
           <span class="met-formula__bracket">[</span>
           <div class="met-formula__fraction">
-            <span class="met-formula__top">Receita per capita 2024</span>
+            <span class="met-formula__top">Receita per capita 2025</span>
             <span class="met-formula__bar"></span>
             <span class="met-formula__bot">Receita per capita 2000</span>
           </div>
@@ -799,7 +825,7 @@
 
       <h3 class="met-h3" data-anim>Decomposição do indicador:</h3>
       <p class="met-lead" data-anim>
-        O crescimento da receita per capita não ocorre de forma isolada; ele é o resultado líquido de dois movimentos simultâneos e frequentemente opostos:
+        O crescimento da receita per capita não ocorre de forma isolada; ele é o resultado líquido de dois movimentos simultâneos:
       </p>
       <ul class="met-list" data-anim>
         <li><b>Crescimento da Receita Total:</b> Representa a variação do montante nominal arrecadado pelo município. Se a receita total cresce acima da inflação, há um efeito positivo direto na disponibilidade de recursos.</li>
@@ -887,7 +913,7 @@
 
       <h3 class="met-h3" data-anim>O Conceito</h3>
       <p class="met-lead" data-anim>
-        Esta construção estatística traduz as características centrais de um subconjunto de municípios, consolidando seus indicadores em um perfil "típico". Isso permite observar padrões sistêmicos que seriam invisíveis ao analisar isoladamente cada um dos 5.570 municípios brasileiros.
+        Esta construção estatística traduz as características centrais de um subconjunto de municípios, consolidando seus indicadores em um perfil "típico". Isso permite observar padrões sistêmicos que seriam invisíveis ao analisar isoladamente cada um dos municípios brasileiros.
       </p>
 
       <h3 class="met-h3" data-anim>Funcionamento</h3>

@@ -640,8 +640,47 @@
               <option value="risco_climatico">por Risco Climático</option>
             </select>
             
+            <!-- Select de sub-variável (notas CAPAG / nível de risco) -->
             <select id="subVariavelAnalisadaSelect" class="form-select form-select-sm d-none w-auto text-secondary shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px;">
                 <option value="todos">Todas as Notas/Riscos</option>
+            </select>
+
+            <!-- Filtros extras exclusivos do modo Risco Climático -->
+            <select id="riscoTipoSelect" class="form-select form-select-sm d-none w-auto shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; color: #495057;">
+              <option value="media_ponderada">Risco Climático Médio (Média Geral)</option>
+              <optgroup label="Biodiversidade">
+                <option value="bio_int_bio">&nbsp;&nbsp;&nbsp;&nbsp;Integridade do Bioma</option>
+              </optgroup>
+              <optgroup label="Desastres Geo-hidrológicos">
+                <option value="des_des_ter">&nbsp;&nbsp;&nbsp;&nbsp;Deslizamento de Terra</option>
+                <option value="des_in_enx_ala">&nbsp;&nbsp;&nbsp;&nbsp;Inundações e Alagamentos</option>
+              </optgroup>
+              <optgroup label="Recursos Hídricos">
+                <option value="rec_ris_est_hid">&nbsp;&nbsp;&nbsp;&nbsp;Risco de Estresse Hídrico</option>
+              </optgroup>
+              <optgroup label="Saúde">
+                <option value="sau_arb">&nbsp;&nbsp;&nbsp;&nbsp;Arboviroses (Dengue, Zika, Chikungunya)</option>
+                <option value="sau_lei_teg_ame">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Tegumentar Americana</option>
+                <option value="sau_lei_vis">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Visceral</option>
+                <option value="sau_mal">&nbsp;&nbsp;&nbsp;&nbsp;Malária</option>
+              </optgroup>
+              <optgroup label="Segurança Alimentar">
+                <option value="seg_ali_ace_con_ali">&nbsp;&nbsp;&nbsp;&nbsp;Acesso e Consumo de Alimentos</option>
+                <option value="seg_ali_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Alimentos</option>
+              </optgroup>
+              <optgroup label="Segurança Energética">
+                <option value="seg_ene_ace">&nbsp;&nbsp;&nbsp;&nbsp;Acesso à Energia</option>
+                <option value="seg_ene_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Energia</option>
+              </optgroup>
+            </select>
+
+            <select id="riscoNivelSelect" class="form-select form-select-sm d-none w-auto shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; color: #495057;">
+              <option value="todos">Todos os Níveis</option>
+              <option value="Muito baixo">Muito Baixo (&lt; 0,2)</option>
+              <option value="Baixo">Baixo (0,2 a 0,4)</option>
+              <option value="Médio">Médio (0,4 a 0,6)</option>
+              <option value="Alto">Alto (0,6 a 0,8)</option>
+              <option value="Muito alto">Muito Alto (≥ 0,8)</option>
             </select>
           </h5>
 

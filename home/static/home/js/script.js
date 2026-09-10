@@ -157,6 +157,9 @@ async function atualizarFiltros() {
     const subVariavelAnalisadaSelect = document.getElementById('subVariavelAnalisadaSelect');
     const subVariavelAnalisada = subVariavelAnalisadaSelect ? subVariavelAnalisadaSelect.value : 'todos';
 
+    const riscoTipoSelect = document.getElementById('riscoTipoSelect');
+    const riscoNivelSelect = document.getElementById('riscoNivelSelect');
+
     const apiUrl =
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
         `&uf=${selectedUf}` +
@@ -168,7 +171,9 @@ async function atualizarFiltros() {
         `&calculation_mode=${calculationMode}` +
         `&include_2000_data=${include2000Data}` +
         `&variavel_analisada=${variavelAnalisada}` +
-        `&sub_variavel_analisada=${subVariavelAnalisada}`;
+        `&sub_variavel_analisada=${subVariavelAnalisada}` +
+        `&risco_campo=${encodeURIComponent(riscoTipoSelect ? riscoTipoSelect.value : 'media_ponderada')}` +
+        `&risco_nivel=${encodeURIComponent(riscoNivelSelect ? riscoNivelSelect.value : 'todos')}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -298,7 +303,11 @@ async function atualizarFiltros() {
                 );
 
                 populacaoQuintilChart.data.datasets.push({
-                    label: dataset.label,
+                    // Para risco_climatico: legenda sem o ano, tooltip mostra o ano via tooltipLabel
+                    label: variavelAnalisada === 'risco_climatico'
+                        ? dataset.label.replace(/ \(2025\)$/, '').replace(/ \(2000\)$/, '')
+                        : dataset.label,
+                    tooltipLabel: dataset.label, // label completo (com ano) usado só no tooltip
                     data: dataset.data,
                     backgroundColor: backgroundColors,
                     borderColor: barColors, 
@@ -455,6 +464,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             ? value.toFixed(1) + '%'
                             : value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
                     }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            // Usa tooltipLabel (com ano) se disponível, senão usa label normal
+                            const fullLabel = context.dataset.tooltipLabel || context.dataset.label;
+                            const value = context.formattedValue;
+                            return `${fullLabel}: ${value}`;
+                        }
+                    }
                 }
             },
             scales: {
@@ -519,9 +538,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (subVariavelAnalisadaSelect) {
                 if (e.target.value === 'populacao') {
+                    // Oculta todos os filtros extras
                     subVariavelAnalisadaSelect.classList.add('d-none');
                     subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
+                    const rt = document.getElementById('riscoTipoSelect');
+                    const rn = document.getElementById('riscoNivelSelect');
+                    if (rt) { rt.classList.add('d-none'); rt.value = 'media_ponderada'; }
+                    if (rn) { rn.classList.add('d-none'); rn.value = 'todos'; }
                 } else if (e.target.value === 'capag') {
+                    // Exibe somente o sub-select de notas CAPAG
+                    const rt = document.getElementById('riscoTipoSelect');
+                    const rn = document.getElementById('riscoNivelSelect');
+                    if (rt) { rt.classList.add('d-none'); rt.value = 'media_ponderada'; }
+                    if (rn) { rn.classList.add('d-none'); rn.value = 'todos'; }
                     subVariavelAnalisadaSelect.classList.remove('d-none');
                     subVariavelAnalisadaSelect.innerHTML = `
                         <option value="todos">Todas as Notas</option>
@@ -531,15 +560,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="D e outros">D e outros</option>
                     `;
                 } else if (e.target.value === 'risco_climatico') {
-                    subVariavelAnalisadaSelect.classList.remove('d-none');
-                    subVariavelAnalisadaSelect.innerHTML = `
-                        <option value="todos">Todos os Riscos</option>
-                        <option value="Muito baixo">Muito baixo</option>
-                        <option value="Baixo">Baixo</option>
-                        <option value="Médio">Médio</option>
-                        <option value="Alto">Alto</option>
-                        <option value="Muito alto">Muito alto</option>
-                    `;
+                    // Oculta o sub-select genérico e exibe os dois filtros de risco
+                    subVariavelAnalisadaSelect.classList.add('d-none');
+                    subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
+                    const rt = document.getElementById('riscoTipoSelect');
+                    const rn = document.getElementById('riscoNivelSelect');
+                    if (rt) rt.classList.remove('d-none');
+                    if (rn) rn.classList.remove('d-none');
                 }
             }
 
@@ -565,6 +592,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (subVariavelAnalisadaSelect) {
         subVariavelAnalisadaSelect.addEventListener('change', atualizarFiltros);
     }
+
+    // Listeners para os dois novos filtros de risco climático
+    const riscoTipoSelectEl = document.getElementById('riscoTipoSelect');
+    const riscoNivelSelectEl = document.getElementById('riscoNivelSelect');
+    if (riscoTipoSelectEl) riscoTipoSelectEl.addEventListener('change', atualizarFiltros);
+    if (riscoNivelSelectEl) riscoNivelSelectEl.addEventListener('change', atualizarFiltros);
 
     if (toggle2025) {
         toggle2025.addEventListener('click', () => {
@@ -597,6 +630,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (variavelAnalisadaSelect) variavelAnalisadaSelect.value = 'populacao';
             if (toggle2000e2025) {
                 toggle2000e2025.classList.remove('d-none');
+            }
+
+            // Reseta filtros de risco climático
+            const rtEl = document.getElementById('riscoTipoSelect');
+            const rnEl = document.getElementById('riscoNivelSelect');
+            if (rtEl) { rtEl.classList.add('d-none'); rtEl.value = 'media_ponderada'; }
+            if (rnEl) { rnEl.classList.add('d-none'); rnEl.value = 'todos'; }
+            if (subVariavelAnalisadaSelect) {
+                subVariavelAnalisadaSelect.classList.add('d-none');
+                subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
             }
 
             document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));

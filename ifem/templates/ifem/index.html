@@ -190,7 +190,7 @@
                             <div class="svg-wrapper">
                                 <svg viewBox="0 0 200 200" class="pie-svg">
                                     <circle class="circle-base" cx="100" cy="100" r="80" fill="none"></circle>
-                                    <circle class="circle-progress" cx="100" cy="100" r="80" fill="none" data-offset="336"></circle>
+                                    <circle class="circle-progress" cx="100" cy="100" r="80" fill="none" data-offset="{{ pie_offset }}"></circle>
                                 </svg>
                                 <div class="chart-center-text"><span>Receitas</span></div>
                             </div>
@@ -202,7 +202,7 @@
                                             <path d="M4 10V21H8V14H16V21H20V10L12 3L4 10Z"></path>
                                             <path d="M2 21H22"></path>
                                         </svg>
-                                        <span class="legend-value"><span class="pie-counter" data-target="67">0</span>%</span>
+                                        <span class="legend-value"><span class="pie-counter" data-target="{{ pct_transferencias }}">0</span>%</span>
                                     </div>
                                     <span class="legend-label">Transferências</span>
                                 </div>
@@ -217,7 +217,7 @@
                                             <path d="M9 13V13.01"></path>
                                             <path d="M9 17V17.01"></path>
                                         </svg>
-                                        <span class="legend-value"><span class="pie-counter" data-target="33">0</span>%</span>
+                                        <span class="legend-value"><span class="pie-counter" data-target="{{ pct_propria }}">0</span>%</span>
                                     </div>
                                     <span class="legend-label">Arrecadação Própria</span>
                                 </div>

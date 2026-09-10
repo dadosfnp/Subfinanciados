@@ -152,8 +152,7 @@
 .met-donut__c span { color: var(--m-mut); font-size: .82rem; margin-top: .2rem; max-width: 130px; }
 
 /* ---------- Escala de portes (barras crescentes, animam ao entrar) ---------- */
-.met-portes { display: flex; align-items: flex-end; gap: .7rem; margin-top: 2.4rem; padding: 1.8rem 1.6rem 1.4rem;
-  background: #fff; border: 1px solid var(--m-line); border-radius: 18px; box-shadow: 0 14px 40px rgba(16,55,88,.06); overflow-x: auto; }
+.met-portes { display: flex; align-items: flex-end; gap: .7rem; overflow-x: auto; }
 .met-porte { flex: 1; min-width: 64px; display: flex; flex-direction: column; align-items: center; gap: .7rem; }
 .met-porte i { width: 100%; max-width: 50px; height: var(--h); border-radius: 8px 8px 4px 4px;
   background: linear-gradient(180deg, #4f9bf2, var(--m-blue2)); transform: scaleY(0); transform-origin: bottom;
@@ -161,7 +160,15 @@
 .met-portes.in .met-porte i { transform: scaleY(1); }
 .met-porte span { font-size: .76rem; font-weight: 600; color: var(--m-mut); text-align: center; line-height: 1.2; }
 .met-porte__n { font-size: .8rem; font-weight: 800; color: var(--m-blue2); }
-@media (max-width: 760px){ .met-portes { gap: .4rem; padding: 1.4rem 1rem 1rem; } .met-porte { min-width: 52px; } .met-porte span { font-size: .64rem; } .met-porte__n { font-size: .64rem; } }
+@media (max-width: 760px){ .met-portes { gap: .4rem; } .met-porte { min-width: 52px; } .met-porte span { font-size: .64rem; } .met-porte__n { font-size: .64rem; } }
+
+/* ---------- Card com alternância de faixas (padrão / FNP) ---------- */
+.met-portes-card { margin-top: 2.4rem; padding: 1.6rem 1.6rem 1.4rem; background: #fff; border: 1px solid var(--m-line);
+  border-radius: 18px; box-shadow: 0 14px 40px rgba(16,55,88,.06); }
+.met-portes-toggle { margin-bottom: 1.4rem; }
+.met-portes-pane { display: none; }
+.met-portes-pane.active { display: block; animation: met-fade .4s ease; }
+@media (max-width: 760px){ .met-portes-card { padding: 1.1rem 1rem 1rem; } }
 
 /* ---------- Dois grandes blocos (abaixo / acima de 80 mil) ---------- */
 .met-split80 { margin-top: 1rem; }
