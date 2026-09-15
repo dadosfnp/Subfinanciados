@@ -154,8 +154,8 @@ async function atualizarFiltros() {
     const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2025';
     const include2000Data = (selectedYearOption === '2000 e 2025');
 
-    const subVariavelAnalisadaSelect = document.getElementById('subVariavelAnalisadaSelect');
-    const subVariavelAnalisada = subVariavelAnalisadaSelect ? subVariavelAnalisadaSelect.value : 'todos';
+    const capagTipoSelect = document.getElementById('capagTipoSelect');
+    const capagNotaSelect = document.getElementById('capagNotaSelect');
 
     const riscoTipoSelect = document.getElementById('riscoTipoSelect');
     const riscoNivelSelect = document.getElementById('riscoNivelSelect');
@@ -171,7 +171,8 @@ async function atualizarFiltros() {
         `&calculation_mode=${calculationMode}` +
         `&include_2000_data=${include2000Data}` +
         `&variavel_analisada=${variavelAnalisada}` +
-        `&sub_variavel_analisada=${subVariavelAnalisada}` +
+        `&capag_campo=${encodeURIComponent(capagTipoSelect ? capagTipoSelect.value : 'geral')}` +
+        `&capag_nota=${encodeURIComponent(capagNotaSelect ? capagNotaSelect.value : 'todos')}` +
         `&risco_campo=${encodeURIComponent(riscoTipoSelect ? riscoTipoSelect.value : 'media_ponderada')}` +
         `&risco_nivel=${encodeURIComponent(riscoNivelSelect ? riscoNivelSelect.value : 'todos')}`;
 
@@ -233,11 +234,20 @@ async function atualizarFiltros() {
             '#d9ef8b', '#a6d96a', '#66bd63', '#1a9850', '#006837'
         ];
 
+        // Nota geral: gradiente do verde ao vermelho
         const CAPAG_PALETTE = {
             'A': '#2D8A4E',
             'B': '#72BA6A',
             'C': '#E8C83E',
             'D e outros': '#A33242'
+        };
+
+        // Indicadores I, II e III: semáforo, com cinza para a faixa sem nota
+        const CAPAG_INDICADOR_PALETTE = {
+            'A': '#2D8A4E',            // verde
+            'B': '#E8C83E',            // amarelo
+            'C': '#A33242',            // vermelho
+            'n.d. ou n.e.': '#9E9E9E'  // cinza
         };
 
         const RISCO_PALETTE = {
@@ -253,6 +263,9 @@ async function atualizarFiltros() {
             if (count > 5) return DECIL_PALETTE; 
             return QUINTIL_PALETTE;
         };
+
+        // A nota geral e os indicadores da CAPAG têm paleta e ordem de legenda próprias
+        const capagEhIndicador = variavelAnalisada === 'capag' && capagTipoSelect && capagTipoSelect.value !== 'geral';
 
         if (data.chartData.datasets?.length > 0) {
             const createDiagonalPattern = (color) => {
@@ -289,7 +302,7 @@ async function atualizarFiltros() {
                     const labelBase = dataset.label.replace(' (2025)', '').replace(' (2000)', '');
                     let singleColor = '#cccccc';
                     if (variavelAnalisada === 'capag') {
-                        singleColor = CAPAG_PALETTE[labelBase] || '#9E9E9E';
+                        singleColor = (capagEhIndicador ? CAPAG_INDICADOR_PALETTE : CAPAG_PALETTE)[labelBase] || '#9E9E9E';
                     } else if (variavelAnalisada === 'risco_climatico') {
                         singleColor = RISCO_PALETTE[labelBase] || '#9E9E9E';
                     }
@@ -303,9 +316,9 @@ async function atualizarFiltros() {
                 );
 
                 populacaoQuintilChart.data.datasets.push({
-                    // Para risco_climatico: legenda sem o ano, tooltip mostra o ano via tooltipLabel
-                    label: variavelAnalisada === 'risco_climatico'
-                        ? dataset.label.replace(/ \(2025\)$/, '').replace(/ \(2000\)$/, '')
+                    // Só o modo população compara anos; nos demais a legenda dispensa o ano (o tooltip mantém)
+                    label: variavelAnalisada !== 'populacao'
+                        ? dataset.label.replace(/ \((?:2000|2025)\)$/, '')
                         : dataset.label,
                     tooltipLabel: dataset.label, // label completo (com ano) usado só no tooltip
                     data: dataset.data,
@@ -372,6 +385,31 @@ async function atualizarFiltros() {
 }
 
 // ==== Eventos e inicialização ====
+/**
+ * Reconstrói o select de notas CAPAG conforme o tipo escolhido:
+ * a nota geral chega até D, enquanto os indicadores vão de A a C.
+ */
+function atualizarOpcoesNotaCapag() {
+    const tipo = document.getElementById('capagTipoSelect');
+    const nota = document.getElementById('capagNotaSelect');
+    if (!tipo || !nota) return;
+
+    const outros = tipo.value === 'geral' ? 'D e outros' : 'n.d. ou n.e.';
+    const selecaoAnterior = nota.value;
+
+    nota.innerHTML = `
+        <option value="todos">Todas as Notas</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="${outros}">${outros}</option>
+    `;
+
+    // Mantém a nota selecionada quando ela ainda existir na nova lista
+    const aindaExiste = Array.from(nota.options).some(opt => opt.value === selecaoAnterior);
+    nota.value = aindaExiste ? selecaoAnterior : 'todos';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     filtroRegiao = document.getElementById('filtro-regiao');
     filtroUf = document.getElementById('filtro-uf');
@@ -419,6 +457,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         padding: 20,
                         generateLabels: function(chart) {
                             const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            const varSelect = document.getElementById('variavelAnalisadaSelect');
+                            const currentVar = varSelect ? varSelect.value : 'populacao';
+
                             original.forEach(label => {
                                 label.strokeStyle = '#000000';
                                 label.lineWidth = 1;
@@ -426,8 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const dsBackgroundColor = chart.data.datasets[label.datasetIndex]?.backgroundColor;
                                 const baseColor = Array.isArray(dsBackgroundColor) ? dsBackgroundColor[0] : dsBackgroundColor;
 
-                                const varSelect = document.getElementById('variavelAnalisadaSelect');
-                                const currentVar = varSelect ? varSelect.value : 'populacao';
                                 const finalColor = (currentVar === 'populacao') ? '#000000' : (baseColor || '#000000');
 
                                 if (label.text.includes('2000')) {
@@ -449,7 +488,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                     label.fillStyle = finalColor; 
                                 }
                             });
-                            return original;
+
+                            // Nos indicadores da CAPAG os datasets chegam invertidos (a melhor nota
+                            // é empilhada por último, no topo); a legenda segue a leitura visual do
+                            // topo para a base: A, B, C e n.d. ou n.e.
+                            const capagTipo = document.getElementById('capagTipoSelect');
+                            const ehIndicador = currentVar === 'capag' && capagTipo && capagTipo.value !== 'geral';
+                            return ehIndicador ? original.reverse() : original;
                         }
                     }
                 },
@@ -518,7 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const variavelAnalisadaSelect = document.getElementById('variavelAnalisadaSelect');
-    const subVariavelAnalisadaSelect = document.getElementById('subVariavelAnalisadaSelect');
 
     if (variavelAnalisadaSelect) {
         variavelAnalisadaSelect.addEventListener('change', (e) => {
@@ -536,39 +580,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (subVariavelAnalisadaSelect) {
-                if (e.target.value === 'populacao') {
-                    // Oculta todos os filtros extras
-                    subVariavelAnalisadaSelect.classList.add('d-none');
-                    subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
-                    const rt = document.getElementById('riscoTipoSelect');
-                    const rn = document.getElementById('riscoNivelSelect');
-                    if (rt) { rt.classList.add('d-none'); rt.value = 'media_ponderada'; }
-                    if (rn) { rn.classList.add('d-none'); rn.value = 'todos'; }
-                } else if (e.target.value === 'capag') {
-                    // Exibe somente o sub-select de notas CAPAG
-                    const rt = document.getElementById('riscoTipoSelect');
-                    const rn = document.getElementById('riscoNivelSelect');
-                    if (rt) { rt.classList.add('d-none'); rt.value = 'media_ponderada'; }
-                    if (rn) { rn.classList.add('d-none'); rn.value = 'todos'; }
-                    subVariavelAnalisadaSelect.classList.remove('d-none');
-                    subVariavelAnalisadaSelect.innerHTML = `
-                        <option value="todos">Todas as Notas</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D e outros">D e outros</option>
-                    `;
-                } else if (e.target.value === 'risco_climatico') {
-                    // Oculta o sub-select genérico e exibe os dois filtros de risco
-                    subVariavelAnalisadaSelect.classList.add('d-none');
-                    subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
-                    const rt = document.getElementById('riscoTipoSelect');
-                    const rn = document.getElementById('riscoNivelSelect');
-                    if (rt) rt.classList.remove('d-none');
-                    if (rn) rn.classList.remove('d-none');
-                }
-            }
+            // Cada modo exibe apenas o seu próprio par de filtros (tipo + nota/nível)
+            const mostraCapag = e.target.value === 'capag';
+            const mostraRisco = e.target.value === 'risco_climatico';
+
+            const ct = document.getElementById('capagTipoSelect');
+            const cn = document.getElementById('capagNotaSelect');
+            const rt = document.getElementById('riscoTipoSelect');
+            const rn = document.getElementById('riscoNivelSelect');
+
+            if (ct) { ct.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) ct.value = 'geral'; }
+            if (cn) { cn.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) cn.value = 'todos'; }
+            if (rt) { rt.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rt.value = 'media_ponderada'; }
+            if (rn) { rn.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rn.value = 'todos'; }
+
+            if (mostraCapag) atualizarOpcoesNotaCapag();
 
             const chartTooltip = document.getElementById('chart-info-tooltip');
             if (chartTooltip) {
@@ -589,9 +615,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (subVariavelAnalisadaSelect) {
-        subVariavelAnalisadaSelect.addEventListener('change', atualizarFiltros);
+    // Listeners para os dois filtros de nota CAPAG
+    const capagTipoSelectEl = document.getElementById('capagTipoSelect');
+    const capagNotaSelectEl = document.getElementById('capagNotaSelect');
+    if (capagTipoSelectEl) {
+        capagTipoSelectEl.addEventListener('change', () => {
+            atualizarOpcoesNotaCapag();
+            atualizarFiltros();
+        });
     }
+    if (capagNotaSelectEl) capagNotaSelectEl.addEventListener('change', atualizarFiltros);
 
     // Listeners para os dois novos filtros de risco climático
     const riscoTipoSelectEl = document.getElementById('riscoTipoSelect');
@@ -632,15 +665,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggle2000e2025.classList.remove('d-none');
             }
 
-            // Reseta filtros de risco climático
+            // Reseta os filtros extras de CAPAG e de risco climático
+            const ctEl = document.getElementById('capagTipoSelect');
+            const cnEl = document.getElementById('capagNotaSelect');
             const rtEl = document.getElementById('riscoTipoSelect');
             const rnEl = document.getElementById('riscoNivelSelect');
+            if (ctEl) { ctEl.classList.add('d-none'); ctEl.value = 'geral'; }
+            if (cnEl) { cnEl.classList.add('d-none'); cnEl.value = 'todos'; }
             if (rtEl) { rtEl.classList.add('d-none'); rtEl.value = 'media_ponderada'; }
             if (rnEl) { rnEl.classList.add('d-none'); rnEl.value = 'todos'; }
-            if (subVariavelAnalisadaSelect) {
-                subVariavelAnalisadaSelect.classList.add('d-none');
-                subVariavelAnalisadaSelect.innerHTML = '<option value="todos">Todas as Notas/Riscos</option>';
-            }
+            atualizarOpcoesNotaCapag();
 
             document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
             if (toggle2025) toggle2025.classList.add('active');

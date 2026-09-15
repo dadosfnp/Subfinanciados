@@ -304,11 +304,19 @@ class IndicadoresAtuais(models.Model):
     populacao_atual_total_estadual = models.IntegerField(null=True, blank=True)
     populacao_atual_rank_faixa = models.IntegerField(null=True, blank=True)
     populacao_atual_total_faixa = models.IntegerField(null=True, blank=True)
+
     capag = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    capag_indicador_I = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    capag_indicador_II = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    capag_indicador_III = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    capag_qualidade_fiscal = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_I        = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_I_nota   =  models.FloatField(null=True, blank=True)
+    capag_indicador_II       = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_II_nota  = models.FloatField(null=True, blank=True)
+    capag_indicador_III      = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    capag_indicador_III_nota = models.FloatField(null=True, blank=True)
+    capag_qualidade_fiscal   = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+
+    rgf_comprometimento_pessoal = models.FloatField(null=True, blank=True)
+    rgf_liquidez_relativa = models.FloatField(null=True, blank=True)
+
     rc_atual = models.FloatField(null=True, blank=True)
     rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
     quintil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)

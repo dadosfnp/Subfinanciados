@@ -11,7 +11,7 @@ class Command(BaseCommand):
         pop = pd.read_excel('base_datas/populacao.xlsx')
         rec24 = pd.read_excel('base_datas/receitas_correntes_2025.xlsx')
         rec00 = pd.read_excel('base_datas/receitas_correntes_2000.xlsx')
-        capag = pd.read_excel('base_datas/capag_05_08_26.xlsx')
+        capag = pd.read_excel('base_datas/capag_12_09_26.xlsx')
         
         # --- CORREÇÃO CRÍTICA 1: Garantir que o IBGE seja texto (Isso conserta o Merge!) ---
         pop['cod_ibge'] = pop['cod_ibge'].astype(str)
@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
         pop = pop.merge(rec24.drop(columns=['uf', 'faixas'], errors='ignore'), on='cod_ibge', how='left')
         pop = pop.merge(rec00, on='cod_ibge', how='left')
-        pop = pop.merge(capag[['cod_ibge', 'capag', 'indicador_i', 'indicador_ii', 'indicador_iii', 'qualidade_fiscal']], on='cod_ibge', how='left')
+        pop = pop.merge(capag[['cod_ibge', 'capag', 'indicador_i', 'nota_indicador_i', 'indicador_ii', 'nota_indicador_ii', 'indicador_iii', 'nota_indicador_iii', 'qualidade_fiscal']], on='cod_ibge', how='left')
 
         pop['name_muni_uf'] = pop['nome_muni'] + ' - ' + pop['uf']
 
@@ -86,8 +86,11 @@ class Command(BaseCommand):
                     populacao_atual_total_faixa=row['total_fax_pop'],
                     capag=row['capag'],
                     capag_indicador_I=row['indicador_i'],
+                    capag_indicador_I_nota=row['nota_indicador_i'],
                     capag_indicador_II=row['indicador_ii'],
+                    capag_indicador_II_nota=row['nota_indicador_ii'],
                     capag_indicador_III=row['indicador_iii'],
+                    capag_indicador_III_nota=row['nota_indicador_iii'],
                     capag_qualidade_fiscal=row['qualidade_fiscal'],
                     rc_atual=row['receita'],
                     rc_atual_pc=row['receita_pc'],
