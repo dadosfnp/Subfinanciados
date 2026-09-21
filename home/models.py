@@ -317,6 +317,9 @@ class IndicadoresAtuais(models.Model):
     rgf_comprometimento_pessoal = models.FloatField(null=True, blank=True)
     rgf_divida_consolidada_liquida = models.FloatField(null=True, blank=True)
 
+    # (despesa corrente + amortizações da dívida) / receita corrente — metodologia Multi Cidades
+    indicador_equilibrio_fiscal = models.FloatField(null=True, blank=True)
+
     rc_atual = models.FloatField(null=True, blank=True)
     rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
     quintil_atual = models.CharField(max_length=50, null=True, blank=True, db_index=True)

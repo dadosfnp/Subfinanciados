@@ -160,6 +160,8 @@ async function atualizarFiltros() {
     const riscoTipoSelect = document.getElementById('riscoTipoSelect');
     const riscoNivelSelect = document.getElementById('riscoNivelSelect');
 
+    const criterioSaudeFiscal = criterioSaudeFiscalAtual();
+
     const apiUrl =
         `/api/dashboard-data/?regiao=${selectedRegiao}` +
         `&uf=${selectedUf}` +
@@ -174,7 +176,8 @@ async function atualizarFiltros() {
         `&capag_campo=${encodeURIComponent(capagTipoSelect ? capagTipoSelect.value : 'geral')}` +
         `&capag_nota=${encodeURIComponent(capagNotaSelect ? capagNotaSelect.value : 'todos')}` +
         `&risco_campo=${encodeURIComponent(riscoTipoSelect ? riscoTipoSelect.value : 'media_ponderada')}` +
-        `&risco_nivel=${encodeURIComponent(riscoNivelSelect ? riscoNivelSelect.value : 'todos')}`;
+        `&risco_nivel=${encodeURIComponent(riscoNivelSelect ? riscoNivelSelect.value : 'todos')}` +
+        `&saude_fiscal_criterio=${criterioSaudeFiscal}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -268,6 +271,26 @@ async function atualizarFiltros() {
             'Sem dados': '#9E9E9E'
         };
 
+        // Quintis do proprio indicador: verde no grupo em melhor situacao, vermelho no pior
+        const QUINTIL_INDICADOR_PALETTE = {
+            'Muito bom': '#2D8A4E',
+            'Bom': '#72BA6A',
+            'Regular': '#E8C83E',
+            'Ruim': '#D97636',
+            'Muito ruim': '#A33242',
+            'Sem dados': '#9E9E9E'
+        };
+
+        // Equilibrio fiscal: verde com folga, vermelho quando as despesas passam da receita
+        const EQUILIBRIO_PALETTE = {
+            'Margem alta': '#2D8A4E',
+            'Margem moderada': '#72BA6A',
+            'Margem baixa': '#E8C83E',
+            'Margem mínima': '#D97636',
+            'Sem margem': '#A33242',
+            'Sem dados': '#9E9E9E'
+        };
+
         const RISCO_PALETTE = {
             'Muito baixo': '#2D8A4E',
             'Baixo': '#72BA6A',
@@ -286,6 +309,8 @@ async function atualizarFiltros() {
         const saudeFiscalTipo = capagTipoSelect ? capagTipoSelect.value : 'geral';
 
         const paletaSaudeFiscal = () => {
+            if (criterioSaudeFiscal === 'quintil' && saudeFiscalTipo !== 'geral') return QUINTIL_INDICADOR_PALETTE;
+            if (saudeFiscalTipo === 'equilibrio') return EQUILIBRIO_PALETTE;
             if (saudeFiscalTipo === 'rgf_pessoal') return RGF_PESSOAL_PALETTE;
             if (saudeFiscalTipo === 'rgf_divida') return RGF_DIVIDA_PALETTE;
             if (saudeFiscalTipo === 'geral') return CAPAG_PALETTE;
@@ -415,22 +440,22 @@ async function atualizarFiltros() {
 const FICHAS_SAUDE_FISCAL = {
     'geral': {
         titulo: 'Nota CAPAG (Geral)',
-        oQueE: 'A Capacidade de Pagamento avalia a situação fiscal do município para que a União decida conceder ou não garantia em operações de crédito.',
-        formulaHtml: 'Nota CAPAG = <strong>pior nota</strong> entre os indicadores I, II e III',
-        formulaNota: 'Princípio do elo mais fraco: basta um indicador ruim para derrubar a nota geral.',
+        oQueE: 'A Capacidade de Pagamento avalia a situação fiscal do município para que a União decida conceder ou não garantia em operações de crédito. É apurada pelo Tesouro Nacional a partir de três indicadores.',
+        formulaHtml: 'Nota CAPAG = combinação das notas dos três indicadores, pela matriz do art. 4º da Portaria Normativa MF nº 1.583/2023',
         comoInterpretar: 'A nota resume a capacidade de tomar crédito com aval federal. De C para baixo, o município fica impedido de contratar novas operações com garantia da União.',
         faixas: [
-            ['A', '#2D8A4E', 'A e A+', 'Capacidade fiscal forte. Contas equilibradas, endividamento controlado, boa liquidez e poupança corrente sólida. Acesso amplo a crédito com garantia da União.'],
-            ['B', '#72BA6A', 'B e B+', 'Capacidade estável a moderada. Algum indicador exige atenção, mas ainda permite contratar empréstimos com garantia federal, em geral sob condições específicas.'],
-            ['C', '#E8C83E', 'C', 'Capacidade limitada. Pelo menos um indicador com vulnerabilidade severa. Impede novas operações de crédito com garantia da União e exige ajuste fiscal.'],
-            ['D e outros', '#A33242', 'D, n.d. e n.e.', 'D indica situação crítica, com risco elevado de inadimplência e vedação total ao aval federal. n.d. é o município que não enviou os dados ao Siconfi, ou os enviou com inconsistências graves; n.e. é o que tem impedimento legal estrutural. Nos três casos não há acesso à garantia da União.']
+            ['A', '#2D8A4E', 'A', 'Capacidade fiscal forte: dívida controlada e folga de caixa ou de orçamento. Acesso amplo a crédito com garantia da União.'],
+            ['B', '#72BA6A', 'B', 'Capacidade estável a moderada. Algum indicador exige atenção, mas ainda permite contratar empréstimos com garantia federal, em geral sob condições específicas.'],
+            ['C', '#E8C83E', 'C', 'Capacidade limitada. Basta um C em Poupança Corrente ou em Liquidez Relativa para chegar aqui. Impede novas operações de crédito com garantia da União e exige ajuste fiscal.'],
+            ['D e outros', '#A33242', 'D, n.d. e n.e.', 'D é a situação crítica, reservada a quem tem os três indicadores em C. n.d. é o município cujo indicador não pôde ser apurado, por falta ou inconsistência de dados no Siconfi. n.e. é o que ficou sem CAPAG por ter nota Eicf no ranking de qualidade contábil. Nos três casos não há acesso à garantia da União.']
         ]
     },
     'indicador_i': {
         titulo: 'Indicador I – Endividamento (DC)',
         oQueE: 'Mede o tamanho da dívida em relação a um ano inteiro de arrecadação líquida do município.',
-        numerador: 'Dívida Consolidada (DC)',
+        numerador: 'Dívida Consolidada Bruta',
         denominador: 'Receita Corrente Líquida (RCL)',
+        formulaNota: 'Apurado com base no Relatório de Gestão Fiscal do Executivo referente ao último quadrimestre ou semestre do exercício.',
         comoInterpretar: 'Quanto menor, menor o peso das obrigações de longo prazo sobre a receita. Em 100%, a dívida equivale a um ano inteiro de receita corrente líquida.',
         faixas: [
             ['A', '#2D8A4E', 'abaixo de 60%', 'Dívida menor que 60% da receita corrente líquida.'],
@@ -441,8 +466,9 @@ const FICHAS_SAUDE_FISCAL = {
     'indicador_ii': {
         titulo: 'Indicador II – Poupança Corrente (PC)',
         oQueE: 'Mede quanto da receita corrente é consumido pelas despesas correntes de manutenção: custeio, pessoal e afins.',
-        numerador: 'Despesas Correntes',
-        denominador: 'Receitas Correntes Ajustadas',
+        numerador: 'Despesa Corrente',
+        denominador: 'Receita Corrente Ajustada',
+        formulaNota: 'Não é um retrato de um ano só: entra a média ponderada dos três últimos exercícios encerrados, com pesos de 50%, 30% e 20%, do mais recente para o mais antigo.',
         comoInterpretar: 'Quanto menor, maior a sobra para investir e pagar dívida. A partir de 100% o município gasta no custeio mais do que arrecada, ou seja, opera em déficit corrente.',
         faixas: [
             ['A', '#2D8A4E', 'abaixo de 85%', 'Sobra pelo menos 15% da receita corrente depois do custeio.'],
@@ -452,22 +478,22 @@ const FICHAS_SAUDE_FISCAL = {
     },
     'indicador_iii': {
         titulo: 'Indicador III – Liquidez Relativa (LR)',
-        oQueE: 'Mede a sobra de caixa do município: o que resta da disponibilidade financeira depois de descontadas as obrigações de curto prazo, comparada à receita corrente líquida.',
-        numerador: 'Disponibilidade de caixa − obrigações financeiras (restos a pagar e despesas a liquidar)',
+        oQueE: 'Mede a folga de caixa do município: o que resta da disponibilidade financeira depois de descontadas as obrigações já vencidas, comparada à receita corrente líquida.',
+        numerador: 'Disponibilidade de Caixa Bruta − Obrigações Financeiras',
         denominador: 'Receita Corrente Líquida (RCL)',
-        comoInterpretar: 'Ao contrário dos outros dois indicadores, aqui maior é melhor: o índice mostra quanto sobra em caixa. Zero ou negativo significa que as obrigações de curto prazo já consumiram toda a disponibilidade financeira.',
+        comoInterpretar: 'Ao contrário dos outros dois indicadores, aqui maior é melhor: o índice mostra quanto sobra em caixa. Zero ou negativo significa que as obrigações já consumiram toda a disponibilidade financeira.',
         faixas: [
-            ['A', '#2D8A4E', '5% ou mais', 'Sobra em caixa equivalente a 5% ou mais da receita corrente líquida.'],
-            ['B', '#E8C83E', 'entre 0 e 5%', 'Sobra positiva, porém pequena.'],
-            ['C', '#A33242', '0 ou negativo', 'Não há sobra: as obrigações de curto prazo igualam ou superam o caixa disponível.']
+            ['A', '#2D8A4E', '5% ou mais', 'Folga de caixa equivalente a 5% ou mais da receita corrente líquida.'],
+            ['B', '#E8C83E', 'entre 0 e 5%', 'Folga positiva, porém pequena.'],
+            ['C', '#A33242', '0 ou negativo', 'Não há folga: as obrigações igualam ou superam o caixa disponível.']
         ]
     },
     'rgf_pessoal': {
         titulo: 'RGF – Comprometimento com Pessoal',
-        oQueE: 'Despesa Total com Pessoal (DTP): o percentual da Receita Corrente Líquida comprometido com pessoal ativo, inativo e pensionistas, já descontadas as exclusões legais previstas na LRF.',
+        oQueE: 'Despesa Total com Pessoal (DTP) é o percentual da Receita Corrente Líquida comprometido com pessoal ativo, inativo e pensionistas, já descontadas as exclusões legais previstas na LRF.',
         numerador: 'Despesa Total com Pessoal (DTP)',
         denominador: 'Receita Corrente Líquida (RCL)',
-        comoInterpretar: 'As faixas usam o teto do Executivo municipal, de 54% da RCL — o limite de 60% da LRF vale para o município inteiro, e 6% cabem ao Legislativo. Alerta e prudencial são, respectivamente, 90% e 95% desse teto.',
+        comoInterpretar: 'As faixas usam o teto do Executivo municipal, de 54% da RCL. O limite de 60% da LRF vale para o município inteiro, e 6% cabem ao Legislativo. Alerta e prudencial são, respectivamente, 90% e 95% desse teto.',
         faixas: [
             ['Regular', '#2D8A4E', 'abaixo de 48,6%', 'Abaixo do limite de alerta. Conformidade legal integral.'],
             ['Acima do Limite de Alerta', '#E8C83E', '48,6% ou mais', 'Atingiu 90% do teto. O Tribunal de Contas emite alerta formal para que o gestor adote medidas preventivas de contenção de gastos.'],
@@ -478,10 +504,10 @@ const FICHAS_SAUDE_FISCAL = {
     },
     'rgf_divida': {
         titulo: 'RGF – Dívida Consolidada Líquida',
-        oQueE: 'A DCL é o total das obrigações financeiras de longo prazo menos as disponibilidades de caixa e demais haveres financeiros. O indicador mostra quanto ela representa da Receita Corrente Líquida.',
+        oQueE: 'A Dívida Consolidada Líquida (DCL) é o total das obrigações financeiras de longo prazo menos as disponibilidades de caixa e demais haveres financeiros. O indicador mostra quanto ela representa da Receita Corrente Líquida.',
         numerador: 'Dívida Consolidada Bruta − caixa, aplicações e haveres financeiros',
         denominador: 'Receita Corrente Líquida (RCL)',
-        comoInterpretar: 'O teto fixado pelo Senado Federal para municípios é de 120% da RCL. DCL negativa significa que o município tem mais recursos líquidos disponíveis do que dívida.',
+        comoInterpretar: 'O teto fixado pelo Senado Federal para municípios é de 120% da Receita Corrente Líquida. Dívida Consolidada Líquida negativa significa que o município tem mais recursos líquidos disponíveis do que dívida.',
         faixas: [
             ['Caixa Positivo (DCL Negativa)', '#2D8A4E', 'abaixo de 0%', 'Caixa e haveres financeiros superam a dívida bruta. Indicador de solidez financeira.'],
             ['Regular', '#72BA6A', 'de 0% a 108%', 'Dívida dentro do teto fixado pelo Senado Federal.'],
@@ -489,27 +515,81 @@ const FICHAS_SAUDE_FISCAL = {
             ['Acima do Limite', '#A33242', 'acima de 120%', 'Ultrapassou o teto do Senado. Sujeita o município a prazo legal de enquadramento, restrições rígidas de crédito, proibição de novos financiamentos e controle externo.'],
             ['Sem dados', '#9E9E9E', '—', 'Município sem informação de dívida consolidada líquida na base do RGF.']
         ]
+    },
+    'equilibrio': {
+        titulo: 'Indicador de Equilíbrio Fiscal',
+        oQueE: 'Compara as despesas correntes, somadas às amortizações da dívida, com a receita corrente. Mostra quanto da arrecadação é consumido para manter a máquina funcionando e pagar o principal da dívida — o que sobra é a margem disponível para investir.',
+        numerador: 'Despesa Corrente + Amortizações da Dívida',
+        denominador: 'Receita corrente bruta − deduções da receita',
+        formulaNota: 'Metodologia da publicação Multi Cidades, da FNP. Atenção ao denominador: ele é cerca de 10% menor que a receita corrente usada nos quintis deste painel, porque desconta as deduções (sobretudo a formação do FUNDEB). Não é a mesma Receita Corrente Líquida da LRF que aparece nas fichas do RGF. Destas faixas, só o corte de 100% vem da fonte; 85%, 90% e 95% são escolha editorial do painel, sem força normativa.',
+        comoInterpretar: 'Quanto mais perto de 100%, menor a folga para investir e maior a exposição a uma queda inesperada de arrecadação. Na base de 2025 a mediana dos municípios é 94,4%, e o indicador piora com o porte: vai de 93,8% nos municípios até 20 mil habitantes a 101,3% nos acima de 500 mil, e alcança 11 das 26 capitais. Cuidado ao comparar com o Indicador II da CAPAG: ele usa cortes parecidos, mas é média de três exercícios, tem outro denominador e não inclui amortizações — os dois discordam de faixa em um terço dos municípios.',
+        faixas: [
+            ['Margem alta', '#2D8A4E', 'abaixo de 85%', 'Sobra mais de 15% da receita corrente depois do custeio e das amortizações. Não é atestado de saúde fiscal: um em cada dez municípios daqui tem CAPAG C ou D.'],
+            ['Margem moderada', '#72BA6A', 'de 85% a 90%', 'Folga de 10% a 15% da receita corrente.'],
+            ['Margem baixa', '#E8C83E', 'de 90% a 95%', 'Folga de 5% a 10%: o custeio e a dívida consomem quase tudo.'],
+            ['Margem mínima', '#D97636', 'de 95% a 100%', 'Sobra no máximo 5%. Uma frustração de receita joga o município para o vermelho.'],
+            ['Sem margem', '#A33242', '100% ou mais', 'Despesas correntes e amortizações consomem toda a receita corrente. Não significa necessariamente déficit no custeio: em um terço destes municípios a despesa corrente cabe na receita, e o que estoura os 100% é a amortização da dívida, que é despesa de capital.'],
+            ['Sem dados', '#9E9E9E', '—', 'Município fora da planilha de equilíbrio ou com registro que a própria fonte marcou como inconsistente. São 8 casos, incluindo Brasília.']
+        ]
     }
 };
 
+/* Como ler o gráfico, por modo. No modo Saúde Fiscal a frase nomeia o recorte escolhido. */
+const CATEGORIA_SAUDE_FISCAL = {
+    'geral': 'da nota da CAPAG',
+    'indicador_i': 'do Indicador I – Endividamento',
+    'indicador_ii': 'do Indicador II – Poupança Corrente',
+    'indicador_iii': 'do Indicador III – Liquidez Relativa',
+    'rgf_pessoal': 'do Comprometimento com Pessoal do RGF',
+    'rgf_divida': 'da Dívida Consolidada Líquida do RGF',
+    'equilibrio': 'do Indicador de Equilíbrio Fiscal'
+};
+
+const COMO_LER_POPULACAO = [
+    'O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2025 ou na comparação entre 2000 e 2025.',
+    'O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. A lógica se repete nos demais quintis, até o último, que representa os municípios com maior receita per capita.',
+    'Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.'
+];
+
+const COMO_LER_RISCO = [
+    'O gráfico apresenta a quantidade de municípios em cada nível de Risco Climático, distribuídos por quintil de receita per capita.',
+    'O primeiro quintil inclui os municípios com menor receita per capita, enquanto o último agrupa os de maior receita.',
+    'Isso permite observar como os municípios mais vulneráveis a eventos climáticos estão distribuídos em relação à sua capacidade de arrecadação.'
+];
+
+function textoComoLer(modo, tipoSaudeFiscal, criterio) {
+    if (modo === 'risco_climatico') return COMO_LER_RISCO;
+    if (modo !== 'saude_fiscal') return COMO_LER_POPULACAO;
+
+    const categoria = CATEGORIA_SAUDE_FISCAL[tipoSaudeFiscal] || CATEGORIA_SAUDE_FISCAL['geral'];
+    const abertura = (criterio === 'quintil' && tipoSaudeFiscal !== 'geral')
+        ? 'O gráfico apresenta a quantidade de municípios em cada quintil ' + categoria +
+            ', distribuídos por quintil de receita por habitante.'
+        : 'O gráfico apresenta a quantidade de municípios em cada categoria ' + categoria +
+            ', distribuídos por quintil de receita por habitante.';
+    return [
+        abertura,
+        'O primeiro quintil inclui os municípios com menor receita por habitante, enquanto o último representa aqueles com maior receita por habitante.',
+        'Isso permite visualizar se municípios com melhor situação fiscal estão concentrados no grupo de municípios mais subfinanciado ou se distribui de forma uniforme.'
+    ];
+}
+
 /* Monta o corpo do pop-up: como ler o gráfico e, no modo Saúde Fiscal, a ficha do indicador. */
 function montarCorpoInfo() {
-    const botao = document.getElementById('chart-info-tooltip');
     const varSelect = document.getElementById('variavelAnalisadaSelect');
     const tipoSelect = document.getElementById('capagTipoSelect');
+    const modo = varSelect ? varSelect.value : 'populacao';
+    const tipo = tipoSelect ? tipoSelect.value : 'geral';
+    const criterio = criterioSaudeFiscalAtual();
+    const porQuintil = modo === 'saude_fiscal' && criterio === 'quintil' && tipo !== 'geral';
 
-    // O texto de "como ler" é o mesmo do tooltip, lido do próprio botão para não duplicar
-    const comoLer = botao
-        ? (botao.getAttribute('data-bs-original-title')
-            || botao.getAttribute('data-bs-title')
-            || botao.getAttribute('title')
-            || '')
-        : '';
+    const paragrafos = textoComoLer(modo, tipo, criterio)
+        .map(function (p) { return '<p>' + p + '</p>'; })
+        .join('');
 
-    let html = '<div class="info-secao"><h6>Como ler o gráfico</h6><p class="mb-0">' + comoLer + '</p></div>';
+    let html = '<div class="info-secao"><h6>Como ler o gráfico</h6>' + paragrafos + '</div>';
 
-    const ehSaudeFiscal = varSelect && varSelect.value === 'saude_fiscal';
-    const ficha = ehSaudeFiscal ? FICHAS_SAUDE_FISCAL[tipoSelect ? tipoSelect.value : 'geral'] : null;
+    const ficha = modo === 'saude_fiscal' ? FICHAS_SAUDE_FISCAL[tipo] : null;
 
     if (ficha) {
         const nomeCurto = ficha.titulo.split('–').pop().trim();
@@ -535,11 +615,16 @@ function montarCorpoInfo() {
             + (ficha.formulaNota ? '<p class="text-muted small mb-0 mt-2">' + ficha.formulaNota + '</p>' : '')
             + '</div>'
             + '<div class="info-secao"><h6>Como interpretar</h6><p class="mb-0">' + ficha.comoInterpretar + '</p></div>'
-            + '<div class="info-secao"><h6>O que significa cada faixa</h6>'
-            + '<div class="table-responsive"><table class="table table-sm info-faixas">'
-            + '<thead><tr><th>Faixa</th><th>Critério</th><th>Significado</th></tr></thead>'
-            + '<tbody>' + linhas + '</tbody></table></div>'
-            + '</div>';
+            + (porQuintil
+                ? '<div class="info-secao"><h6>Como os grupos são formados</h6>'
+                    + '<p>Neste modo os grupos saem do próprio valor do indicador, e não das faixas oficiais: os cortes dividem o universo de referência em cinco partes de 20%, da melhor situação ("Muito bom") para a pior ("Muito ruim").</p>'
+                    + '<p>Esse universo segue o modo de cálculo escolhido nos filtros: todos os municípios do país ou apenas a seleção atual. Com os cortes nacionais e algum filtro aplicado, os grupos aparecem em tamanhos diferentes — é justamente o que o gráfico mostra. Quem não tem valor apurado fica em "Sem dados".</p>'
+                    + '</div>'
+                : '<div class="info-secao"><h6>O que significa cada faixa</h6>'
+                    + '<div class="table-responsive"><table class="table table-sm info-faixas">'
+                    + '<thead><tr><th>Faixa</th><th>Critério</th><th>Significado</th></tr></thead>'
+                    + '<tbody>' + linhas + '</tbody></table></div>'
+                    + '</div>');
     }
 
     const titulo = document.getElementById('indicador-info-titulo');
@@ -550,6 +635,43 @@ function montarCorpoInfo() {
 }
 
 // ==== Eventos e inicialização ====
+const QUINTIS_INDICADOR = ['Muito bom', 'Bom', 'Regular', 'Ruim', 'Muito ruim'];
+
+/* Qual criterio de classificacao esta ativo: faixas oficiais ou quintis do indicador. */
+function criterioSaudeFiscalAtual() {
+    const ativo = document.querySelector('#criterio-saude-fiscal .toggle-option.active');
+    return ativo ? ativo.dataset.criterio : 'legal';
+}
+
+/**
+ * Mostra o par de botões só no modo Saúde Fiscal e desabilita "Limites por Quintil"
+ * na nota geral da CAPAG, que é letra pura — não há valor numérico para dividir.
+ */
+function atualizarCriterioSaudeFiscal() {
+    const bloco = document.getElementById('criterio-saude-fiscal');
+    if (!bloco) return;
+
+    const varSelect = document.getElementById('variavelAnalisadaSelect');
+    const tipoSelect = document.getElementById('capagTipoSelect');
+    bloco.classList.toggle('d-none', !(varSelect && varSelect.value === 'saude_fiscal'));
+
+    const semQuintil = !tipoSelect || tipoSelect.value === 'geral';
+    const btnQuintil = bloco.querySelector('[data-criterio="quintil"]');
+    const btnLegal = bloco.querySelector('[data-criterio="legal"]');
+    if (!btnQuintil || !btnLegal) return;
+
+    btnQuintil.classList.toggle('desabilitado', semQuintil);
+    btnQuintil.title = semQuintil
+        ? 'A nota geral da CAPAG é só uma letra, sem valor numérico para dividir em quintis.'
+        : '';
+
+    // Ao cair na nota geral vindo do modo quintil, volta para os limites legais
+    if (semQuintil && btnQuintil.classList.contains('active')) {
+        btnQuintil.classList.remove('active');
+        btnLegal.classList.add('active');
+    }
+}
+
 /**
  * Reconstrói o select de notas/classificações conforme o recorte escolhido:
  * a nota geral da CAPAG chega até D, os indicadores vão de A a C e os campos
@@ -561,27 +683,79 @@ function atualizarOpcoesNotaCapag() {
     const nota = document.getElementById('capagNotaSelect');
     if (!tipo || !nota) return;
 
-    const FAIXAS_RGF = {
+    // Recortes cujas faixas legais não são letras da CAPAG: RGF e equilíbrio fiscal
+    const FAIXAS_POR_VALOR = {
         'rgf_pessoal': ['Regular', 'Acima do Limite de Alerta', 'Acima do Limite Prudencial',
                         'Acima do Limite Máximo', 'Sem dados'],
         'rgf_divida': ['Caixa Positivo (DCL Negativa)', 'Regular', 'Em Alerta (TCE)',
-                       'Acima do Limite', 'Sem dados']
+                       'Acima do Limite', 'Sem dados'],
+        'equilibrio': ['Margem alta', 'Margem moderada', 'Margem baixa',
+                       'Margem mínima', 'Sem margem', 'Sem dados']
     };
 
-    const ehRgf = tipo.value in FAIXAS_RGF;
-    const faixas = ehRgf
-        ? FAIXAS_RGF[tipo.value]
-        : ['A', 'B', 'C', tipo.value === 'geral' ? 'D e outros' : 'n.d. ou n.e.'];
+    const ehQuintil = criterioSaudeFiscalAtual() === 'quintil' && tipo.value !== 'geral';
+    const ehRgf = tipo.value in FAIXAS_POR_VALOR;
+    let faixas;
+    let rotuloTodos;
+    if (ehQuintil) {
+        faixas = QUINTIS_INDICADOR.concat(['Sem dados']);
+        rotuloTodos = 'Todos os Quintis';
+    } else if (ehRgf) {
+        faixas = FAIXAS_POR_VALOR[tipo.value];
+        rotuloTodos = 'Todas as Classificações';
+    } else {
+        faixas = ['A', 'B', 'C', tipo.value === 'geral' ? 'D e outros' : 'n.d. ou n.e.'];
+        rotuloTodos = 'Todas as Notas';
+    }
 
     const selecaoAnterior = nota.value;
 
-    nota.innerHTML = [`<option value="todos">${ehRgf ? 'Todas as Classificações' : 'Todas as Notas'}</option>`]
+    nota.innerHTML = [`<option value="todos">${rotuloTodos}</option>`]
         .concat(faixas.map(f => `<option value="${f}">${f}</option>`))
         .join('');
 
     // Mantém a seleção quando ela ainda existir na nova lista
     const aindaExiste = Array.from(nota.options).some(opt => opt.value === selecaoAnterior);
     nota.value = aindaExiste ? selecaoAnterior : 'todos';
+}
+
+/**
+ * Deixa os controles coerentes com o modo selecionado: seletor de anos, os pares de
+ * filtros de cada modo e os botões de critério. Roda na troca de modo e também na
+ * carga da página — um F5 pode restaurar o select num modo diferente de População,
+ * e sem isto os controles daquele modo ficariam escondidos.
+ */
+function sincronizarControlesDoModo() {
+    const varSelect = document.getElementById('variavelAnalisadaSelect');
+    const modo = varSelect ? varSelect.value : 'populacao';
+
+    // Só o modo População compara 2000 com 2025
+    if (modo !== 'populacao') {
+        if (toggle2000e2025) toggle2000e2025.classList.add('d-none');
+        if (toggle2025) {
+            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
+            toggle2025.classList.add('active');
+        }
+    } else if (toggle2000e2025) {
+        toggle2000e2025.classList.remove('d-none');
+    }
+
+    // Cada modo exibe apenas o seu próprio par de filtros (tipo + nota/nível)
+    const mostraCapag = modo === 'saude_fiscal';
+    const mostraRisco = modo === 'risco_climatico';
+
+    const ct = document.getElementById('capagTipoSelect');
+    const cn = document.getElementById('capagNotaSelect');
+    const rt = document.getElementById('riscoTipoSelect');
+    const rn = document.getElementById('riscoNivelSelect');
+
+    if (ct) { ct.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) ct.value = 'geral'; }
+    if (cn) { cn.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) cn.value = 'todos'; }
+    if (rt) { rt.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rt.value = 'media_ponderada'; }
+    if (rn) { rn.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rn.value = 'todos'; }
+
+    atualizarCriterioSaudeFiscal();
+    if (mostraCapag) atualizarOpcoesNotaCapag();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -663,12 +837,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             });
 
-                            // Fora da nota geral os datasets chegam invertidos (a melhor faixa é
-                            // empilhada por último, no topo); a legenda segue a leitura visual do
-                            // topo para a base: da melhor faixa para a pior.
-                            const capagTipo = document.getElementById('capagTipoSelect');
-                            const ehIndicador = currentVar === 'saude_fiscal' && capagTipo && capagTipo.value !== 'geral';
-                            return ehIndicador ? original.reverse() : original;
+                            // Nos modos empilhados os datasets chegam do pior para o melhor,
+                            // porque no empilhado o primeiro vai para a base: assim o cinza
+                            // (sem dado) fica embaixo de tudo, o vermelho logo acima e o verde
+                            // no topo. A legenda inverte essa ordem para ler sempre do verde ao
+                            // vermelho. População não tem faixas — são os anos, e ali a ordem
+                            // dos datasets já é a que se quer ler.
+                            const empilhado = currentVar !== 'populacao';
+                            return empilhado ? original.reverse() : original;
                         }
                     }
                 },
@@ -739,63 +915,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const variavelAnalisadaSelect = document.getElementById('variavelAnalisadaSelect');
 
     if (variavelAnalisadaSelect) {
-        variavelAnalisadaSelect.addEventListener('change', (e) => {
-            if (e.target.value !== 'populacao') {
-                if (toggle2000e2025) {
-                    toggle2000e2025.classList.add('d-none');
-                }
-                if (toggle2025) {
-                    document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
-                    toggle2025.classList.add('active');
-                }
-            } else {
-                if (toggle2000e2025) {
-                    toggle2000e2025.classList.remove('d-none');
-                }
-            }
-
-            // Cada modo exibe apenas o seu próprio par de filtros (tipo + nota/nível)
-            const mostraCapag = e.target.value === 'saude_fiscal';
-            const mostraRisco = e.target.value === 'risco_climatico';
-
-            const ct = document.getElementById('capagTipoSelect');
-            const cn = document.getElementById('capagNotaSelect');
-            const rt = document.getElementById('riscoTipoSelect');
-            const rn = document.getElementById('riscoNivelSelect');
-
-            if (ct) { ct.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) ct.value = 'geral'; }
-            if (cn) { cn.classList.toggle('d-none', !mostraCapag); if (!mostraCapag) cn.value = 'todos'; }
-            if (rt) { rt.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rt.value = 'media_ponderada'; }
-            if (rn) { rn.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rn.value = 'todos'; }
-
-            if (mostraCapag) atualizarOpcoesNotaCapag();
-
-            const chartTooltip = document.getElementById('chart-info-tooltip');
-            if (chartTooltip) {
-                let tooltipText = "O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2025 ou na comparação entre 2000 e 2025. <br>O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. <br>A lógica se repete nos demais quintis, até o último quintil, que representa os municípios com maior receita per capita.<br> Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.";
-                if (e.target.value === 'saude_fiscal') {
-                    tooltipText = "O gráfico apresenta a quantidade de municípios em cada categoria de saúde fiscal — nota CAPAG, seus indicadores ou os limites da LRF apurados no RGF —, distribuídos por quintil de receita per capita. <br>O primeiro quintil inclui os municípios com menor receita per capita, enquanto o último representa aqueles com maior receita. <br>Isso permite visualizar se a melhor situação fiscal está concentrada nos municípios mais ricos ou se distribui de forma uniforme.";
-                } else if (e.target.value === 'risco_climatico') {
-                    tooltipText = "O gráfico apresenta a quantidade de municípios em cada nível de Risco Climático, distribuídos por quintil de receita per capita. <br>O primeiro quintil inclui os municípios com menor receita per capita, enquanto o último agrupa os de maior receita. <br>Isso permite observar como os municípios mais vulneráveis a eventos climáticos estão distribuídos em relação à sua capacidade de arrecadação.";
-                }
-                chartTooltip.setAttribute('data-bs-original-title', tooltipText);
-                const bsTooltip = bootstrap.Tooltip.getInstance(chartTooltip);
-                if (bsTooltip) {
-                    bsTooltip.setContent({ '.tooltip-inner': tooltipText });
-                }
-            }
-
+        variavelAnalisadaSelect.addEventListener('change', () => {
+            sincronizarControlesDoModo();
             atualizarFiltros();
         });
     }
 
-    // O ícone de interrogação abre o pop-up com a ficha do indicador selecionado
-    const btnInfoGrafico = document.getElementById('chart-info-tooltip');
+    // O botao de interrogacao abre o pop-up com a ficha do indicador selecionado
+    const btnInfoGrafico = document.getElementById('chart-info-btn');
     const modalInfoEl = document.getElementById('indicador-info-modal');
     if (btnInfoGrafico && modalInfoEl) {
         btnInfoGrafico.addEventListener('click', () => {
-            const tip = bootstrap.Tooltip.getInstance(btnInfoGrafico);
-            if (tip) tip.hide();  // senão o balão fica preso atrás do modal
             montarCorpoInfo();
             bootstrap.Modal.getOrCreateInstance(modalInfoEl).show();
         });
@@ -806,10 +936,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const capagNotaSelectEl = document.getElementById('capagNotaSelect');
     if (capagTipoSelectEl) {
         capagTipoSelectEl.addEventListener('change', () => {
+            atualizarCriterioSaudeFiscal();
             atualizarOpcoesNotaCapag();
             atualizarFiltros();
         });
     }
+
+    // Par de botões Limites Legais / Limites por Quintil
+    document.querySelectorAll('#criterio-saude-fiscal .toggle-option').forEach(botao => {
+        botao.addEventListener('click', () => {
+            if (botao.classList.contains('desabilitado') || botao.classList.contains('active')) return;
+            document.querySelectorAll('#criterio-saude-fiscal .toggle-option')
+                .forEach(b => b.classList.remove('active'));
+            botao.classList.add('active');
+            atualizarOpcoesNotaCapag();  // as faixas do terceiro select mudam com o critério
+            atualizarFiltros();
+        });
+    });
     if (capagNotaSelectEl) capagNotaSelectEl.addEventListener('change', atualizarFiltros);
 
     // Listeners para os dois novos filtros de risco climático
@@ -820,7 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (toggle2025) {
         toggle2025.addEventListener('click', () => {
-            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
             toggle2025.classList.add('active');
             atualizarFiltros();
         });
@@ -828,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (toggle2000e2025) {
         toggle2000e2025.addEventListener('click', () => {
-            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
             toggle2000e2025.classList.add('active');
             atualizarFiltros();
         });
@@ -860,16 +1003,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cnEl) { cnEl.classList.add('d-none'); cnEl.value = 'todos'; }
             if (rtEl) { rtEl.classList.add('d-none'); rtEl.value = 'media_ponderada'; }
             if (rnEl) { rnEl.classList.add('d-none'); rnEl.value = 'todos'; }
+            document.querySelectorAll('#criterio-saude-fiscal .toggle-option').forEach(b => {
+                b.classList.toggle('active', b.dataset.criterio === 'legal');
+            });
+            atualizarCriterioSaudeFiscal();
             atualizarOpcoesNotaCapag();
 
-            document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
             if (toggle2025) toggle2025.classList.add('active');
 
             updateDependentFilters(true).then(atualizarFiltros);
         });
     }
 
-    // Chamada inicial
+    // Chamada inicial: reconcilia os controles com o modo atual antes de buscar os dados
+    sincronizarControlesDoModo();
     updateDependentFilters(true).then(atualizarFiltros);
 });
 
