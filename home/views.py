@@ -291,6 +291,30 @@ def api_get_dashboard_data(request):
     }
     orm_risco_campo = RISCO_CAMPO_ORM.get(risco_campo, 'dados_adapta_brasil__media_ponderada')
 
+    # Filtros específicos de saúde fiscal (notas da CAPAG e indicadores do RGF)
+    capag_campo = request.GET.get('capag_campo', 'geral')  # nota geral, indicador da CAPAG ou do RGF
+    capag_nota = request.GET.get('capag_nota', 'todos')    # nota/classificação selecionada
+
+    # Mapeamento de campo simbólico → campo ORM da saúde fiscal
+    CAPAG_CAMPO_ORM = {
+        'geral':         'dados_atuais__capag',
+        'indicador_i':   'dados_atuais__capag_indicador_I',
+        'indicador_ii':  'dados_atuais__capag_indicador_II',
+        'indicador_iii': 'dados_atuais__capag_indicador_III',
+        'rgf_pessoal':   'dados_atuais__rgf_comprometimento_pessoal',
+        'rgf_divida':    'dados_atuais__rgf_divida_consolidada_liquida',
+    }
+    orm_capag_campo = CAPAG_CAMPO_ORM.get(capag_campo, 'dados_atuais__capag')
+
+    CAPAG_CAMPO_LABELS = {
+        'geral':         'Nota CAPAG',
+        'indicador_i':   'Indicador I – Endividamento',
+        'indicador_ii':  'Indicador II – Poupança Corrente',
+        'indicador_iii': 'Indicador III – Liquidez Relativa',
+        'rgf_pessoal':   'RGF – Comprometimento com Pessoal',
+        'rgf_divida':    'RGF – Dívida Consolidada Líquida',
+    }
+
     # Nomes legíveis para o campo selecionado (para título do gráfico)
     RISCO_CAMPO_LABELS = {
         'media_ponderada':    'Risco Climático Médio (Média Geral)',
@@ -350,6 +374,12 @@ def api_get_dashboard_data(request):
         classification_filter = 'quintil'
         num_quantiles = 5
 
+    # Campos carregados apenas quando o filtro selecionado exige (media_ponderada e capag já vêm por padrão)
+    extra_value_fields = [
+        campo for campo in (orm_risco_campo, orm_capag_campo)
+        if campo not in ('dados_adapta_brasil__media_ponderada', 'dados_atuais__capag')
+    ]
+
     base_classification_labels = [f'{i+1}º {classification_filter}' for i in range(num_quantiles)]
     try:
         # --- Lógica 2025 (dados_atuais) ---
@@ -361,7 +391,7 @@ def api_get_dashboard_data(request):
             municipios_raw_data_24 = list(queryset.values(
                 'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
                 'dados_atuais__capag', 'dados_adapta_brasil__media_ponderada',
-                *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+                *extra_value_fields
             ))
             rc_values_24 = np.array([muni['dados_atuais__rc_atual_pc'] for muni in municipios_raw_data_24 if muni.get('dados_atuais__rc_atual_pc') is not None])
             
@@ -384,7 +414,7 @@ def api_get_dashboard_data(request):
                     'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
                     field_for_aggregation_24, 'dados_atuais__capag',
                     'dados_adapta_brasil__media_ponderada',
-                    *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+                    *extra_value_fields
                 ))
         else:
             field_for_aggregation_24 = f'dados_atuais__{classification_filter}_atual'
@@ -393,7 +423,7 @@ def api_get_dashboard_data(request):
                 'cod_ibge', 'dados_atuais__populacao_atual', 'dados_atuais__rc_atual_pc',
                 field_for_aggregation_24, 'dados_atuais__capag',
                 'dados_adapta_brasil__media_ponderada',
-                *([orm_risco_campo] if orm_risco_campo != 'dados_adapta_brasil__media_ponderada' else [])
+                *extra_value_fields
             ))
 
         # --- Lógica 2000 (dados_2000) ---
@@ -458,6 +488,24 @@ def api_get_dashboard_data(request):
             if val.startswith('D'): return 'D'
             return 'Sem Nota'
 
+        # Comprometimento com pessoal (% da RCL): o teto da LRF para o Executivo municipal
+        # é 54%, com limite prudencial em 95% do teto (51,3%) e alerta em 90% (48,6%).
+        def get_lrf_pessoal(val):
+            if val is None: return 'Sem dados'
+            if val >= 54: return 'Acima do Limite Máximo'
+            if val >= 51.3: return 'Acima do Limite Prudencial'
+            if val >= 48.6: return 'Acima do Limite de Alerta'
+            return 'Regular'
+
+        # Dívida Consolidada Líquida (% da RCL): teto de 120%, alerta dos TCEs em 108%
+        # (90% do teto). DCL negativa significa disponibilidade de caixa maior que a dívida.
+        def get_lrf_divida(val):
+            if val is None: return 'Sem dados'
+            if val > 120: return 'Acima do Limite'
+            if val >= 108: return 'Em Alerta (TCE)'
+            if val >= 0: return 'Regular'
+            return 'Caixa Positivo (DCL Negativa)'
+
         def get_risco_climatico(val):
             if val is None: return 'Sem Dados'
             if val >= 0.8: return 'Muito alto'
@@ -466,20 +514,44 @@ def api_get_dashboard_data(request):
             if val >= 0.2: return 'Baixo'
             return 'Muito baixo'
 
-        sub_variavel_analisada = request.GET.get('sub_variavel_analisada', 'todos')
+        # 'capag' é o nome antigo deste modo, aceito para não quebrar links já salvos
+        if variavel_analisada in ('saude_fiscal', 'capag'):
+            # Usa o campo selecionado (nota geral, indicador da CAPAG ou indicador do RGF)
+            campo_key = orm_capag_campo
+            campo_label = CAPAG_CAMPO_LABELS.get(capag_campo, 'Nota CAPAG')
 
-        if variavel_analisada == 'capag':
-            row_configs = [
-                ('A', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'A'),
-                ('B', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'B'),
-                ('C', lambda m: get_capag_grade(m.get('dados_atuais__capag')) == 'C'),
-                ('D e outros', lambda m: get_capag_grade(m.get('dados_atuais__capag')) in ['D', 'Sem Nota']),
+            if capag_campo == 'rgf_pessoal':
+                classificar = get_lrf_pessoal
+                faixas = ['Regular', 'Acima do Limite de Alerta',
+                          'Acima do Limite Prudencial', 'Acima do Limite Máximo', 'Sem dados']
+                table_row_header = 'Classificação LRF – Pessoal'
+            elif capag_campo == 'rgf_divida':
+                classificar = get_lrf_divida
+                faixas = ['Caixa Positivo (DCL Negativa)', 'Regular',
+                          'Em Alerta (TCE)', 'Acima do Limite', 'Sem dados']
+                table_row_header = 'Classificação LRF – Dívida'
+            else:
+                # Só a nota geral chega até D; os indicadores vão de A a C
+                outros_label = 'D e outros' if capag_campo == 'geral' else 'n.d. ou n.e.'
+
+                def classificar(val, outros=outros_label):
+                    grade = get_capag_grade(val)
+                    return grade if grade in ('A', 'B', 'C') else outros
+
+                faixas = ['A', 'B', 'C', outros_label]
+                table_row_header = 'Notas CAPAG'
+
+            all_row_configs = [
+                (faixa, lambda m, ck=campo_key, f=faixa, cl=classificar: cl(m.get(ck)) == f)
+                for faixa in faixas
             ]
-            if sub_variavel_analisada != 'todos':
-                row_configs = [rc for rc in row_configs if rc[0] == sub_variavel_analisada]
+            # Aplica filtro de nota/classificação se selecionado
+            if capag_nota and capag_nota != 'todos':
+                row_configs = [rc for rc in all_row_configs if rc[0] == capag_nota]
+            else:
+                row_configs = all_row_configs
             y_axis_title = 'Quantidade de Municípios'
-            table_row_header = 'Notas CAPAG'
-            chart_title = 'Distribuição de Municípios por Nota CAPAG'
+            chart_title = f'Distribuição de Municípios por {campo_label}'
             is_count = True
         elif variavel_analisada == 'risco_climatico':
             # Usa o campo selecionado (tipo de risco ou média ponderada)

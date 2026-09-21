@@ -636,13 +636,30 @@
             Distribuição 
             <select id="variavelAnalisadaSelect" name="variavelAnalisada" class="form-select form-select-sm d-inline-block w-auto text-primary bg-light shadow-sm" style="font-size: 0.95rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; padding-right: 30px;">
               <option value="populacao">da População Municipal</option>
-              <option value="capag">por Nota CAPAG</option>
+              <option value="saude_fiscal">por Saúde Fiscal</option>
               <option value="risco_climatico">por Risco Climático</option>
             </select>
             
-            <!-- Select de sub-variável (notas CAPAG / nível de risco) -->
-            <select id="subVariavelAnalisadaSelect" class="form-select form-select-sm d-none w-auto text-secondary shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px;">
-                <option value="todos">Todas as Notas/Riscos</option>
+            <!-- Filtros extras exclusivos do modo Saúde Fiscal -->
+            <select id="capagTipoSelect" class="form-select form-select-sm d-none w-auto shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; color: #495057;">
+              <optgroup label="CAPAG">
+                <option value="geral">&nbsp;&nbsp;&nbsp;&nbsp;Nota CAPAG (Geral)</option>
+                <option value="indicador_i">&nbsp;&nbsp;&nbsp;&nbsp;Indicador I &#8211; Endividamento</option>
+                <option value="indicador_ii">&nbsp;&nbsp;&nbsp;&nbsp;Indicador II &#8211; Poupança Corrente</option>
+                <option value="indicador_iii">&nbsp;&nbsp;&nbsp;&nbsp;Indicador III &#8211; Liquidez Relativa</option>
+              </optgroup>
+              <optgroup label="RGF">
+                <option value="rgf_pessoal">&nbsp;&nbsp;&nbsp;&nbsp;Comprometimento com Pessoal</option>
+                <option value="rgf_divida">&nbsp;&nbsp;&nbsp;&nbsp;Dívida Consolidada Líquida</option>
+              </optgroup>
+            </select>
+
+            <select id="capagNotaSelect" class="form-select form-select-sm d-none w-auto shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; color: #495057;">
+              <option value="todos">Todas as Notas</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D e outros">D e outros</option>
             </select>
 
             <!-- Filtros extras exclusivos do modo Risco Climático -->
@@ -815,6 +832,19 @@
 
 
 <!-- Modal de busca (Command Palette) -->
+
+<!-- Pop-up de ajuda do gráfico: como ler + ficha do indicador de saúde fiscal -->
+<div id="indicador-info-modal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="indicador-info-titulo">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="indicador-info-titulo">Sobre este gráfico</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body" id="indicador-info-corpo"></div>
+    </div>
+  </div>
+</div>
 
 <div id="search-modal" class="modal fade" tabindex="-1" aria-hidden="true">
 
