@@ -310,6 +310,61 @@
    POP-UP DE AJUDA DO GRÁFICO (ficha do indicador de saúde fiscal)
    ========================================================================== */
 
+/* Criterio de classificacao (Limites Legais x Limites por Quintil): centralizado
+   logo acima da legenda do grafico. */
+.criterio-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: .5rem;
+}
+
+.criterio-toggle.d-none { display: none !important; }
+
+.criterio-toggle .toggle-option {
+  padding: 6px 16px;
+  font-size: .85rem;
+}
+
+/* Sem valor numerico nao ha quintil: o botao fica visivel, porem inerte */
+.criterio-toggle .toggle-option.desabilitado {
+  color: #9aa5b1;
+  cursor: not-allowed;
+  background: #f1f3f5;
+}
+
+.criterio-toggle .toggle-option.desabilitado:hover { background: #f1f3f5; }
+
+/* Botao de ajuda do grafico: circulo branco com a interrogacao em azul FNP.
+   Nao e tooltip — abre o pop-up no clique. */
+.btn-info-grafico {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--fnp-blue);
+  color: var(--fnp-blue);
+  font-size: .75rem;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(25, 70, 133, .15);
+  cursor: pointer;
+  transition: background-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.btn-info-grafico:hover {
+  background: #eef3fa;
+  box-shadow: 0 2px 6px rgba(25, 70, 133, .22);
+}
+
+.btn-info-grafico:focus-visible {
+  outline: 2px solid var(--fnp-blue);
+  outline-offset: 2px;
+}
+
 /* Balao de hover: fundo claro, igual ao pop-up (o padrao do Bootstrap e preto).
    Vale so nesta pagina — este arquivo nao e carregado pelos outros modulos. */
 .fnp-tooltip {
@@ -354,6 +409,10 @@
 }
 
 #indicador-info-modal .info-secao + .info-secao { margin-top: 1.25rem; }
+
+/* O texto de "como ler" vem em varios paragrafos; o ultimo nao leva margem extra */
+#indicador-info-modal .info-secao p { margin-bottom: .6rem; }
+#indicador-info-modal .info-secao p:last-child { margin-bottom: 0; }
 
 #indicador-info-modal .info-secao h6 {
   font-size: .8rem;

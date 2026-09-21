@@ -362,7 +362,7 @@
 
               <h6 class="mb-0 me-1">Modo de Cálculo</h6>
 
-              <button type="button" class="btn-info-tooltip shadow-none border-0 bg-transparent p-0" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="O modo 'Total' considera todos os municípios para calcular os quintis, independentemente dos filtros aplicados. <br>O modo 'Aplicar Filtros' recalcula os quintis com base apenas nos municípios que atendem aos critérios dos filtros selecionados.">
+              <button type="button" class="btn-info-tooltip shadow-none border-0 bg-transparent p-0" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="O modo 'Total' considera todos os municípios para calcular os quintis, independentemente dos filtros aplicados. <br>O modo 'Aplicar Filtros' recalcula os quintis com base apenas nos municípios que atendem aos critérios dos filtros selecionados. <br>Vale para os quintis de receita, que são as colunas do gráfico, e também para os quintis do indicador, quando a Saúde Fiscal está em &#39;Limites por Quintil&#39;.">
 
                 <i class="fa-solid fa-circle-info text-secondary"></i>
 
@@ -652,6 +652,9 @@
                 <option value="rgf_pessoal">&nbsp;&nbsp;&nbsp;&nbsp;Comprometimento com Pessoal</option>
                 <option value="rgf_divida">&nbsp;&nbsp;&nbsp;&nbsp;Dívida Consolidada Líquida</option>
               </optgroup>
+              <optgroup label="Outros">
+                <option value="equilibrio">&nbsp;&nbsp;&nbsp;&nbsp;Indicador de Equilíbrio Fiscal</option>
+              </optgroup>
             </select>
 
             <select id="capagNotaSelect" class="form-select form-select-sm d-none w-auto shadow-sm" style="font-size: 0.85rem; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; color: #495057;">
@@ -702,19 +705,10 @@
           </h5>
 
           <button type="button"
-                  id="chart-info-tooltip"
-                  class="btn-info-tooltip"
-
-                  data-bs-toggle="tooltip"
-
-                  data-bs-placement="right"
-
-                  data-bs-html="true"
-
-                  title="O gráfico apresenta a quantidade de pessoas que vivem nos municípios de cada quintil, para o ano de 2025 ou na comparação entre 2000 e 2025. <br>O primeiro quintil inclui os municípios com menor receita per capita, e o total de população nesse grupo mostra quantas pessoas vivem nessas áreas. <br>A lógica se repete nos demais quintis, até o último quintil, que representa os municípios com maior receita per capita.<br> Como cada grupo contém o mesmo número de municípios, se um quintil tiver mais habitantes, isso indica que seus municípios são mais populosos, em média, do que os de outros grupos.">
-
-            <i class="fa-solid fa-circle-info text-secondary"></i>
-
+                  id="chart-info-btn"
+                  class="btn-info-grafico"
+                  aria-label="Como ler este gráfico">
+            <i class="fa-solid fa-question" aria-hidden="true"></i>
           </button>
 
         </div>
@@ -735,6 +729,14 @@
 
         </div>
 
+      </div>
+
+      <!-- Critério de classificação das faixas: só aparece no modo Saúde Fiscal -->
+      <div id="criterio-saude-fiscal" class="criterio-toggle d-none">
+        <div class="toggle-container">
+          <span class="toggle-option active" data-criterio="legal">Limites Legais</span>
+          <span class="toggle-option" data-criterio="quintil">Limites por Quintil</span>
+        </div>
       </div>
 
       <div class="chart-container" style="position: relative; height:400px; width:100%">

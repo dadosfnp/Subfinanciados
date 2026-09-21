@@ -13,6 +13,7 @@ class Command(BaseCommand):
         rec00 = pd.read_excel('base_datas/receitas_correntes_2000.xlsx')
         capag = pd.read_excel('base_datas/capag_12_09_26.xlsx')
         rgf = pd.read_excel('base_datas/indicadores_rgf.xlsx')
+        equilibrio = pd.read_excel('base_datas/indicador_equilibrio_fiscal_2025.xlsx')
         
         # --- CORREÇÃO CRÍTICA 1: Garantir que o IBGE seja texto (Isso conserta o Merge!) ---
         pop['cod_ibge'] = pop['cod_ibge'].astype(str)
@@ -20,12 +21,14 @@ class Command(BaseCommand):
         rec00['cod_ibge'] = rec00['cod_ibge'].astype(str)
         capag['cod_ibge'] = capag['cod_ibge'].astype(str)
         rgf['cod_ibge'] = rgf['cod_ibge'].astype(str)
+        equilibrio['cod_ibge'] = equilibrio['cod_ibge'].astype(str)
         # 2. Converte todos os nomes de colunas para minúsculo
         pop.columns = pop.columns.str.lower()
         rec24.columns = rec24.columns.str.lower()
         rec00.columns = rec00.columns.str.lower()
         capag.columns = capag.columns.str.lower()
         rgf.columns = rgf.columns.str.lower()
+        equilibrio.columns = equilibrio.columns.str.lower()
         
         # Ranking Nacional 2000
         rec00['rank_nacional00'] = rec00['receita_00_pc'].rank(method='min', ascending=False).astype(int)
@@ -59,6 +62,11 @@ class Command(BaseCommand):
         pop = pop.merge(rec00, on='cod_ibge', how='left')
         pop = pop.merge(capag[['cod_ibge', 'capag', 'indicador_i', 'nota_indicador_i', 'indicador_ii', 'nota_indicador_ii', 'indicador_iii', 'nota_indicador_iii', 'qualidade_fiscal']], on='cod_ibge', how='left')
         pop = pop.merge(rgf[['cod_ibge', 'comprometimento_pessoal', 'divida_consolidada_liquida']], on='cod_ibge', how='left')
+        # A própria planilha marca em 'status' os registros que não fecham (receita corrente
+        # não positiva, indicador fora da faixa plausível). Sem isso entram valores como
+        # 56.245 vindos de denominador degenerado, que viram 'Déficit corrente' no gráfico.
+        equilibrio.loc[equilibrio['status'] != 'ok', 'indicador'] = np.nan
+        pop = pop.merge(equilibrio[['cod_ibge', 'indicador']].rename(columns={'indicador': 'indicador_equilibrio_fiscal'}), on='cod_ibge', how='left')
 
         pop['name_muni_uf'] = pop['nome_muni'] + ' - ' + pop['uf']
 
@@ -98,6 +106,7 @@ class Command(BaseCommand):
                     capag_qualidade_fiscal=row['qualidade_fiscal'],
                     rgf_comprometimento_pessoal=row['comprometimento_pessoal'],
                     rgf_divida_consolidada_liquida=row['divida_consolidada_liquida'],
+                    indicador_equilibrio_fiscal=row['indicador_equilibrio_fiscal'],
                     rc_atual=row['receita'],
                     rc_atual_pc=row['receita_pc'],
                     quintil_atual=row['quintil'],

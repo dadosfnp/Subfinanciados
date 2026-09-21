@@ -256,6 +256,10 @@ def api_get_dependent_filters(request):
         'capags': list(capags)
     })
 
+# Piso de municípios para calcular quintis do indicador sobre a seleção filtrada
+MIN_MUNICIPIOS_QUINTIL = 10
+
+
 def api_get_dashboard_data(request):
     queryset = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
     regiao_filtro = request.GET.get('regiao')
@@ -294,6 +298,10 @@ def api_get_dashboard_data(request):
     # Filtros específicos de saúde fiscal (notas da CAPAG e indicadores do RGF)
     capag_campo = request.GET.get('capag_campo', 'geral')  # nota geral, indicador da CAPAG ou do RGF
     capag_nota = request.GET.get('capag_nota', 'todos')    # nota/classificação selecionada
+    # 'legal' usa as faixas oficiais (CAPAG e LRF); 'quintil' divide os municípios em cinco
+    # grupos iguais pelo próprio valor do indicador. A nota geral da CAPAG não tem valor
+    # numérico — só a letra —, então para ela o modo quintil não existe.
+    saude_fiscal_criterio = request.GET.get('saude_fiscal_criterio', 'legal')
 
     # Mapeamento de campo simbólico → campo ORM da saúde fiscal
     CAPAG_CAMPO_ORM = {
@@ -303,8 +311,28 @@ def api_get_dashboard_data(request):
         'indicador_iii': 'dados_atuais__capag_indicador_III',
         'rgf_pessoal':   'dados_atuais__rgf_comprometimento_pessoal',
         'rgf_divida':    'dados_atuais__rgf_divida_consolidada_liquida',
+        'equilibrio':    'dados_atuais__indicador_equilibrio_fiscal',
     }
     orm_capag_campo = CAPAG_CAMPO_ORM.get(capag_campo, 'dados_atuais__capag')
+
+    # Valor numérico por trás de cada recorte, usado no modo quintil
+    CAPAG_CAMPO_VALOR_ORM = {
+        'indicador_i':   'dados_atuais__capag_indicador_I_nota',
+        'indicador_ii':  'dados_atuais__capag_indicador_II_nota',
+        'indicador_iii': 'dados_atuais__capag_indicador_III_nota',
+        'rgf_pessoal':   'dados_atuais__rgf_comprometimento_pessoal',
+        'rgf_divida':    'dados_atuais__rgf_divida_consolidada_liquida',
+        'equilibrio':    'dados_atuais__indicador_equilibrio_fiscal',
+    }
+    # Na Liquidez Relativa maior é melhor; nos demais indicadores, menor é melhor
+    CAPAG_CAMPO_MAIOR_MELHOR = {'indicador_iii'}
+
+    usa_quintil_indicador = (
+        variavel_analisada in ('saude_fiscal', 'capag')
+        and saude_fiscal_criterio == 'quintil'
+        and capag_campo in CAPAG_CAMPO_VALOR_ORM
+    )
+    orm_capag_valor = CAPAG_CAMPO_VALOR_ORM.get(capag_campo) if usa_quintil_indicador else None
 
     CAPAG_CAMPO_LABELS = {
         'geral':         'Nota CAPAG',
@@ -313,6 +341,7 @@ def api_get_dashboard_data(request):
         'indicador_iii': 'Indicador III – Liquidez Relativa',
         'rgf_pessoal':   'RGF – Comprometimento com Pessoal',
         'rgf_divida':    'RGF – Dívida Consolidada Líquida',
+        'equilibrio':    'Indicador de Equilíbrio Fiscal',
     }
 
     # Nomes legíveis para o campo selecionado (para título do gráfico)
@@ -375,10 +404,28 @@ def api_get_dashboard_data(request):
         num_quantiles = 5
 
     # Campos carregados apenas quando o filtro selecionado exige (media_ponderada e capag já vêm por padrão)
-    extra_value_fields = [
-        campo for campo in (orm_risco_campo, orm_capag_campo)
-        if campo not in ('dados_adapta_brasil__media_ponderada', 'dados_atuais__capag')
-    ]
+    extra_value_fields = list(dict.fromkeys(
+        campo for campo in (orm_risco_campo, orm_capag_campo, orm_capag_valor)
+        if campo and campo not in ('dados_adapta_brasil__media_ponderada', 'dados_atuais__capag')
+    ))
+
+    # Limites dos quintis do indicador. O universo acompanha o modo de cálculo já usado
+    # pelos quintis de receita: nacional em 'total', só a seleção em 'por_filtro'.
+    limites_quintil_indicador = None
+    if usa_quintil_indicador:
+        def _valores(qs):
+            return np.array([v for v in qs.values_list(orm_capag_valor, flat=True) if v is not None])
+
+        nacional = Municipio.objects.filter(dados_atuais__rc_atual_pc__isnull=False)
+        valores_indicador = _valores(queryset) if quantil_calculation == 'por_filtro' else _valores(nacional)
+
+        # Dividir meia dúzia de municípios em cinco grupos e chamar um deles de "Muito
+        # ruim" não diz nada; abaixo do piso, usa os cortes nacionais.
+        if quantil_calculation == 'por_filtro' and len(valores_indicador) < MIN_MUNICIPIOS_QUINTIL:
+            valores_indicador = _valores(nacional)
+
+        if len(valores_indicador) > 0:
+            limites_quintil_indicador = np.quantile(valores_indicador, [0.2, 0.4, 0.6, 0.8])
 
     base_classification_labels = [f'{i+1}º {classification_filter}' for i in range(num_quantiles)]
     try:
@@ -488,6 +535,10 @@ def api_get_dashboard_data(request):
             if val.startswith('D'): return 'D'
             return 'Sem Nota'
 
+        # Rótulos dos quintis do indicador, do melhor grupo para o pior. Não se chamam
+        # "1º quintil" para não colidir com os quintis de receita, que são as colunas.
+        QUINTIS_INDICADOR = ['Muito bom', 'Bom', 'Regular', 'Ruim', 'Muito ruim']
+
         # Comprometimento com pessoal (% da RCL): o teto da LRF para o Executivo municipal
         # é 54%, com limite prudencial em 95% do teto (51,3%) e alerta em 90% (48,6%).
         def get_lrf_pessoal(val):
@@ -506,6 +557,21 @@ def api_get_dashboard_data(request):
             if val >= 0: return 'Regular'
             return 'Caixa Positivo (DCL Negativa)'
 
+        # Equilíbrio fiscal (despesa corrente + amortizações sobre receita corrente). Só o
+        # corte de 100% tem lastro na fonte; 85%, 90% e 95% são escolha editorial do painel
+        # (85 e 95 vêm da Poupança Corrente da CAPAG, que mede razão parecida mas sem as
+        # amortizações; 90 entrou para não deixar 44% do país num balde só).
+        # O valor vem em fração (0,9435 = 94,35%), diferente dos campos do RGF, que são em p.p.
+        # Acima de 100% não é sinônimo de déficit corrente: a amortização é despesa de capital,
+        # e um terço dos municípios dessa faixa tem superávit no custeio. Daí "Sem margem".
+        def get_equilibrio(val):
+            if val is None: return 'Sem dados'
+            if val >= 1.00: return 'Sem margem'
+            if val >= 0.95: return 'Margem mínima'
+            if val >= 0.90: return 'Margem baixa'
+            if val >= 0.85: return 'Margem moderada'
+            return 'Margem alta'
+
         def get_risco_climatico(val):
             if val is None: return 'Sem Dados'
             if val >= 0.8: return 'Muito alto'
@@ -520,11 +586,33 @@ def api_get_dashboard_data(request):
             campo_key = orm_capag_campo
             campo_label = CAPAG_CAMPO_LABELS.get(capag_campo, 'Nota CAPAG')
 
-            if capag_campo == 'rgf_pessoal':
+            if usa_quintil_indicador:
+                # Cinco grupos de tamanho igual pelo valor do indicador, do melhor para o pior
+                maior_melhor = capag_campo in CAPAG_CAMPO_MAIOR_MELHOR
+                campo_key = orm_capag_valor
+
+                def classificar(val, limites=limites_quintil_indicador, inverte=maior_melhor):
+                    if val is None or limites is None:
+                        return 'Sem dados'
+                    # O lado do corte muda com a direção para que o empate caia sempre no
+                    # grupo melhor: à esquerda quando menor é melhor, à direita quando maior é.
+                    posicao = int(np.searchsorted(limites, val, side='right' if inverte else 'left'))
+                    if inverte:
+                        posicao = 4 - posicao
+                    return QUINTIS_INDICADOR[posicao]
+
+                faixas = list(QUINTIS_INDICADOR) + ['Sem dados']
+                table_row_header = f'Situação ({campo_label})'
+            elif capag_campo == 'rgf_pessoal':
                 classificar = get_lrf_pessoal
                 faixas = ['Regular', 'Acima do Limite de Alerta',
                           'Acima do Limite Prudencial', 'Acima do Limite Máximo', 'Sem dados']
                 table_row_header = 'Classificação LRF – Pessoal'
+            elif capag_campo == 'equilibrio':
+                classificar = get_equilibrio
+                faixas = ['Margem alta', 'Margem moderada', 'Margem baixa',
+                          'Margem mínima', 'Sem margem', 'Sem dados']
+                table_row_header = 'Equilíbrio Fiscal'
             elif capag_campo == 'rgf_divida':
                 classificar = get_lrf_divida
                 faixas = ['Caixa Positivo (DCL Negativa)', 'Regular',
@@ -545,13 +633,19 @@ def api_get_dashboard_data(request):
                 (faixa, lambda m, ck=campo_key, f=faixa, cl=classificar: cl(m.get(ck)) == f)
                 for faixa in faixas
             ]
-            # Aplica filtro de nota/classificação se selecionado
-            if capag_nota and capag_nota != 'todos':
+            # Aplica filtro de nota/classificação se selecionado. Uma nota que não existe
+            # no critério atual (link antigo, ou troca de critério) é ignorada: melhor
+            # mostrar tudo do que devolver um gráfico vazio sem explicação.
+            if capag_nota and capag_nota != 'todos' and capag_nota in faixas:
                 row_configs = [rc for rc in all_row_configs if rc[0] == capag_nota]
             else:
                 row_configs = all_row_configs
             y_axis_title = 'Quantidade de Municípios'
-            chart_title = f'Distribuição de Municípios por {campo_label}'
+            chart_title = (
+                f'Distribuição de Municípios por {campo_label} (quintis do indicador)'
+                if usa_quintil_indicador
+                else f'Distribuição de Municípios por {campo_label}'
+            )
             is_count = True
         elif variavel_analisada == 'risco_climatico':
             # Usa o campo selecionado (tipo de risco ou média ponderada)
