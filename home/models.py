@@ -315,7 +315,7 @@ class IndicadoresAtuais(models.Model):
     capag_qualidade_fiscal   = models.CharField(max_length=50, null=True, blank=True, db_index=True)
 
     rgf_comprometimento_pessoal = models.FloatField(null=True, blank=True)
-    rgf_liquidez_relativa = models.FloatField(null=True, blank=True)
+    rgf_divida_consolidada_liquida = models.FloatField(null=True, blank=True)
 
     rc_atual = models.FloatField(null=True, blank=True)
     rc_atual_pc = models.FloatField(null=True, blank=True, db_index=True)
