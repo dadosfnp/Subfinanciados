@@ -775,8 +775,8 @@ def municipio_details_api(request):
     ).aggregate(avg_d=Avg('d'))
     delta_rc_pc = round(delta_rc_pc_agg['avg_d'], 2) if delta_rc_pc_agg['avg_d'] is not None else 0
 
-    # Get the count of municipalities in the filtered queryset
-    quantidade_municipios = queryset.count()
+    # Get the count of municipalities with revenue in the filtered queryset
+    quantidade_municipios = queryset.filter(dados_atuais__rc_atual__gt=0).count()
     
     # Format the data for the JSON response
     response_data = {
