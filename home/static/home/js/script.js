@@ -185,7 +185,7 @@ async function atualizarFiltros() {
     // O toggle de ano tem tres estados: '2000', '2025' e 'ambos'. Escopado em
     // .chart-controls para nao confundir com o toggle de criterio da Saude Fiscal.
     const serieAtiva = document.querySelector('.chart-controls .toggle-option.active');
-    const serie = serieAtiva ? serieAtiva.dataset.option : '2000';
+    const serie = serieAtiva ? serieAtiva.dataset.option : '2025';
 
     const capagTipoSelect = document.getElementById('capagTipoSelect');
     const capagNotaSelect = document.getElementById('capagNotaSelect');
@@ -1038,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarOpcoesNotaCapag();
 
             document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
-            if (toggle2000) toggle2000.classList.add('active');
+            if (toggle2025) toggle2025.classList.add('active');
 
             updateDependentFilters(true).then(atualizarFiltros);
         });

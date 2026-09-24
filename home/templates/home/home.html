@@ -721,11 +721,13 @@
 
           <div class="toggle-container">
 
-            <!-- 2000 abre por padrao: e o ponto de partida da comparacao. -->
+            <!-- 2025 abre por padrao. 2000 vem antes na ordem dos botoes porque
+                 e o inicio da serie, mas a leitura que interessa de saida e a
+                 do ano corrente. -->
 
-            <span class="toggle-option active" data-option="2000">2000</span>
+            <span class="toggle-option" data-option="2000">2000</span>
 
-            <span class="toggle-option" data-option="2025">2025</span>
+            <span class="toggle-option active" data-option="2025">2025</span>
 
             <span class="toggle-option" data-option="ambos">2000 e 2025</span>
 
@@ -753,7 +755,7 @@
 
 
 
-    <div class="table-card" id="table-card-2000">
+    <div class="table-card d-none" id="table-card-2000">
 
       <div class="d-flex align-items-center mb-1">
 
@@ -793,7 +795,7 @@
 
 
 
-    <div class="table-card d-none" id="table-card-2025">
+    <div class="table-card" id="table-card-2025">
 
       <div class="d-flex align-items-center mb-1">
 
