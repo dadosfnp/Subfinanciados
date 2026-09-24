@@ -17,6 +17,7 @@ let formatPorcentagemRadio;
 let calcModeTotalRadio;
 let calcModeFilteredRadio;
 
+let toggle2000;
 let toggle2025;
 let toggle2000e2025;
 
@@ -111,6 +112,35 @@ async function updateDependentFilters(initial = false) {
 /**
  * Renderiza tabela genérica
  */
+/**
+ * Formata uma celula da tabela de faixas.
+ *
+ * A API manda contagem como numero cru (1234) e porcentagem ja pronta
+ * ("12,3%"). So o numero precisa de separador de milhar -- formatar a string
+ * de porcentagem a quebraria.
+ *
+ * @param {number|string|null} valor  celula vinda da API
+ * @returns {string} texto pronto para a tabela
+ */
+function formatarCelula(valor) {
+    if (valor === null || valor === undefined) return '—';
+    if (typeof valor === 'number') return valor.toLocaleString('pt-BR');
+    return valor;
+}
+
+/**
+ * Exibe (ou esconde) um card de tabela conforme a API tenha mandado a serie.
+ */
+function toggleTabela(card, head, body, headers, data) {
+    if (!card) return;
+    if (!data || !headers) {
+        card.classList.add('d-none');
+        return;
+    }
+    card.classList.remove('d-none');
+    renderTable(head, body, headers, data);
+}
+
 function renderTable(tableHeadElement, tableBodyElement, headers, data) {
     tableHeadElement.innerHTML = '';
     tableBodyElement.innerHTML = '';
@@ -125,10 +155,12 @@ function renderTable(tableHeadElement, tableBodyElement, headers, data) {
 
     data.forEach(rowData => {
         const row = tableBodyElement.insertRow();
+        // A ultima linha fecha a tabela somando as faixas.
+        if (rowData['Faixas'] === 'Total Geral') row.classList.add('linha-total');
+
         headers.forEach(headerKey => {
             const cell = row.insertCell();
-            const cellValue = rowData[headerKey];
-            cell.textContent = cellValue;
+            cell.textContent = formatarCelula(rowData[headerKey]);
             if (headerKey === 'Faixas' || headerKey === 'Total') cell.style.fontWeight = 'bold';
         });
     });
@@ -150,9 +182,10 @@ async function atualizarFiltros() {
     const variavelAnalisadaSelect = document.getElementById('variavelAnalisadaSelect');
     const variavelAnalisada = variavelAnalisadaSelect ? variavelAnalisadaSelect.value : 'populacao';
 
-    const selectedYearOptionElement = document.querySelector('.toggle-option.active');
-    const selectedYearOption = selectedYearOptionElement ? selectedYearOptionElement.dataset.option : '2025';
-    const include2000Data = (selectedYearOption === '2000 e 2025');
+    // O toggle de ano tem tres estados: '2000', '2025' e 'ambos'. Escopado em
+    // .chart-controls para nao confundir com o toggle de criterio da Saude Fiscal.
+    const serieAtiva = document.querySelector('.chart-controls .toggle-option.active');
+    const serie = serieAtiva ? serieAtiva.dataset.option : '2000';
 
     const capagTipoSelect = document.getElementById('capagTipoSelect');
     const capagNotaSelect = document.getElementById('capagNotaSelect');
@@ -171,7 +204,7 @@ async function atualizarFiltros() {
         `&classification=${classificationFilter}` +
         `&display_format=${displayFormat}` +
         `&calculation_mode=${calculationMode}` +
-        `&include_2000_data=${include2000Data}` +
+        `&serie=${serie}` +
         `&variavel_analisada=${variavelAnalisada}` +
         `&capag_campo=${encodeURIComponent(capagTipoSelect ? capagTipoSelect.value : 'geral')}` +
         `&capag_nota=${encodeURIComponent(capagNotaSelect ? capagNotaSelect.value : 'todos')}` +
@@ -412,19 +445,10 @@ async function atualizarFiltros() {
         populacaoQuintilChart.update();
 
         // ==== Tabelas ====
-        if (data.tableData24 && tableCard2025) {
-            tableCard2025.classList.remove('d-none');
-            renderTable(table2025Head, table2025Body, data.tableHeaders24, data.tableData24);
-        } else if (tableCard2025) {
-            tableCard2025.classList.add('d-none');
-        }
-
-        if (include2000Data && data.tableData00 && data.tableHeaders00 && tableCard2000) {
-            tableCard2000.classList.remove('d-none');
-            renderTable(table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
-        } else if (tableCard2000) {
-            tableCard2000.classList.add('d-none');
-        }
+        // Cada card aparece quando a API mandou a serie dele -- nao ha estado de
+        // visibilidade guardado aqui, so o espelho do que veio.
+        toggleTabela(tableCard2000, table2000Head, table2000Body, data.tableHeaders00, data.tableData00);
+        toggleTabela(tableCard2025, table2025Head, table2025Body, data.tableHeaders24, data.tableData24);
 
         enableSynchronizedHover('#table-2025', '#table-2000');
 
@@ -729,15 +753,18 @@ function sincronizarControlesDoModo() {
     const varSelect = document.getElementById('variavelAnalisadaSelect');
     const modo = varSelect ? varSelect.value : 'populacao';
 
-    // Só o modo População compara 2000 com 2025
+    // Só o modo População tem serie de 2000: nos demais, tanto a comparacao
+    // quanto o "2000" sozinho somem, e a leitura fica travada em 2025.
     if (modo !== 'populacao') {
         if (toggle2000e2025) toggle2000e2025.classList.add('d-none');
+        if (toggle2000) toggle2000.classList.add('d-none');
         if (toggle2025) {
             document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
             toggle2025.classList.add('active');
         }
-    } else if (toggle2000e2025) {
-        toggle2000e2025.classList.remove('d-none');
+    } else {
+        if (toggle2000e2025) toggle2000e2025.classList.remove('d-none');
+        if (toggle2000) toggle2000.classList.remove('d-none');
     }
 
     // Cada modo exibe apenas o seu próprio par de filtros (tipo + nota/nível)
@@ -775,8 +802,9 @@ document.addEventListener('DOMContentLoaded', () => {
     calcModeTotalRadio = document.getElementById('calcModeTotal');
     calcModeFilteredRadio = document.getElementById('calcModeFiltered');
 
-    toggle2025 = document.querySelector('.toggle-option[data-option="2025"]');
-    toggle2000e2025 = document.querySelector('.toggle-option[data-option="2000 e 2025"]');
+    toggle2000 = document.querySelector('.chart-controls .toggle-option[data-option="2000"]');
+    toggle2025 = document.querySelector('.chart-controls .toggle-option[data-option="2025"]');
+    toggle2000e2025 = document.querySelector('.chart-controls .toggle-option[data-option="ambos"]');
 
     tableCard2025 = document.getElementById('table-card-2025');
     table2025Head = document.querySelector('#table-2025 thead');
@@ -961,21 +989,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (riscoTipoSelectEl) riscoTipoSelectEl.addEventListener('change', atualizarFiltros);
     if (riscoNivelSelectEl) riscoNivelSelectEl.addEventListener('change', atualizarFiltros);
 
-    if (toggle2025) {
-        toggle2025.addEventListener('click', () => {
-            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
-            toggle2025.classList.add('active');
+    // Um binding para as tres opcoes de ano: antes havia um bloco identico por
+    // opcao, e cada opcao nova pedia mais um. O escopo .chart-controls mantem
+    // o toggle de criterio da Saude Fiscal fora disto.
+    document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            document.querySelectorAll('.chart-controls .toggle-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
             atualizarFiltros();
         });
-    }
-
-    if (toggle2000e2025) {
-        toggle2000e2025.addEventListener('click', () => {
-            document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
-            toggle2000e2025.classList.add('active');
-            atualizarFiltros();
-        });
-    }
+    });
 
     if (btnLimpar) {
         btnLimpar.addEventListener('click', () => {
@@ -1010,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarOpcoesNotaCapag();
 
             document.querySelectorAll('.chart-controls .toggle-option').forEach(opt => opt.classList.remove('active'));
-            if (toggle2025) toggle2025.classList.add('active');
+            if (toggle2000) toggle2000.classList.add('active');
 
             updateDependentFilters(true).then(atualizarFiltros);
         });

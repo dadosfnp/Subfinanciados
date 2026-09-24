@@ -463,3 +463,57 @@
   margin-right: .4rem;
   border: 1px solid rgba(0, 0, 0, .15);
 }
+
+/* ====== Tabelas de faixa populacional ====== */
+/* Rotulo a esquerda, numeros a direita: numero so se compara de relance quando
+   as casas caem na mesma coluna vertical. Alinhado a esquerda, cada valor
+   comecava num ponto diferente e a coluna nao ajudava a ler nada. */
+.table-card table {
+  font-variant-numeric: tabular-nums; /* todo digito com a mesma largura */
+}
+
+.table-card table th,
+.table-card table td {
+  text-align: right;
+  vertical-align: middle;
+}
+
+.table-card table th:first-child,
+.table-card table td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Cabecalho: a faixa azul separa rotulo de dado sem precisar de zebra. */
+.table-card table thead th {
+  background: var(--fnp-blue);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-bottom: 0;
+  padding: .6rem .75rem;
+}
+
+.table-card table tbody td { padding: .55rem .75rem; }
+
+/* Linha que fecha a tabela somando as faixas. */
+.table-card table tbody tr.linha-total td {
+  border-top: 2px solid var(--bs-border-color);
+  background: #f1f5f9;
+}
+
+/* Sete colunas nao cabem em 390px, e o corte parecia fim da tabela. As sombras
+   acendem so do lado onde ainda ha coluna escondida -- os pares local/scroll
+   deixam o proprio navegador calcular isso, sem JS e sem listener. */
+.table-card .table-responsive {
+  background:
+    linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)) left center,
+    linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) right center,
+    radial-gradient(farthest-side at 0 50%, rgba(17, 24, 39, .16), rgba(17, 24, 39, 0)) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(17, 24, 39, .16), rgba(17, 24, 39, 0)) right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}

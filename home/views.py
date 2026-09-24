@@ -17,6 +17,17 @@ def _format_brl(value):
     return 'R$ ' + f'{int(round(value)):,}'.replace(',', '.')
 
 
+def _pct_br(valor):
+    """
+    Porcentagem no padrao brasileiro: uma casa decimal, separador virgula.
+
+    A tabela de faixas mostra contagem e porcentagem lado a lado. Com o ponto
+    decimal do Python a mesma linha exibia "1.034" e "19.0%", em que o mesmo
+    sinal separava milhar num numero e decimal no outro.
+    """
+    return f"{valor:.1f}".replace('.', ',') + '%'
+
+
 def _medias_por_grupo(field, prefix):
     """
     Agrega Avg(rc_atual_pc) por quintil/decil e devolve dict
@@ -270,8 +281,16 @@ def api_get_dashboard_data(request):
     classification_filter = request.GET.get('classification', 'quintil')
     display_format = request.GET.get('display_format', 'numero')
     quantil_calculation = request.GET.get('calculation_mode', 'total')
-    include_2000_data_str = request.GET.get('include_2000_data', 'false')
-    include_2000_data = (include_2000_data_str.lower() == 'true')
+    # Serie escolhida no toggle do grafico: '2000', '2025' ou 'ambos'. Substitui
+    # o antigo booleano include_2000_data, que so sabia dizer "com ou sem 2000"
+    # e por isso nao conseguia exibir 2000 sozinho.
+    # So vale para o modo Populacao; os modos de contagem (saude fiscal, risco)
+    # nao tem dados de 2000 e seguem sempre em 2025 -- ver `is_count` adiante.
+    serie = request.GET.get('serie', '2025')
+    if serie not in ('2000', '2025', 'ambos'):
+        serie = '2025'
+    incluir_00 = serie in ('2000', 'ambos')
+    incluir_24 = serie in ('2025', 'ambos')
     variavel_analisada = request.GET.get('variavel_analisada', 'populacao')
     # Filtros específicos de risco climático
     risco_campo = request.GET.get('risco_campo', 'media_ponderada')  # campo do AdaptaBrasil
@@ -735,13 +754,9 @@ def api_get_dashboard_data(request):
                 if label:
                     pop_by_group_24[label] += item.get('dados_atuais__populacao_atual', 0) if item.get('dados_atuais__populacao_atual') is not None else 0
             
-            datasets_to_send.append({
-                "label": f"{y_axis_title} (2025)",
-                "data": [(pop_by_group_24.get(l, 0) / chart_value_multiplier_24) for l in chart_labels]
-            })
-
-            # Gráfico 2000
-            if include_2000_data:
+            # 2000 primeiro: na comparacao ele e a referencia contra a qual 2025
+            # e lido, entao vem antes na legenda e no agrupamento das barras.
+            if incluir_00:
                 total_pop_for_chart_percentage_00 = sum(item.get('dados_2000__populacao_00', 0) for item in aggregated_data_list_00 if item.get('dados_2000__populacao_00') is not None)
                 chart_value_multiplier_00 = 1_000_000 
                 if display_format == 'porcentagem':
@@ -757,6 +772,12 @@ def api_get_dashboard_data(request):
                 datasets_to_send.append({
                     "label": f"{y_axis_title} (2000)",
                     "data": [(pop_by_group_00.get(l, 0) / chart_value_multiplier_00) for l in chart_labels]
+                })
+
+            if incluir_24:
+                datasets_to_send.append({
+                    "label": f"{y_axis_title} (2025)",
+                    "data": [(pop_by_group_24.get(l, 0) / chart_value_multiplier_24) for l in chart_labels]
                 })
 
         # --- Tabela Dinâmica ---
@@ -780,18 +801,18 @@ def api_get_dashboard_data(request):
                 val = raw_counts_in_row_24.get(col_label, 0)
                 if display_format == 'porcentagem' and is_count:
                     col_total = column_totals_24.get(col_label, 0)
-                    row_data[col_label] = f"{(val / col_total * 100):.1f}%" if col_total > 0 else "0.0%"
+                    row_data[col_label] = _pct_br(val / col_total * 100) if col_total > 0 else _pct_br(0)
                 elif display_format == 'porcentagem':
-                    row_data[col_label] = f"{(val / current_range_total_raw_24 * 100):.1f}%" if current_range_total_raw_24 > 0 else "0.0%"
+                    row_data[col_label] = _pct_br(val / current_range_total_raw_24 * 100) if current_range_total_raw_24 > 0 else _pct_br(0)
                 else:
                     row_data[col_label] = val
                 
                 raw_grand_total_classification_counts_24[col_label] += val
 
             if display_format == 'porcentagem' and is_count:
-                row_data['Total'] = f"{(current_range_total_raw_24 / total_municipios_24 * 100):.1f}%" if total_municipios_24 > 0 else "0.0%"
+                row_data['Total'] = _pct_br(current_range_total_raw_24 / total_municipios_24 * 100) if total_municipios_24 > 0 else _pct_br(0)
             elif display_format == 'porcentagem':
-                row_data['Total'] = "100.0%"
+                row_data['Total'] = _pct_br(100)
             else:
                 row_data['Total'] = current_range_total_raw_24
             
@@ -804,26 +825,26 @@ def api_get_dashboard_data(request):
         for col_label in classification_columns:
             count = raw_grand_total_classification_counts_24.get(col_label, 0)
             if display_format == 'porcentagem' and is_count:
-                grand_total_row_24[col_label] = "100.0%"
+                grand_total_row_24[col_label] = _pct_br(100)
             elif display_format == 'porcentagem':
-                grand_total_row_24[col_label] = f"{(count / total_municipios_for_table_24 * 100):.1f}%" if total_municipios_for_table_24 > 0 else "0.0%"
+                grand_total_row_24[col_label] = _pct_br(count / total_municipios_for_table_24 * 100) if total_municipios_for_table_24 > 0 else _pct_br(0)
             else:
                 grand_total_row_24[col_label] = count
 
         if display_format == 'porcentagem' and is_count:
-            grand_total_row_24['Total'] = "100.0%"
+            grand_total_row_24['Total'] = _pct_br(100)
         elif display_format == 'porcentagem':
-            grand_total_row_24['Total'] = "100.0%"
+            grand_total_row_24['Total'] = _pct_br(100)
         else:
             grand_total_row_24['Total'] = raw_grand_total_rows_total_24
             
         table_data_24.append(grand_total_row_24)
         table_headers_24 = [table_row_header] + classification_columns + ['Total']
 
-        # --- Tabela 2000 (Apenas se for população e houver include_2000_data) ---
+        # --- Tabela 2000 (Apenas se for população e a serie incluir 2000) ---
         table_data_00 = []
         table_headers_00 = []
-        if include_2000_data and not is_count:
+        if incluir_00 and not is_count:
             raw_grand_total_classification_counts_00 = {col: 0 for col in classification_columns}
             for row_label, condition in row_configs:
                 row_data = {table_row_header: row_label}
@@ -863,10 +884,10 @@ def api_get_dashboard_data(request):
                 current_range_total_raw_00 = len(range_data_00_filtered)
                 for col_label in classification_columns:
                     val = raw_counts_in_row_00.get(col_label, 0)
-                    row_data[col_label] = f"{(val / current_range_total_raw_00 * 100):.1f}%" if display_format == 'porcentagem' and current_range_total_raw_00 > 0 else (val if display_format != 'porcentagem' else "0.0%")
+                    row_data[col_label] = _pct_br(val / current_range_total_raw_00 * 100) if display_format == 'porcentagem' and current_range_total_raw_00 > 0 else (val if display_format != 'porcentagem' else _pct_br(0))
                     raw_grand_total_classification_counts_00[col_label] += val
 
-                row_data['Total'] = f"100.0%" if display_format == 'porcentagem' else current_range_total_raw_00
+                row_data['Total'] = _pct_br(100) if display_format == 'porcentagem' else current_range_total_raw_00
                 table_data_00.append(row_data)
 
             grand_total_row_00 = {table_row_header: 'Total Geral'}
@@ -875,9 +896,9 @@ def api_get_dashboard_data(request):
 
             for col_label in classification_columns:
                 count = raw_grand_total_classification_counts_00.get(col_label, 0)
-                grand_total_row_00[col_label] = f"{(count / total_municipios_for_table_00 * 100):.1f}%" if display_format == 'porcentagem' and total_municipios_for_table_00 > 0 else (count if display_format != 'porcentagem' else "0.0%")
+                grand_total_row_00[col_label] = _pct_br(count / total_municipios_for_table_00 * 100) if display_format == 'porcentagem' and total_municipios_for_table_00 > 0 else (count if display_format != 'porcentagem' else _pct_br(0))
 
-            grand_total_row_00['Total'] = "100.0%" if display_format == 'porcentagem' else raw_grand_total_rows_total_00
+            grand_total_row_00['Total'] = _pct_br(100) if display_format == 'porcentagem' else raw_grand_total_rows_total_00
             table_data_00.append(grand_total_row_00)
             table_headers_00 = [table_row_header] + classification_columns + ['Total']
 
@@ -891,9 +912,14 @@ def api_get_dashboard_data(request):
                 "giniIndex": round(coeficiente_de_variacao*100, 2)
             },
             "chartData": {"labels": chart_labels, "datasets": datasets_to_send, "yAxisTitle": y_axis_title, "xAxisTitle": classification_filter.capitalize(), "chartTitle": chart_title},
-            "tableData24": table_data_24, "tableHeaders24": table_headers_24, "tableTitle24": f"Distribuição de Municípios por {table_row_header} (2025)",
+            "serie": serie,
         }
-        if include_2000_data and not is_count:
+        # Modo de contagem nao tem serie de 2000: a tabela de 2025 vai sempre.
+        if incluir_24 or is_count:
+            response_data["tableData24"] = table_data_24
+            response_data["tableHeaders24"] = table_headers_24
+            response_data["tableTitle24"] = f"Distribuição de Municípios por {table_row_header} (2025)"
+        if incluir_00 and not is_count:
             response_data["tableData00"] = table_data_00
             response_data["tableHeaders00"] = table_headers_00
             response_data["tableTitle00"] = f"Distribuição de Municípios por {table_row_header} (2000)"

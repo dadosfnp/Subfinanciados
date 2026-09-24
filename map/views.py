@@ -148,6 +148,20 @@ def _num_classe(valor):
     return int(m.group(1)) if m else None
 
 
+def _arred(valor, casas):
+    """Arredonda preservando None.
+
+    O GeoJSON serializa o float exatamente como o Python o guarda: uma
+    coordenada saia com 14 casas decimais (-62.13705306395801) e uma receita
+    per capita com 12 (6550.411113792953). Nenhuma delas e legivel na tela --
+    a 5a casa de uma coordenada ja vale cerca de 1 metro -- mas todas viajavam,
+    5.440 vezes, em cada abertura do mapa.
+    """
+    if valor is None:
+        return None
+    return round(valor, casas)
+
+
 def _cresc_pct(novo, velho):
     """Variação percentual de `velho` para `novo`, arredondada a 1 casa."""
     if novo is None or velho is None or velho == 0:
@@ -774,7 +788,11 @@ def municipios_geojson_api(request):
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [municipio['coordx'], municipio['coordy']]
+                # 5 casas ~= 1 m: o marcador nao se move, o payload encolhe.
+                "coordinates": [
+                    _arred(municipio['coordx'], 5),
+                    _arred(municipio['coordy'], 5),
+                ]
             },
             "properties": {
                 'cod_ibge': municipio['cod_ibge'],
@@ -782,16 +800,18 @@ def municipios_geojson_api(request):
                 'name_muni_uf': municipio['name_muni_uf'],
                 'Populacao24': pop,
                 'uf': municipio['uf'],
-                'rc_24_pc': rc,
-                'perc_pop_cadunico': perc_cadunico,
-                'sus_dependente': municipio['sus_dependente__sus_dependente'],
+                'rc_24_pc': _arred(rc, 2),
+                'perc_pop_cadunico': _arred(perc_cadunico, 2),
+                'sus_dependente': _arred(municipio['sus_dependente__sus_dependente'], 2),
                 'capag': municipio['dados_atuais__capag'],
                 'quintil24_pre_calculado': municipio['dados_atuais__quintil_atual'],
                 'decil24_pre_calculado': municipio['dados_atuais__decil_atual'],
                 'percentil24': municipio['dados_atuais__percentil_atual'],
                 'percentil24_n': municipio['dados_atuais__percentil_atual_n'],
                 'dynamic_quantile': current_muni_quantile,
-                'riscos_climaticos': riscos_altos,
+                # 4 casas: o popup mostra 2 (toFixed) e as faixas de risco andam
+                # de 0,2 em 0,2 -- nenhuma das duas leituras enxerga a 5a casa.
+                'riscos_climaticos': _arred(riscos_altos, 4),
                 'bio_int_bio': municipio.get('dados_adapta_brasil__bio_int_bio'),
                 'des_des_ter': municipio.get('dados_adapta_brasil__des_des_ter'),
                 'des_in_enx_ala': municipio.get('dados_adapta_brasil__des_in_enx_ala'),
