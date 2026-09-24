@@ -668,8 +668,11 @@ function criterioSaudeFiscalAtual() {
 }
 
 /**
- * Mostra o par de botões só no modo Saúde Fiscal e desabilita "Limites por Quintil"
+ * Mostra o par de botões só no modo Saúde Fiscal e esconde "Limites por Quintil"
  * na nota geral da CAPAG, que é letra pura — não há valor numérico para dividir.
+ *
+ * "Limites Legais" fica visível mesmo sozinho: é ele que diz ao leitor por qual
+ * criterio a distribuição está classificada.
  */
 function atualizarCriterioSaudeFiscal() {
     const bloco = document.getElementById('criterio-saude-fiscal');
@@ -684,10 +687,12 @@ function atualizarCriterioSaudeFiscal() {
     const btnLegal = bloco.querySelector('[data-criterio="legal"]');
     if (!btnQuintil || !btnLegal) return;
 
+    // Escondido, e nao apenas inerte: um botao que nunca podera ser clicado
+    // naquele recorte so faz o leitor tentar e se perguntar por que nao responde.
+    btnQuintil.classList.toggle('d-none', semQuintil);
+    // A classe segue marcada porque o handler de clique a consulta antes de agir.
     btnQuintil.classList.toggle('desabilitado', semQuintil);
-    btnQuintil.title = semQuintil
-        ? 'A nota geral da CAPAG é só uma letra, sem valor numérico para dividir em quintis.'
-        : '';
+    btnQuintil.title = '';
 
     // Ao cair na nota geral vindo do modo quintil, volta para os limites legais
     if (semQuintil && btnQuintil.classList.contains('active')) {

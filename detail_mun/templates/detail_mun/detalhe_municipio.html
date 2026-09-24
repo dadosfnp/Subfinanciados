@@ -450,7 +450,10 @@
 
 {{ chart_data_json|json_script:"chart-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
-{{ data|json_script:"mun-data" }}
+{# {{ data|json_script:"mun-data" }} ficava aqui: os 5.570 municipios com 46
+   campos de receita, 9,9 MB em toda pagina de municipio, para alimentar uma
+   curva que le uma coluna por vez. Agora script_density_mun.js busca so a
+   rubrica atual em /api/distribuicao/. #}
 
 <script id="municipio-data" type="application/json">
 {

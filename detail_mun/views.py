@@ -8,6 +8,66 @@ from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
 
+# ============================================================================
+# CURVA DE DENSIDADE
+# ----------------------------------------------------------------------------
+# Nome publico da rubrica -> caminho no ORM. Serve de allowlist: o parametro da
+# querystring vira nome de coluna, entao nunca vai direto para o ORM.
+#
+# Todos os valores sao divididos pela populacao para virarem per capita -- a
+# curva compara municipios de portes diferentes, e valor absoluto so mostraria
+# o tamanho da cidade.
+# ============================================================================
+CAMPOS_DENSIDADE = {
+    # Receita corrente total, ja per capita no banco.
+    "main_categories": None,
+    "imposto_taxas_contribuicoes": "conta_detalhada__imposto_taxas_contribuicoes",
+    "imposto": "conta_especifica__imposto",
+    "iptu": "conta_mais_especifica__iptu",
+    "itbi": "conta_mais_especifica__itbi",
+    "iss": "conta_mais_especifica__iss",
+    "imposto_renda": "conta_mais_especifica__imposto_renda",
+    "imposto_icms": "conta_mais_especifica__imposto_icms",
+    "imposto_ipva": "conta_mais_especifica__imposto_ipva",
+    "outros_impostos": "conta_mais_especifica__outros_impostos",
+    "taxas": "conta_especifica__taxas",
+    "taxa_policia": "conta_mais_especifica__taxa_policia",
+    "taxa_prestacao_servico": "conta_mais_especifica__taxa_prestacao_servico",
+    "outras_taxas": "conta_mais_especifica__outras_taxas",
+    "contribuicoes_melhoria": "conta_especifica__contribuicoes_melhoria",
+    "contribuicao_melhoria_pavimento_obras": "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
+    "contribuicao_melhoria_agua_potavel": "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
+    "contribuicao_melhoria_iluminacao_publica": "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
+    "outras_contribuicoes_melhoria": "conta_mais_especifica__outras_contribuicoes_melhoria",
+    "contribuicoes": "conta_detalhada__contribuicoes",
+    "contribuicoes_sociais": "conta_especifica__contribuicoes_sociais",
+    "contribuicoes_iluminacao_publica": "conta_especifica__contribuicoes_iluminacao_publica",
+    "outras_contribuicoes": "conta_especifica__outras_contribuicoes",
+    "transferencias_correntes": "conta_detalhada__transferencias_correntes",
+    "transferencias_uniao": "conta_especifica__tranferencias_uniao",
+    "transferencias_uniao_fpm": "conta_mais_especifica__transferencia_uniao_fpm",
+    "transferencia_uniao_fpe": "conta_mais_especifica__transferencia_uniao_fpe",
+    "transferencias_uniao_exploracao": "conta_mais_especifica__transferencia_uniao_exploracao",
+    "transferencias_uniao_sus": "conta_mais_especifica__transferencia_uniao_sus",
+    "transferencias_uniao_fnde": "conta_mais_especifica__transferencia_uniao_fnde",
+    "transferencia_uniao_fundeb": "conta_mais_especifica__transferencia_uniao_fundeb",
+    "transferencias_uniao_fnas": "conta_mais_especifica__transferencia_uniao_fnas",
+    "outras_transferencias_uniao": "conta_mais_especifica__outras_transferencias_uniao",
+    "transferencias_estado": "conta_especifica__tranferencias_estados",
+    "transferencias_estado_icms": "conta_mais_especifica__transferencia_estado_icms",
+    "transferencias_estado_ipva": "conta_mais_especifica__transferencia_estado_ipva",
+    "transferencias_estado_exploracao": "conta_mais_especifica__transferencia_estado_exploracao",
+    "transferencias_estado_sus": "conta_mais_especifica__transferencia_estado_sus",
+    "transferencias_estado_assistencia": "conta_mais_especifica__transferencia_estado_assistencia",
+    "outras_transferencias_estado": "conta_mais_especifica__outras_transferencias_estado",
+    "outras_receitas": "conta_detalhada__outras_receita",
+    "receita_patrimonial": "conta_especifica__receita_patrimonial",
+    "receita_agropecuaria": "conta_especifica__receita_agropecuaria",
+    "receita_industrial": "conta_especifica__receita_industrial",
+    "receita_servicos": "conta_especifica__receita_servicos",
+    "outras_receitas_outras": "conta_especifica__outras_receitas",}
+
+
 def _get_filtered_municipios(request):
     """
     Helper centralizado para aplicar os filtros geográficos e populacionais 
@@ -561,7 +621,10 @@ def municipio_detalhe_view(request, municipio_id):
         )
         .order_by("cod_ibge")
     )
-    data = list(qs) 
+    # `data = list(qs)` ficava aqui: os 5.570 municipios com 46 campos de
+    # receita, embutidos em TODA pagina de municipio -- 9,9 MB de HTML por
+    # pageview, dos quais a curva de densidade usa uma coluna de cada vez.
+    # Agora o grafico busca a rubrica atual em /api/distribuicao/.
 
     # Calcula a variacao percentual da populacao e da receita corrente per capita
     delta_populacao = 0.0
@@ -714,7 +777,6 @@ def municipio_detalhe_view(request, municipio_id):
         'capag_data': capag_data,
         'adapta_brasil_data': adapta_brasil_data,
         'adapta_brasil_media': adapta_brasil_media,
-        'data': data,
         'evolucao_historica': evolucao_historica,
 
         'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
@@ -912,3 +974,66 @@ def municipio_details_api(request):
 
 
 
+
+
+def distribuicao_api(request):
+    """Distribuicao nacional de UMA rubrica, para a curva de densidade.
+
+    Substitui o bloco `#mun-data`, que embutia os 5.570 municipios com 46
+    campos de receita em TODA pagina de municipio — 10 MB de HTML por
+    pageview, dos quais o grafico usava uma coluna de cada vez.
+
+    Querystring:
+        campo     chave de CAMPOS_DENSIDADE (obrigatorio)
+        cod_ibge  municipio a destacar na curva (opcional)
+
+    Resposta:
+        {"campo": str, "n": int, "valores": [float, ...], "referencia": float|null}
+
+    `valores` sai ordenado e sem nulos: o KDE do cliente descarta nao-numeros
+    de qualquer jeito, e mandar o lixo so aumentaria o corpo da resposta.
+    """
+    campo = (request.GET.get("campo") or "main_categories").strip()
+
+    # Allowlist: o parametro vira nome de coluna, entao nunca e usado direto.
+    if campo not in CAMPOS_DENSIDADE:
+        return JsonResponse(
+            {"erro": "campo desconhecido", "campo": campo,
+             "validos": sorted(CAMPOS_DENSIDADE)},
+            status=400,
+        )
+
+    caminho = CAMPOS_DENSIDADE[campo]
+    qs = Municipio.objects.exclude(dados_atuais__populacao_atual__isnull=True)
+
+    if caminho is None:
+        # Receita corrente ja esta per capita no banco.
+        qs = qs.annotate(_valor=F("dados_atuais__rc_atual_pc"))
+    else:
+        qs = qs.exclude(dados_atuais__populacao_atual=0).annotate(
+            _valor=F(caminho) / F("dados_atuais__populacao_atual")
+        )
+
+    linhas = qs.exclude(_valor__isnull=True).values_list("cod_ibge", "_valor")
+
+    valores = []
+    referencia = None
+    cod_alvo = (request.GET.get("cod_ibge") or "").strip()
+
+    for cod, valor in linhas:
+        try:
+            v = float(valor)
+        except (TypeError, ValueError):
+            continue
+        valores.append(v)
+        if cod_alvo and str(cod) == cod_alvo:
+            referencia = v
+
+    valores.sort()
+
+    return JsonResponse({
+        "campo": campo,
+        "n": len(valores),
+        "valores": valores,
+        "referencia": referencia,
+    })
