@@ -242,7 +242,10 @@ def _prepare_revenue_item(
     return item
 
 def municipio_detalhe_view(request, municipio_id):
-    municipio = get_object_or_404(Municipio.objects.prefetch_related(
+    # select_related, e nao prefetch_related: as nove sao OneToOneField, entao
+    # cabem num JOIN so. prefetch_related dispara uma query por relacao -- nove
+    # idas ao banco em vez de uma, e o banco de producao fica fora do droplet.
+    municipio = get_object_or_404(Municipio.objects.select_related(
         'dados_atuais', 'dados_2000',
         'conta_detalhada', 'conta_especifica', 'conta_mais_especifica',
         'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil',
@@ -283,19 +286,10 @@ def municipio_detalhe_view(request, municipio_id):
     def avg_pc(campo):
         return Avg(ExpressionWrapper(F(campo) / F('dados_atuais__populacao_atual'), output_field=FloatField()))
 
-    # 3. FAZENDO A CONSULTA (Apenas municípios com população válida para não dar erro de divisão por zero)
-    base_query = Municipio.objects.exclude(dados_atuais__populacao_atual__isnull=True).exclude(dados_atuais__populacao_atual=0)
-    
-    # Agregações para o 1º Nível (Conta Detalhada)
-    agregacoes = {
-        'transf_correntes': avg_pc('conta_detalhada__transferencias_correntes'),
-        'impostos_taxas': avg_pc('conta_detalhada__imposto_taxas_contribuicoes'),
-        'outras_rec': avg_pc('conta_detalhada__outras_receita'),
-        'contrib': avg_pc('conta_detalhada__contribuicoes'),
-    }
-
-    medias_estadual = base_query.filter(uf=municipio.uf).aggregate(**agregacoes)
-    medias_faixa = base_query.filter(**filtro_faixa).aggregate(**agregacoes)
+    # `medias_estadual` e `medias_faixa` ficavam aqui: duas agregacoes sobre a
+    # base inteira, com join, cujo resultado nao era lido pela view nem pelo
+    # template. Foram substituidas pelas tabelas pre-calculadas logo abaixo
+    # (MediaUfReceita e MediaPorteReceita) e nunca removidas.
 
     # RECUPERACAO DA INSTANCIA DE MEDIAS NACIONAIS (TABELA NOVA)
     media_nac = MediaNacionalReceita.objects.filter(ano_referencia=2024).first()

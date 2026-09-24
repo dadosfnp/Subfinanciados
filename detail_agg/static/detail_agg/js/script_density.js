@@ -1,8 +1,34 @@
 // detail/static/detail/js/script_density.js
 document.addEventListener("DOMContentLoaded", () => {
   let densityChart = null;
-  let totalMunData = null; // Dados brutos (sempre a carga inicial)
-  let AVAILABLE_KEYS = new Set(); // Lista de chaves que REALMENTE existem nos dados
+  // As 11 chaves que o bloco #mun-data trazia no HTML. Ficam fixas aqui porque
+  // resolveKey faz fuzzy match contra este conjunto: aumenta-lo faria rubricas
+  // que hoje nao desenham passarem a desenhar -- mudanca visivel de comportamento.
+  const AVAILABLE_KEYS = new Set([
+    'cod_ibge', 'main_categories', 'imposto_taxas_contribuicoes', 'imposto',
+    'taxas', 'contribuicoes_melhoria', 'contribuicoes', 'transferencias_correntes',
+    'transferencias_uniao', 'transferencias_estado', 'outras_receitas',
+  ]);
+
+  // Vetor de valores por rubrica, buscado sob demanda e guardado para nao repetir.
+  // Antes tudo vinha de #mun-data: 5.570 municipios x 11 colunas embutidos no
+  // HTML (2,18 MB) para desenhar uma coluna por vez.
+  const vetorPorChave = new Map();
+
+  async function valoresDe(key){
+    if (vetorPorChave.has(key)) return vetorPorChave.get(key);
+    try {
+      const r = await fetch(`/api/distribuicao/?campo=${encodeURIComponent(key)}`,
+                           { headers: { 'Accept': 'application/json' } });
+      if (!r.ok) { console.warn(`[densidade] distribuicao indisponivel para '${key}' (HTTP ${r.status}).`); return []; }
+      const vetor = ((await r.json()).valores || []).map(Number);
+      vetorPorChave.set(key, vetor);
+      return vetor;
+    } catch (e) {
+      console.error('[densidade] falha ao buscar distribuicao', e);
+      return [];
+    }
+  }
 
   const categorySelect = document.getElementById('chart-category-select');
   const filtroPorte    = document.getElementById('filtro-porte');
@@ -92,9 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Função de Desenho ---
-  function drawDensityPlot(dataKey, allData, filteredMean){
+  function drawDensityPlot(dataKey, valores, filteredMean){
     try{
-      if(!allData) return;
+      if(!valores) return;
 
       // Usa o Resolver Inteligente
       const key = resolveKey(dataKey);
@@ -104,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
-      const raw = allData.map(d => Number(d[key])).filter(v => Number.isFinite(v));
+      const raw = valores.map(Number).filter(v => Number.isFinite(v));
       const values = raw.filter(v => v > 0); 
 
       const ctx = document.getElementById('densidadeReceita');
@@ -219,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Atualização via Filtros ---
   async function updateFilteredDensity(){
-    if(!totalMunData) return;
     const p = new URLSearchParams();
     p.set('porte',filtroPorte?.value||'todos');
     p.set('rm',filtroRm?.value||'todos');
@@ -241,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Calcula média da seleção atual
       // OBS: filteredMunData vem da API, que tem chaves CURTAS (singular).
-      // totalMunData vem do load inicial, que tem chaves LONGAS (plural).
+      // As chaves LONGAS (plural) sao as de AVAILABLE_KEYS.
       // O resolveKey prioriza o que está em AVAILABLE_KEYS (Longas).
       
       // Tenta pegar o valor. Se falhar na chave longa, tenta a curta.
@@ -257,34 +282,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const nums = vals.map(Number).filter(Number.isFinite);
       const filteredMean = mean(nums);
 
-      drawDensityPlot(key, totalMunData, filteredMean);
+      drawDensityPlot(key, await valoresDe(key), filteredMean);
     }catch(e){ console.error('[densidade] update error', e); }
   }
 
   // ===== Inicialização =====
-  const rawData = document.getElementById("mun-data")?.textContent;
-  if(rawData){
-    try{
-      totalMunData = JSON.parse(rawData);
-      
-      // Popula AVAILABLE_KEYS com as chaves que REALMENTE vieram do Django no load inicial
-      AVAILABLE_KEYS = new Set();
-      if (Array.isArray(totalMunData) && totalMunData.length > 0) {
-        Object.keys(totalMunData[0]).forEach(k => AVAILABLE_KEYS.add(k));
-      }
-      console.log("[Densidade] Chaves carregadas:", AVAILABLE_KEYS.size);
-
-    } catch(e){
-      console.error('falha parse #mun-data', e);
-    }
-  }
-
-  if(categorySelect && totalMunData){
+  if(categorySelect){
     // 1. Desenho inicial
     const key0 = resolveKey(categorySelect.value);
     if(key0) {
-        const initialValues = totalMunData.map(d => Number(d[key0])).filter(Number.isFinite);
-        drawDensityPlot(key0, totalMunData, mean(initialValues));
+        valoresDe(key0).then(v => {
+            const initialValues = v.map(Number).filter(Number.isFinite);
+            drawDensityPlot(key0, v, mean(initialValues));
+        });
     }
 
     // 2. Listener do Select manual
@@ -299,8 +309,10 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("[Densidade] Chave resolvida:", k);
 
       if (k) {
-          const vals = totalMunData.map(d => Number(d[k])).filter(Number.isFinite);
-          drawDensityPlot(k, totalMunData, mean(vals));
+          valoresDe(k).then(v => {
+              const vals = v.map(Number).filter(Number.isFinite);
+              drawDensityPlot(k, v, mean(vals));
+          });
           
           // Sincroniza o select visualmente
                 if(categorySelect.querySelector(`option[value="${k}"]`)){

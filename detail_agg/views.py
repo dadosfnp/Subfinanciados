@@ -1007,97 +1007,16 @@ def conjunto_detalhe_view(request):
         },
     }
 
-    qs = (
-        Municipio.objects
-        .annotate(
-            # Categorias Principais
-            main_categories=F('dados_atuais__rc_atual_pc'),
+    # `qs`/`data` ficavam aqui: 5.570 municipios x 11 colunas materializados e
+    # despejados no bloco #mun-data do template (2,18 MB de HTML por pageview),
+    # para o grafico de densidade ler uma coluna por vez. Agora ele busca a
+    # rubrica atual em /api/distribuicao/, o mesmo caminho ja usado na pagina
+    # de municipio.
 
-            # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('dados_atuais__populacao_atual'),
-            imposto = F('conta_especifica__imposto')/F('dados_atuais__populacao_atual'),  
-            taxas = F('conta_especifica__taxas')/F('dados_atuais__populacao_atual'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
-
-            # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('dados_atuais__populacao_atual'),
-
-            # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('dados_atuais__populacao_atual'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('dados_atuais__populacao_atual'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('dados_atuais__populacao_atual'),
-
-            # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('dados_atuais__populacao_atual'),
-                  )
-        .values(                  # já vem “flat” pro template
-            "cod_ibge", "main_categories",
-            
-            "imposto_taxas_contribuicoes",
-            "imposto",
-            "taxas",
-            "contribuicoes_melhoria",
-            
-            "contribuicoes",
-
-            "transferencias_correntes",
-            "transferencias_uniao",
-            "transferencias_estado",
-            
-            "outras_receitas",
-            
-            
-        )
-        .order_by("cod_ibge")
-    )
-
-    data = list(qs)  # ~5.570 linhas é tranquilo
-
-    qsf = (
-        Municipio.objects
-        .annotate(
-            # Categorias Principais
-            main_categories=F('dados_atuais__rc_atual_pc'),
-
-            # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('dados_atuais__populacao_atual'),
-            imposto = F('conta_especifica__imposto')/F('dados_atuais__populacao_atual'),  
-            taxas = F('conta_especifica__taxas')/F('dados_atuais__populacao_atual'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
-
-            # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('dados_atuais__populacao_atual'),
-
-            # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('dados_atuais__populacao_atual'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('dados_atuais__populacao_atual'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('dados_atuais__populacao_atual'),
-
-            # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('dados_atuais__populacao_atual'),
-                  )
-        .values(                  # já vem “flat” pro template
-            "cod_ibge", "main_categories",
-            
-            "imposto_taxas_contribuicoes",
-            "imposto",
-            "taxas",
-            "contribuicoes_melhoria",
-            
-            "contribuicoes",
-
-            "transferencias_correntes",
-            "transferencias_uniao",
-            "transferencias_estado",
-            
-            "outras_receitas",
-            
-            
-        )
-        .order_by("cod_ibge")
-    )
-
-    data_f = list(qsf)
+    # `qsf`/`data_f` ficavam aqui: um segundo queryset com SQL byte a byte
+    # identico ao de cima, serializado para o bloco #mun-data-f do template.
+    # Eram 2,18 MB de HTML e uma varredura da tabela inteira por pageview, e
+    # nenhum JS do projeto lia esse bloco -- so #mun-data e lido.
 
     # ---------------------------
     # ADAPTA BRASIL (médias do grupo)
@@ -1166,8 +1085,6 @@ def conjunto_detalhe_view(request):
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
         'chart_data_json': chart_data,
-        'data_json': data,
-        'data_f_json': data_f,
         'hist_data': {
             'pop24': population,
             'pop00': pop00,
