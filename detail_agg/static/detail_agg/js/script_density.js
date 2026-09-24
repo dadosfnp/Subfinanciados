@@ -252,35 +252,21 @@ document.addEventListener("DOMContentLoaded", () => {
     p.set('uf',filtroUf?.value||'todos');
 
     try{
-      // Busca dados filtrados da API
-      const resp = await fetch(`/api/conjunto-data/?${p.toString()}`);
-      if(!resp.ok) throw new Error('Falha API');
-      const filteredMunData = await resp.json();
-
       // Pega a chave atual selecionada
       const rawKey = categorySelect?.value;
-      
-      // Resolve a chave usando a API response keys (se necessário) ou as chaves globais
       const key = resolveKey(rawKey);
       if(!key) return;
 
-      // Calcula média da seleção atual
-      // OBS: filteredMunData vem da API, que tem chaves CURTAS (singular).
-      // As chaves LONGAS (plural) sao as de AVAILABLE_KEYS.
-      // O resolveKey prioriza o que está em AVAILABLE_KEYS (Longas).
-      
-      // Tenta pegar o valor. Se falhar na chave longa, tenta a curta.
-      let vals = filteredMunData.map(d => d[key]);
-      
-      // Se vier tudo undefined, tenta a chave "curta" equivalente
-      if (vals.every(v => v === undefined)) {
-          // hack reverso simples
-          const shortKey = key.replace('transferencias_', 'transferencia_').replace('imposto_taxas_contribuicoes_', ''); 
-          vals = filteredMunData.map(d => d[shortKey] || d[key] || 0);
-      }
-      
-      const nums = vals.map(Number).filter(Number.isFinite);
-      const filteredMean = mean(nums);
+      // Media da selecao, calculada no banco. Antes isto baixava
+      // /api/conjunto-data/ -- 9,3 MB com 5.570 municipios x 44 colunas -- a
+      // cada mudanca de filtro, so para tirar a media de uma coluna.
+      p.set('campo', key);
+      const resp = await fetch(`/api/conjunto-media/?${p.toString()}`);
+      if(!resp.ok) throw new Error('Falha API');
+
+      // `|| 0` reproduz o mean() de lista vazia, que devolvia 0 quando a
+      // selecao nao tinha nenhum valor numerico.
+      const filteredMean = Number((await resp.json()).media) || 0;
 
       drawDensityPlot(key, await valoresDe(key), filteredMean);
     }catch(e){ console.error('[densidade] update error', e); }

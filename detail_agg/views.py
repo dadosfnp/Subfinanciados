@@ -2120,3 +2120,59 @@ def conjunto_data_api(request):
 
     data = list(qs)
     return JsonResponse(data, safe=False)
+
+
+def conjunto_media_api(request):
+    """Media de UMA rubrica na selecao atual, para a linha de referencia da curva.
+
+    Existe porque o grafico de densidade buscava /api/conjunto-data/ -- 9,3 MB
+    com 5.570 municipios x 44 colunas -- a cada mudanca de filtro, so para tirar
+    a media de uma coluna. Aqui a media sai do proprio banco e a resposta tem
+    algumas dezenas de bytes.
+
+    /api/conjunto-data/ segue intacta: e uma URL publica e pode ter consumidor
+    fora deste repositorio.
+
+    Querystring:
+        campo   chave de CAMPOS_DENSIDADE (obrigatorio)
+        + os mesmos filtros de _get_filtered_municipios (uf, regiao, porte, rm...)
+
+    Resposta:
+        {"campo": str, "media": float|null, "n": int}
+    """
+    # Reaproveita a allowlist ja definida no detail_mun em vez de repetir os 46
+    # caminhos do ORM -- duplicar faria as duas listas divergirem no primeiro
+    # campo novo.
+    from detail_mun.views import CAMPOS_DENSIDADE
+
+    campo = (request.GET.get('campo') or 'main_categories').strip()
+    if campo not in CAMPOS_DENSIDADE:
+        return JsonResponse(
+            {'erro': 'campo desconhecido', 'campo': campo,
+             'validos': sorted(CAMPOS_DENSIDADE)},
+            status=400,
+        )
+
+    queryset, _filtros = _get_filtered_municipios(request)
+    caminho = CAMPOS_DENSIDADE[campo]
+
+    if caminho is None:
+        # Receita corrente ja esta per capita no banco.
+        expr = F('dados_atuais__rc_atual_pc')
+        qs = queryset
+    else:
+        expr = ExpressionWrapper(
+            F(caminho) / F('dados_atuais__populacao_atual'),
+            output_field=FloatField(),
+        )
+        # Sem o exclude a divisao estoura em populacao zero.
+        qs = queryset.exclude(dados_atuais__populacao_atual=0)
+
+    qs = qs.exclude(dados_atuais__populacao_atual__isnull=True)
+    resultado = qs.aggregate(media=Avg(expr))
+
+    return JsonResponse({
+        'campo': campo,
+        'media': resultado['media'],
+        'n': qs.count(),
+    })
