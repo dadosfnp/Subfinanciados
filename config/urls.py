@@ -49,6 +49,8 @@ urlpatterns = [
         {'template_name': 'home/home_folheto.html'},
         name='home_folheto',
     ),
+    # Landing em formato de apresentacao (scrollytelling), modulos em ifem/apresentacao.py.
+    path('preview/inicio/', ifem_views.inicio_preview, name='inicio_folheto'),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),

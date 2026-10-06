@@ -1,0 +1,293 @@
+{% extends "global/head.html" %}
+{% comment %}
+PREVIEW - Landing do IFEM em formato de apresentacao (/preview/inicio/).
+
+Parte 1: a apresentacao da FNP em scrollytelling. Os blocos vem de
+ifem/apresentacao.py (modulos) e os numeros, do banco. Este template so
+desenha cada TIPO de bloco; o conteudo nao mora aqui.
+Parte 2: a plataforma (as quatro ferramentas e a busca de municipio).
+Parte 3: FAQ e noticias.
+
+Os graficos e o mapa sao desenhados pelo static/ifem/js/inicio_folheto.js a
+partir do JSON #apresentacao-dados.
+{% endcomment %}
+{% load static %}
+
+{% block extra_head %}
+    <title>IFEM - O desafio da sustentabilidade fiscal nos municípios brasileiros</title>
+    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link rel="stylesheet" href="{% static 'ifem/css/inicio_folheto.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="ap-page">
+
+{% for bloco in blocos %}
+
+    {% if bloco.tipo == 'capa' %}
+    {# ==================== CAPA ==================== #}
+    <section class="ap-capa">
+        <div class="ap-capa-imagem" style="background-image: url('{% static bloco.imagem %}');" role="img" aria-label="Textura de palha trançada nas cores do Brasil"></div>
+        <div class="ap-capa-texto">
+            <p class="ap-eyebrow">IFEM · Frente Nacional de Prefeitas e Prefeitos</p>
+            <h1 class="ap-capa-titulo">{{ bloco.titulo }}</h1>
+            <p class="ap-capa-sub">{{ bloco.subtitulo }}</p>
+            <a class="ap-capa-rolar" href="#inicio-historia">Role para baixo <span aria-hidden="true">↓</span></a>
+        </div>
+    </section>
+    <span id="inicio-historia"></span>
+
+    {% elif bloco.tipo == 'capitulo' %}
+    {# ==================== CAPITULO ==================== #}
+    <section class="ap-capitulo" style="background-image: url('{% static bloco.imagem %}');">
+        <div class="ap-capitulo-caixa">
+            <h2 class="ap-capitulo-titulo">{{ bloco.titulo|safe }}</h2>
+        </div>
+    </section>
+
+    {% elif bloco.tipo == 'trilha' %}
+    {# ==================== TRILHA (scrollytelling) ==================== #}
+    {% comment %}
+    Textos a esquerda, um por passo; o palco a direita fica fixo e mostra o
+    visual do passo ativo (o JS troca data-ativo). Visuais de imagem e HTML
+    saem prontos daqui; graficos e mapa o JS desenha na primeira vez que o
+    passo fica ativo.
+    {% endcomment %}
+    <section class="ap-trilha" data-trilha="{{ bloco.id }}">
+        <div class="ap-trilha-textos">
+            {% for passo in bloco.passos %}
+            <article class="ap-passo" data-passo="{{ passo.id }}">
+                <div class="ap-passo-cartao">
+                    <h3 class="ap-passo-titulo">{{ passo.titulo }}</h3>
+                    <div class="ap-passo-texto">{{ passo.texto|safe }}</div>
+                    {% if passo.nota %}<p class="ap-passo-nota">{{ passo.nota }}</p>{% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="ap-trilha-palco" aria-live="polite">
+            {% for passo in bloco.passos %}
+            <figure class="ap-visual ap-visual--{{ passo.visual }}" data-visual="{{ passo.id }}" {% if forloop.first %}data-ativo="1"{% endif %}>
+
+                {% if passo.visual == 'imagem' %}
+                    <img src="{% static passo.opcoes.src %}" alt="{{ passo.opcoes.alt }}" loading="lazy">
+                    {% if passo.opcoes.legenda %}<figcaption>{{ passo.opcoes.legenda }}</figcaption>{% endif %}
+
+                {% elif passo.visual == 'imagem_dupla' %}
+                    <div class="ap-imagem-dupla">
+                        {% for img in passo.opcoes.imagens %}
+                        <div>
+                            <img src="{% static img.src %}" alt="{{ img.alt }}" loading="lazy">
+                            <span>{{ img.legenda }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                {% elif passo.visual == 'lista' %}
+                    <div class="ap-lista">
+                        <h4>{{ passo.opcoes.titulo }}</h4>
+                        <ul>{% for item in passo.opcoes.itens %}<li>{{ item }}</li>{% endfor %}</ul>
+                    </div>
+
+                {% elif passo.visual == 'quintis' %}
+                    <div class="ap-grafico">
+                        <p class="ap-grafico-titulo">Os cinco quintis de receita por habitante</p>
+                        <p class="ap-grafico-sub">Cada grupo tem cerca de {{ passo.dados.por_grupo }} municípios. Barra: receita corrente média por habitante, em R$ por ano.</p>
+                        <div class="ap-quintis">
+                            {% for g in passo.dados.grupos %}
+                            <div class="ap-quintil" style="--q: var(--ap-q{{ forloop.counter }});">
+                                <span class="ap-quintil-nome">{{ g.quintil }}</span>
+                                <span class="ap-quintil-barra"><i data-largura="{{ g.media }}" data-max="{{ passo.dados.media_5q }}"></i></span>
+                                <span class="ap-quintil-valor" data-reais="{{ g.media }}"></span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="ap-quintis-eixo"><span>menor receita por habitante</span><span>maior receita por habitante</span></div>
+                    </div>
+
+                {% elif passo.visual == 'mapa' %}
+                    <div class="ap-grafico ap-grafico--mapa">
+                        <div class="ap-mapa-legenda" aria-hidden="true">
+                            <span style="--q: var(--ap-q1);">1º quintil</span><span style="--q: var(--ap-q2);">2º</span>
+                            <span style="--q: var(--ap-q3);">3º</span><span style="--q: var(--ap-q4);">4º</span>
+                            <span style="--q: var(--ap-q5);">5º quintil</span>
+                        </div>
+                        <canvas class="ap-mapa" role="img" aria-label="Mapa de pontos dos municípios brasileiros por quintil de receita por habitante"></canvas>
+                    </div>
+
+                {% else %}
+                    <div class="ap-grafico">
+                        <p class="ap-grafico-titulo">{{ passo.opcoes.titulo }}</p>
+                        <p class="ap-grafico-sub">{{ passo.opcoes.subtitulo }}</p>
+                        <div class="ap-grafico-area"><canvas role="img" aria-label="{{ passo.opcoes.titulo }}"></canvas></div>
+                    </div>
+                {% endif %}
+
+                {% if passo.fonte %}<p class="ap-fonte">{{ passo.fonte }}</p>{% endif %}
+            </figure>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% elif bloco.tipo == 'fechamento' %}
+    {# ==================== FECHAMENTO ==================== #}
+    <section class="ap-fechamento">
+        <div class="ap-fechamento-texto">
+            <h2 class="ap-fechamento-titulo">{{ bloco.titulo|safe }}</h2>
+            {% for grupo in bloco.grupos %}
+            <div class="ap-fechamento-grupo">
+                <h3>{{ grupo.titulo }}</h3>
+                <ul>{% for item in grupo.itens %}<li>{{ item }}</li>{% endfor %}</ul>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="ap-fechamento-imagem" style="background-image: url('{% static bloco.imagem %}');" aria-hidden="true"></div>
+    </section>
+    {% endif %}
+
+{% endfor %}
+
+    {# ==================== PLATAFORMA ==================== #}
+    <section class="ap-secao ap-secao--escura" id="plataforma">
+        <div class="ap-container">
+            <p class="ap-eyebrow ap-eyebrow--claro">A plataforma</p>
+            <h2 class="ap-secao-titulo">Veja os números do seu município</h2>
+            <p class="ap-secao-dek">
+                Tudo o que você viu acima vem da base do IFEM. Na plataforma, dá para recortar
+                por estado, região, porte e agrupamento, ou abrir o perfil de cada município.
+            </p>
+
+            <div class="ap-busca" role="search">
+                <label for="ap-busca-input">Encontre seu município</label>
+                <div class="ap-busca-campo">
+                    <input id="ap-busca-input" type="search" placeholder="Digite o nome do município (mínimo 3 letras)" autocomplete="off"
+                           aria-controls="ap-busca-resultados" aria-autocomplete="list">
+                    <ul id="ap-busca-resultados" class="ap-busca-resultados" role="listbox"></ul>
+                </div>
+            </div>
+
+            <div class="ap-ferramentas">
+                <a class="ap-ferramenta" href="/analise/">
+                    <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_grafica.mp4' %}" type="video/mp4"></video>
+                    <div class="ap-ferramenta-info">
+                        <h3>Gráficos</h3>
+                        <p>Como população, saúde fiscal e risco climático se distribuem entre os quintis, em 2000 e 2025.</p>
+                        <span>Abrir gráficos &rarr;</span>
+                    </div>
+                </a>
+                <a class="ap-ferramenta" href="/mapa/">
+                    <img src="{% static 'ifem/images/mapa_red.png' %}" alt="" loading="lazy">
+                    <div class="ap-ferramenta-info">
+                        <h3>Mapa</h3>
+                        <p>Todos os municípios do país no mapa, com filtros regionais e de porte.</p>
+                        <span>Abrir mapa &rarr;</span>
+                    </div>
+                </a>
+                <a class="ap-ferramenta" href="/selecionar-municipio/">
+                    <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_municipal.mp4' %}" type="video/mp4"></video>
+                    <div class="ap-ferramenta-info">
+                        <h3>Município</h3>
+                        <p>O perfil de cada município: receitas, posição, evolução desde 2000, saúde fiscal e riscos.</p>
+                        <span>Escolher município &rarr;</span>
+                    </div>
+                </a>
+                <a class="ap-ferramenta" href="/analise-municipal/">
+                    <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_agregada.mp4' %}" type="video/mp4"></video>
+                    <div class="ap-ferramenta-info">
+                        <h3>Agregado</h3>
+                        <p>Um conjunto de municípios de uma vez: estado, região metropolitana, consórcio ou porte.</p>
+                        <span>Abrir agregado &rarr;</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {# ==================== FAQ ==================== #}
+    <section class="ap-secao" id="faq">
+        <div class="ap-container ap-faq">
+            <div>
+                <p class="ap-eyebrow">Perguntas frequentes</p>
+                <h2 class="ap-secao-titulo ap-secao-titulo--escuro">Dúvidas sobre o IFEM</h2>
+                <p class="ap-secao-dek ap-secao-dek--escuro">O que é, de onde vêm os dados e quem pode usar.</p>
+            </div>
+            {# <details> nativo: abre e fecha sem JS e funciona no teclado. #}
+            <div class="ap-faq-lista">
+                <details>
+                    <summary>O que é o IFEM?</summary>
+                    <p>O IFEM é uma plataforma desenvolvida pela Gerência de Dados da FNP que analisa como os municípios brasileiros se financiam e como os recursos públicos estão distribuídos no território nacional.</p>
+                </details>
+                <details>
+                    <summary>Qual o objetivo do IFEM?</summary>
+                    <p>Ampliar o debate público e legislativo sobre o federalismo fiscal.</p>
+                </details>
+                <details>
+                    <summary>O IFEM propõe mudanças no modelo de financiamento?</summary>
+                    <p>Não. O IFEM disponibiliza dados que revelam evidências para embasar decisões do poder público.</p>
+                </details>
+                <details>
+                    <summary>Os dados do IFEM são oficiais?</summary>
+                    <p>Sim. A plataforma utiliza exclusivamente bases públicas e oficiais do Estado brasileiro, organizadas e analisadas pela Gerência de Dados da Frente Nacional de Prefeitas e Prefeitos (FNP).</p>
+                </details>
+                <details>
+                    <summary>Qual é o principal insight da plataforma?</summary>
+                    <p>O descompasso entre população e recursos: cada vez mais brasileiros vivem em municípios com menor capacidade de financiamento per capita, enquanto parte significativa dos recursos permanece concentrada onde a população cresce menos ou diminui.</p>
+                </details>
+                <details>
+                    <summary>Por que esse debate é importante agora?</summary>
+                    <p>Porque o subfinanciamento municipal impacta diretamente a qualidade dos serviços públicos. Onde o recurso falta, o serviço falha, e quem paga a conta é a população.</p>
+                </details>
+                <details>
+                    <summary>Quem pode usar a plataforma?</summary>
+                    <p>Gestores públicos, parlamentares, imprensa, pesquisadores e qualquer cidadão interessado em entender o financiamento municipal de forma clara e comparável.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    {# ==================== NOTICIAS ==================== #}
+    {% if noticias %}
+    <section class="ap-secao ap-secao--creme" id="noticias">
+        <div class="ap-container">
+            <p class="ap-eyebrow">Na imprensa</p>
+            <h2 class="ap-secao-titulo ap-secao-titulo--escuro">Notícias</h2>
+            <div class="ap-noticias">
+                {% for noticia in noticias %}
+                <a class="ap-noticia" href="{{ noticia.link|default:'#' }}" target="_blank" rel="noopener noreferrer">
+                    {% if noticia.imagem_embed_url %}
+                    <img src="{{ noticia.imagem_embed_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">
+                    {% endif %}
+                    <div>
+                        <span class="ap-noticia-data">{{ noticia.data|date:"d M Y" }}</span>
+                        <h3>{{ noticia.titulo }}</h3>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer class="ap-rodape">
+        <div class="ap-container ap-rodape-grid">
+            <div>
+                <strong>IFEM</strong>
+                <p>Indicadores de Financiamento e Equidade Municipal. Uma iniciativa da Frente Nacional de Prefeitas e Prefeitos.</p>
+            </div>
+            <a href="https://fnp.org.br/" target="_blank" rel="noopener noreferrer">
+                <img src="{% static 'ifem/images/FNP_negativo.png' %}" alt="Frente Nacional de Prefeitas e Prefeitos" class="ap-rodape-logo">
+            </a>
+        </div>
+    </footer>
+</div>
+
+{{ apresentacao_json|json_script:"apresentacao-dados" }}
+<script src="{% static 'ifem/js/inicio_folheto.js' %}"></script>
+{% endblock content %}

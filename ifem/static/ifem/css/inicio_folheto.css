@@ -1,0 +1,572 @@
+/* ============================================================================
+   Landing em formato de apresentação (/preview/inicio/)
+   ----------------------------------------------------------------------------
+   Linguagem do site de referência (scrollytelling de texto à esquerda e
+   gráfico fixo à direita, serifa nos títulos, fundo papel) com a identidade
+   da apresentação da FNP: palha trançada, azul FNP, destaque amarelo nas
+   palavras-chave e as cores de quintil do IFEM.
+   ========================================================================== */
+
+:root {
+  --ap-azul-escuro: #122747;
+  --ap-azul: #1B3A6B;
+  --ap-azul-claro: #AABBCC;
+  --ap-amarelo: #FFC72C;
+  --ap-verde-cap: #5E9B45;      /* caixa verde dos slides de capítulo */
+  --ap-vermelho: #B4322A;       /* números em destaque no texto */
+  --ap-papel: #F8F6F1;
+  --ap-creme: #F1ECE2;
+  --ap-fio: #DDD6C8;
+  --ap-tinta: #1E2530;
+  --ap-cinza: #5F6670;
+
+  --ap-q1: #A81C21;
+  --ap-q2: #E47326;
+  --ap-q3: #F4D01D;
+  --ap-q4: #6AC074;
+  --ap-q5: #1C9148;
+
+  --ap-serifa: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --ap-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* style.css global põe overflow-x: hidden em html/body, o que anula o
+   position: sticky do palco. clip corta o estouro lateral sem esse efeito. */
+html, body { overflow-x: clip !important; overflow-y: visible !important; }
+
+.ap-page {
+  background: var(--ap-papel);
+  color: var(--ap-tinta);
+  font-family: var(--ap-sans);
+}
+
+.ap-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ap-vermelho);
+  margin: 0 0 14px;
+}
+
+.ap-eyebrow--claro { color: var(--ap-amarelo); }
+
+.ap-container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+/* Destaque amarelo dos slides: o marca-texto atrás da palavra. */
+.ap-page mark {
+  background: linear-gradient(transparent 8%, var(--ap-amarelo) 8%, var(--ap-amarelo) 92%, transparent 92%);
+  color: inherit;
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ---- 1. Capa ---- */
+.ap-capa {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: calc(100vh - 110px);
+  background: #ffffff;
+}
+
+.ap-capa-imagem { background-size: cover; background-position: left center; }
+
+.ap-capa-texto {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 56px clamp(24px, 6vw, 96px);
+}
+
+.ap-capa-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(34px, 4.6vw, 62px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--ap-azul-escuro);
+  margin: 0;
+  max-width: 16ch;
+}
+
+.ap-capa-sub {
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.55;
+  color: var(--ap-cinza);
+  margin: 22px 0 0;
+  max-width: 46ch;
+}
+
+.ap-capa-rolar {
+  margin-top: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ap-azul);
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.ap-capa-rolar span { display: inline-block; animation: ap-desce 1.6s ease-in-out infinite; }
+
+@keyframes ap-desce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* ---- 2. Capítulo ---- */
+.ap-capitulo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 78vh;
+  padding: 64px 24px;
+  background-size: cover;
+  background-position: center;
+}
+
+/* O azul da foto já vem tratado; o véu só garante contraste com a caixa. */
+.ap-capitulo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(18, 39, 71, 0.25), rgba(18, 39, 71, 0.55));
+}
+
+.ap-capitulo-caixa {
+  position: relative;
+  max-width: 820px;
+  background: var(--ap-verde-cap);
+  border-radius: 14px;
+  padding: clamp(26px, 4vw, 44px) clamp(24px, 5vw, 60px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.ap-capitulo-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(28px, 4vw, 50px);
+  font-weight: 600;
+  line-height: 1.22;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+}
+
+.ap-capitulo-titulo mark { color: var(--ap-azul-escuro); }
+
+/* ---- 3. Trilha (scrollytelling) ---- */
+.ap-trilha {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  gap: 0 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.ap-passo {
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+}
+
+.ap-passo-cartao {
+  background: #ffffff;
+  border: 1px solid var(--ap-fio);
+  border-radius: 6px;
+  padding: 26px 28px;
+  box-shadow: 0 10px 30px rgba(18, 39, 71, 0.07);
+  opacity: 0.38;
+  transform: translateY(8px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* O passo ativo fica nítido; os outros, apagados, como no site de referência. */
+.ap-passo.is-ativo .ap-passo-cartao { opacity: 1; transform: none; }
+
+.ap-passo-titulo {
+  font-family: var(--ap-serifa);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ap-azul-escuro);
+  margin: 0 0 12px;
+}
+
+.ap-passo-texto p {
+  font-family: var(--ap-serifa);
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: var(--ap-tinta);
+  margin: 0 0 12px;
+}
+
+.ap-passo-texto p:last-child { margin-bottom: 0; }
+
+.fx-num-destaque { color: var(--ap-vermelho); font-weight: 700; }
+
+.ap-passo-nota {
+  margin: 14px 0 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--ap-vermelho);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ap-cinza);
+}
+
+/* Palco fixo: ocupa a altura da tela enquanto os passos rolam ao lado. */
+.ap-trilha-palco {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.ap-visual {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.985);
+  transition: opacity 0.5s ease, transform 0.5s ease, visibility 0s linear 0.5s;
+}
+
+.ap-visual[data-ativo="1"] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.5s ease, transform 0.5s ease, visibility 0s;
+}
+
+.ap-trilha-palco { position: sticky; }
+.ap-trilha-palco > .ap-visual { top: 50%; transform: translateY(-50%) scale(0.985); }
+.ap-trilha-palco > .ap-visual[data-ativo="1"] { transform: translateY(-50%); }
+
+.ap-visual img { width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 16px 40px rgba(18, 39, 71, 0.16); }
+
+.ap-visual figcaption,
+.ap-imagem-dupla span {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ap-cinza);
+}
+
+.ap-imagem-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ap-imagem-dupla img { filter: grayscale(1) contrast(1.05); }
+
+.ap-fonte { margin: 10px 2px 0; font-size: 11.5px; color: var(--ap-cinza); }
+
+/* Lista (municípios subfinanciados) */
+.ap-lista {
+  background: #ffffff;
+  border-left: 6px solid var(--ap-amarelo);
+  padding: 34px 38px;
+  box-shadow: 0 16px 40px rgba(18, 39, 71, 0.1);
+}
+
+.ap-lista h4 {
+  font-family: var(--ap-serifa);
+  font-size: clamp(28px, 3.2vw, 42px);
+  font-weight: 600;
+  color: var(--ap-azul-escuro);
+  margin: 0 0 18px;
+}
+
+.ap-lista ul { margin: 0; padding-left: 20px; }
+.ap-lista li { font-size: 19px; line-height: 1.5; color: var(--ap-tinta); margin-bottom: 8px; }
+.ap-lista li::marker { color: var(--ap-vermelho); }
+
+/* Cartão de gráfico */
+.ap-grafico {
+  background: #ffffff;
+  border: 1px solid var(--ap-fio);
+  border-radius: 6px;
+  padding: 22px 22px 16px;
+}
+
+.ap-grafico-titulo { font-size: 15px; font-weight: 700; color: var(--ap-azul-escuro); margin: 0; }
+.ap-grafico-sub { font-size: 12.5px; color: var(--ap-cinza); margin: 3px 0 14px; }
+.ap-grafico-area { position: relative; height: min(56vh, 460px); }
+
+/* Diagrama dos quintis */
+.ap-quintis { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+
+.ap-quintil {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 12px;
+}
+
+.ap-quintil-nome {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--q);
+  border-radius: 3px;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.ap-quintil:nth-child(3) .ap-quintil-nome { color: var(--ap-azul-escuro); }
+
+.ap-quintil-barra { height: 26px; background: var(--ap-creme); border-radius: 2px; overflow: hidden; }
+
+.ap-quintil-barra i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--q);
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ap-quintil-valor { font-size: 14px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
+.ap-quintis-eixo {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--ap-cinza);
+}
+
+/* Mapa */
+.ap-grafico--mapa { padding: 14px; }
+.ap-mapa { display: block; width: 100%; height: min(70vh, 600px); }
+
+.ap-mapa-legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--ap-cinza); margin: 2px 4px 6px; }
+.ap-mapa-legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ap-mapa-legenda span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--q); }
+
+/* ---- 4. Fechamento ---- */
+.ap-fechamento {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  min-height: 90vh;
+  background: #ffffff;
+}
+
+.ap-fechamento-texto {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px clamp(24px, 6vw, 96px);
+}
+
+.ap-fechamento-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(32px, 4.2vw, 56px);
+  font-weight: 600;
+  line-height: 1.12;
+  color: var(--ap-azul);
+  margin: 0 0 34px;
+}
+
+.ap-fechamento-grupo h3 { font-size: 22px; font-weight: 700; color: var(--ap-azul); margin: 0 0 8px; }
+.ap-fechamento-grupo ul { margin: 0 0 24px; padding-left: 22px; }
+.ap-fechamento-grupo li { font-size: 18px; line-height: 1.55; color: var(--ap-tinta); }
+
+.ap-fechamento-imagem { background-size: cover; background-position: right center; }
+
+/* ---- 5. Seções da plataforma ---- */
+.ap-secao { padding: 88px 0; }
+.ap-secao--escura { background: var(--ap-azul-escuro); color: #ffffff; }
+.ap-secao--creme { background: var(--ap-creme); }
+
+.ap-secao-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 600;
+  line-height: 1.12;
+  margin: 0;
+  color: #ffffff;
+}
+
+.ap-secao-titulo--escuro { color: var(--ap-azul-escuro); }
+
+.ap-secao-dek { font-size: 17px; line-height: 1.6; color: #D7DFEA; max-width: 60ch; margin: 14px 0 0; }
+.ap-secao-dek--escuro { color: var(--ap-cinza); }
+
+/* Busca de município */
+.ap-busca { margin: 34px 0 40px; max-width: 620px; }
+.ap-busca label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ap-amarelo); margin-bottom: 8px; }
+.ap-busca-campo { position: relative; }
+
+.ap-busca input {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ap-tinta);
+  background: #ffffff;
+  outline: none;
+}
+
+.ap-busca input:focus-visible { box-shadow: 0 0 0 3px var(--ap-amarelo); }
+
+.ap-busca-resultados {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.ap-busca-resultados:empty { display: none; }
+
+.ap-busca-resultados a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  color: var(--ap-tinta);
+  text-decoration: none;
+  font-size: 14.5px;
+  border-bottom: 1px solid var(--ap-creme);
+}
+
+.ap-busca-resultados a:hover,
+.ap-busca-resultados a:focus-visible { background: var(--ap-creme); outline: none; }
+.ap-busca-resultados small { color: var(--ap-cinza); white-space: nowrap; }
+
+/* Ferramentas */
+.ap-ferramentas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+
+.ap-ferramenta {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  color: var(--ap-tinta);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ap-ferramenta:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3); }
+.ap-ferramenta:focus-visible { outline: 3px solid var(--ap-amarelo); outline-offset: 3px; }
+
+.ap-ferramenta video,
+.ap-ferramenta img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; background: var(--ap-creme); }
+
+.ap-ferramenta-info { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+.ap-ferramenta-info h3 { font-family: var(--ap-serifa); font-size: 22px; font-weight: 600; color: var(--ap-azul-escuro); margin: 0 0 6px; }
+.ap-ferramenta-info p { font-size: 14px; line-height: 1.5; color: var(--ap-cinza); margin: 0 0 14px; flex: 1; }
+.ap-ferramenta-info span { font-size: 13px; font-weight: 700; color: var(--ap-azul); }
+
+/* FAQ */
+.ap-faq { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 48px; }
+.ap-faq-lista details { border-bottom: 1px solid var(--ap-fio); }
+
+.ap-faq-lista summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 2px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ap-azul-escuro);
+  cursor: pointer;
+}
+
+.ap-faq-lista summary::-webkit-details-marker { display: none; }
+.ap-faq-lista summary::after { content: "+"; font-size: 22px; line-height: 1; color: var(--ap-vermelho); transition: transform 0.2s ease; }
+.ap-faq-lista details[open] summary::after { transform: rotate(45deg); }
+.ap-faq-lista summary:focus-visible { outline: 2px solid var(--ap-azul); outline-offset: 2px; }
+.ap-faq-lista details p { font-size: 15.5px; line-height: 1.65; color: var(--ap-tinta); margin: 0 0 18px; max-width: 64ch; }
+
+/* Notícias */
+.ap-noticias { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 30px; }
+
+.ap-noticia {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--ap-fio);
+  border-radius: 6px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--ap-tinta);
+}
+
+.ap-noticia img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.ap-noticia div { padding: 14px 16px 18px; }
+.ap-noticia-data { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ap-vermelho); }
+.ap-noticia h3 { font-family: var(--ap-serifa); font-size: 17px; font-weight: 600; line-height: 1.3; margin: 6px 0 0; color: var(--ap-azul-escuro); }
+.ap-noticia:hover h3 { text-decoration: underline; }
+
+/* Rodapé */
+.ap-rodape { background: var(--ap-azul-escuro); color: #D7DFEA; padding: 40px 0; }
+.ap-rodape-grid { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.ap-rodape strong { color: #ffffff; font-size: 20px; letter-spacing: 0.1em; }
+.ap-rodape p { margin: 6px 0 0; font-size: 14px; max-width: 52ch; }
+.ap-rodape-logo { height: 44px; width: auto; }
+
+/* ---- 6. Responsivo ---- */
+@media (max-width: 1024px) {
+  .ap-ferramentas,
+  .ap-noticias { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ap-faq { grid-template-columns: 1fr; gap: 20px; }
+}
+
+/* No celular o palco fica preso no topo (metade da tela) e os cartões de
+   texto passam por baixo dele: é o padrão dos scrollytellings móveis. */
+@media (max-width: 860px) {
+  .ap-capa,
+  .ap-fechamento { grid-template-columns: 1fr; min-height: 0; }
+  .ap-capa-imagem { min-height: 34vh; }
+  .ap-fechamento-imagem { min-height: 30vh; order: -1; }
+
+  .ap-trilha { display: flex; flex-direction: column-reverse; padding: 0 16px; }
+
+  .ap-trilha-palco {
+    top: 0;
+    height: 56vh;
+    z-index: 1;
+    background: var(--ap-papel);
+    padding: 10px 0;
+  }
+
+  .ap-trilha-textos { position: relative; z-index: 2; margin-top: -10vh; }
+  .ap-passo { min-height: 80vh; align-items: flex-end; padding-bottom: 6vh; }
+  .ap-passo-cartao { opacity: 0.9; padding: 20px; }
+  .ap-passo-texto p { font-size: 16px; }
+
+  .ap-grafico-area { height: 38vh; }
+  .ap-mapa { height: 44vh; }
+  .ap-grafico { padding: 14px 12px 10px; }
+  .ap-lista { padding: 22px; }
+  .ap-lista li { font-size: 16px; }
+  .ap-quintil { grid-template-columns: 78px minmax(0, 1fr) 70px; gap: 8px; }
+
+  .ap-container { padding: 0 16px; }
+  .ap-secao { padding: 60px 0; }
+  .ap-ferramentas,
+  .ap-noticias { grid-template-columns: 1fr; }
+  .ap-rodape-grid { flex-direction: column; align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-visual,
+  .ap-passo-cartao,
+  .ap-quintil-barra i { transition: none; }
+  .ap-capa-rolar span { animation: none; }
+}
