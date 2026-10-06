@@ -43,9 +43,15 @@ urlpatterns = [
 
     # --- APIS: DETAIL ---
     path('api/dados-detalhados/', detail_mun_views.municipio_details_api, name='municipio_details_api'),
+    # Distribuicao nacional de UMA rubrica, para a curva de densidade.
+    # Substitui o bloco #mun-data, que embutia 9,9 MB em cada pagina.
+    path('api/distribuicao/', detail_mun_views.distribuicao_api, name='distribuicao_api'),
     path('api/fiscal-details/', detail_agg_views.conjunto_fiscal_api, name='conjunto_fiscal_api'),
     path('api/conjunto-chart-data/', detail_agg_views.conjunto_chart_api, name='conjunto_chart_api'),
     path('api/conjunto-data/', detail_agg_views.conjunto_data_api, name='conjunto_data_api'),
+    # Media de uma rubrica na selecao. O grafico de densidade usava a
+    # conjunto-data acima (9,3 MB) so para tirar essa media.
+    path('api/conjunto-media/', detail_agg_views.conjunto_media_api, name='conjunto_media_api'),
 
     # --- APIS: MAPA ---
     path('api/dados-municipios/', map_views.municipios_geojson_api, name='municipios_geojson_api'),

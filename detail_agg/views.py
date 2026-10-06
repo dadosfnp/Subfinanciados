@@ -20,6 +20,7 @@ def _get_filtered_municipios(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
@@ -29,6 +30,7 @@ def _get_filtered_municipios(request):
         municipio_filtro and municipio_filtro != 'todos',
         porte_filtro and porte_filtro != 'todos',
         rm_filtro and rm_filtro != 'todos',
+        consorcio_filtro and consorcio_filtro != 'todos',
         subgroup_filter and subgroup_filter != 'todos'
     ])
 
@@ -43,6 +45,10 @@ def _get_filtered_municipios(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -295,6 +301,7 @@ def conjunto_detalhe_view(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
@@ -306,6 +313,10 @@ def conjunto_detalhe_view(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     # --- faixas de porte ---
     if porte_filtro and porte_filtro != 'todos':
@@ -996,97 +1007,16 @@ def conjunto_detalhe_view(request):
         },
     }
 
-    qs = (
-        Municipio.objects
-        .annotate(
-            # Categorias Principais
-            main_categories=F('dados_atuais__rc_atual_pc'),
+    # `qs`/`data` ficavam aqui: 5.570 municipios x 11 colunas materializados e
+    # despejados no bloco #mun-data do template (2,18 MB de HTML por pageview),
+    # para o grafico de densidade ler uma coluna por vez. Agora ele busca a
+    # rubrica atual em /api/distribuicao/, o mesmo caminho ja usado na pagina
+    # de municipio.
 
-            # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('dados_atuais__populacao_atual'),
-            imposto = F('conta_especifica__imposto')/F('dados_atuais__populacao_atual'),  
-            taxas = F('conta_especifica__taxas')/F('dados_atuais__populacao_atual'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
-
-            # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('dados_atuais__populacao_atual'),
-
-            # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('dados_atuais__populacao_atual'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('dados_atuais__populacao_atual'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('dados_atuais__populacao_atual'),
-
-            # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('dados_atuais__populacao_atual'),
-                  )
-        .values(                  # já vem “flat” pro template
-            "cod_ibge", "main_categories",
-            
-            "imposto_taxas_contribuicoes",
-            "imposto",
-            "taxas",
-            "contribuicoes_melhoria",
-            
-            "contribuicoes",
-
-            "transferencias_correntes",
-            "transferencias_uniao",
-            "transferencias_estado",
-            
-            "outras_receitas",
-            
-            
-        )
-        .order_by("cod_ibge")
-    )
-
-    data = list(qs)  # ~5.570 linhas é tranquilo
-
-    qsf = (
-        Municipio.objects
-        .annotate(
-            # Categorias Principais
-            main_categories=F('dados_atuais__rc_atual_pc'),
-
-            # Imposto, Taxas e Contribuições de Melhoria
-            imposto_taxas_contribuicoes=F('conta_detalhada__imposto_taxas_contribuicoes')/F('dados_atuais__populacao_atual'),
-            imposto = F('conta_especifica__imposto')/F('dados_atuais__populacao_atual'),  
-            taxas = F('conta_especifica__taxas')/F('dados_atuais__populacao_atual'),
-            contribuicoes_melhoria = F('conta_especifica__contribuicoes_melhoria')/F('dados_atuais__populacao_atual'),
-
-            # Contribuições
-            contribuicoes=F('conta_detalhada__contribuicoes')/F('dados_atuais__populacao_atual'),
-
-            # Transferências Correntes
-            transferencias_correntes=F('conta_detalhada__transferencias_correntes')/F('dados_atuais__populacao_atual'),
-            transferencias_uniao = F('conta_especifica__tranferencias_uniao')/F('dados_atuais__populacao_atual'),
-            transferencias_estado = F('conta_especifica__tranferencias_estados')/F('dados_atuais__populacao_atual'),
-
-            # Outras Receitas Correntes
-            outras_receitas=F('conta_detalhada__outras_receita')/F('dados_atuais__populacao_atual'),
-                  )
-        .values(                  # já vem “flat” pro template
-            "cod_ibge", "main_categories",
-            
-            "imposto_taxas_contribuicoes",
-            "imposto",
-            "taxas",
-            "contribuicoes_melhoria",
-            
-            "contribuicoes",
-
-            "transferencias_correntes",
-            "transferencias_uniao",
-            "transferencias_estado",
-            
-            "outras_receitas",
-            
-            
-        )
-        .order_by("cod_ibge")
-    )
-
-    data_f = list(qsf)
+    # `qsf`/`data_f` ficavam aqui: um segundo queryset com SQL byte a byte
+    # identico ao de cima, serializado para o bloco #mun-data-f do template.
+    # Eram 2,18 MB de HTML e uma varredura da tabela inteira por pageview, e
+    # nenhum JS do projeto lia esse bloco -- so #mun-data e lido.
 
     # ---------------------------
     # ADAPTA BRASIL (médias do grupo)
@@ -1136,12 +1066,25 @@ def conjunto_detalhe_view(request):
             })
     adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
 
+    # Compute media_ponderada average
+    media_geral_val = queryset.aggregate(media_geral=Avg('dados_adapta_brasil__media_ponderada', filter=Q(dados_adapta_brasil__media_ponderada__isnull=False)))['media_geral']
+    adapta_brasil_media = None
+    if media_geral_val is not None:
+        if media_geral_val >= 0.8:
+            adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.6:
+            adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.4:
+            adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.2:
+            adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_geral_val}
+        else:
+            adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_geral_val}
+
     context = {
         'revenue_tree': revenue_tree,
         # passe o dict direto; no template use {{ chart_data_json|json_script:"chart-data" }}
         'chart_data_json': chart_data,
-        'data_json': data,
-        'data_f_json': data_f,
         'hist_data': {
             'pop24': population,
             'pop00': pop00,
@@ -1160,6 +1103,7 @@ def conjunto_detalhe_view(request):
         'media_nacional_rc_pc': 316.74,
         'media_nacional_pop': 16.04,
         'adapta_brasil_data': adapta_brasil_data,
+        'adapta_brasil_media': adapta_brasil_media,
     }
 
     return render(request, 'detail_agg/detalhe_conjunto.html', context)
@@ -1881,9 +1825,24 @@ def conjunto_fiscal_api(request):
             })
     adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
 
+    # Compute media_ponderada average
+    media_geral_val = queryset.aggregate(media_geral=Avg('dados_adapta_brasil__media_ponderada', filter=Q(dados_adapta_brasil__media_ponderada__isnull=False)))['media_geral']
+    adapta_brasil_media = None
+    if media_geral_val is not None:
+        if media_geral_val >= 0.8:
+            adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.6:
+            adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.4:
+            adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_geral_val}
+        elif media_geral_val >= 0.2:
+            adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_geral_val}
+        else:
+            adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_geral_val}
+
     # Renderiza os templates parciais e retorna como JSON
     rendered_html = render_to_string('detail_agg/partials/_fiscal_details.html', {'revenue_tree': revenue_tree, 'level': 0})
-    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data})
+    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data, 'adapta_brasil_media': adapta_brasil_media})
     
     return JsonResponse({
         'html': rendered_html,
@@ -2161,3 +2120,59 @@ def conjunto_data_api(request):
 
     data = list(qs)
     return JsonResponse(data, safe=False)
+
+
+def conjunto_media_api(request):
+    """Media de UMA rubrica na selecao atual, para a linha de referencia da curva.
+
+    Existe porque o grafico de densidade buscava /api/conjunto-data/ -- 9,3 MB
+    com 5.570 municipios x 44 colunas -- a cada mudanca de filtro, so para tirar
+    a media de uma coluna. Aqui a media sai do proprio banco e a resposta tem
+    algumas dezenas de bytes.
+
+    /api/conjunto-data/ segue intacta: e uma URL publica e pode ter consumidor
+    fora deste repositorio.
+
+    Querystring:
+        campo   chave de CAMPOS_DENSIDADE (obrigatorio)
+        + os mesmos filtros de _get_filtered_municipios (uf, regiao, porte, rm...)
+
+    Resposta:
+        {"campo": str, "media": float|null, "n": int}
+    """
+    # Reaproveita a allowlist ja definida no detail_mun em vez de repetir os 46
+    # caminhos do ORM -- duplicar faria as duas listas divergirem no primeiro
+    # campo novo.
+    from detail_mun.views import CAMPOS_DENSIDADE
+
+    campo = (request.GET.get('campo') or 'main_categories').strip()
+    if campo not in CAMPOS_DENSIDADE:
+        return JsonResponse(
+            {'erro': 'campo desconhecido', 'campo': campo,
+             'validos': sorted(CAMPOS_DENSIDADE)},
+            status=400,
+        )
+
+    queryset, _filtros = _get_filtered_municipios(request)
+    caminho = CAMPOS_DENSIDADE[campo]
+
+    if caminho is None:
+        # Receita corrente ja esta per capita no banco.
+        expr = F('dados_atuais__rc_atual_pc')
+        qs = queryset
+    else:
+        expr = ExpressionWrapper(
+            F(caminho) / F('dados_atuais__populacao_atual'),
+            output_field=FloatField(),
+        )
+        # Sem o exclude a divisao estoura em populacao zero.
+        qs = queryset.exclude(dados_atuais__populacao_atual=0)
+
+    qs = qs.exclude(dados_atuais__populacao_atual__isnull=True)
+    resultado = qs.aggregate(media=Avg(expr))
+
+    return JsonResponse({
+        'campo': campo,
+        'media': resultado['media'],
+        'n': qs.count(),
+    })

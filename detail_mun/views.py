@@ -8,6 +8,66 @@ from django.db.models.functions import Coalesce
 from functools import reduce
 import operator
 
+# ============================================================================
+# CURVA DE DENSIDADE
+# ----------------------------------------------------------------------------
+# Nome publico da rubrica -> caminho no ORM. Serve de allowlist: o parametro da
+# querystring vira nome de coluna, entao nunca vai direto para o ORM.
+#
+# Todos os valores sao divididos pela populacao para virarem per capita -- a
+# curva compara municipios de portes diferentes, e valor absoluto so mostraria
+# o tamanho da cidade.
+# ============================================================================
+CAMPOS_DENSIDADE = {
+    # Receita corrente total, ja per capita no banco.
+    "main_categories": None,
+    "imposto_taxas_contribuicoes": "conta_detalhada__imposto_taxas_contribuicoes",
+    "imposto": "conta_especifica__imposto",
+    "iptu": "conta_mais_especifica__iptu",
+    "itbi": "conta_mais_especifica__itbi",
+    "iss": "conta_mais_especifica__iss",
+    "imposto_renda": "conta_mais_especifica__imposto_renda",
+    "imposto_icms": "conta_mais_especifica__imposto_icms",
+    "imposto_ipva": "conta_mais_especifica__imposto_ipva",
+    "outros_impostos": "conta_mais_especifica__outros_impostos",
+    "taxas": "conta_especifica__taxas",
+    "taxa_policia": "conta_mais_especifica__taxa_policia",
+    "taxa_prestacao_servico": "conta_mais_especifica__taxa_prestacao_servico",
+    "outras_taxas": "conta_mais_especifica__outras_taxas",
+    "contribuicoes_melhoria": "conta_especifica__contribuicoes_melhoria",
+    "contribuicao_melhoria_pavimento_obras": "conta_mais_especifica__contribuicao_melhoria_pavimento_obras",
+    "contribuicao_melhoria_agua_potavel": "conta_mais_especifica__contribuicao_melhoria_agua_potavel",
+    "contribuicao_melhoria_iluminacao_publica": "conta_mais_especifica__contribuicao_melhoria_iluminacao_publica",
+    "outras_contribuicoes_melhoria": "conta_mais_especifica__outras_contribuicoes_melhoria",
+    "contribuicoes": "conta_detalhada__contribuicoes",
+    "contribuicoes_sociais": "conta_especifica__contribuicoes_sociais",
+    "contribuicoes_iluminacao_publica": "conta_especifica__contribuicoes_iluminacao_publica",
+    "outras_contribuicoes": "conta_especifica__outras_contribuicoes",
+    "transferencias_correntes": "conta_detalhada__transferencias_correntes",
+    "transferencias_uniao": "conta_especifica__tranferencias_uniao",
+    "transferencias_uniao_fpm": "conta_mais_especifica__transferencia_uniao_fpm",
+    "transferencia_uniao_fpe": "conta_mais_especifica__transferencia_uniao_fpe",
+    "transferencias_uniao_exploracao": "conta_mais_especifica__transferencia_uniao_exploracao",
+    "transferencias_uniao_sus": "conta_mais_especifica__transferencia_uniao_sus",
+    "transferencias_uniao_fnde": "conta_mais_especifica__transferencia_uniao_fnde",
+    "transferencia_uniao_fundeb": "conta_mais_especifica__transferencia_uniao_fundeb",
+    "transferencias_uniao_fnas": "conta_mais_especifica__transferencia_uniao_fnas",
+    "outras_transferencias_uniao": "conta_mais_especifica__outras_transferencias_uniao",
+    "transferencias_estado": "conta_especifica__tranferencias_estados",
+    "transferencias_estado_icms": "conta_mais_especifica__transferencia_estado_icms",
+    "transferencias_estado_ipva": "conta_mais_especifica__transferencia_estado_ipva",
+    "transferencias_estado_exploracao": "conta_mais_especifica__transferencia_estado_exploracao",
+    "transferencias_estado_sus": "conta_mais_especifica__transferencia_estado_sus",
+    "transferencias_estado_assistencia": "conta_mais_especifica__transferencia_estado_assistencia",
+    "outras_transferencias_estado": "conta_mais_especifica__outras_transferencias_estado",
+    "outras_receitas": "conta_detalhada__outras_receita",
+    "receita_patrimonial": "conta_especifica__receita_patrimonial",
+    "receita_agropecuaria": "conta_especifica__receita_agropecuaria",
+    "receita_industrial": "conta_especifica__receita_industrial",
+    "receita_servicos": "conta_especifica__receita_servicos",
+    "outras_receitas_outras": "conta_especifica__outras_receitas",}
+
+
 def _get_filtered_municipios(request):
     """
     Helper centralizado para aplicar os filtros geográficos e populacionais 
@@ -20,6 +80,7 @@ def _get_filtered_municipios(request):
     municipio_filtro = request.GET.get('municipio')
     porte_filtro = request.GET.get('porte')
     rm_filtro = request.GET.get('rm')
+    consorcio_filtro = request.GET.get('consorcio')
     classification_filter = request.GET.get('classification', 'quintil')
     subgroup_filter = request.GET.get('subgrupo')
 
@@ -29,6 +90,7 @@ def _get_filtered_municipios(request):
         municipio_filtro and municipio_filtro != 'todos',
         porte_filtro and porte_filtro != 'todos',
         rm_filtro and rm_filtro != 'todos',
+        consorcio_filtro and consorcio_filtro != 'todos',
         subgroup_filter and subgroup_filter != 'todos'
     ])
 
@@ -43,6 +105,10 @@ def _get_filtered_municipios(request):
         queryset = queryset.filter(name_muni_uf=municipio_filtro)
     if rm_filtro and rm_filtro != 'todos':
         queryset = queryset.filter(rm__nome=rm_filtro)
+    # Consórcio é M2M (um município pode estar em vários): o lookup por nome não
+    # duplica linhas porque casa no máximo uma associação por município.
+    if consorcio_filtro and consorcio_filtro != 'todos':
+        queryset = queryset.filter(consorcios__nome=consorcio_filtro)
 
     if porte_filtro and porte_filtro != 'todos':
         if porte_filtro == 'Até 5 mil':
@@ -183,7 +249,10 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     percentis, medias e arvore de receitas. A unica diferenca entre a pagina
     publica e a de preview e a camada de apresentacao.
     """
-    municipio = get_object_or_404(Municipio.objects.prefetch_related(
+    # select_related, e nao prefetch_related: as nove sao OneToOneField, entao
+    # cabem num JOIN so. prefetch_related dispara uma query por relacao -- nove
+    # idas ao banco em vez de uma, e o banco de producao fica fora do droplet.
+    municipio = get_object_or_404(Municipio.objects.select_related(
         'dados_atuais', 'dados_2000',
         'conta_detalhada', 'conta_especifica', 'conta_mais_especifica',
         'conta_detalhada_percentil', 'conta_especifica_percentil', 'conta_mais_especifica_percentil',
@@ -224,19 +293,10 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     def avg_pc(campo):
         return Avg(ExpressionWrapper(F(campo) / F('dados_atuais__populacao_atual'), output_field=FloatField()))
 
-    # 3. FAZENDO A CONSULTA (Apenas municípios com população válida para não dar erro de divisão por zero)
-    base_query = Municipio.objects.exclude(dados_atuais__populacao_atual__isnull=True).exclude(dados_atuais__populacao_atual=0)
-    
-    # Agregações para o 1º Nível (Conta Detalhada)
-    agregacoes = {
-        'transf_correntes': avg_pc('conta_detalhada__transferencias_correntes'),
-        'impostos_taxas': avg_pc('conta_detalhada__imposto_taxas_contribuicoes'),
-        'outras_rec': avg_pc('conta_detalhada__outras_receita'),
-        'contrib': avg_pc('conta_detalhada__contribuicoes'),
-    }
-
-    medias_estadual = base_query.filter(uf=municipio.uf).aggregate(**agregacoes)
-    medias_faixa = base_query.filter(**filtro_faixa).aggregate(**agregacoes)
+    # `medias_estadual` e `medias_faixa` ficavam aqui: duas agregacoes sobre a
+    # base inteira, com join, cujo resultado nao era lido pela view nem pelo
+    # template. Foram substituidas pelas tabelas pre-calculadas logo abaixo
+    # (MediaUfReceita e MediaPorteReceita) e nunca removidas.
 
     # RECUPERACAO DA INSTANCIA DE MEDIAS NACIONAIS (TABELA NOVA)
     media_nac = MediaNacionalReceita.objects.filter(ano_referencia=2024).first()
@@ -562,7 +622,10 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
         )
         .order_by("cod_ibge")
     )
-    data = list(qs) 
+    # `data = list(qs)` ficava aqui: os 5.570 municipios com 46 campos de
+    # receita, embutidos em TODA pagina de municipio -- 9,9 MB de HTML por
+    # pageview, dos quais a curva de densidade usa uma coluna de cada vez.
+    # Agora o grafico busca a rubrica atual em /api/distribuicao/.
 
     # Calcula a variacao percentual da populacao e da receita corrente per capita
     delta_populacao = 0.0
@@ -623,7 +686,8 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
 
     # AdaptaBrasil data preparation
     adapta_brasil_data = []
-    if hasattr(municipio, 'dados_adapta_brasil') and municipio.dados_adapta_brasil:
+    adapta_brasil_media = None
+    if getattr(municipio, 'dados_adapta_brasil', None) and municipio.dados_adapta_brasil:
         ab = municipio.dados_adapta_brasil
         indicators_map = [
             ("Biodiversidade", "Integridade do bioma", ab.bio_int_bio),
@@ -668,13 +732,52 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
                 
         # Sort by risk (valor) from highest to lowest
         adapta_brasil_data.sort(key=lambda x: x['valor'], reverse=True)
+        
+        # Get media ponderada (geral)
+        media_val = ab.media_ponderada
+        if media_val is not None:
+            if media_val >= 0.8:
+                adapta_brasil_media = {'grau': 'Muito alto', 'cor': 'bg-[#d73027]', 'valor': media_val}
+            elif media_val >= 0.6:
+                adapta_brasil_media = {'grau': 'Alto', 'cor': 'bg-[#f46d43]', 'valor': media_val}
+            elif media_val >= 0.4:
+                adapta_brasil_media = {'grau': 'Médio', 'cor': 'bg-[#fdae61]', 'valor': media_val}
+            elif media_val >= 0.2:
+                adapta_brasil_media = {'grau': 'Baixo', 'cor': 'bg-[#66bd63]', 'valor': media_val}
+            else:
+                adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_val}
+
+    capag_data = None
+    if getattr(municipio, 'dados_atuais', None) and getattr(municipio.dados_atuais, 'capag', None):
+        def get_capag_color(val):
+            if not val:
+                return "bg-slate-500"
+            val_str = str(val).strip().upper()
+            if val_str.startswith('A') or val_str.startswith('B') or val_str == 'BICF':
+                return "bg-[#2f5c29]" # Green
+            return "bg-[#9a331c]" # Red
+
+        capag_data = {
+            'nota': municipio.dados_atuais.capag,
+            'nota_color': get_capag_color(municipio.dados_atuais.capag),
+            'indicador_i': municipio.dados_atuais.capag_indicador_I or '-',
+            'indicador_i_color': get_capag_color(municipio.dados_atuais.capag_indicador_I),
+            'indicador_ii': municipio.dados_atuais.capag_indicador_II or '-',
+            'indicador_ii_color': get_capag_color(municipio.dados_atuais.capag_indicador_II),
+            'indicador_iii': municipio.dados_atuais.capag_indicador_III or '-',
+            'indicador_iii_color': get_capag_color(municipio.dados_atuais.capag_indicador_III),
+            'qualidade_fiscal': municipio.dados_atuais.capag_qualidade_fiscal or '-',
+            'qualidade_fiscal_color': get_capag_color(municipio.dados_atuais.capag_qualidade_fiscal),
+        }
 
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
-        'data': data,
+        'capag_data': capag_data,
+        'adapta_brasil_data': adapta_brasil_data,
+        'adapta_brasil_media': adapta_brasil_media,
         'evolucao_historica': evolucao_historica,
 
         'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
@@ -735,8 +838,8 @@ def municipio_details_api(request):
     ).aggregate(avg_d=Avg('d'))
     delta_rc_pc = round(delta_rc_pc_agg['avg_d'], 2) if delta_rc_pc_agg['avg_d'] is not None else 0
 
-    # Get the count of municipalities in the filtered queryset
-    quantidade_municipios = queryset.count()
+    # Get the count of municipalities with revenue in the filtered queryset
+    quantidade_municipios = queryset.filter(dados_atuais__rc_atual__gt=0).count()
     
     # Format the data for the JSON response
     response_data = {
@@ -872,3 +975,66 @@ def municipio_details_api(request):
 
 
 
+
+
+def distribuicao_api(request):
+    """Distribuicao nacional de UMA rubrica, para a curva de densidade.
+
+    Substitui o bloco `#mun-data`, que embutia os 5.570 municipios com 46
+    campos de receita em TODA pagina de municipio — 10 MB de HTML por
+    pageview, dos quais o grafico usava uma coluna de cada vez.
+
+    Querystring:
+        campo     chave de CAMPOS_DENSIDADE (obrigatorio)
+        cod_ibge  municipio a destacar na curva (opcional)
+
+    Resposta:
+        {"campo": str, "n": int, "valores": [float, ...], "referencia": float|null}
+
+    `valores` sai ordenado e sem nulos: o KDE do cliente descarta nao-numeros
+    de qualquer jeito, e mandar o lixo so aumentaria o corpo da resposta.
+    """
+    campo = (request.GET.get("campo") or "main_categories").strip()
+
+    # Allowlist: o parametro vira nome de coluna, entao nunca e usado direto.
+    if campo not in CAMPOS_DENSIDADE:
+        return JsonResponse(
+            {"erro": "campo desconhecido", "campo": campo,
+             "validos": sorted(CAMPOS_DENSIDADE)},
+            status=400,
+        )
+
+    caminho = CAMPOS_DENSIDADE[campo]
+    qs = Municipio.objects.exclude(dados_atuais__populacao_atual__isnull=True)
+
+    if caminho is None:
+        # Receita corrente ja esta per capita no banco.
+        qs = qs.annotate(_valor=F("dados_atuais__rc_atual_pc"))
+    else:
+        qs = qs.exclude(dados_atuais__populacao_atual=0).annotate(
+            _valor=F(caminho) / F("dados_atuais__populacao_atual")
+        )
+
+    linhas = qs.exclude(_valor__isnull=True).values_list("cod_ibge", "_valor")
+
+    valores = []
+    referencia = None
+    cod_alvo = (request.GET.get("cod_ibge") or "").strip()
+
+    for cod, valor in linhas:
+        try:
+            v = float(valor)
+        except (TypeError, ValueError):
+            continue
+        valores.append(v)
+        if cod_alvo and str(cod) == cod_alvo:
+            referencia = v
+
+    valores.sort()
+
+    return JsonResponse({
+        "campo": campo,
+        "n": len(valores),
+        "valores": valores,
+        "referencia": referencia,
+    })

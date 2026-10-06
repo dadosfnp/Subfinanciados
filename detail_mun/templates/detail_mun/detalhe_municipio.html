@@ -394,32 +394,53 @@
 
     {% if adapta_brasil_data %}
     <section class="mb-12">
-
-        <div class="section-heading mb-1">
-                <span>Riscos Climáticos AdaptaBrasil</span>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-[#103758] font-semibold border-b border-slate-200">
-                        <tr>
-                            <th scope="col" class="px-6 py-4">Setor Estratégico</th>
-                            <th scope="col" class="px-6 py-4">Subsetor</th>
-                            <th scope="col" class="px-6 py-4">Grau de Risco</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for item in adapta_brasil_data %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ item.setor }}</td>
-                            <td class="px-6 py-4">{{ item.subsetor }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="{{ item.cor }} text-white text-xs font-semibold px-2.5 py-1 rounded-md">{{ item.grau }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="w-full">
+            <div class="flex flex-col h-full">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex-1 flex flex-col h-full relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Riscos Climáticos</h4>
+                        {% if adapta_brasil_media %}
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                Média Geral
+                                <i class="fa-solid fa-circle-info text-slate-300 hover:text-slate-500 transition-colors cursor-help" title="Média Ponderada da Metodologia de Risco (AdaptaBrasil)"></i>
+                            </span>
+                            <span class="{{ adapta_brasil_media.cor }} text-white text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                                {{ adapta_brasil_media.grau }} 
+                                <span class="bg-white/20 px-1 rounded">{{ adapta_brasil_media.valor|floatformat:2 }}</span>
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col">
+                        <div class="overflow-y-auto max-h-[320px] border border-slate-100 rounded-xl relative shadow-inner">
+                            <table class="w-full text-left text-xs text-slate-600">
+                                <thead class="sticky top-0 bg-slate-50 text-[#103758] font-bold border-b border-slate-200 z-10 shadow-sm">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 bg-slate-50">Setor Estratégico</th>
+                                        <th scope="col" class="px-4 py-3 bg-slate-50">Subsetor</th>
+                                        <th scope="col" class="px-4 py-3 text-right bg-slate-50">Risco</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="adapta-brasil-tbody">
+                                    {% for item in adapta_brasil_data %}
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-4 py-3 font-medium">{{ item.setor }}</td>
+                                        <td class="px-4 py-3 text-slate-500">{{ item.subsetor }}</td>
+                                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                                            <span class="{{ item.cor }} text-white font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-end gap-1.5 w-max ml-auto">
+                                                {{ item.grau }}
+                                                <span class="bg-white/20 px-1 rounded">{{ item.valor|floatformat:2 }}</span>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -429,7 +450,10 @@
 
 {{ chart_data_json|json_script:"chart-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
-{{ data|json_script:"mun-data" }}
+{# {{ data|json_script:"mun-data" }} ficava aqui: os 5.570 municipios com 46
+   campos de receita, 9,9 MB em toda pagina de municipio, para alimentar uma
+   curva que le uma coluna por vez. Agora script_density_mun.js busca so a
+   rubrica atual em /api/distribuicao/. #}
 
 <script id="municipio-data" type="application/json">
 {

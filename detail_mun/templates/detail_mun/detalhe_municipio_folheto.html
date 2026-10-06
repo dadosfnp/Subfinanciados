@@ -29,6 +29,8 @@ O QUE MUDA em relacao a pagina publica:
 
 {% block extra_head %}
     <title>{{ municipio.name_muni_uf }} - Preview IFEM</title>
+    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
+    <meta name="robots" content="noindex, nofollow">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
@@ -480,7 +482,8 @@ O QUE MUDA em relacao a pagina publica:
 {# ==================== DADOS ==================== #}
 {{ chart_data_json|json_script:"chart-data" }}
 {{ percentile_data_json|json_script:"percentile-data" }}
-{{ data|json_script:"mun-data" }}
+{# mun-data saiu, como na pagina publica: script_density_mun.js busca a
+   rubrica atual em /api/distribuicao/ em vez de receber 9,9 MB no HTML. #}
 
 <script id="municipio-data" type="application/json">
 {

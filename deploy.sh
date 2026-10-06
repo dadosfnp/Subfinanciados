@@ -45,6 +45,15 @@ docker compose build
 # `migrate` NAO cobre este caso: quando as migrations sao regeradas do zero, o 0001_initial
 # novo ja consta como aplicado e o migrate sai com sucesso sem fazer nada, enquanto o codigo
 # espera colunas que nao existem. Sem esta checagem, o deploy publicaria um site em 500.
+# Aplicar as migrations ANTES de conferir, senao toda migration nova viraria um
+# falso "schema incompativel" — foi o que aconteceu na primeira vez que o guard
+# barrou um deploy legitimo. Rodar aqui (e nao so no entrypoint) tambem e melhor:
+# uma migration que falha derruba o deploy com log visivel, em vez de deixar o
+# container reiniciando em loop depois que o antigo ja foi embora.
+echo "[deploy] Aplicando migrations pendentes..."
+docker compose run --rm --no-deps -e RUN_MIGRATIONS=0 --entrypoint python ifem \
+    manage.py migrate --noinput
+
 echo "[deploy] Verificando se o banco e compativel com o codigo novo..."
 if ! docker compose run --rm --no-deps -e RUN_MIGRATIONS=0 --entrypoint python ifem \
         manage.py verificar_schema --silencioso; then

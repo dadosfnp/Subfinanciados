@@ -355,6 +355,8 @@ Se você quiser recarregar apenas uma etapa, dá para rodar os comandos individu
 | 7 | `07_media_nacional_detalhamento` | Médias nacional, por UF e por porte. |
 | 8 | `08_mediana_nacional_detalhamento` | Medianas nacional, por UF e por porte. |
 | 9 | `09_crescimento_medio` | Crescimento médio de receita e população. |
+| 10 | `10_adapta_brasil` | Indicadores de risco climático do AdaptaBrasil. |
+| 11 | `11_importar_consorcios` | Consórcios intermunicipais (filtro **Agrupamento**) e sua composição. |
 
 > ⚠️ **Nunca rode com `manage.py shell < arquivo`.** Assim o Python engole os erros no meio
 > do caminho: a carga fica pela metade e mesmo assim parece ter dado certo. Já aconteceu — as

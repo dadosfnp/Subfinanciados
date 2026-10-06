@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.db.models import Avg, Q, F, FloatField, ExpressionWrapper
+from django.db.models import Avg, Count, Q, F, FloatField, ExpressionWrapper
 
 from home.models import Municipio
 
@@ -21,19 +21,39 @@ def metodologia_page(request):
         ('50 a 100 mil', 50000, 100000), ('100 a 200 mil', 100000, 200000),
         ('200 a 500 mil', 200000, 500000), ('+500 mil', 500000, None),
     ]
-    faixas, counts = [], []
-    for label, lo, hi in faixas_def:
-        cond = Q(dados_atuais__populacao_atual__gte=lo) & (Q(dados_atuais__populacao_atual__lt=hi) if hi else Q())
-        c = pop_qs.filter(cond).count()
-        counts.append(c)
-        faixas.append({'label': label, 'count': c})
+    # Todas as faixas contadas numa query so, com um Count(filter=...) por faixa.
+    # Antes era um .count() por iteracao: nove idas ao banco para montar um
+    # grafico de oito barras -- e o banco de producao fica fora do droplet,
+    # entao cada ida custa latencia de rede.
+    def _cond(lo, hi):
+        cond = Q(dados_atuais__populacao_atual__gte=lo)
+        return cond & Q(dados_atuais__populacao_atual__lt=hi) if hi else cond
+
+    contagens = pop_qs.aggregate(
+        **{f'faixa_{i}': Count('cod_ibge', filter=_cond(lo, hi))
+           for i, (label, lo, hi) in enumerate(faixas_def)},
+        abaixo_80k=Count('cod_ibge', filter=Q(dados_atuais__populacao_atual__lte=80000)),
+    )
+
+    counts = [contagens[f'faixa_{i}'] for i in range(len(faixas_def))]
+    faixas = [{'label': label, 'count': c}
+              for (label, _lo, _hi), c in zip(faixas_def, counts)]
     mx = max(counts) or 1
     for item in faixas:
         item['h'] = max(6, round(item['count'] / mx * 130))  # altura proporcional (px)
 
     total = sum(counts) or 1
-    abaixo = pop_qs.filter(dados_atuais__populacao_atual__lte=80000).count()
+    abaixo = contagens['abaixo_80k']
     acima = total - abaixo
+
+    # Segunda leitura do mesmo gráfico: agrupamento em dois grandes grupos (FNP).
+    faixas_fnp = [
+        {'label': 'Abaixo de 80 mil habitantes', 'count': abaixo},
+        {'label': 'Acima de 80 mil habitantes', 'count': acima},
+    ]
+    mx_fnp = max(item['count'] for item in faixas_fnp) or 1
+    for item in faixas_fnp:
+        item['h'] = max(6, round(item['count'] / mx_fnp * 130))
 
     # Médias nacionais dos indicadores sociais (média dos municípios).
     media_sus = pop_qs.filter(sus_dependente__sus_dependente__isnull=False).aggregate(m=Avg('sus_dependente__sus_dependente'))['m'] or 0
@@ -44,6 +64,7 @@ def metodologia_page(request):
     ctx = {
         'media_nacional': str(round(media)),
         'faixas': faixas,
+        'faixas_fnp': faixas_fnp,
         'abaixo80': abaixo,
         'acima80': acima,
         'pct_abaixo80': round(abaixo / total * 100),

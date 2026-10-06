@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const filtroUf     = document.getElementById('filtro-uf');
   const filtroPorte  = document.getElementById('filtro-porte');
   const filtroRm     = document.getElementById('filtro-rm');
+  const filtroConsorcio = document.getElementById('filtro-consorcio');
   const filtroClassificacao = document.getElementById('filtro-classificacao');
   const filtroSubgrupo      = document.getElementById('filtro-subgrupo');
 
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const p = new URLSearchParams();
     p.set('porte', filtroPorte?.value || 'todos');
     p.set('rm', filtroRm?.value || 'todos');
+    p.set('consorcio', filtroConsorcio?.value || 'todos');
     p.set('regiao', filtroRegiao?.value || 'todos');
     p.set('uf', filtroUf?.value || 'todos');
     p.set('classification', filtroClassificacao?.value || 'quintil');
@@ -156,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const r = filtroRegiao.value;
     const u = filtroUf.value;
     const m = filtroRm.value;
+    const c = filtroConsorcio ? filtroConsorcio.value : 'todos';
     
     try{
       const resp = await fetch(`/api/get-dependent-filters/?${buildParams().toString()}`);
@@ -169,6 +172,12 @@ document.addEventListener('DOMContentLoaded', function () {
       filtroRm.innerHTML ='<option value="todos">Todos</option>';
       (data.rms||[]).forEach(x=>filtroRm.add(new Option(x,x)));        
       restoreSelectValue(filtroRm,m);
+
+      if(filtroConsorcio){
+        filtroConsorcio.innerHTML ='<option value="todos">Todos</option>';
+        (data.consorcios||[]).forEach(x=>filtroConsorcio.add(new Option(x,x)));
+        restoreSelectValue(filtroConsorcio,c);
+      }
       
       filtroUf.innerHTML ='<option value="todos">Todas</option>';
       (data.ufs||[]).forEach(x=>filtroUf.add(new Option(x,x)));        
@@ -619,6 +628,8 @@ function updateTimelineColors(mode) {
     const rm = document.getElementById('filtro-rm')?.value;
     const porte = document.getElementById('filtro-porte')?.value;
     
+    const consorcio = document.getElementById('filtro-consorcio')?.value;
+    if (consorcio && consorcio !== 'todos') return consorcio;
     if (rm && rm !== 'todos') {
       const sel = document.getElementById('filtro-rm');
       return `${sel.options[sel.selectedIndex].text}`;
@@ -635,6 +646,10 @@ function updateTimelineColors(mode) {
     const rm = document.getElementById('filtro-rm')?.value;
     const porte = document.getElementById('filtro-porte')?.value;
     
+    const consorcio = document.getElementById('filtro-consorcio')?.value;
+    // 'do agrupamento X' e não 'do X': os nomes têm gêneros diferentes
+    // (o CIOSTE, a GRANPAL, o Grande ABC) e a forma neutra serve a todos.
+    if (consorcio && consorcio !== 'todos') return `do agrupamento ${consorcio}`;
     if (rm && rm !== 'todos') {
       const sel = document.getElementById('filtro-rm');
       return `da ${sel.options[sel.selectedIndex].text}`;
@@ -917,6 +932,7 @@ function updateTimelineColors(mode) {
   if(filtroRegiao) filtroRegiao.addEventListener('change', applyFiltersAndData);
   if(filtroUf)     filtroUf.addEventListener('change',     applyFiltersAndData);
   if(filtroRm)     filtroRm.addEventListener('change',     applyFiltersAndData);
+  if(filtroConsorcio) filtroConsorcio.addEventListener('change', applyFiltersAndData);
   if(filtroPorte)  filtroPorte.addEventListener('change',  applyFiltersAndData);
 
   const btnLimpar=document.getElementById('btn-limpar-filtros');
@@ -924,6 +940,7 @@ function updateTimelineColors(mode) {
     btnLimpar.addEventListener('click',()=>{
       if(filtroRegiao) filtroRegiao.value='todos';
       if(filtroRm)     filtroRm.value='todos';
+      if(filtroConsorcio) filtroConsorcio.value='todos';
       if(filtroUf)     filtroUf.value='todos';
       if(filtroPorte)  filtroPorte.value='todos';
       if(filtroClassificacao) filtroClassificacao.value='quintil';

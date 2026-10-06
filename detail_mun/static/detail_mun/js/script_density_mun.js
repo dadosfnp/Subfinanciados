@@ -41,32 +41,37 @@ const densityAtX = (pts, x) => {
 // 3) Função principal para desenhar o gráfico, agora parametrizada
 async function drawDensityPlot(dataKey) {
     try {
-        // a) Obter os dados brutos do HTML
-        const raw = document.getElementById("mun-data").textContent;
-        const dados = JSON.parse(raw);
+        // a) Buscar SO a rubrica pedida.
+        //
+        // Antes, esta funcao lia o bloco #mun-data, que trazia os 5.570
+        // municipios com 46 campos embutidos no HTML -- 9,9 MB por pagina, para
+        // usar uma coluna de cada vez. Agora /api/distribuicao/ devolve apenas
+        // o vetor da rubrica atual e ja identifica o municipio em foco.
+        const pathParts = window.location.pathname.split("/");
+        const cod_ibge = pathParts.find(p => /^\d{7}$/.test(p)) || "";
 
-        // b) Extrair o vetor de dados usando a CHAVE DINÂMICA (dataKey)
-        const receitas = dados
-            .map(d => Number(d[dataKey])) //
-            .filter(v => Number.isFinite(v));
+        const resposta = await fetch(
+            `/api/distribuicao/?campo=${encodeURIComponent(dataKey)}` +
+            (cod_ibge ? `&cod_ibge=${encodeURIComponent(cod_ibge)}` : ""),
+            { headers: { "Accept": "application/json" } }
+        );
+
+        if (!resposta.ok) {
+            console.warn(`Distribuicao indisponivel para '${dataKey}' (HTTP ${resposta.status}).`);
+            return;
+        }
+
+        const payload = await resposta.json();
+        const receitas = (payload.valores || []).filter(v => Number.isFinite(v));
 
         if (!receitas.length) {
             console.warn(`Sem valores numéricos em '${dataKey}'.`);
             return;
         }
 
-        // c) Obter o valor de referência para o município em foco
-        const pathParts = window.location.pathname.split("/");
-        const cod_ibge = pathParts.find(p => /^\d{7}$/.test(p));
-        const municipio = dados.find(d => String(d.cod_ibge) === String(cod_ibge));
-        
-        if (!municipio) {
-            console.warn("Município não encontrado:", cod_ibge);
-            return;
-        }
-        
-        // Extrai o valor de referência usando a CHAVE DINÂMICA
-        const xRef = Number(municipio[dataKey]);
+        // b) Valor de referencia (a linha tracejada). A API ja devolve o valor
+        //    do municipio pedido, entao nao e preciso varrer o vetor inteiro.
+        const xRef = Number(payload.referencia);
         if (!Number.isFinite(xRef)) {
             console.warn(`Valor de referência inválido para '${dataKey}' no município ${cod_ibge}.`);
         }

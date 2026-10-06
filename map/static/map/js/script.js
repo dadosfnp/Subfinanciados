@@ -24,17 +24,22 @@ const filtroMunicipio      = document.getElementById('filtro-municipio');
 const filtroPorte          = document.getElementById('filtro-porte');
 const filtroSubgrupo       = document.getElementById('filtro-subgrupo');
 const filtroRm             = document.getElementById('filtro-rm');
-const filtroCapag          = document.getElementById('filtro-capag');
+const filtroConsorcio      = document.getElementById('filtro-consorcio');
+// const filtroCapag          = document.getElementById('filtro-capag');
+const filtroRiscoCampo     = document.getElementById('filtro-risco-campo');
 const filtroRiscos         = document.getElementById('filtro-riscos');
 const filtroClassificacao  = document.getElementById('filtro-classificacao');
 const filtroModoCalculo    = document.getElementById('filtro-modo-calculo');
-const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
-const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescimento');
+// DESATIVADO: filtro-modo-analise removido da UX
+// const filtroModoAnalise        = document.getElementById('filtro-modo-analise');
+// const filtroMetricaCrescimento = document.getElementById('filtro-metrica-crescimento');
+const filtroModoAnalise        = null; // desativado
+const filtroMetricaCrescimento = null; // desativado
 const blocoReceita             = document.getElementById('bloco-receita');
 const blocoCrescimento         = document.getElementById('bloco-crescimento');
 
-// True quando o usuário está no modo "Crescimento 2000→2025".
-const modoCrescimentoAtivo = () => filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
+// True quando o usuário está no modo "Crescimento 2000→2025" (sempre false enquanto desativado).
+const modoCrescimentoAtivo = () => false; // filtroModoAnalise && filtroModoAnalise.value === 'crescimento';
 
 let debounceTimer = null;
 let lastRequestId = 0;
@@ -63,12 +68,14 @@ function paramsKeyFromSelects() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
-    capag: filtroCapag.value,
-    risco_climatico: filtroRiscos.value,
+    consorcio: filtroConsorcio.value,
+    // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value,
-    modo_analise: filtroModoAnalise ? filtroModoAnalise.value : 'receita',
-    metrica: filtroMetricaCrescimento ? filtroMetricaCrescimento.value : ''
+    modo_analise: 'receita', // filtroModoAnalise desativado, forçado para 'receita'
+    // metrica: filtroMetricaCrescimento ? filtroMetricaCrescimento.value : ''  // desativado
   };
   const cleaned = {};
   Object.entries(raw).forEach(([k, v]) => { if (v && v !== 'todos') cleaned[k] = v; });
@@ -80,16 +87,19 @@ async function updateDependentFilters() {
   const regiaoAtual    = filtroRegiao.value;
   const ufAtual        = filtroUf.value;
   const rmAtual        = filtroRm.value;
+  const consorcioAtual = filtroConsorcio.value;
   const municipioAtual = filtroMunicipio.value;
-  const capagAtual     = filtroCapag.value;
+  // const capagAtual     = typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos';
 
   /* Monta os parametros com o estado atual para o backend retornar apenas itens validos */
   const params = {
     regiao: regiaoAtual,
     uf: ufAtual,
     rm: rmAtual,
-    capag: capagAtual,
-    risco_climatico: filtroRiscos.value,
+    consorcio: consorcioAtual,
+    // capag: capagAtual,
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     classification: filtroClassificacao.value,
@@ -109,6 +119,10 @@ async function updateDependentFilters() {
     data.rms.forEach(v => filtroRm.add(new Option(v, v)));
     restoreSelectValue(filtroRm, rmAtual);
 
+    filtroConsorcio.innerHTML = '<option value="todos">Todos</option>';
+    (data.consorcios || []).forEach(v => filtroConsorcio.add(new Option(v, v)));
+    restoreSelectValue(filtroConsorcio, consorcioAtual);
+
     filtroUf.innerHTML = '<option value="todos">Todas</option>';
     data.ufs.forEach(v => filtroUf.add(new Option(v, v)));
     restoreSelectValue(filtroUf, ufAtual);
@@ -117,11 +131,11 @@ async function updateDependentFilters() {
     data.municipios.forEach(v => filtroMunicipio.add(new Option(v, v)));
     restoreSelectValue(filtroMunicipio, municipioAtual);
 
-    filtroCapag.innerHTML = '<option value="todos">Todos</option>';
-    if (data.capags) {
-        data.capags.forEach(v => filtroCapag.add(new Option(v, v)));
-    }
-    restoreSelectValue(filtroCapag, capagAtual);
+    // filtroCapag.innerHTML = '<option value="todos">Todos</option>';
+    // if (data.capags) {
+    //     data.capags.forEach(v => filtroCapag.add(new Option(v, v)));
+    // }
+    // restoreSelectValue(filtroCapag, capagAtual);
   } catch (err) {
     console.error("Erro ao atualizar filtros dependentes:", err);
   }
@@ -141,8 +155,10 @@ async function atualizarMapa() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
-    capag: filtroCapag.value,
-    risco_climatico: filtroRiscos.value,
+    consorcio: filtroConsorcio.value,
+    // capag: typeof filtroCapag !== 'undefined' && filtroCapag ? filtroCapag.value : 'todos',
+    risco_campo: filtroRiscoCampo ? filtroRiscoCampo.value : 'media_ponderada',
+    risco_climatico: filtroRiscos ? filtroRiscos.value : 'todos',
     classification: classificacaoAtual,
     calculation_mode: filtroModoCalculo.value,
     analise: analiseAtual
@@ -157,13 +173,22 @@ async function atualizarMapa() {
   const myId = ++lastRequestId;
 
   try {
-    const [respMapa, respResumo] = await Promise.all([
-      fetch(buildApiUrl('/api/dados-municipios/', paramsMapa)),
-      fetch(buildApiUrl('/api/dados-municipios/', paramsResumo))
-    ]);
+    const urlMapa   = buildApiUrl('/api/dados-municipios/', paramsMapa);
+    const urlResumo = buildApiUrl('/api/dados-municipios/', paramsResumo);
 
-    const geojsonMapa   = await respMapa.json();
-    const geojsonResumo = await respResumo.json();
+    /* paramsMapa e paramsResumo só diferem no município, e buildApiUrl descarta
+       valores 'todos' — então sem município selecionado (o caso padrão) as duas
+       URLs são idênticas. Buscar as duas ocupava os dois workers do Gunicorn com
+       a mesma consulta de 5,5k linhas. Uma requisição só, resposta reaproveitada:
+       nenhum consumidor abaixo muta o GeoJSON, então compartilhar o objeto é seguro. */
+    let geojsonMapa, geojsonResumo;
+    if (urlMapa === urlResumo) {
+      geojsonMapa = geojsonResumo = await (await fetch(urlMapa)).json();
+    } else {
+      const [respMapa, respResumo] = await Promise.all([fetch(urlMapa), fetch(urlResumo)]);
+      geojsonMapa   = await respMapa.json();
+      geojsonResumo = await respResumo.json();
+    }
 
     if (myId !== lastRequestId) return;
     if (paramsKeyFromSelects() !== desiredKey) return;
@@ -247,8 +272,16 @@ map.on("load", async () => {
   });
 
   hideBaseMunicipalityLayers();
-  await updateDependentFilters();
+
+  /* A cascata de filtros e o GeoJSON são independentes: uma preenche os <select>,
+     o outro pinta o mapa. Serializar as duas (await antes de refrescar) somava um
+     round-trip inteiro ao primeiro desenho, então disparamos em paralelo.
+     O scheduleAtualizarMapa(0) substitui o debounce de 150ms que refrescarVisualizacao
+     agenda — proteger contra rajada de cliques só faz sentido depois do load. */
+  const filtrosProntos = updateDependentFilters();
   refrescarVisualizacao(); // aplica o modo de análise (receita por padrão): cores + legenda + refetch
+  scheduleAtualizarMapa(0);
+  await filtrosProntos;
 
 // =========================================================
   // LOGICA UNIFICADA: Xambioá e Varginha
@@ -425,6 +458,7 @@ function applyZoom(geojsonData) {
   }
 
   if (filtroUf.value !== 'todos' || filtroRm.value !== 'todos' ||
+      filtroConsorcio.value !== 'todos' ||
       filtroRegiao.value !== 'todos' || filtroPorte.value !== 'todos' ||
       filtroSubgrupo.value !== 'todos') {
     const bbox = getGeoJSONBounds(geojsonData);
@@ -503,6 +537,23 @@ function abrirPopupDoMunicipioSelecionado(feature) {
     rank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>`,
     riscos: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
   };
+  // 1. Declare a função antes de montar o HTML
+  function formatarRisco(valor) {
+    if (valor === undefined || valor === null) return '0,00';
+    
+    const num = Number(valor);
+    // Formata para 2 casas e troca o ponto pela vírgula
+    const formatado = num.toFixed(2).replace('.', ','); 
+    
+    let classe = '';
+    if (num < 0.2) classe = 'risco muito baixo';
+    else if (num < 0.4) classe = 'risco baixo';
+    else if (num < 0.6) classe = 'risco médio';
+    else if (num < 0.8) classe = 'risco alto';
+    else classe = 'risco muito alto';
+
+    return `${formatado} (${classe})`;
+  }
 
   /* Frase de Sintese (Logica de cores mantida) */
   let summaryHTML = '';
@@ -543,6 +594,7 @@ function abrirPopupDoMunicipioSelecionado(feature) {
           </div>
         </div>
 
+        ${/*
         <div class="popup-data-row">
           ${icons.capag}
           <div class="popup-info-content">
@@ -565,22 +617,63 @@ function abrirPopupDoMunicipioSelecionado(feature) {
             <span class="popup-value">${props.capag || 'N/D'}</span>
           </div>
         </div>
+        */ ''}
 
         <div class="popup-data-row">
           ${icons.riscos}
           <div class="popup-info-content">
             <span class="popup-label" style="display: flex; align-items: center;">
-              Riscos Climáticos Altos:
+              ${(() => {
+                const selectedRiskKey = (typeof filtroRiscoCampo !== 'undefined' && filtroRiscoCampo) ? filtroRiscoCampo.value : 'media_ponderada';
+                const RISK_LABELS = {
+                  'todos': 'Risco Climático Médio',
+                  'media_ponderada': 'Risco Climático Médio',
+                  'bio_int_bio': 'Biodiversidade (Integridade do Bioma)',
+                  'des_des_ter': 'Desastres (Deslizamento de Terra)',
+                  'des_in_enx_ala': 'Desastres (Inundações e Alagamentos)',
+                  'rec_ris_est_hid': 'Recursos Hídricos (Estresse Hídrico)',
+                  'sau_arb': 'Saúde (Arboviroses)',
+                  'sau_lei_teg_ame': 'Saúde (Leishmaniose Tegumentar)',
+                  'sau_lei_vis': 'Saúde (Leishmaniose Visceral)',
+                  'sau_mal': 'Saúde (Malária)',
+                  'seg_ali_ace_con_ali': 'Segurança Alimentar (Acesso/Consumo)',
+                  'seg_ali_dis': 'Segurança Alimentar (Disponibilidade)',
+                  'seg_ene_ace': 'Segurança Energética (Acesso)',
+                  'seg_ene_dis': 'Segurança Energética (Disponibilidade)'
+                };
+                return RISK_LABELS[selectedRiskKey] || 'Risco Climático Médio';
+              })()}
               <span class="capag-tooltip">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="margin-left: 5px; cursor: help; color: #64748b;">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
                 </svg>
                 <div class="capag-tooltip-text">
-                  <div style="font-weight: bold; margin-bottom: 8px;">Subsetores do AdaptaBrasil com valor acima de 0,6</div>
+                  <div style="font-weight: bold; margin-bottom: 8px;">Metodologia de Risco (AdaptaBrasil)</div>
+                  <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Base de Dados:</strong> Consolida as avaliações de 12 subsetores da plataforma AdaptaBrasil.</li>
+                    <li><strong>Cálculo:</strong> Média ponderada das notas dos 12 subsetores, atribuindo pesos iguais para cada setor estratégico.</li>
+                    <li><strong>Normalização:</strong> O valor resultante foi ajustado e normalizado para uma escala de 0 a 1.</li>
+                    <li><strong>Classificação:</strong>
+                      <ul style="margin-top: 4px; padding-left: 16px; display: flex; flex-direction: column; gap: 4px;">
+                        <li>Abaixo de 0,2: Muito baixo</li>
+                        <li>De 0,2 a 0,4: Baixo</li>
+                        <li>De 0,4 a 0,6: Médio</li>
+                        <li>De 0,6 a 0,8: Alto</li>
+                        <li>Acima de 0,8: Muito alto</li>
+                      </ul>
+                    </li>
+                  </ul>
                 </div>
               </span>
             </span>
-            <span class="popup-value">${props.riscos_climaticos !== undefined ? props.riscos_climaticos : '0'} / 12</span>
+            <span class="popup-value">${formatarRisco((() => {
+                const selectedRiskKey = (typeof filtroRiscoCampo !== 'undefined' && filtroRiscoCampo) ? filtroRiscoCampo.value : 'media_ponderada';
+                let valorRisco = props.riscos_climaticos;
+                if (selectedRiskKey !== 'todos' && selectedRiskKey !== 'media_ponderada' && props[selectedRiskKey] != null) {
+                    valorRisco = props[selectedRiskKey];
+                }
+                return valorRisco;
+            })())}</span>
           </div>
         </div>
 
@@ -819,15 +912,15 @@ function updateLegendCrescimento(metricaKey) {
 // Despachante central: aplica a visualização conforme o modo de análise ativo.
 function refrescarVisualizacao() {
   if (modoCrescimentoAtivo()) {
-    blocoReceita.style.display = 'none';
-    blocoCrescimento.style.display = '';
+    if (blocoReceita)     blocoReceita.style.display = 'none';
+    if (blocoCrescimento) blocoCrescimento.style.display = '';
     const metrica = filtroMetricaCrescimento.value;
     map.setPaintProperty('populacao-circulos', 'circle-color', getCrescimentoPaint(metrica));
     updateLegendCrescimento(metrica);
     scheduleAtualizarMapa();
   } else {
-    blocoReceita.style.display = '';
-    blocoCrescimento.style.display = 'none';
+    if (blocoReceita)     blocoReceita.style.display = '';
+    if (blocoCrescimento) blocoCrescimento.style.display = 'none'; // elemento pode estar comentado no HTML
     atualizarClassificacao(); // seta cores + legenda + subgrupo e agenda o refetch
   }
 }
@@ -874,16 +967,39 @@ function atualizarClassificacao() {
 document.getElementById('btn-limpar-filtros').addEventListener('click', async () => {
     filtroRegiao.value = 'todos';
     filtroRm.value = 'todos';
+    filtroConsorcio.value = 'todos';
     filtroUf.value = 'todos';
     filtroMunicipio.value = 'todos';
     filtroPorte.value = 'todos';
     filtroSubgrupo.value = 'todos';
-    filtroCapag.value = 'todos';
-    filtroRiscos.value = 'todos';
+    // if (typeof filtroCapag !== 'undefined' && filtroCapag) filtroCapag.value = 'todos';
+    if (filtroRiscoCampo) filtroRiscoCampo.value = 'media_ponderada';
+    if (filtroRiscos) {
+        filtroRiscos.value = 'todos';
+        const containerPillsRisco = document.getElementById('container-pills-risco');
+        if (containerPillsRisco) {
+            containerPillsRisco.querySelectorAll('.pill-risco').forEach(b => {
+                const bVal = b.getAttribute('data-value');
+                if (bVal === 'todos') {
+                    b.classList.add('active');
+                    b.style.backgroundColor = '#103758';
+                    b.style.color = '#ffffff';
+                } else {
+                    b.classList.remove('active');
+                    b.style.backgroundColor = '#ffffff';
+                    if (bVal === 'muito_baixo') b.style.color = '#16a34a';
+                    else if (bVal === 'baixo') b.style.color = '#65a30d';
+                    else if (bVal === 'medio') b.style.color = '#d97706';
+                    else if (bVal === 'alto') b.style.color = '#ea580c';
+                    else if (bVal === 'muito_alto') b.style.color = '#dc2626';
+                }
+            });
+        }
+    }
   filtroClassificacao.value = 'quintil';
   filtroModoCalculo.value = 'total';
-  if (filtroModoAnalise) filtroModoAnalise.value = 'receita';
-  if (filtroMetricaCrescimento) filtroMetricaCrescimento.value = 'cresc_pop_pct';
+  // if (filtroModoAnalise) filtroModoAnalise.value = 'receita';         // desativado
+  // if (filtroMetricaCrescimento) filtroMetricaCrescimento.value = 'cresc_pop_pct'; // desativado
   map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, speed: 0.8, curve: 1.3 });
   await updateDependentFilters();
   refrescarVisualizacao();
@@ -893,7 +1009,7 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
 }
 });
 
-[filtroRegiao, filtroUf, filtroRm, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroCapag, filtroRiscos]
+[filtroRegiao, filtroUf, filtroRm, filtroConsorcio, filtroMunicipio, filtroPorte, filtroSubgrupo, filtroRiscoCampo]
   .forEach(sel => sel.addEventListener('change', async () => {
     
     if (sel === filtroMunicipio && filtroMunicipio.value === 'todos' && popupAtivo) {
@@ -910,11 +1026,44 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', async ()
     scheduleAtualizarMapa();
   }));
 
+const containerPillsRisco = document.getElementById('container-pills-risco');
+if (containerPillsRisco) {
+  containerPillsRisco.querySelectorAll('.pill-risco').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const val = btn.getAttribute('data-value');
+      if (filtroRiscos) filtroRiscos.value = val;
+      
+      containerPillsRisco.querySelectorAll('.pill-risco').forEach(b => {
+        const bVal = b.getAttribute('data-value');
+        b.classList.remove('active');
+        b.style.backgroundColor = '#ffffff';
+        if (bVal === 'todos') b.style.color = '#475569';
+        else if (bVal === 'muito_baixo') b.style.color = '#16a34a';
+        else if (bVal === 'baixo') b.style.color = '#65a30d';
+        else if (bVal === 'medio') b.style.color = '#d97706';
+        else if (bVal === 'alto') b.style.color = '#ea580c';
+        else if (bVal === 'muito_alto') b.style.color = '#dc2626';
+      });
+
+      btn.classList.add('active');
+      if (val === 'todos') { btn.style.backgroundColor = '#103758'; btn.style.color = '#ffffff'; }
+      else if (val === 'muito_baixo') { btn.style.backgroundColor = '#16a34a'; btn.style.color = '#ffffff'; }
+      else if (val === 'baixo') { btn.style.backgroundColor = '#65a30d'; btn.style.color = '#ffffff'; }
+      else if (val === 'medio') { btn.style.backgroundColor = '#d97706'; btn.style.color = '#ffffff'; }
+      else if (val === 'alto') { btn.style.backgroundColor = '#ea580c'; btn.style.color = '#ffffff'; }
+      else if (val === 'muito_alto') { btn.style.backgroundColor = '#dc2626'; btn.style.color = '#ffffff'; }
+
+      await updateDependentFilters();
+      scheduleAtualizarMapa();
+    });
+  });
+}
+
 
 filtroModoCalculo.addEventListener('change', atualizarClassificacao);
 filtroClassificacao.addEventListener('change', atualizarClassificacao);
-if (filtroModoAnalise) filtroModoAnalise.addEventListener('change', refrescarVisualizacao);
-if (filtroMetricaCrescimento) filtroMetricaCrescimento.addEventListener('change', refrescarVisualizacao);
+// if (filtroModoAnalise) filtroModoAnalise.addEventListener('change', refrescarVisualizacao);     // desativado
+// if (filtroMetricaCrescimento) filtroMetricaCrescimento.addEventListener('change', refrescarVisualizacao); // desativado
 
 map.on("mouseenter", "populacao-circulos", () => { map.getCanvas().style.cursor = "pointer"; });
 map.on("mouseleave", "populacao-circulos", () => { map.getCanvas().style.cursor = ""; });
@@ -928,6 +1077,7 @@ async function downloadTableData() {
     porte: filtroPorte.value,
     subgrupo: filtroSubgrupo.value,
     rm: filtroRm.value,
+    consorcio: filtroConsorcio.value,
     classification: filtroClassificacao.value,
     calculation_mode: filtroModoCalculo.value
   });
@@ -1110,20 +1260,32 @@ document.getElementById("btn-screenshot").addEventListener("click", async () => 
     const headerY = 150;
 
     function boldIfNotAll(nome, valor) {
-        if (!valor || valor.toLowerCase() === "todos" || valor.toLowerCase() === "todas") {
-            return `${nome}: ${valor}`;
+        const v = valor ? valor.trim() : '';
+        if (!v || v.toLowerCase() === "todos" || v.toLowerCase() === "todas" || v.toLowerCase() === "todos os riscos") {
+            return `${nome}: ${v}`;
         }
-        return `${nome}: **${valor}**`;
+        return `${nome}: **${v}**`;
     }
+
+    const INTENSIDADE_MAP = {
+        'todos': 'todas',
+        'muito_baixo': 'Muito Baixo',
+        'baixo': 'Baixo',
+        'medio': 'Médio',
+        'alto': 'Alto',
+        'muito_alto': 'Muito Alto'
+    };
 
     const filtros = [
         boldIfNotAll("Faixa Populacional", document.getElementById("filtro-porte").value),
         boldIfNotAll("Região Metropolitana", document.getElementById("filtro-rm").value),
+        boldIfNotAll("Agrupamento", document.getElementById("filtro-consorcio").value),
         boldIfNotAll("Região", document.getElementById("filtro-regiao").value),
         boldIfNotAll("UF", document.getElementById("filtro-uf").value),
         boldIfNotAll("Município", document.getElementById("filtro-municipio").value),
-        boldIfNotAll("Capag", document.getElementById("filtro-capag").value),
-        boldIfNotAll("Riscos Climáticos", document.getElementById("filtro-riscos").options[document.getElementById("filtro-riscos").selectedIndex].text)
+        // boldIfNotAll("Capag", document.getElementById("filtro-capag") ? document.getElementById("filtro-capag").value : 'todos'),
+        boldIfNotAll("Risco Climático", filtroRiscoCampo ? filtroRiscoCampo.options[filtroRiscoCampo.selectedIndex].text : 'todos'),
+        boldIfNotAll("Intensidade", INTENSIDADE_MAP[filtroRiscos ? filtroRiscos.value : 'todos'] || 'todas')
     ];
 
     ctx.font = "24px Arial";

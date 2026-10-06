@@ -211,6 +211,22 @@
       });
     }
 
+    /* ---------- Alternância (faixas populacionais / FNP) ---------- */
+    const faixasTabsHead = document.getElementById("faixasTabsHead");
+    if (faixasTabsHead) {
+      faixasTabsHead.querySelectorAll("button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const set = btn.getAttribute("data-set");
+          faixasTabsHead.querySelectorAll("button").forEach(function (b) { b.classList.toggle("active", b === btn); });
+          document.querySelectorAll(".met-portes-pane").forEach(function (p) {
+            const on = p.getAttribute("data-set-pane") === set;
+            p.classList.toggle("active", on);
+            if (on) { const chart = p.querySelector(".met-portes"); if (chart) chart.classList.add("in"); }
+          });
+        });
+      });
+    }
+
     /* ---------- "Saiba mais" expansível ---------- */
     document.querySelectorAll("[data-more]").forEach(function (btn) {
       const panel = btn.nextElementSibling;

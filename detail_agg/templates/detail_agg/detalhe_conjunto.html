@@ -223,6 +223,19 @@
           </div>
         </div>
 
+        <!-- Rótulo "Agrupamento" na tela; a entidade no banco é Consorcio (base_datas/consorcios.xlsx). -->
+        <div class="filter-group mb-4">
+          <label for="filtro-consorcio" class="form-label">Agrupamento:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-consorcio" class="form-select form-select-sm">
+              <option value="todos">Todos</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-search-for="#filtro-consorcio">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="filter-group mb-4">
           <label for="filtro-regiao" class="form-label">Região:</label>
           <div class="input-group input-group-sm">
@@ -496,9 +509,12 @@
       </div>
     </section>
 
-    <section class="mb-12 px-4 lg:px-0" id="riscos-climaticos-container">
+    <section class="mb-12 mt-12 px-4 lg:px-0" id="riscos-climaticos-container">
       {% include 'detail_agg/partials/_riscos_climaticos.html' %}
     </section>
+
+
+
 
   </main>
 </div>
@@ -518,9 +534,12 @@
 </div>
 
 {{ chart_data_json|json_script:"chart-data" }}
-{{ data_json|json_script:"mun-data" }}
-{{ percentile_data_json|json_script:"percentile-data" }}
-{{ data_f_json|json_script:"mun-data-f" }}
+{# #mun-data saiu daqui: eram 5.570 municipios x 11 colunas (2,18 MB) no
+   HTML para o grafico ler UMA coluna por vez. script_density.js agora busca
+   a rubrica atual em /api/distribuicao/. #}
+{# #percentile-data e #mun-data-f sairam daqui: o primeiro renderizava uma
+   variavel que nao existe no contexto, e o segundo era copia byte a byte de
+   #mun-data -- 2,18 MB que nenhum script lia. #}
 <script src="{% static 'detail_agg/js/script.js' %}"></script>
 <script src="{% static 'detail_agg/js/script_density.js' %}"></script>
 

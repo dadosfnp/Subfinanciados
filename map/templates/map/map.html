@@ -198,6 +198,17 @@
           </div>
         </div>
 
+        <!-- Rótulo "Agrupamento" na tela; a entidade no banco é Consorcio (base_datas/consorcios.xlsx). -->
+        <div class="filter-group">
+          <label for="filtro-consorcio" class="form-label">Agrupamento:</label>
+          <div class="input-group input-group-sm">
+            <select id="filtro-consorcio" class="form-select form-select-sm"><option value="todos">Todos</option></select>
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-consorcio" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="filter-group">
           <label for="filtro-regiao" class="form-label">Região:</label>
           <div class="input-group input-group-sm">
@@ -228,6 +239,7 @@
           </div>
         </div>
 
+        <!--
         <div class="filter-group">
           <label for="filtro-capag" class="form-label">Capag:</label>
           <div class="input-group input-group-sm">
@@ -237,43 +249,71 @@
             </button>
           </div>
         </div>
+        -->
 
         <div class="filter-group">
-          <label for="filtro-riscos" class="form-label">Riscos Climáticos:</label>
-          <div class="input-group input-group-sm">
-            <select id="filtro-riscos" class="form-select form-select-sm">
-              <option value="todos">Todos</option>
+          <label for="filtro-risco-campo" class="form-label">Risco Climático:</label>
+          <div class="input-group input-group-sm mb-1.5">
+            <select id="filtro-risco-campo" class="form-select form-select-sm">
+              <option value="todos">Todos os Riscos</option>
+              <option value="media_ponderada" selected>Risco Climático Médio (Média Geral)</option>
+
               <optgroup label="Biodiversidade">
-                <option value="bio_int_bio">Integridade do bioma</option>
+                <option value="bio_int_bio">&nbsp;&nbsp;&nbsp;&nbsp;Integridade do Bioma</option>
               </optgroup>
-              <optgroup label="Desastres geo-hidrológicos">
-                <option value="des_des_ter">Deslizamento de terra</option>
-                <option value="des_in_enx_ala">Inundações, enxurradas e alagamentos</option>
+
+              <optgroup label="Desastres Geo-hidrológicos">
+                <option value="des_des_ter">&nbsp;&nbsp;&nbsp;&nbsp;Deslizamento de Terra</option>
+                <option value="des_in_enx_ala">&nbsp;&nbsp;&nbsp;&nbsp;Inundações e Alagamentos</option>
               </optgroup>
-              <optgroup label="Recursos hídricos">
-                <option value="rec_ris_est_hid">Risco de estresse hídrico</option>
+
+              <optgroup label="Recursos Hídricos">
+                <option value="rec_ris_est_hid">&nbsp;&nbsp;&nbsp;&nbsp;Risco de Estresse Hídrico</option>
               </optgroup>
+
               <optgroup label="Saúde">
-                <option value="sau_arb">Arboviroses (dengue, zika e chikungunya)</option>
-                <option value="sau_lei_teg_ame">Leishmaniose tegumentar americana</option>
-                <option value="sau_lei_vis">Leishmaniose visceral</option>
-                <option value="sau_mal">Malária</option>
+                <option value="sau_arb">&nbsp;&nbsp;&nbsp;&nbsp;Arboviroses (Dengue, Zika, Chikungunya)</option>
+                <option value="sau_lei_teg_ame">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Tegumentar Americana</option>
+                <option value="sau_lei_vis">&nbsp;&nbsp;&nbsp;&nbsp;Leishmaniose Visceral</option>
+                <option value="sau_mal">&nbsp;&nbsp;&nbsp;&nbsp;Malária</option>
               </optgroup>
-              <optgroup label="Segurança alimentar">
-                <option value="seg_ali_ace_con_ali">Acesso e consumo de alimentos</option>
-                <option value="seg_ali_dis">Disponibilidade de alimentos</option>
+
+              <optgroup label="Segurança Alimentar">
+                <option value="seg_ali_ace_con_ali">&nbsp;&nbsp;&nbsp;&nbsp;Acesso e Consumo de Alimentos</option>
+                <option value="seg_ali_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Alimentos</option>
               </optgroup>
-              <optgroup label="Segurança energética">
-                <option value="seg_ene_ace">Acesso</option>
-                <option value="seg_ene_dis">Disponibilidade</option>
+
+              <optgroup label="Segurança Energética">
+                <option value="seg_ene_ace">&nbsp;&nbsp;&nbsp;&nbsp;Acesso à Energia</option>
+                <option value="seg_ene_dis">&nbsp;&nbsp;&nbsp;&nbsp;Disponibilidade de Energia</option>
               </optgroup>
             </select>
-            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-riscos" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
+            <button type="button" class="btn btn-sm text-white px-3 shadow-none" data-search-for="#filtro-risco-campo" title="Buscar na lista" style="background-color: #103758; border: none; border-radius: 0 4px 4px 0;">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
           </div>
+
+          <!-- Hidden input keeping value for backend and JS compatibility -->
+          <input type="hidden" id="filtro-riscos" value="todos" />
+
+          <!-- Interactive Intensity Pills (2 Explicit Rows of 3 Buttons) -->
+          <div class="mt-1 flex flex-col gap-1 p-1 bg-slate-50 border border-slate-200 rounded-md" id="container-pills-risco">
+            <!-- Linha Superior (3 botões) -->
+            <div class="grid grid-cols-3 gap-1 w-full" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important;">
+              <button type="button" class="btn btn-xs pill-risco active shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="todos" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #103758; color: #ffffff; border-radius: 4px; width: 100% !important;">Todos</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="muito_baixo" title="Muito Baixo (< 0,2)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #16a34a; border: 1px solid #dcfce7; border-radius: 4px; width: 100% !important;">Muito Baixo</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="baixo" title="Baixo (0,2 a 0,4)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #65a30d; border: 1px solid #ecfccb; border-radius: 4px; width: 100% !important;">Baixo</button>
+            </div>
+            <!-- Linha Inferior (3 botões) -->
+            <div class="grid grid-cols-3 gap-1 w-full" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important;">
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="medio" title="Médio (0,4 a 0,6)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #d97706; border: 1px solid #fef3c7; border-radius: 4px; width: 100% !important;">Médio</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="alto" title="Alto (0,6 a 0,8)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #ea580c; border: 1px solid #ffedd5; border-radius: 4px; width: 100% !important;">Alto</button>
+              <button type="button" class="btn btn-xs pill-risco shadow-sm w-full text-center leading-tight whitespace-nowrap" data-value="muito_alto" title="Muito Alto (≥ 0,8)" style="font-size: 8.5px; padding: 4px 1px; font-weight: 600; background-color: #ffffff; color: #dc2626; border: 1px solid #fee2e2; border-radius: 4px; width: 100% !important;">Muito Alto</button>
+            </div>
+          </div>
         </div>
 
+        <!-- INÍCIO: filtro-modo-analise (desativado temporariamente)
         <div class="filter-group">
           <label for="filtro-modo-analise" class="form-label">Modo de análise:</label>
           <select id="filtro-modo-analise" class="form-select form-select-sm">
@@ -281,6 +321,7 @@
             <option value="crescimento">Crescimento 2000 → 2025</option>
           </select>
         </div>
+        FIM: filtro-modo-analise -->
 
         <!-- Controles do modo "Receita atual" (escondidos no modo crescimento) -->
         <div id="bloco-receita">
@@ -307,7 +348,7 @@
           </div>
         </div>
 
-        <!-- Controles do modo "Crescimento 2000→2025" -->
+        <!-- INÍCIO: bloco-crescimento (desativado junto com filtro-modo-analise)
         <div id="bloco-crescimento" style="display:none;">
           <div class="filter-group">
             <label for="filtro-metrica-crescimento" class="form-label">Métrica de crescimento:</label>
@@ -321,6 +362,7 @@
             </select>
           </div>
         </div>
+        FIM: bloco-crescimento -->
       </div>
 
       <div class="d-grid gap-2 mt-3">

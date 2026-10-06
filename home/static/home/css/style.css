@@ -306,3 +306,214 @@
     background-color: #0d264d !important;
     border-color: #0d264d !important;
 }
+/* ==========================================================================
+   POP-UP DE AJUDA DO GRÁFICO (ficha do indicador de saúde fiscal)
+   ========================================================================== */
+
+/* Criterio de classificacao (Limites Legais x Limites por Quintil): centralizado
+   logo acima da legenda do grafico. */
+.criterio-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: .5rem;
+}
+
+.criterio-toggle.d-none { display: none !important; }
+
+.criterio-toggle .toggle-option {
+  padding: 6px 16px;
+  font-size: .85rem;
+}
+
+/* Sem valor numerico nao ha quintil: o botao fica visivel, porem inerte */
+.criterio-toggle .toggle-option.desabilitado {
+  color: #9aa5b1;
+  cursor: not-allowed;
+  background: #f1f3f5;
+}
+
+.criterio-toggle .toggle-option.desabilitado:hover { background: #f1f3f5; }
+
+/* Botao de ajuda do grafico: circulo branco com a interrogacao em azul FNP.
+   Nao e tooltip — abre o pop-up no clique. */
+.btn-info-grafico {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--fnp-blue);
+  color: var(--fnp-blue);
+  font-size: .75rem;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(25, 70, 133, .15);
+  cursor: pointer;
+  transition: background-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.btn-info-grafico:hover {
+  background: #eef3fa;
+  box-shadow: 0 2px 6px rgba(25, 70, 133, .22);
+}
+
+.btn-info-grafico:focus-visible {
+  outline: 2px solid var(--fnp-blue);
+  outline-offset: 2px;
+}
+
+/* Balao de hover: fundo claro, igual ao pop-up (o padrao do Bootstrap e preto).
+   Vale so nesta pagina — este arquivo nao e carregado pelos outros modulos. */
+.fnp-tooltip {
+  --bs-tooltip-bg: #ffffff;
+  --bs-tooltip-color: #1f2937;
+  --bs-tooltip-opacity: 1;
+  --bs-tooltip-max-width: 340px;
+}
+
+.fnp-tooltip .tooltip-inner {
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 0 6px 18px rgba(25, 70, 133, .14);
+  text-align: left;
+  font-size: .85rem;
+  line-height: 1.45;
+  padding: .6rem .75rem;
+}
+
+/* Pop-up: casco claro, cabecalho num tom levemente mais frio que o corpo */
+#indicador-info-modal .modal-content {
+  background: #ffffff;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(25, 70, 133, .15);
+}
+
+#indicador-info-modal .modal-header {
+  background: #f6f8fb;
+  border-bottom: 1px solid var(--bs-border-color);
+  border-radius: 12px 12px 0 0;
+}
+
+#indicador-info-modal .modal-title {
+  color: var(--fnp-blue);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+#indicador-info-modal .modal-body {
+  background: #ffffff;
+  color: #1f2937;
+}
+
+#indicador-info-modal .info-secao + .info-secao { margin-top: 1.25rem; }
+
+/* O texto de "como ler" vem em varios paragrafos; o ultimo nao leva margem extra */
+#indicador-info-modal .info-secao p { margin-bottom: .6rem; }
+#indicador-info-modal .info-secao p:last-child { margin-bottom: 0; }
+
+#indicador-info-modal .info-secao h6 {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-bottom: .4rem;
+}
+
+/* Fórmula: destaque em bloco, com a divisão em fração para ficar legível */
+#indicador-info-modal .info-formula {
+  background: #f6f8fb;
+  border: 1px solid var(--bs-border-color);
+  border-left: 4px solid var(--fnp-blue);
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  font-size: .95rem;
+  color: #1f2937;
+  /* Em tela estreita a fracao desce para a linha de baixo em vez de estourar o modal */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem;
+}
+
+#indicador-info-modal .info-fracao {
+  display: inline-flex;
+  flex-direction: column;
+  text-align: center;
+  max-width: 100%;
+}
+
+#indicador-info-modal .info-fracao .numerador { border-bottom: 1px solid #1f2937; padding: 0 .4rem .1rem; }
+#indicador-info-modal .info-fracao .denominador { padding: .1rem .4rem 0; }
+
+/* Tabela de faixas: a cor da bolinha espelha a paleta usada no gráfico */
+#indicador-info-modal .info-faixas { width: 100%; font-size: .9rem; margin-bottom: 0; }
+#indicador-info-modal .info-faixas th { font-size: .8rem; color: #6c757d; font-weight: 600; }
+#indicador-info-modal .info-faixas td { vertical-align: top; }
+#indicador-info-modal .info-faixas .faixa-nome { min-width: 8rem; font-weight: 600; }
+
+#indicador-info-modal .bolinha {
+  display: inline-block;
+  width: .7rem;
+  height: .7rem;
+  border-radius: 50%;
+  margin-right: .4rem;
+  border: 1px solid rgba(0, 0, 0, .15);
+}
+
+/* ====== Tabelas de faixa populacional ====== */
+/* Rotulo a esquerda, numeros a direita: numero so se compara de relance quando
+   as casas caem na mesma coluna vertical. Alinhado a esquerda, cada valor
+   comecava num ponto diferente e a coluna nao ajudava a ler nada. */
+.table-card table {
+  font-variant-numeric: tabular-nums; /* todo digito com a mesma largura */
+}
+
+.table-card table th,
+.table-card table td {
+  text-align: right;
+  vertical-align: middle;
+}
+
+.table-card table th:first-child,
+.table-card table td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Cabecalho: a faixa azul separa rotulo de dado sem precisar de zebra. */
+.table-card table thead th {
+  background: var(--fnp-blue);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-bottom: 0;
+  padding: .6rem .75rem;
+}
+
+.table-card table tbody td { padding: .55rem .75rem; }
+
+/* Linha que fecha a tabela somando as faixas. */
+.table-card table tbody tr.linha-total td {
+  border-top: 2px solid var(--bs-border-color);
+  background: #f1f5f9;
+}
+
+/* Sete colunas nao cabem em 390px, e o corte parecia fim da tabela. As sombras
+   acendem so do lado onde ainda ha coluna escondida -- os pares local/scroll
+   deixam o proprio navegador calcular isso, sem JS e sem listener. */
+.table-card .table-responsive {
+  background:
+    linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)) left center,
+    linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) right center,
+    radial-gradient(farthest-side at 0 50%, rgba(17, 24, 39, .16), rgba(17, 24, 39, 0)) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(17, 24, 39, .16), rgba(17, 24, 39, 0)) right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
