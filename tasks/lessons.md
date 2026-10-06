@@ -73,3 +73,26 @@ viewport em telas estreitas — a página pública tem o mesmo problema.
 **Regra:** ao encontrar bug fora do escopo em arquivo compartilhado com
 produção, **não corrigir por conta própria**: isolar o efeito no código novo,
 documentar o motivo no CSS/código e reportar ao Pedro para decidir.
+
+---
+
+## Dados e banco
+
+### Nunca apagar ou recriar banco sem consultar o Pedro
+**Erro:** para ter os campos de Saúde Fiscal no SQLite local, tentei rodar
+`recriar_banco --confirmar` (apaga e recarrega tudo) e propus validar a tela
+com valores de exemplo.
+
+**Regra:** nenhum comando que apague, recrie ou recarregue banco (local ou
+produção) roda sem perguntar antes. Validação de tela é sempre com dados reais
+do banco; se o banco local não tiver o dado, conferir em produção só lendo, ou
+perguntar.
+
+---
+
+## Texto
+
+### Nunca usar travessão
+**Regra:** nenhum texto visível ao usuário (templates, JS, títulos, tooltips)
+usa travessão ("—"). Usar vírgula, ponto, dois-pontos ou parênteses. Para
+"sem dado" em célula, usar "n/d".
