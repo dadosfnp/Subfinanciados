@@ -35,6 +35,13 @@ urlpatterns = [
         {'template_name': 'detail_mun/detalhe_municipio_folheto.html'},
         name='municipio_detalhe_folheto',
     ),
+    # Mesmo esquema para o agregado: a view do conjunto com o template do folheto.
+    path(
+        'preview/agregado/',
+        detail_agg_views.conjunto_detalhe_view,
+        {'template_name': 'detail_agg/detalhe_conjunto_folheto.html'},
+        name='conjunto_detalhe_folheto',
+    ),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),

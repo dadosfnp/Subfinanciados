@@ -2,6 +2,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from detail_mun.saude_fiscal import distribuir_saude_fiscal
 from django.db.models import Sum, Avg, F, ExpressionWrapper, FloatField, Q, Value
 from home.models import Municipio, RegiaoMetropolitana, ContaDetalhada, MediaNacionalReceita, MediaUfReceita, MediaPorteReceita, CrescimentoMedioUf, CrescimentoMedioPorte, MedianaNacionalReceita, MedianaUfReceita, MedianaPorteReceita
 from django.db.models.functions import Coalesce
@@ -114,6 +115,20 @@ def _prepare_revenue_item_aggregated(
     diff = {
         "pc": round(((value_pc - value_pc_nac) / value_pc_nac * 100), 2) if value_pc_nac else 0
     }
+    # Para a barra divergente do layout folheto (/preview/agregado/): metade do
+    # trilho para cada lado, saturando em +-100% (o dobro ou zero da media).
+    # As faixas de cor sao as mesmas do quadradinho da pagina publica.
+    diff["barra"] = round(min(abs(diff["pc"]), 100) / 2, 2)
+    if diff["pc"] <= -60:
+        diff["faixa"] = 1
+    elif diff["pc"] <= -20:
+        diff["faixa"] = 2
+    elif diff["pc"] <= 20:
+        diff["faixa"] = 3
+    elif diff["pc"] <= 60:
+        diff["faixa"] = 4
+    else:
+        diff["faixa"] = 5
 
     item = {
         "name": name,
@@ -176,7 +191,13 @@ def _group_pc_media(queryset, fields):
 
     return qs.aggregate(avg=Avg('pc'))['avg'] or 0
 
-def conjunto_detalhe_view(request):
+def conjunto_detalhe_view(request, template_name='detail_agg/detalhe_conjunto.html'):
+    """Pagina do agregado (conjunto de municipios).
+
+    `template_name` existe para a rota de preview (/preview/agregado/) reaproveitar
+    todo o calculo desta view trocando so a camada de apresentacao, como em
+    detail_mun.views.municipio_detalhe_view.
+    """
     queryset = Municipio.objects.all()
 
     # Calcular a média nacional de receita per capita para comparação usando uma única query
@@ -1106,7 +1127,7 @@ def conjunto_detalhe_view(request):
         'adapta_brasil_media': adapta_brasil_media,
     }
 
-    return render(request, 'detail_agg/detalhe_conjunto.html', context)
+    return render(request, template_name, context)
 
 
 
@@ -1840,13 +1861,26 @@ def conjunto_fiscal_api(request):
         else:
             adapta_brasil_media = {'grau': 'Muito baixo', 'cor': 'bg-[#1a9850]', 'valor': media_geral_val}
 
-    # Renderiza os templates parciais e retorna como JSON
-    rendered_html = render_to_string('detail_agg/partials/_fiscal_details.html', {'revenue_tree': revenue_tree, 'level': 0})
-    adapta_html = render_to_string('detail_agg/partials/_riscos_climaticos.html', {'adapta_brasil_data': adapta_brasil_data, 'adapta_brasil_media': adapta_brasil_media})
-    
+    # Renderiza os templates parciais e retorna como JSON.
+    # layout=folheto vem da pagina de preview (/preview/agregado/): mesmos dados,
+    # partials com a linguagem do folheto, e a Saude Fiscal do conjunto, que a
+    # pagina publica ainda nao exibe. Qualquer outro valor mantem a resposta antiga.
+    usa_folheto = request.GET.get('layout') == 'folheto'
+    sufixo = '_folheto' if usa_folheto else ''
+    rendered_html = render_to_string(f'detail_agg/partials/_fiscal_details{sufixo}.html', {'revenue_tree': revenue_tree, 'level': 0})
+    adapta_html = render_to_string(f'detail_agg/partials/_riscos_climaticos{sufixo}.html', {'adapta_brasil_data': adapta_brasil_data, 'adapta_brasil_media': adapta_brasil_media})
+    saude_html = None
+    if usa_folheto:
+        saude_html = render_to_string('detail_agg/partials/_saude_fiscal_folheto.html', {
+            # Mesmo universo do KPI 'Municipios no conjunto' (receita informada),
+            # para os dois numeros baterem na tela.
+            'saude_fiscal_dist': distribuir_saude_fiscal(queryset.filter(dados_atuais__rc_atual__gt=0)),
+        })
+
     return JsonResponse({
         'html': rendered_html,
         'adapta_html': adapta_html,
+        'saude_html': saude_html,
         'hist_data': {
             'pop24': population,
             'pop00': pop00,

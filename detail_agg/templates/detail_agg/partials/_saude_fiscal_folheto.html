@@ -1,0 +1,41 @@
+{% comment %}
+Saude Fiscal do agregado: para cada indicador, como os municipios do conjunto
+se dividem entre as situacoes (barra empilhada de 100%). Montado por
+detail_mun.saude_fiscal.distribuir_saude_fiscal, com as mesmas regras da
+tabela do municipio. Devolvido pela /api/fiscal-details/?layout=folheto.
+{% endcomment %}
+{% if saude_fiscal_dist %}
+<div class="fx-card fx-card--tabela">
+    <div class="fx-card-tabela-head">
+        <h3 class="fx-card-titulo">Saúde Fiscal</h3>
+        <p class="fx-card-dek">
+            Como os {{ saude_fiscal_dist.0.total }} municípios do conjunto se dividem em cada indicador:
+            nota da CAPAG, limites da Lei de Responsabilidade Fiscal e equilíbrio entre receita e despesa.
+        </p>
+    </div>
+    <div class="fx-dist">
+        {% for ind in saude_fiscal_dist %}
+        <div class="fx-dist-linha">
+            <div class="fx-dist-rotulo">
+                <span class="fx-dist-grupo">{{ ind.grupo }}</span>
+                <span class="fx-dist-nome">{{ ind.indicador }}</span>
+            </div>
+            <div class="fx-dist-dados">
+                <div class="fx-dist-barra" role="img"
+                     aria-label="{% for s in ind.segmentos %}{{ s.situacao }}: {{ s.pct_txt }}{% if not forloop.last %}; {% endif %}{% endfor %}">
+                    {% for s in ind.segmentos %}
+                    <span class="fx-dist-seg" style="width: {{ s.pct|stringformat:'s' }}%; background: {{ s.hex }}; color: {{ s.hex_texto }};"
+                          title="{{ s.situacao }}: {{ s.n }} municípios ({{ s.pct_txt }})">{% if s.pct >= 9 %}{{ s.pct_txt }}{% endif %}</span>
+                    {% endfor %}
+                </div>
+                <div class="fx-dist-legenda">
+                    {% for s in ind.segmentos %}
+                    <span><i style="background: {{ s.hex }};"></i>{{ s.situacao }} <b>{{ s.pct_txt }}</b></span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

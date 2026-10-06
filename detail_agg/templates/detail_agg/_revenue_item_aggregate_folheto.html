@@ -1,0 +1,62 @@
+{% comment %}
+Linha da Estrutura de Receitas do AGREGADO no layout do folheto IFEM.
+
+Diferenca para a linha do municipio: um conjunto nao tem percentil por
+rubrica, entao a coluna do meio mostra a diferenca da media do conjunto para a
+media nacional, numa barra divergente (esquerda = abaixo, direita = acima).
+item.diff.barra e item.diff.faixa vem de _prepare_revenue_item_aggregated.
+
+Classes exigidas pelo detail_agg/js/script.js, que continua dono da arvore:
+  - .toggle-heading / .toggle-subheading com data-target: abre e fecha filhos
+    (ele alterna 'hidden' no alvo e 'open' na linha);
+  - .valor-per-capita / .valor-absoluto: toggle Por habitante / Totais e a
+    ordenacao das rubricas por valor.
+{% endcomment %}
+{% load currency_filters %}
+{% with has_children=item.children %}
+<div class="fx-item">
+    <div class="fx-row fx-row--agg {% if has_children %}fx-clickable {% if level == 0 %}toggle-heading{% else %}toggle-subheading{% endif %}{% endif %}"
+         data-level="{{ level }}"
+         data-field-base="{{ item.field_base }}"
+         style="--fx-cor: var(--fx-q{{ item.diff.faixa }}); --fx-cor-txt: var(--fx-q{{ item.diff.faixa }}-txt);"
+         {% if has_children %}data-target="{{ item.target_id }}" role="button" tabindex="0" aria-controls="{{ item.target_id }}"{% endif %}>
+
+        <div class="fx-rubrica">
+            {% if has_children %}
+                <svg class="fx-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            {% else %}
+                <span class="fx-chevron-placeholder" aria-hidden="true"></span>
+            {% endif %}
+            <span class="fx-nome">{{ item.name }}</span>
+        </div>
+
+        <div class="fx-diverge" title="{% if item.diff.pc > 0 %}{{ item.diff.pc|floatformat:0 }}% acima{% elif item.diff.pc < 0 %}{{ item.diff.pc|abs|floatformat:0 }}% abaixo{% else %}igual à{% endif %} da média nacional">
+            <span class="fx-diverge-pct">{% if item.diff.pc > 0 %}+{% endif %}{{ item.diff.pc|floatformat:0 }}%</span>
+            <div class="fx-diverge-track">
+                <span class="fx-diverge-meio" aria-hidden="true"></span>
+                <span class="fx-diverge-fill {% if item.diff.pc < 0 %}is-neg{% else %}is-pos{% endif %}" style="width: {{ item.diff.barra|stringformat:'s' }}%;"></span>
+            </div>
+        </div>
+
+        <span class="fx-valor">
+            <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
+            <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
+        </span>
+
+        <div class="fx-media" data-rotulo="Brasil">
+            <span class="fx-box fx-box-br {% if not item.media_nacional %}is-vazio{% endif %}">{% if item.media_nacional %}R$ {{ item.media_nacional|br_integer }}{% endif %}</span>
+        </div>
+    </div>
+
+    {% if has_children %}
+    <div id="{{ item.target_id }}" class="fx-children-agg hidden">
+        {% for child in item.children %}
+            {% include "detail_agg/_revenue_item_aggregate_folheto.html" with item=child level=level|add:1 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endwith %}

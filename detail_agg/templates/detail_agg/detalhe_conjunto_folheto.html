@@ -1,0 +1,379 @@
+{% extends "global/head.html" %}
+{% comment %}
+PREVIEW - Agregado (conjunto de municipios) no layout editorial do folheto IFEM.
+
+Rota: /preview/agregado/  (name: conjunto_detalhe_folheto)
+Mesma view da pagina publica (conjunto_detalhe_view), so muda o template.
+
+PRINCIPIO: o detail_agg/js/script.js continua dono de tudo que ja fazia
+(filtros, KPIs, arvore de receitas, graficos, sintese). Por isso os IDs abaixo
+sao os mesmos da pagina publica. A diferenca:
+  - window.IFEM_LAYOUT = 'folheto' faz a /api/fiscal-details/ devolver os
+    partials no layout novo, mais a Saude Fiscal do conjunto;
+  - script_agg_folheto.js cuida so do que e novo: titulo do hero a partir dos
+    filtros, numeros grandes da sintese, filtros no celular e o botao Baixar.
+
+Visual compartilhado com a preview do municipio: carrega o
+style_mun_folheto.css e acrescenta o style_agg_folheto.css.
+{% endcomment %}
+{% load static %}
+{% load currency_filters %}
+
+{% block extra_head %}
+    <title>Análise agregada - Preview IFEM</title>
+    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'detail_agg/css/style_agg_folheto.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="fx-page">
+
+    {# ==================== BARRA DE CONTROLE (fixa no topo) ==================== #}
+    <div class="fx-controles fx-controles--agg">
+        <div class="fx-controles-inner">
+            <span class="fx-controles-muni" id="fx-agg-barra-titulo">Análise agregada</span>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label">Valores em</span>
+                <div class="fx-seg" id="valor-toggle" role="group" aria-label="Tipo de valor">
+                    <button id="btn-per-capita" class="segmented-option active" type="button">Por habitante</button>
+                    <button id="btn-valores-reais" class="segmented-option" type="button">Totais</button>
+                </div>
+            </div>
+
+            <button type="button" class="fx-btn-baixar fx-btn-filtros" id="fx-agg-abrir-filtros" aria-expanded="false" aria-controls="filters">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="4" y1="6" x2="20" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="10" y1="18" x2="14" y2="18"></line>
+                </svg>
+                <span>Filtros</span>
+            </button>
+
+            <button type="button" class="fx-btn-baixar" id="btn-limpar-filtros">Limpar filtros</button>
+
+            <button type="button" class="fx-btn-baixar" id="fx-baixar"
+                    title="Abre a caixa de impressao do navegador; escolha &quot;Salvar como PDF&quot;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Baixar</span>
+            </button>
+        </div>
+
+        {# IDs dos selects iguais aos da pagina publica: o script.js os le e repovoa. #}
+        <div class="fx-filtros" id="filters">
+            <label class="fx-filtro">
+                <span>Faixa populacional</span>
+                <select id="filtro-porte">
+                    <option value="todos">Todas</option>
+                    <option value="Até 5 mil">Até 5 mil</option>
+                    <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+                    <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+                    <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+                    <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+                    <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+                    <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+                    <option value="Acima de 500 mil">Acima de 500 mil</option>
+                    <option value="Acima de 80 mil">Acima de 80 mil</option>
+                    <option value="Abaixo de 80 mil">Abaixo de 80 mil</option>
+                </select>
+            </label>
+            <label class="fx-filtro">
+                <span>Região</span>
+                <select id="filtro-regiao"><option value="todos">Todas</option></select>
+            </label>
+            <label class="fx-filtro">
+                <span>UF</span>
+                <select id="filtro-uf"><option value="todos">Todas</option></select>
+            </label>
+            <label class="fx-filtro">
+                <span>Região metropolitana</span>
+                <select id="filtro-rm"><option value="todos">Todas</option></select>
+            </label>
+            {# Rotulo "Agrupamento" na tela; a entidade no banco e Consorcio. #}
+            <label class="fx-filtro">
+                <span>Agrupamento</span>
+                <select id="filtro-consorcio"><option value="todos">Todos</option></select>
+            </label>
+            <label class="fx-filtro">
+                <span>Classificar por</span>
+                <select id="filtro-classificacao">
+                    <option value="quintil" selected>Quintis de receita p/c</option>
+                    <option value="decil">Decis de receita p/c</option>
+                    <option value="natural">Quebras naturais (receita)</option>
+                </select>
+            </label>
+            <div class="fx-filtro" id="grupo-subgrupo">
+                {# O script.js troca este rotulo (Quintil, Decil, Faixa de Receita). #}
+                <label for="filtro-subgrupo">Quintil:</label>
+                <select id="filtro-subgrupo"><option value="todos" selected>Todos</option></select>
+            </div>
+        </div>
+    </div>
+
+    {# ==================== HERO ==================== #}
+    <section class="fx-faixa fx-faixa--escura fx-hero">
+        <div class="fx-container">
+            <div class="fx-hero-grid">
+                <div>
+                    <p class="fx-eyebrow">Análise agregada · 2025</p>
+                    {# Montado no JS a partir dos filtros ativos. #}
+                    <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-agg-titulo">Todos os municípios do Brasil</h1>
+                    <p class="fx-hero-veredito">
+                        <span class="fx-hero-destaque" id="kpi-receita-per-capita">&nbsp;</span>
+                        por habitante em receita corrente, na média dos municípios do conjunto.
+                    </p>
+                    <div class="fx-agg-chips" id="fx-agg-chips"></div>
+                </div>
+
+                <div class="fx-hero-stats">
+                    <div class="fx-stat">
+                        <span class="fx-stat-label">População</span>
+                        <span class="fx-stat-valor" id="kpi-populacao">&nbsp;</span>
+                    </div>
+                    <div class="fx-stat">
+                        <span class="fx-stat-label">Municípios no conjunto</span>
+                        <span class="fx-stat-valor" id="kpi-quantidade">&nbsp;</span>
+                    </div>
+                    <div class="fx-stat">
+                        <span class="fx-stat-label">Diferença para a média nacional</span>
+                        <span class="fx-stat-valor" id="kpi-diferenca-media">&nbsp;</span>
+                        <span class="fx-stat-sub">na receita corrente por habitante</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ==================== ESTRUTURA DE RECEITAS ==================== #}
+    <section class="fx-faixa fx-faixa--creme">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">De onde vem a receita</p>
+                <h2 class="fx-titulo">Estrutura de Receitas</h2>
+                <p class="fx-dek">
+                    Média por habitante dos municípios do conjunto em cada rubrica, comparada à média
+                    nacional. Clique em uma linha para abrir o detalhamento.
+                </p>
+            </div>
+
+            <div class="fx-card fx-como-ler">
+                <div class="fx-como-ler-texto">
+                    <h3 class="fx-card-titulo">Como ler a barra</h3>
+                    <p class="fx-como-ler-frase">
+                        A barra parte do centro, que é a <strong>média nacional</strong>. Para a direita, o
+                        conjunto arrecada <strong>mais</strong> que a média naquela rubrica; para a esquerda,
+                        <strong>menos</strong>. Uma barra de <strong class="fx-exemplo-pct">+40%</strong> quer dizer
+                        que a média do conjunto é 40% maior que a do país.
+                    </p>
+                    <p class="fx-como-ler-nota">
+                        A barra satura em 100% para cada lado, ou seja, no dobro ou em zero da média nacional.
+                    </p>
+                </div>
+                <div class="fx-escala">
+                    <div class="fx-escala-barras">
+                        <span class="fx-escala-item" style="--c: var(--fx-q1);"><i></i><b>até -60%</b></span>
+                        <span class="fx-escala-item" style="--c: var(--fx-q2);"><i></i><b>-60 a -20</b></span>
+                        <span class="fx-escala-item" style="--c: var(--fx-q3);"><i></i><b>-20 a +20</b></span>
+                        <span class="fx-escala-item" style="--c: var(--fx-q4);"><i></i><b>+20 a +60</b></span>
+                        <span class="fx-escala-item" style="--c: var(--fx-q5);"><i></i><b>acima de +60</b></span>
+                    </div>
+                    <div class="fx-escala-pontas">
+                        <span>bem abaixo da média nacional</span>
+                        <span>bem acima da média nacional</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fx-tabela">
+                <div class="fx-head fx-head--agg">
+                    <div class="fx-head-rot">Rubrica</div>
+                    <div class="fx-head-rot fx-head-centro">
+                        Diferença para a média nacional
+                        <span class="fx-head-sub">abaixo &larr; &nbsp;|&nbsp; &rarr; acima</span>
+                    </div>
+                    <div class="fx-head-rot fx-head-muni">
+                        Conjunto
+                        <span class="fx-head-sub" id="fx-agg-head-unidade">R$ por habitante</span>
+                    </div>
+                    <div class="fx-head-rot fx-head-centro">
+                        Média Brasil
+                        <span class="fx-head-sub">R$ por habitante</span>
+                    </div>
+                </div>
+                <div id="main-revenue-details-container">
+                    {% include "detail_agg/partials/_fiscal_details_folheto.html" %}
+                </div>
+            </div>
+
+            <div id="chart-section">
+                <div class="fx-graficos-grid">
+                    <div class="fx-card fx-grafico-card">
+                        <h3 class="fx-card-titulo">Composição da Receita</h3>
+                        <p class="fx-card-dek">Participação de cada tipo de receita no total do conjunto. Clique numa barra para detalhar.</p>
+                        <select id="chart-category-select" class="fx-select">
+                            <option value="main_categories">Categorias Principais</option>
+                            <option value="imposto_taxas_contribuicoes">Impostos, Taxas e Contribuições de Melhoria</option>
+                            <option value="imposto">Impostos</option>
+                            <option value="taxas">Taxas</option>
+                            <option value="contribuicoes_melhoria">Contribuições de Melhoria</option>
+                            <option value="contribuicoes">Contribuições</option>
+                            <option value="transferencias_correntes">Transferências Correntes</option>
+                            <option value="transferencias_uniao">Transferências da União</option>
+                            <option value="transferencias_estado">Transferências dos Estados</option>
+                            <option value="outras_receitas">Outras Receitas</option>
+                        </select>
+                        <div class="fx-grafico-area"><canvas id="myChart"></canvas></div>
+                    </div>
+                    <div class="fx-card fx-grafico-card">
+                        <h3 class="fx-card-titulo">Densidade Fiscal Nacional</h3>
+                        <p class="fx-card-dek">
+                            A linha tracejada mostra onde está a média do conjunto. Quanto mais alta a curva,
+                            mais municípios naquela faixa de valor.
+                        </p>
+                        <div class="fx-grafico-area"><canvas id="densidadeReceita"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div id="chart-empty-state" class="fx-vazio" style="display:none;">
+                Selecione filtros para visualizar a análise agregada.
+            </div>
+        </div>
+    </section>
+
+    {# ==================== SINTESE FISCAL E DEMOGRAFICA ==================== #}
+    {# display:none ate o script.js confirmar que ha dado de 2000 para o conjunto. #}
+    <section class="fx-faixa fx-faixa--branca" id="sintese-fiscal-container" style="display:none;">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">Como evoluiu · 2000 a 2025</p>
+                <h2 class="fx-titulo">Síntese Fiscal e Demográfica</h2>
+                <p class="fx-dek">
+                    Quanto a receita e a população do conjunto cresceram em 25 anos, comparadas à média
+                    nacional. Valores financeiros corrigidos pela inflação para 2025.
+                </p>
+            </div>
+
+            <div class="fx-evo-grid">
+                <article class="fx-card fx-evo-card">
+                    <h3 class="fx-card-titulo">Receita por habitante</h3>
+                    <div class="fx-evo-numeros">
+                        <div class="fx-evo-num">
+                            <span class="fx-evo-valor" id="fx-agg-delta-rc">&nbsp;</span>
+                            <span class="fx-evo-legenda"><i style="background:#103758"></i><span class="fx-agg-nome-curto">Conjunto</span></span>
+                        </div>
+                        <div class="fx-evo-num">
+                            <span class="fx-evo-valor fx-evo-valor--media" id="fx-agg-media-rc">&nbsp;</span>
+                            <span class="fx-evo-legenda"><i style="background:#cbd5e1"></i>Média nacional</span>
+                        </div>
+                    </div>
+                    <div class="fx-evo-chart"><canvas id="chartReceitaEvo"></canvas></div>
+                </article>
+
+                <article class="fx-card fx-evo-card">
+                    <h3 class="fx-card-titulo">População</h3>
+                    <div class="fx-evo-numeros">
+                        <div class="fx-evo-num">
+                            <span class="fx-evo-valor" id="fx-agg-delta-pop">&nbsp;</span>
+                            <span class="fx-evo-legenda"><i style="background:#EEAF19"></i><span class="fx-agg-nome-curto">Conjunto</span></span>
+                        </div>
+                        <div class="fx-evo-num">
+                            <span class="fx-evo-valor fx-evo-valor--media" id="fx-agg-media-pop">&nbsp;</span>
+                            <span class="fx-evo-legenda"><i style="background:#cbd5e1"></i>Média nacional</span>
+                        </div>
+                    </div>
+                    <div class="fx-evo-chart"><canvas id="chartPopEvo"></canvas></div>
+                </article>
+            </div>
+
+            {# Plano, frase e regua desenhados pelo script.js (updateTimelineColors / renderTimelineRuler). #}
+            <article class="fx-card fx-posicao">
+                <div class="fx-posicao-head">
+                    <div>
+                        <h3 class="fx-card-titulo">Posição entre os municípios do país</h3>
+                        <p class="fx-card-dek">Receita por habitante média do conjunto: onde estava em 2000 e onde está em 2025.</p>
+                    </div>
+                    <div id="timeline-toggle" class="fx-seg fx-seg--claro" role="group" aria-label="Medida da posição">
+                        <button class="segmented-option active" type="button" data-mode="percentil">Percentil</button>
+                        <button class="segmented-option" type="button" data-mode="quintil">Quintil</button>
+                        <button class="segmented-option" type="button" data-mode="decil">Decil</button>
+                    </div>
+                </div>
+
+                <div class="fx-posicao-grid">
+                    <div class="fx-posicao-plano">
+                        <span class="fx-posicao-eixo">melhor posição</span>
+                        <div class="relative w-full h-[260px] border-l-2 border-b-2 border-[#D9D2C3]" id="cartesian-plane">
+                            <div class="absolute w-full h-px bg-[#EFEAE0] top-1/4"></div>
+                            <div class="absolute w-full h-px bg-[#EFEAE0] top-2/4"></div>
+                            <div class="absolute w-full h-px bg-[#EFEAE0] top-3/4"></div>
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                                <line id="cartesian-line" x1="25%" y1="50%" x2="75%" y2="50%" stroke="#AABBCC" stroke-width="2" stroke-dasharray="6 4" />
+                            </svg>
+                            <div id="circle-container-2000" class="absolute transform -translate-x-1/2 translate-y-1/2 flex flex-col items-center transition-all duration-700 ease-out z-10" style="left: 25%; bottom: 50%;">
+                                <span class="absolute bottom-full mb-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 rounded-full">2000</span>
+                                <div id="circle-2000" class="timeline-circle-dynamic w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300"
+                                     data-quintil="-" data-decil="-" data-percentil="0">
+                                    <span class="dynamic-value text-lg sm:text-2xl font-black leading-none"></span>
+                                    <span class="dynamic-label text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 mt-0.5 leading-none"></span>
+                                </div>
+                            </div>
+                            <div id="circle-container-2024" class="absolute transform -translate-x-1/2 translate-y-1/2 flex flex-col items-center transition-all duration-700 ease-out z-10" style="left: 75%; bottom: 50%;">
+                                <span class="absolute bottom-full mb-1 text-xs font-bold text-[#122747] uppercase tracking-widest bg-white/80 px-2 rounded-full">2025</span>
+                                <div id="circle-2024" class="timeline-circle-dynamic w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg flex flex-col items-center justify-center transition-colors duration-300"
+                                     data-quintil="-" data-decil="-" data-percentil="0">
+                                    <span class="dynamic-value text-lg sm:text-2xl font-black leading-none"></span>
+                                    <span class="dynamic-label text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 mt-0.5 leading-none"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="fx-posicao-eixo fx-posicao-eixo--baixo">pior posição</span>
+                    </div>
+                    <div class="fx-posicao-leitura">
+                        <p id="timeline-dynamic-summary" class="fx-posicao-resumo" data-muni-name="Conjunto Selecionado"></p>
+                        <div id="timeline-ruler-container" class="mt-8 px-10 w-full hidden relative h-16"></div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    {# ==================== SAUDE FISCAL E RISCOS CLIMATICOS ==================== #}
+    {# Os dois containers sao preenchidos pela /api/fiscal-details/?layout=folheto. #}
+    <section class="fx-faixa fx-faixa--creme">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">Contas e riscos</p>
+                <h2 class="fx-titulo">Saúde Fiscal e Riscos Climáticos</h2>
+            </div>
+            <div class="fx-tabelas-pilha">
+                <div id="saude-fiscal-container"></div>
+                <div id="riscos-climaticos-container"></div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+{{ chart_data_json|json_script:"chart-data" }}
+
+<script>
+  // Lido pelo buildParams() do script.js: pede os partials no layout folheto.
+  window.IFEM_LAYOUT = 'folheto';
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+  }
+</script>
+<script src="{% static 'detail_agg/js/script.js' %}"></script>
+<script src="{% static 'detail_agg/js/script_density.js' %}"></script>
+<script src="{% static 'detail_agg/js/script_agg_folheto.js' %}"></script>
+{% endblock content %}
