@@ -463,6 +463,16 @@
    Os 4 toggles espalhados pela página antiga (hero, sticky header, seção de
    receitas) viram uma barra só, sempre visível e com rótulo dizendo o que
    cada grupo controla. Era a principal fonte de confusão do layout anterior. */
+/* style_mun.css (e o style.css global) poem `overflow-x: hidden` em html e
+   body. Overflow diferente de visible em um ancestral anula o position:sticky:
+   a barra rolava junto com a pagina. `clip` corta o estouro lateral do mesmo
+   jeito, mas nao cria contexto de rolagem, entao o sticky volta a funcionar.
+   Vale so para a preview: este arquivo nao e carregado na pagina publica. */
+html, body {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
 .fx-controles {
   position: sticky;
   top: 0;
@@ -626,53 +636,84 @@
   color: var(--fx-blue-light);
 }
 
-/* Blocos de número do hero (população, posição) */
+/* Blocos de número do hero (população, posição, crescimento).
+   Um por linha, separados por fio: lado a lado na coluna direita os valores
+   longos ("11.904.961") encostavam no vizinho e a fonte não podia crescer. */
 .fx-hero-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 14px;
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 26px;
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
 }
 
+.fx-stat { padding: 18px 0; }
+.fx-stat + .fx-stat { border-top: 1px solid rgba(255, 255, 255, 0.14); }
+
 .fx-stat-label {
   display: block;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--fx-blue-light);
-  margin-bottom: 3px;
+  margin-bottom: 6px;
 }
 
 .fx-stat-valor {
+  display: block;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
-  font-size: 27px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 1.05;
+  letter-spacing: -0.01em;
   color: #ffffff;
+  font-variant-numeric: tabular-nums;
 }
 
 .fx-stat-sub {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--fx-blue-light);
-  margin-top: 2px;
-  line-height: 1.35;
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 .fx-stat-sub.is-positivo { color: #7FD4A0; }
 .fx-stat-sub.is-negativo { color: #F0A08A; }
 
-/* ---- 8.4 Layout receitas + composição ---- */
-.fx-receitas-grid {
+/* ---- 8.4 Layout receitas: leitura, tabela, gráficos ----
+   A tabela ocupa a largura inteira. Os dois gráficos vêm depois dela, lado a
+   lado: numa coluna ao lado da tabela, disputavam a atenção com ela. */
+.fx-graficos-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
-  gap: 26px;
-  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 26px;
 }
+
+.fx-grafico-card { display: flex; flex-direction: column; }
+
+.fx-grafico-area { position: relative; height: 260px; margin-top: auto; }
+.fx-grafico-area--donut { height: 300px; }
+
+/* O <select> de categoria do donut no acabamento dos campos da preview. */
+.fx-select {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fx-blue-dark);
+  background: var(--fx-paper);
+  border: 1px solid var(--fx-rule);
+  border-radius: 4px;
+  outline: none;
+}
+
+.fx-select:focus-visible { border-color: var(--fx-blue); box-shadow: 0 0 0 2px rgba(27, 58, 107, 0.18); }
 
 .fx-card {
   background: #ffffff;
@@ -744,8 +785,11 @@
 /* ---- 8.8 Responsivo da página ---- */
 @media (max-width: 1024px) {
   .fx-hero-grid,
-  .fx-receitas-grid { grid-template-columns: minmax(0, 1fr); }
+  .fx-graficos-grid,
+  .fx-evo-grid,
+  .fx-posicao-grid { grid-template-columns: minmax(0, 1fr); }
   .fx-hero-grid { gap: 28px; }
+  .fx-como-ler { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 860px) {
@@ -777,14 +821,16 @@
   .fx-slope-wrap { height: 260px; }
 }
 
-/* ---- 8.9 Coluna lateral e card "Como ler" ----
-   A coluna direita tinha só o donut e terminava bem antes da tabela, deixando
-   um vazio grande. O card de leitura preenche esse espaço com o que faltava:
-   o significado da barra, que o cabeçalho sozinho não explicava. */
-.fx-coluna-lateral {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* ---- 8.9 Card "Como ler a barra" ----
+   Fica ANTES da tabela, em faixa horizontal: texto à esquerda, escala de cores
+   à direita. A dúvida sobre o que a barra significa aparece na primeira linha
+   da tabela, então a resposta precisa estar acima dela. */
+.fx-como-ler {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 18px 36px;
+  align-items: center;
+  margin-bottom: 18px;
 }
 
 .fx-como-ler-frase {
@@ -844,12 +890,7 @@
   border-top: 1px solid var(--fx-rule);
 }
 
-/* No mobile a coluna lateral vem depois da tabela; o card de leitura sobe,
-   porque a dúvida aparece ao ler a tabela, não depois do gráfico. */
-@media (max-width: 1024px) {
-  .fx-coluna-lateral { gap: 16px; }
-  .fx-como-ler { order: -1; }
-}
+.fx-como-ler .fx-escala { margin-bottom: 0; }
 
 /* ---- 8.10 Botao de baixar ---- */
 .fx-btn-baixar {
@@ -876,40 +917,6 @@
 /* A leitura invertida ("e menos que os outros X%") vem em tom menor: completa
    a frase sem competir com o numero principal. */
 .fx-veredito-inverso { opacity: 0.72; font-size: 0.86em; }
-
-/* ---- 8.11 Blocos reaproveitados da pagina publica ----
-   Sintese Fiscal, Composicao, Densidade e Riscos sao o MESMO HTML da pagina
-   publica, com os mesmos IDs, para que o script_mun.js continue sendo o dono
-   deles. Aqui so recebem o acabamento da preview: as margens de secao saem
-   (quem espaca agora e a faixa) e os cards perdem o raio grande e a sombra,
-   alinhando com a tabela do folheto. */
-.fx-legado .section-heading {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--fx-blue-dark);
-  margin-bottom: 4px;
-}
-
-.fx-legado section,
-.fx-legado > .fx-container > section { margin-bottom: 0 !important; }
-.fx-legado .mb-12 { margin-bottom: 0 !important; }
-
-.fx-legado .rounded-2xl,
-.fx-legado .rounded-xl {
-  border-radius: 6px !important;
-  box-shadow: none !important;
-  border-color: var(--fx-rule) !important;
-}
-
-/* A coluna lateral herda o mesmo acabamento dos cards novos. */
-.fx-coluna-lateral .rounded-2xl {
-  border-radius: 6px !important;
-  box-shadow: none !important;
-  border-color: var(--fx-rule) !important;
-  padding: 20px !important;
-}
 
 /* ---- 8.12 Impressao ----
    O botao Baixar chama window.print(); o PDF sai daqui. Objetivo: caber em
@@ -958,12 +965,11 @@
   .fx-secao-head { break-after: avoid; }
 
   /* Uma coluna: duas colunas em A4 espremem a tabela a ponto de ilegivel. */
-  .fx-receitas-grid,
-  .fx-hero-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
-
-  .fx-legado .lg\:col-span-7,
-  .fx-legado .lg\:col-span-5,
-  .fx-legado .grid { display: block !important; }
+  .fx-hero-grid,
+  .fx-graficos-grid,
+  .fx-evo-grid,
+  .fx-posicao-grid,
+  .fx-como-ler { grid-template-columns: 1fr !important; gap: 14px !important; }
 
   /* Chart.js desenha em canvas: sem limite de altura ele estoura a pagina. */
   canvas { max-height: 240px !important; }
@@ -971,24 +977,176 @@
   a[href]::after { content: ""; }
 }
 
-/* A legenda do Chart.js herdava o tamanho de fonte do card e saia enorme
-   dentro da coluna estreita. Chart.js desenha a legenda no proprio canvas
-   quando configurada la, mas a do donut da pagina publica e HTML — entao o
-   ajuste e por CSS mesmo. */
-.fx-coluna-lateral canvas + div,
-.fx-coluna-lateral .chartjs-legend,
-.fx-coluna-lateral ul.chartjs-legend li {
-  font-size: 11.5px !important;
-  line-height: 1.35 !important;
+/* ---- 8.13 Síntese Fiscal e Demográfica ----
+   Na página pública a mesma informação ficava em três lugares (frase com o
+   número, frase com a média, gráfico de barras). Aqui cada card responde uma
+   pergunta só: "cresceu mais ou menos que a média?". Os dois números vêm
+   lado a lado, com a cor da barra correspondente, e o gráfico confirma. */
+.fx-evo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
 }
 
-.fx-coluna-lateral .fx-legado-legenda { font-size: 11.5px; }
+.fx-evo-card { display: flex; flex-direction: column; }
 
-/* O <select> de categoria do donut acompanha o acabamento dos campos da
-   preview, em vez do arredondado grande do layout antigo. */
-.fx-coluna-lateral select {
-  border-radius: 4px !important;
-  border-color: var(--fx-rule) !important;
-  font-size: 12.5px !important;
-  padding: 7px 9px !important;
+.fx-evo-numeros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 14px 0 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--fx-rule);
+}
+
+.fx-evo-num + .fx-evo-num {
+  padding-left: 18px;
+  border-left: 1px solid var(--fx-rule);
+}
+
+.fx-evo-valor {
+  display: block;
+  font-size: clamp(30px, 3.4vw, 40px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fx-blue-dark);
+}
+
+.fx-evo-valor.is-positivo { color: var(--fx-q5-txt); }
+.fx-evo-valor.is-negativo { color: var(--fx-q1-txt); }
+.fx-evo-valor--media { color: #647080; }
+
+.fx-evo-legenda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fx-muted);
+}
+
+.fx-evo-legenda i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.fx-evo-chart { position: relative; height: 200px; margin-top: auto; }
+
+/* Posição relativa: plano à esquerda, leitura à direita. */
+.fx-posicao { margin-top: 22px; }
+
+.fx-posicao-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 26px;
+}
+
+.fx-posicao-head .fx-card-dek { margin-bottom: 0; }
+
+.fx-posicao-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 28px 44px;
+  align-items: center;
+}
+
+.fx-posicao-plano { padding-top: 30px; }
+
+.fx-posicao-eixo {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+  margin-bottom: 6px;
+}
+
+.fx-posicao-eixo--baixo { margin: 6px 0 0; }
+
+.fx-posicao-resumo {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fx-ink);
+  margin: 0;
+  padding-left: 16px;
+  border-left: 3px solid #FFC72C;
+  text-align: left;
+}
+
+/* Variante clara do segmented, para usar dentro de card branco. */
+.fx-seg--claro {
+  background: var(--fx-cream);
+  border-color: var(--fx-rule);
+}
+
+.fx-seg--claro button { color: var(--fx-muted); }
+.fx-seg--claro button:hover { color: var(--fx-blue-dark); }
+.fx-seg--claro button.active { background: var(--fx-blue-dark); color: #ffffff; }
+
+/* style_mun.css empilha o #timeline-toggle na vertical (layout da página
+   pública, onde ele fica numa coluna estreita). Aqui ele fica no cabeçalho do
+   card, em linha; o ID no seletor iguala a especificidade da regra original. */
+#timeline-toggle.fx-seg { flex-direction: row; gap: 2px; }
+.fx-seg--claro button:focus-visible { outline-color: var(--fx-blue); }
+
+/* ---- 8.14 Saúde Fiscal e Riscos Climáticos ----
+   As duas tabelas usam o mesmo cabeçalho azul da tabela de receitas. */
+.fx-tabelas-pilha { display: flex; flex-direction: column; gap: 22px; }
+
+.fx-card--tabela { padding: 0; overflow: hidden; }
+
+.fx-card-tabela-head { padding: 20px 20px 4px; }
+
+.fx-card-tabela-head--linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 20px;
+}
+
+.fx-rolagem { overflow-x: auto; }
+
+.fx-riscos-tabela .fx-num { text-align: right; white-space: nowrap; }
+.fx-riscos-tabela tbody td { vertical-align: top; }
+.fx-riscos-grupo { font-weight: 600; color: var(--fx-blue-dark) !important; white-space: nowrap; }
+.fx-riscos-nome { display: block; font-weight: 600; }
+.fx-riscos-desc { display: block; font-size: 11.5px; color: var(--fx-muted); margin-top: 2px; }
+.fx-riscos-valor { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.fx-riscos-media {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+}
+
+/* ---- 8.15 Responsivo das seções novas ----
+   No fim do arquivo de propósito: as regras de 8.9, 8.13 e 8.14 vêm depois do
+   bloco 8.8 e, com a mesma especificidade, anulariam a coluna única dele. */
+@media (max-width: 1024px) {
+  .fx-como-ler,
+  .fx-evo-grid,
+  .fx-posicao-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .fx-stat-valor { font-size: 30px; }
+  .fx-hero-stats { padding: 2px 18px; }
+  .fx-evo-numeros { gap: 12px; }
+  .fx-evo-num + .fx-evo-num { padding-left: 12px; }
+  .fx-posicao-resumo { font-size: 15px; }
 }
