@@ -25,6 +25,17 @@ urlpatterns = [
     path('municipio/<str:municipio_id>/', detail_mun_views.municipio_detalhe_view, name='municipio_detalhe'),
     path('metodologia/', metodologia_views.metodologia_page, name='metodologia'),
 
+    # --- PREVIEW (nao publicado no menu) ---
+    # Mesma view do detalhe do municipio, so troca o template: a Estrutura de
+    # Receitas sai dos cards e vira a tabela de barras do folheto IFEM.
+    # Rota temporaria, para aprovacao da diretoria antes de virar o padrao.
+    path(
+        'preview/municipio/<str:municipio_id>/',
+        detail_mun_views.municipio_detalhe_view,
+        {'template_name': 'detail_mun/detalhe_municipio_folheto.html'},
+        name='municipio_detalhe_folheto',
+    ),
+
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),
     path('api/debug-status/', home_views.api_debug_status, name='debug_status'),

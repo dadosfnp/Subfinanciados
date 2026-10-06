@@ -1,0 +1,87 @@
+{% comment %}
+Linha da Estrutura de Receitas no layout do folheto IFEM.
+
+Tradução web de `_linha_receita` (dadosfnp/folheto-ifem, python/temas/ifem.py):
+faixa colorida + rubrica | percentil + barra + valor | média UF | média Brasil.
+
+Recursivo, como o partial original — a árvore de 3 níveis é preservada.
+
+A cor sai daqui sem valor definido: quem pinta é o script_mun_folheto.js, que
+lê os data-pct-* e escreve --fx-cor/--fx-cor-txt conforme a base escolhida
+(nacional/estadual/porte). Renderizar já colorido pelo Django obrigaria a
+recarregar a página a cada troca de base.
+
+Classes .valor-per-capita/.valor-absoluto e .estatistica-media/.estatistica-mediana
+são as mesmas do layout antigo, de propósito: os toggles do script_mun.js
+já operam sobre elas e passam a funcionar aqui sem nenhuma linha extra.
+{% endcomment %}
+{% load currency_filters %}
+{% with has_children=item.children %}
+
+<div class="fx-item">
+    <div class="fx-row {% if has_children %}fx-clickable{% endif %}"
+         data-level="{{ level }}"
+         data-field-base="{{ item.field_base }}"
+         data-pct-nacional="{{ item.percentiles.nacional|default_if_none:'' }}"
+         data-pct-estadual="{{ item.percentiles.estadual|default_if_none:'' }}"
+         data-pct-faixa="{{ item.percentiles.faixa|default_if_none:'' }}"
+         {% if has_children %}data-target="{{ item.target_id }}"
+         role="button" tabindex="0" aria-expanded="false" aria-controls="{{ item.target_id }}"{% endif %}>
+
+        {# ---- Rubrica ---- #}
+        <div class="fx-rubrica">
+            {% if has_children %}
+                <svg class="fx-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            {% else %}
+                <span class="fx-chevron-placeholder" aria-hidden="true"></span>
+            {% endif %}
+            <span class="fx-nome">{{ item.name }}</span>
+        </div>
+
+        {# ---- Coluna SUPERA: percentil + barra ---- #}
+        <div class="fx-supera" title="">
+            <span class="fx-pct"></span>
+            <div class="fx-bar-track">
+                <div class="fx-bar-fill"></div>
+            </div>
+        </div>
+
+        {# ---- Coluna MUNICÍPIO: o valor ---- #}
+        <span class="fx-valor">
+            <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
+            <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
+        </span>
+
+        {% comment %}
+        Médias UF e Brasil: duas colunas fixas, como no folheto. O toggle
+        Média/Mediana troca o par exibido; o toggle Por habitante/Totais
+        esconde as duas (comparar média per capita com valor absoluto não
+        diria nada).
+        {% endcomment %}
+        <div class="fx-media estatistica-media" data-rotulo="{{ municipio.uf|upper }}">
+            <span class="fx-box {% if not item.media_estadual %}is-vazio{% endif %}">{% if item.media_estadual %}R$ {{ item.media_estadual|br_integer }}{% endif %}</span>
+        </div>
+        <div class="fx-media estatistica-media" data-rotulo="Brasil">
+            <span class="fx-box fx-box-br {% if not item.media_nacional %}is-vazio{% endif %}">{% if item.media_nacional %}R$ {{ item.media_nacional|br_integer }}{% endif %}</span>
+        </div>
+
+        <div class="fx-media estatistica-mediana invisible-by-est" data-rotulo="{{ municipio.uf|upper }}">
+            <span class="fx-box {% if not item.mediana_estadual %}is-vazio{% endif %}">{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|br_integer }}{% endif %}</span>
+        </div>
+        <div class="fx-media estatistica-mediana invisible-by-est" data-rotulo="Brasil">
+            <span class="fx-box fx-box-br {% if not item.mediana_nacional %}is-vazio{% endif %}">{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|br_integer }}{% endif %}</span>
+        </div>
+    </div>
+
+    {% if has_children %}
+    <div id="{{ item.target_id }}" class="fx-children">
+        {% for child in item.children %}
+            {% include "detail_mun/_revenue_item_folheto.html" with item=child level=level|add:1 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endwith %}

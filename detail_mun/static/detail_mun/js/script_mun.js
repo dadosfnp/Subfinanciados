@@ -1294,13 +1294,14 @@ timelineBtns.forEach(btn => {
     const mainBaseBtns = document.querySelectorAll('#global-base-toggle .segmented-option');
 
     // 1. Controle de exibição no Scroll
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > 300) {
-            stickyHeader.classList.add('visible');
-        } else {
-            stickyHeader.classList.remove('visible');
-        }
-    });
+    // A guarda de null importa: nem toda página que usa este script tem o
+    // sticky header antigo (a de preview traz a barra de controle fixa no
+    // lugar dele). Sem ela, o listener lançava TypeError a cada scroll.
+    if (stickyHeader) {
+        window.addEventListener('scroll', function() {
+            stickyHeader.classList.toggle('visible', window.scrollY > 300);
+        });
+    }
 
     // 2. Sincronização dos Filtros (Sticky -> Global)
     stickyBaseBtns.forEach(btn => {
