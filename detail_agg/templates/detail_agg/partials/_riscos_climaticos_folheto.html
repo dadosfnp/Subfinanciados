@@ -1,0 +1,45 @@
+{% comment %}
+Riscos Climaticos do agregado no layout folheto: media de cada indice do
+AdaptaBrasil entre os municipios do conjunto. Mesma tabela da preview do
+municipio. Devolvido pela /api/fiscal-details/?layout=folheto.
+{% endcomment %}
+{% if adapta_brasil_data %}
+<div class="fx-card fx-card--tabela">
+    <div class="fx-card-tabela-head fx-card-tabela-head--linha">
+        <div>
+            <h3 class="fx-card-titulo">Riscos Climáticos</h3>
+            <p class="fx-card-dek">Média dos índices do AdaptaBrasil entre os municípios do conjunto, do maior para o menor risco.</p>
+        </div>
+        {% if adapta_brasil_media %}
+        <div class="fx-riscos-media" title="Média Ponderada da Metodologia de Risco (AdaptaBrasil)">
+            <span>Média geral</span>
+            <span class="fx-risco-tag text-white {{ adapta_brasil_media.cor }}">
+                {{ adapta_brasil_media.grau }} · {{ adapta_brasil_media.valor|floatformat:2 }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+    <div class="fx-rolagem">
+        <table class="fx-riscos-tabela">
+            <thead>
+                <tr>
+                    <th scope="col">Setor estratégico</th>
+                    <th scope="col">Subsetor</th>
+                    <th scope="col" class="fx-num">Índice médio</th>
+                    <th scope="col" class="fx-num">Risco</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in adapta_brasil_data %}
+                <tr>
+                    <td class="fx-riscos-grupo">{{ item.setor }}</td>
+                    <td>{{ item.subsetor }}</td>
+                    <td class="fx-num fx-riscos-valor">{{ item.valor|floatformat:2 }}</td>
+                    <td class="fx-num"><span class="fx-risco-tag text-white {{ item.cor }}">{{ item.grau }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

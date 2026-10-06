@@ -1,0 +1,13 @@
+{% comment %}
+Arvore de receitas do agregado no layout folheto. Devolvida pela
+/api/fiscal-details/?layout=folheto e tambem usada na carga inicial da
+pagina de preview. O cabecalho da tabela fica no template da pagina; aqui so
+as linhas, porque o script.js substitui o conteudo do container a cada filtro.
+{% endcomment %}
+{% if revenue_tree %}
+    {% for item in revenue_tree %}
+        {% include "detail_agg/_revenue_item_aggregate_folheto.html" with item=item level=0 %}
+    {% endfor %}
+{% else %}
+    <div class="fx-vazio">Nenhum dado de receita detalhada foi encontrado para este conjunto.</div>
+{% endif %}

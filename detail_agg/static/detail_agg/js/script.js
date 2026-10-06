@@ -149,6 +149,9 @@ document.addEventListener('DOMContentLoaded', function () {
     p.set('uf', filtroUf?.value || 'todos');
     p.set('classification', filtroClassificacao?.value || 'quintil');
     p.set('subgrupo', filtroSubgrupo?.value || 'todos');
+    // A pagina de preview (/preview/agregado/) define window.IFEM_LAYOUT = 'folheto'
+    // para a API devolver os partials no layout novo. A publica nao define nada.
+    if (window.IFEM_LAYOUT) p.set('layout', window.IFEM_LAYOUT);
     return p;
   };
 
@@ -527,6 +530,12 @@ function updateTimelineColors(mode) {
       if (adaptaEl && data.adapta_html) {
           adaptaEl.innerHTML = data.adapta_html;
       }
+      // So a preview tem este container; a API so manda saude_html com layout=folheto.
+      const saudeEl = document.getElementById('saude-fiscal-container');
+      if (saudeEl && data.saude_html) {
+          saudeEl.innerHTML = data.saude_html;
+      }
+      document.dispatchEvent(new CustomEvent('agregado:dados-atualizados', { detail: { hist: data.hist_data } }));
       
       initializeToggleListeners(el);
       setValorMode(isShowingPerCapita ? 'percapita' : 'real');
