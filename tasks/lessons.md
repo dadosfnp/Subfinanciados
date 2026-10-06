@@ -101,3 +101,14 @@ perguntar.
 **Regra:** nenhum texto visível ao usuário (templates, JS, títulos, tooltips)
 usa travessão ("—"). Usar vírgula, ponto, dois-pontos ou parênteses. Para
 "sem dado" em célula, usar "n/d".
+
+### Substituição de bloco HTML pode engolir tag de fechamento
+**Erro:** ao inserir o trilho de seções na barra fixa da preview do município,
+a string de substituição tinha um `</div>` a menos que a original. A barra
+fixa passou a envolver a página inteira (4.481 px) e o "próxima seção" rolava
+para o topo.
+
+**Regra:** ao trocar trecho que fecha tags, contar as tags de fechamento antes
+e depois. Na validação, medir a altura de elementos fixos/sticky
+(`getBoundingClientRect().height`): se passar da altura da tela, há tag aberta.
+

@@ -95,7 +95,8 @@
         plugins: {
           legend: { display: false },
           datalabels: {
-            display: true, anchor: 'end', align: function (c) { return c.dataset.data[c.dataIndex] < 0 ? 'start' : 'end'; },
+            // Rotulo sempre do lado de fora da ponta: a esquerda nas barras negativas.
+            display: true, anchor: 'end', align: function (c) { return c.dataset.data[c.dataIndex] < 0 ? 'left' : 'right'; },
             color: '#1E2530', font: { size: 12, weight: '700' },
             formatter: function (v) { return fmt1.format(v) + '%'; }
           },
@@ -135,6 +136,92 @@
           y: { stacked: true, max: 100, grid: { color: '#EEE9DF' }, border: { display: false }, ticks: { callback: function (v) { return v + '%'; } } }
         }
       })
+    });
+  }
+
+  /** Rosca de duas fatias (transferencias x arrecadacao propria), % no centro. */
+  function desenharRosca(canvas, d) {
+    var centro = {
+      id: 'centro',
+      afterDraw: function (chart) {
+        var meta = chart.getDatasetMeta(0).data[0];
+        if (!meta) return;
+        var ctx = chart.ctx;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#122747';
+        ctx.font = '700 34px "Source Serif 4", Georgia, serif';
+        ctx.fillText(d.valores[0] + '%', meta.x, meta.y + 4);
+        ctx.font = '600 12px "Inter", sans-serif';
+        ctx.fillStyle = '#5F6670';
+        ctx.fillText('de transferências', meta.x, meta.y + 24);
+        ctx.restore();
+      }
+    };
+    return new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: d.rotulos, datasets: [{ data: d.valores, backgroundColor: d.cores, borderColor: '#ffffff', borderWidth: 3 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '64%',
+        animation: { animateRotate: true, duration: 1100 },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, font: { size: 13 } } },
+          datalabels: { display: false },
+          tooltip: { callbacks: { label: function (c) { return ' ' + c.label + ': ' + c.raw + '%'; } } }
+        }
+      },
+      plugins: [centro]
+    });
+  }
+
+  /** Barras horizontais 100% empilhadas (participacao acima/abaixo de 80 mil). */
+  function desenharPilhaH(canvas, d) {
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: d.rotulos,
+        datasets: d.series.map(function (s) {
+          return { label: s.nome, data: s.valores, backgroundColor: s.cor, borderColor: '#ffffff', borderWidth: 1, maxBarThickness: 64 };
+        })
+      },
+      options: opcoesBase({
+        indexAxis: 'y',
+        plugins: {
+          legend: { position: 'top', align: 'start', labels: { boxWidth: 12, boxHeight: 12 } },
+          datalabels: {
+            display: true,
+            color: function (c) { return c.dataset.backgroundColor === '#EEAF19' ? '#122747' : '#ffffff'; },
+            font: { size: 14, weight: '700' },
+            formatter: function (v) { return fmt1.format(v) + '%'; }
+          },
+          tooltip: { callbacks: { label: function (c) { return ' ' + c.dataset.label + ': ' + fmt1.format(c.raw) + '%'; } } }
+        },
+        scales: {
+          x: { stacked: true, max: 100, grid: { color: '#EEE9DF' }, border: { display: false }, ticks: { callback: function (v) { return v + '%'; } } },
+          y: { stacked: true, grid: { display: false }, ticks: { font: { size: 14, weight: '700' } } }
+        }
+      })
+    });
+  }
+
+  /** Descompasso: barras em HTML, proporcionais ao maior valor dos quatro. */
+  function desenharDescompasso(figura) {
+    var barras = figura.querySelectorAll('.ap-desc-barra i');
+    var max = 0;
+    barras.forEach(function (i) { max = Math.max(max, Number(i.getAttribute('data-valor')) || 0); });
+    barras.forEach(function (i) {
+      var v = Number(i.getAttribute('data-valor')) || 0;
+      i.style.width = (max ? v / max * 100 : 0) + '%';
+    });
+    figura.querySelectorAll('[data-mi]').forEach(function (el) {
+      el.textContent = fmt1.format(Number(el.getAttribute('data-mi')) || 0) + ' mi';
+    });
+    figura.querySelectorAll('[data-var]').forEach(function (el) {
+      var v = Number(el.getAttribute('data-var'));
+      if (!isFinite(v)) return;
+      el.textContent = (v >= 0 ? '▲ +' : '▼ ') + fmt1.format(v) + '%';
     });
   }
 
@@ -221,6 +308,9 @@
     barras_h: function (fig, cfg) { return desenharBarrasH(fig.querySelector('canvas'), cfg.dados); },
     empilhada: function (fig, cfg) { return desenharEmpilhada(fig.querySelector('canvas'), cfg.dados); },
     quintis: function (fig) { desenharQuintis(fig); return true; },
+    rosca: function (fig, cfg) { return desenharRosca(fig.querySelector('canvas'), cfg.dados); },
+    pilha_h: function (fig, cfg) { return desenharPilhaH(fig.querySelector('canvas'), cfg.dados); },
+    descompasso: function (fig) { desenharDescompasso(fig); return true; },
     mapa: function (fig, cfg) { return desenharMapa(fig.querySelector('canvas'), cfg.opcoes || {}); }
   };
 
@@ -323,7 +413,12 @@
             a.setAttribute('role', 'option');
             a.textContent = m.nome;
             var info = document.createElement('small');
-            info.textContent = (m.quintil ? m.quintil + ' · ' : '') + 'R$ ' + fmt0.format(m.rc_pc) + '/hab.';
+            // Como o widget "Onde seu municipio se encaixa?" da landing antiga:
+            // quintil, receita por habitante e a distancia para a media do pais.
+            var media = Number(json.national_avg) || 0;
+            var dif = media ? (m.rc_pc / media - 1) * 100 : null;
+            info.textContent = (m.quintil ? m.quintil + ' · ' : '') + 'R$ ' + fmt0.format(m.rc_pc) + '/hab.' +
+              (dif === null ? '' : ' · ' + (dif >= 0 ? '+' : '') + fmt0.format(dif) + '% da média');
             a.appendChild(info);
             li.appendChild(a);
             lista.appendChild(li);

@@ -62,6 +62,81 @@ html, body { overflow-x: clip !important; overflow-y: visible !important; }
   -webkit-box-decoration-break: clone;
 }
 
+/* ---- 0. Hero com vídeo ----
+   O vídeo de cidades da landing atual é a cara do IFEM hoje: fica como
+   abertura, com o título que já é a marca da plataforma. */
+.ap-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 110px);
+  overflow: hidden;
+  background: var(--ap-azul-escuro);
+  text-align: center;
+}
+
+.ap-hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ap-hero-veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(18, 39, 71, 0.45) 0%, rgba(18, 39, 71, 0.72) 100%);
+}
+
+.ap-hero-texto { position: relative; padding: 48px 24px; max-width: 960px; }
+
+.ap-hero-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(40px, 6.6vw, 88px);
+  font-weight: 600;
+  line-height: 1.04;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
+}
+
+.ap-hero-titulo mark { color: var(--ap-azul-escuro); text-shadow: none; }
+
+.ap-hero-sub { font-size: clamp(17px, 1.8vw, 22px); color: #E6ECF4; margin: 22px 0 0; }
+
+.ap-hero-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 36px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.ap-hero-botao:hover { background: rgba(255, 255, 255, 0.12); border-color: #ffffff; color: #ffffff; }
+.ap-hero-botao:focus-visible { outline: 3px solid var(--ap-amarelo); outline-offset: 3px; }
+.ap-hero-botao span { display: inline-block; animation: ap-desce 1.6s ease-in-out infinite; }
+
+/* Entrada do hero na carga: título, subtítulo e botão em sequência. */
+.ap-hero-texto > * { animation: ap-sobe 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ap-hero-texto > :nth-child(2) { animation-delay: 0.12s; }
+.ap-hero-texto > :nth-child(3) { animation-delay: 0.3s; }
+.ap-hero-texto > :nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes ap-sobe {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* ---- 1. Capa ---- */
 .ap-capa {
   display: grid;
@@ -346,6 +421,50 @@ html, body { overflow-x: clip !important; overflow-y: visible !important; }
 .ap-mapa-legenda span { display: inline-flex; align-items: center; gap: 6px; }
 .ap-mapa-legenda span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--q); }
 
+/* Descompasso: população dos dois extremos, 2000 x 2025 */
+.ap-desc-grupo { position: relative; padding: 14px 0 12px; border-top: 1px solid var(--ap-fio); }
+.ap-desc-grupo:first-of-type { border-top: 0; }
+.ap-desc-grupo h4 { font-size: 14px; font-weight: 700; color: var(--ap-azul-escuro); margin: 0 0 10px; padding-right: 90px; }
+.ap-desc-grupo h4 small { font-weight: 500; color: var(--ap-cinza); }
+
+.ap-desc-linha {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 70px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ap-desc-linha span { font-size: 12px; font-weight: 600; color: var(--ap-cinza); }
+.ap-desc-barra { display: block; height: 22px; background: var(--ap-creme); border-radius: 2px; overflow: hidden; }
+.ap-desc-barra i { display: block; height: 100%; width: 0; background: var(--q); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.ap-desc-barra.is-claro i { opacity: 0.45; }
+.ap-desc-linha em { font-style: normal; font-size: 14px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
+.ap-desc-var {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  color: #ffffff;
+  background: var(--q);
+}
+
+.ap-desc-insight {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: var(--ap-azul-escuro);
+  color: #E6ECF4;
+  border-radius: 4px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.ap-desc-insight strong { color: var(--ap-amarelo); }
+
 /* ---- 4. Fechamento ---- */
 .ap-fechamento {
   display: grid;
@@ -530,6 +649,7 @@ html, body { overflow-x: clip !important; overflow-y: visible !important; }
 /* No celular o palco fica preso no topo (metade da tela) e os cartões de
    texto passam por baixo dele: é o padrão dos scrollytellings móveis. */
 @media (max-width: 860px) {
+  .ap-hero { min-height: 82vh; }
   .ap-capa,
   .ap-fechamento { grid-template-columns: 1fr; min-height: 0; }
   .ap-capa-imagem { min-height: 34vh; }
@@ -569,4 +689,6 @@ html, body { overflow-x: clip !important; overflow-y: visible !important; }
   .ap-passo-cartao,
   .ap-quintil-barra i { transition: none; }
   .ap-capa-rolar span { animation: none; }
+  .ap-hero-texto > *,
+  .ap-hero-botao span { animation: none; }
 }
