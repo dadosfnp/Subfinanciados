@@ -46,11 +46,14 @@ def _medias_por_grupo(field, prefix):
     return out
 
 # --- VIEW DASHBOARD ---
-def home(request):
+def home(request, template_name='home/home.html'):
     """
     Renderiza o template HTML para a visualização dos gráficos (Dashboard).
+
+    `template_name` existe para a rota de preview (/preview/analise/) usar o
+    layout do folheto com a mesma view e a mesma API (api_get_dashboard_data).
     """
-    return render(request, 'home/home.html')
+    return render(request, template_name)
 
 # --- VIEW LANDING PAGE ---
 def index(request):

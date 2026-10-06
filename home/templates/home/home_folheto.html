@@ -1,0 +1,314 @@
+{% extends "global/head.html" %}
+{% comment %}
+PREVIEW - Analise grafica no layout editorial do folheto IFEM.
+
+Rota: /preview/analise/  (name: home_folheto)
+Mesma view da pagina publica (home.views.home), so muda o template.
+
+O home/js/script.js continua dono de tudo (filtros em cascata, cards, grafico,
+tabelas, pop-up de ajuda). Por isso todos os IDs, names de radio e as classes
+que ele procura (.chart-controls .toggle-option, #criterio-saude-fiscal
+.toggle-option, d-none) sao os mesmos da pagina publica.
+
+O Bootstrap ja vem do head global (CSS e JS); o pop-up de ajuda usa a
+estrutura de modal dele, so com o acabamento do folheto.
+{% endcomment %}
+{% load static %}
+
+{% block extra_head %}
+    <title>Análise gráfica - Preview IFEM</title>
+    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'detail_agg/css/style_agg_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/style_home_folheto.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="fx-page">
+
+    {# ==================== BARRA DE CONTROLE (fixa no topo) ==================== #}
+    <div class="fx-controles fx-controles--agg">
+        <div class="fx-controles-inner">
+            <span class="fx-controles-muni" id="fx-home-barra-titulo">Análise gráfica</span>
+
+            {# O script.js procura .chart-controls .toggle-option[data-option] para o ano. #}
+            <div class="fx-controle chart-controls">
+                <span class="fx-controle-label">Ano</span>
+                <div class="fx-seg" role="group" aria-label="Ano">
+                    <span class="toggle-option" data-option="2000" role="button" tabindex="0">2000</span>
+                    <span class="toggle-option active" data-option="2025" role="button" tabindex="0">2025</span>
+                    <span class="toggle-option" data-option="ambos" role="button" tabindex="0">2000 e 2025</span>
+                </div>
+            </div>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label">Mostrar</span>
+                <div class="fx-seg fx-seg--radio" role="radiogroup" aria-label="Base de visualização">
+                    <label><input type="radio" name="displayFormat" id="formatNumero" value="numero" checked><span>Número</span></label>
+                    <label><input type="radio" name="displayFormat" id="formatPorcentagem" value="porcentagem"><span>%</span></label>
+                </div>
+            </div>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label" title="Os municípios são ordenados pela receita por habitante e divididos em 5 (quintil) ou 10 (decil) grupos com o mesmo número de municípios.">Grupos</span>
+                <div class="fx-seg fx-seg--radio" role="radiogroup" aria-label="Quantil">
+                    <label><input type="radio" name="quantilType" id="quantilQuintil" value="quintil" checked><span>Quintil</span></label>
+                    <label><input type="radio" name="quantilType" id="quantilDecil" value="decil"><span>Decil</span></label>
+                </div>
+            </div>
+
+            <div class="fx-controle">
+                <span class="fx-controle-label" title="Total usa os quintis de todo o país. Aplicar filtros recalcula os quintis só com os municípios filtrados.">Quintis</span>
+                <div class="fx-seg fx-seg--radio" role="radiogroup" aria-label="Modo de cálculo">
+                    <label><input type="radio" name="calculationMode" id="calcModeTotal" value="total" checked><span>Do país</span></label>
+                    <label><input type="radio" name="calculationMode" id="calcModeFiltered" value="por_filtro"><span>Do filtro</span></label>
+                </div>
+            </div>
+
+            <button type="button" class="fx-btn-baixar fx-btn-filtros" id="fx-agg-abrir-filtros" aria-expanded="false" aria-controls="filters">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="4" y1="6" x2="20" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="10" y1="18" x2="14" y2="18"></line>
+                </svg>
+                <span>Filtros</span>
+            </button>
+        </div>
+
+        <div class="fx-filtros fx-filtros--home" id="filters">
+            <label class="fx-filtro">
+                <span>Faixa populacional</span>
+                <select id="filtro-porte">
+                    <option value="todos">Todas</option>
+                    <option value="Até 5 mil">Até 5 mil</option>
+                    <option value="5 mil a 10 mil">5 mil a 10 mil</option>
+                    <option value="10 mil a 20 mil">10 mil a 20 mil</option>
+                    <option value="20 mil a 50 mil">20 mil a 50 mil</option>
+                    <option value="50 mil a 100 mil">50 mil a 100 mil</option>
+                    <option value="100 mil a 200 mil">100 mil a 200 mil</option>
+                    <option value="200 mil a 500 mil">200 mil a 500 mil</option>
+                    <option value="Acima de 500 mil">Acima de 500 mil</option>
+                    <option value="Acima de 80 mil">Acima de 80 mil</option>
+                    <option value="Abaixo de 80 mil">Abaixo de 80 mil</option>
+                </select>
+            </label>
+            <label class="fx-filtro">
+                <span>Região</span>
+                <select id="filtro-regiao"><option value="todos">Todas</option></select>
+            </label>
+            <label class="fx-filtro">
+                <span>UF</span>
+                <select id="filtro-uf"><option value="todos">Todas</option></select>
+            </label>
+            <label class="fx-filtro">
+                <span>Recorte metropolitano</span>
+                <select id="filtro-rm"><option value="todos">Todos</option></select>
+            </label>
+            {# Rotulo "Agrupamento" na tela; a entidade no banco e Consorcio. #}
+            <label class="fx-filtro">
+                <span>Agrupamento</span>
+                <select id="filtro-consorcio"><option value="todos">Todos</option></select>
+            </label>
+            <div class="fx-filtro fx-filtro--acao">
+                <span>&nbsp;</span>
+                <button type="button" class="fx-btn-limpar" id="btn-limpar-filtros">Limpar filtros</button>
+            </div>
+        </div>
+    </div>
+
+    {# ==================== HERO ==================== #}
+    <section class="fx-faixa fx-faixa--escura fx-hero">
+        <div class="fx-container">
+            <div class="fx-hero-grid">
+                <div>
+                    <p class="fx-eyebrow">Análise gráfica · IFEM</p>
+                    <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-home-titulo">Todos os municípios do Brasil</h1>
+                    <p class="fx-hero-veredito">
+                        Os municípios são ordenados pela receita corrente por habitante e divididos em grupos
+                        do mesmo tamanho. O gráfico mostra como a <strong>população</strong>, a
+                        <strong>saúde fiscal</strong> e o <strong>risco climático</strong> se distribuem entre
+                        esses grupos, do mais pobre (1º) ao mais rico.
+                    </p>
+                    <div class="fx-agg-chips" id="fx-agg-chips"></div>
+                </div>
+
+                <div class="fx-hero-stats">
+                    <div class="fx-stat">
+                        <span class="fx-stat-label">Municípios na seleção</span>
+                        <span class="fx-stat-valor" id="summary-total-municipios">&nbsp;</span>
+                    </div>
+                    <div class="fx-stat">
+                        <span class="fx-stat-label">Receita corrente por habitante (média)</span>
+                        <span class="fx-stat-valor" id="summary-media-receita">&nbsp;</span>
+                    </div>
+                    <div class="fx-stat fx-stat--par">
+                        <div>
+                            <span class="fx-stat-label">Diferença da média nacional</span>
+                            <span class="fx-stat-valor" id="summary-diff-nacional">&nbsp;</span>
+                            <span class="fx-stat-sub" id="summary-diff-nacional-trend"></span>
+                        </div>
+                        <div>
+                            <span class="fx-stat-label" title="Desvio padrão dividido pela média: quanto maior, mais desigual a receita por habitante dentro da seleção.">Coeficiente de variação</span>
+                            <span class="fx-stat-valor" id="summary-gini">&nbsp;</span>
+                            <span class="fx-stat-sub">quanto maior, mais desigual</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ==================== GRAFICO ==================== #}
+    <section class="fx-faixa fx-faixa--creme">
+        <div class="fx-container">
+            <div class="fx-secao-head fx-home-grafico-head">
+                <p class="fx-eyebrow">Distribuição por grupo de receita</p>
+                <h2 class="fx-titulo fx-titulo--select" id="chart-main-title">
+                    <span>Distribuição</span>
+                    <select id="variavelAnalisadaSelect" name="variavelAnalisada" class="fx-titulo-select" aria-label="Variável analisada">
+                        <option value="populacao">da População Municipal</option>
+                        <option value="saude_fiscal">por Saúde Fiscal</option>
+                        <option value="risco_climatico">por Risco Climático</option>
+                    </select>
+                </h2>
+
+                <div class="fx-home-subcontroles">
+                    {# Selects extras: o script.js mostra/esconde com d-none conforme o modo. #}
+                    <select id="capagTipoSelect" class="fx-select fx-select--inline d-none" aria-label="Indicador de saúde fiscal">
+                        <optgroup label="CAPAG">
+                            <option value="geral">Nota CAPAG (geral)</option>
+                            <option value="indicador_i">Indicador I, Endividamento</option>
+                            <option value="indicador_ii">Indicador II, Poupança Corrente</option>
+                            <option value="indicador_iii">Indicador III, Liquidez Relativa</option>
+                        </optgroup>
+                        <optgroup label="RGF">
+                            <option value="rgf_pessoal">Comprometimento com Pessoal</option>
+                            <option value="rgf_divida">Dívida Consolidada Líquida</option>
+                        </optgroup>
+                        <optgroup label="Outros">
+                            <option value="equilibrio">Indicador de Equilíbrio Fiscal</option>
+                        </optgroup>
+                    </select>
+
+                    <select id="capagNotaSelect" class="fx-select fx-select--inline d-none" aria-label="Nota ou faixa">
+                        <option value="todos">Todas as notas</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D e outros">D e outros</option>
+                    </select>
+
+                    <select id="riscoTipoSelect" class="fx-select fx-select--inline d-none" aria-label="Indicador de risco climático">
+                        <option value="media_ponderada">Risco climático médio (média geral)</option>
+                        <optgroup label="Biodiversidade">
+                            <option value="bio_int_bio">Integridade do Bioma</option>
+                        </optgroup>
+                        <optgroup label="Desastres Geo-hidrológicos">
+                            <option value="des_des_ter">Deslizamento de Terra</option>
+                            <option value="des_in_enx_ala">Inundações e Alagamentos</option>
+                        </optgroup>
+                        <optgroup label="Recursos Hídricos">
+                            <option value="rec_ris_est_hid">Risco de Estresse Hídrico</option>
+                        </optgroup>
+                        <optgroup label="Saúde">
+                            <option value="sau_arb">Arboviroses (Dengue, Zika, Chikungunya)</option>
+                            <option value="sau_lei_teg_ame">Leishmaniose Tegumentar Americana</option>
+                            <option value="sau_lei_vis">Leishmaniose Visceral</option>
+                            <option value="sau_mal">Malária</option>
+                        </optgroup>
+                        <optgroup label="Segurança Alimentar">
+                            <option value="seg_ali_ace_con_ali">Acesso e Consumo de Alimentos</option>
+                            <option value="seg_ali_dis">Disponibilidade de Alimentos</option>
+                        </optgroup>
+                        <optgroup label="Segurança Energética">
+                            <option value="seg_ene_ace">Acesso à Energia</option>
+                            <option value="seg_ene_dis">Disponibilidade de Energia</option>
+                        </optgroup>
+                    </select>
+
+                    <select id="riscoNivelSelect" class="fx-select fx-select--inline d-none" aria-label="Nível de risco">
+                        <option value="todos">Todos os níveis</option>
+                        <option value="Muito baixo">Muito baixo (&lt; 0,2)</option>
+                        <option value="Baixo">Baixo (0,2 a 0,4)</option>
+                        <option value="Médio">Médio (0,4 a 0,6)</option>
+                        <option value="Alto">Alto (0,6 a 0,8)</option>
+                        <option value="Muito alto">Muito alto (≥ 0,8)</option>
+                    </select>
+
+                    {# Criterio das faixas: so no modo Saude Fiscal. #}
+                    <div id="criterio-saude-fiscal" class="fx-seg fx-seg--claro d-none" role="group" aria-label="Critério das faixas">
+                        <span class="toggle-option active" data-criterio="legal" role="button" tabindex="0">Limites legais</span>
+                        <span class="toggle-option" data-criterio="quintil" role="button" tabindex="0">Limites por quintil</span>
+                    </div>
+
+                    <button type="button" id="chart-info-btn" class="fx-btn-ajuda" aria-label="Como ler este gráfico">
+                        <span aria-hidden="true">?</span> Como ler
+                    </button>
+                </div>
+            </div>
+
+            <div class="fx-card fx-home-grafico">
+                <div class="fx-home-grafico-area">
+                    <canvas id="populacaoQuintilChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ==================== TABELAS ==================== #}
+    <section class="fx-faixa fx-faixa--branca">
+        <div class="fx-container">
+            <div class="fx-secao-head">
+                <p class="fx-eyebrow">Por tamanho de município</p>
+                <h2 class="fx-titulo">Faixas populacionais por grupo</h2>
+                <p class="fx-dek">
+                    Cada linha é uma faixa de população; cada coluna, um grupo de receita por habitante.
+                    A tabela mostra se os municípios de um tamanho tendem a estar entre os mais pobres ou os
+                    mais ricos do país.
+                </p>
+            </div>
+
+            <div class="fx-tabelas-pilha">
+                <div class="fx-card fx-card--tabela d-none" id="table-card-2000">
+                    <div class="fx-card-tabela-head">
+                        <h3 class="fx-card-titulo" id="table-2000-title">Distribuição de Municípios por Faixa Populacional (2000)</h3>
+                    </div>
+                    <div class="fx-rolagem">
+                        <table class="fx-home-tabela" id="table-2000"><thead></thead><tbody></tbody></table>
+                    </div>
+                </div>
+
+                <div class="fx-card fx-card--tabela" id="table-card-2025">
+                    <div class="fx-card-tabela-head">
+                        <h3 class="fx-card-titulo" id="table-2025-title">Distribuição de Municípios por Faixa Populacional (2025)</h3>
+                    </div>
+                    <div class="fx-rolagem">
+                        <table class="fx-home-tabela" id="table-2025"><thead></thead><tbody></tbody></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% comment %}
+Pop-up de ajuda: conteudo montado pelo script.js (montarCorpoInfo), aberto com
+bootstrap.Modal, que o head global ja carrega. Estrutura do Bootstrap, visual do folheto.
+{% endcomment %}
+<div id="indicador-info-modal" class="modal fade fx-modal" tabindex="-1" aria-hidden="true" aria-labelledby="indicador-info-titulo">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content fx-modal-caixa">
+            <div class="modal-header fx-modal-head">
+                <h3 class="fx-card-titulo" id="indicador-info-titulo">Sobre este gráfico</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body fx-modal-corpo" id="indicador-info-corpo"></div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'home/js/script_home_folheto.js' %}"></script>
+<script src="{% static 'home/js/script.js' %}"></script>
+{% endblock content %}

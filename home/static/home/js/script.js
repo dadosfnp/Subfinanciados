@@ -123,7 +123,7 @@ async function updateDependentFilters(initial = false) {
  * @returns {string} texto pronto para a tabela
  */
 function formatarCelula(valor) {
-    if (valor === null || valor === undefined) return '—';
+    if (valor === null || valor === undefined) return 'n/d';
     if (typeof valor === 'number') return valor.toLocaleString('pt-BR');
     return valor;
 }

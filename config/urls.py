@@ -42,6 +42,13 @@ urlpatterns = [
         {'template_name': 'detail_agg/detalhe_conjunto_folheto.html'},
         name='conjunto_detalhe_folheto',
     ),
+    # E para a analise grafica: mesma view, template do folheto.
+    path(
+        'preview/analise/',
+        home_views.home,
+        {'template_name': 'home/home_folheto.html'},
+        name='home_folheto',
+    ),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),

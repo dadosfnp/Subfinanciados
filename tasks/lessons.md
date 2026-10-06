@@ -16,6 +16,11 @@ fecha o comentário na quebra de linha — o `#}` da linha seguinte vira conteú
 **Regra:** comentário de mais de uma linha usa sempre `{% comment %}` /
 `{% endcomment %}`. `{# #}` só para uma linha.
 
+**Reincidência (out/2026):** gerei um `{# #}` de duas linhas via script de
+substituição e ele vazou de novo no rodapé da preview de Gráficos. Antes de
+entregar qualquer template, conferir o HTML renderizado:
+`curl -s <url> | grep -c "{#"` precisa dar 0.
+
 ### `runserver --noreload` não recarrega templates
 **Erro:** duas rodadas de correção "sem efeito" porque o servidor servia os
 templates carregados no boot.
