@@ -149,3 +149,84 @@ def montar_saude_fiscal(dados):
     if all(l['situacao'] in ('Sem nota', 'Sem dados') for l in linhas):
         return []
     return linhas
+
+
+# ---------------------------------------------------------------------------
+# Distribuição para um CONJUNTO de municípios (página do Agregado)
+# ---------------------------------------------------------------------------
+# Num conjunto não existe "a" nota: o que informa é quantos municípios caem em
+# cada situação. As classificações são as mesmas funções acima, aplicadas a
+# cada município do conjunto, para que município e agregado nunca divirjam.
+
+# Cor sólida de cada classe, para as barras empilhadas (largura via style).
+_HEX = {
+    _VERDE_ESCURO: '#1C9148', _VERDE: '#6AC074', _AMARELO: '#F4D01D',
+    _LARANJA: '#E47326', _VERMELHO: '#A81C21', _CINZA: '#B9BFC7',
+}
+# Texto escuro sobre as cores claras, branco sobre as escuras (contraste AA).
+_HEX_TEXTO = {
+    _VERDE_ESCURO: '#ffffff', _VERDE: '#103758', _AMARELO: '#103758',
+    _LARANJA: '#ffffff', _VERMELHO: '#ffffff', _CINZA: '#103758',
+}
+
+_NOTAS = ['Nota A', 'Nota B', 'Nota C', 'Nota D', 'Sem nota']
+
+# (grupo, indicador, campo em DadosAtuais, classificador, ordem das situações
+# da melhor para a pior). O classificador recebe o valor cru do banco.
+_INDICADORES_CONJUNTO = [
+    ('CAPAG', 'Nota geral', 'capag', _situacao_capag, _NOTAS),
+    ('CAPAG', 'Endividamento (indicador I)', 'capag_indicador_I', _situacao_capag, _NOTAS),
+    ('CAPAG', 'Poupança corrente (indicador II)', 'capag_indicador_II', _situacao_capag, _NOTAS),
+    ('CAPAG', 'Liquidez relativa (indicador III)', 'capag_indicador_III', _situacao_capag, _NOTAS),
+    ('LRF', 'Despesa com pessoal', 'rgf_comprometimento_pessoal', _situacao_pessoal,
+     ['Regular', 'Acima do limite de alerta', 'Acima do limite prudencial',
+      'Acima do limite máximo', 'Sem dados']),
+    ('LRF', 'Dívida consolidada líquida', 'rgf_divida_consolidada_liquida', _situacao_divida,
+     ['Caixa positivo (DCL negativa)', 'Regular', 'Em alerta (TCE)', 'Acima do limite', 'Sem dados']),
+    ('Equilíbrio', 'Indicador de equilíbrio fiscal', 'indicador_equilibrio_fiscal', _situacao_equilibrio,
+     ['Margem alta', 'Margem moderada', 'Margem baixa', 'Margem mínima', 'Sem margem', 'Sem dados']),
+]
+
+
+def distribuir_saude_fiscal(queryset):
+    """Distribui os municípios de um conjunto pelas situações de cada indicador.
+
+    Args:
+        queryset: QuerySet de `Municipio` já filtrado.
+
+    Returns:
+        Lista de dicts (um por indicador) com `grupo`, `indicador`, `total` e
+        `segmentos`, cada segmento com `situacao`, `n`, `pct` (float), `pct_txt`,
+        `hex` e `hex_texto`. Situações sem município ficam de fora. Lista vazia
+        se o conjunto está vazio.
+    """
+    campos = [c for _, _, c, _, _ in _INDICADORES_CONJUNTO]
+    # Uma query só, com as 7 colunas; no máximo ~5.500 linhas de floats/letras.
+    linhas = list(queryset.values_list(*[f'dados_atuais__{c}' for c in campos]))
+    total = len(linhas)
+    if total == 0:
+        return []
+
+    resultado = []
+    for idx, (grupo, indicador, _campo, classificar, ordem) in enumerate(_INDICADORES_CONJUNTO):
+        contagem = {}
+        cor_por_situacao = {}
+        for linha in linhas:
+            situacao, cor = classificar(linha[idx])
+            contagem[situacao] = contagem.get(situacao, 0) + 1
+            cor_por_situacao[situacao] = cor
+
+        segmentos = []
+        for situacao in ordem:
+            n = contagem.get(situacao, 0)
+            if not n:
+                continue
+            pct = n / total * 100
+            cor = cor_por_situacao[situacao]
+            segmentos.append({
+                'situacao': situacao, 'n': n, 'pct': round(pct, 2),
+                'pct_txt': _pct(pct, 0) if pct >= 1 else '<1%',
+                'hex': _HEX[cor], 'hex_texto': _HEX_TEXTO[cor],
+            })
+        resultado.append({'grupo': grupo, 'indicador': indicador, 'total': total, 'segmentos': segmentos})
+    return resultado
