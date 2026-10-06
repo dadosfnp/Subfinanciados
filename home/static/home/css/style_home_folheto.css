@@ -1,0 +1,272 @@
+/* ============================================================================
+   Preview da ANÁLISE GRÁFICA no layout folheto (/preview/analise/)
+   ----------------------------------------------------------------------------
+   Carregado depois de style_mun_folheto.css (tokens, faixas, hero, cards) e
+   style_agg_folheto.css (barra de filtros). Aqui só o que é desta página:
+   radios em forma de segmented, título com select, gráfico, tabelas de faixa
+   e o pop-up de ajuda sem Bootstrap.
+   ========================================================================== */
+
+/* O script.js esconde e mostra controles com d-none. O Bootstrap do head
+   global já define a classe; repetida aqui para a página não depender disso. */
+.d-none { display: none !important; }
+
+/* ---- 1. Barra fixa ---- */
+.fx-filtros--home { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+/* Ano: o script.js usa <span class="toggle-option">; recebe o mesmo visual
+   dos botões do segmented. */
+.fx-seg .toggle-option,
+.fx-seg--radio label span {
+  display: inline-block;
+  color: var(--fx-blue-light);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.fx-seg .toggle-option:hover,
+.fx-seg--radio label:hover span { color: #ffffff; }
+
+.fx-seg .toggle-option.active,
+.fx-seg--radio input:checked + span {
+  background: #FFC72C;
+  color: var(--fx-blue-dark);
+}
+
+.fx-seg .toggle-option:focus-visible,
+.fx-seg--radio input:focus-visible + span { outline: 2px solid #ffffff; outline-offset: 1px; }
+
+/* Radios de verdade (o script.js lê .checked e escuta 'change'), visualmente
+   escondidos: o rótulo é o botão. */
+.fx-seg--radio label { margin: 0; display: inline-flex; }
+.fx-seg--radio input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Variante clara (critério da Saúde Fiscal, dentro da faixa creme). */
+.fx-seg--claro .toggle-option { color: var(--fx-muted); }
+.fx-seg--claro .toggle-option:hover { color: var(--fx-blue-dark); }
+.fx-seg--claro .toggle-option.active { background: var(--fx-blue-dark); color: #ffffff; }
+.fx-seg--claro .toggle-option.desabilitado { opacity: 0.4; cursor: not-allowed; }
+
+.fx-filtro--acao { justify-content: flex-end; }
+
+.fx-btn-limpar {
+  appearance: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.fx-btn-limpar:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* ---- 2. Hero ---- */
+.fx-hero-veredito strong { color: #FFC72C; font-weight: 600; }
+
+/* Os dois últimos números dividem uma linha: são complementares e curtos. */
+.fx-stat--par {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.fx-stat--par > div + div { padding-left: 18px; border-left: 1px solid rgba(255, 255, 255, 0.14); }
+
+#summary-diff-nacional.positive { color: #7FD4A0; }
+#summary-diff-nacional.negative { color: #F0A08A; }
+#summary-diff-nacional-trend.positive { color: #7FD4A0; }
+#summary-diff-nacional-trend.negative { color: #F0A08A; }
+
+/* ---- 3. Título com select ---- */
+.fx-titulo--select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 12px;
+}
+
+/* O select faz parte da frase do título: mesmo corpo, sublinhado tracejado
+   indicando que dá para trocar. */
+.fx-titulo-select {
+  appearance: none;
+  font: inherit;
+  color: var(--fx-blue);
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B3A6B' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 2px center;
+  background-size: 0.5em;
+  border: 0;
+  border-bottom: 3px dashed #FFC72C;
+  padding: 0 1.2em 0 0;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.fx-titulo-select:focus-visible { outline: 2px solid var(--fx-blue-mid); outline-offset: 3px; }
+
+.fx-home-subcontroles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.fx-select--inline { width: auto; margin-bottom: 0; max-width: 100%; }
+
+.fx-btn-ajuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  appearance: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fx-blue-dark);
+  background: #ffffff;
+  border: 1px solid var(--fx-rule);
+  border-radius: 4px;
+  padding: 6px 12px 6px 7px;
+  cursor: pointer;
+}
+
+.fx-btn-ajuda span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--fx-blue-dark);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.fx-btn-ajuda:hover { border-color: var(--fx-blue-mid); }
+
+/* ---- 4. Gráfico ---- */
+.fx-home-grafico { padding: 22px 22px 14px; }
+.fx-home-grafico-area { position: relative; height: 460px; }
+
+/* ---- 5. Tabelas de faixa ---- */
+.fx-home-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-home-tabela thead th {
+  background: var(--fx-blue);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: right;
+  padding: 10px 14px 8px;
+  white-space: nowrap;
+  position: relative;
+}
+
+.fx-home-tabela thead th:first-child { text-align: left; }
+
+/* Faixa de cor do grupo embaixo do cabeçalho (posta pelo script_home_folheto). */
+.fx-home-tabela thead th[data-cor]::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 3px;
+  background: var(--fx-th-cor);
+}
+
+.fx-home-tabela tbody td {
+  padding: 9px 14px;
+  text-align: right;
+  border-bottom: 1px solid rgba(217, 210, 195, 0.55);
+  color: var(--fx-ink);
+  font-weight: 400 !important;
+}
+
+.fx-home-tabela tbody td:first-child { text-align: left; font-weight: 600 !important; color: var(--fx-blue-dark); }
+.fx-home-tabela tbody td:last-child { font-weight: 700 !important; }
+.fx-home-tabela tbody tr:nth-child(even) td { background: var(--fx-paper); }
+.fx-home-tabela tbody tr:hover td { background: var(--fx-cream); }
+
+.fx-home-tabela tbody tr.linha-total td {
+  background: var(--fx-cream-dark);
+  border-top: 1.5px solid var(--fx-blue-dark);
+  font-weight: 700 !important;
+}
+
+/* Hover sincronizado 2000 x 2025 do script.js. */
+.fx-home-tabela td.highlight,
+.fx-home-tabela td.highlight2 { background: #FFF1C2 !important; }
+
+/* ---- 6. Pop-up de ajuda ----
+   Modal do Bootstrap (o head global já o carrega); aqui só o acabamento. */
+.fx-modal .fx-modal-caixa { border: 0; border-radius: 8px; overflow: hidden; background: #ffffff; }
+.fx-modal .fx-modal-head { padding: 16px 20px; border-bottom: 1px solid var(--fx-rule); }
+.fx-modal-head .fx-card-titulo { margin: 0; }
+
+.fx-modal-corpo {
+  padding: 18px 20px 22px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fx-ink);
+}
+
+.fx-modal-corpo h6 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fx-blue);
+  margin: 14px 0 6px;
+}
+
+.fx-modal-corpo table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.fx-modal-corpo th { text-align: left; background: var(--fx-blue); color: #fff; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; padding: 7px 10px; }
+.fx-modal-corpo td { padding: 7px 10px; border-bottom: 1px solid rgba(217, 210, 195, 0.55); vertical-align: top; }
+.fx-modal-corpo .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.fx-modal-corpo .info-formula { background: var(--fx-paper); border: 1px solid var(--fx-rule); border-radius: 4px; padding: 10px 12px; margin: 8px 0; }
+.fx-modal-corpo .info-fracao { display: inline-flex; flex-direction: column; text-align: center; vertical-align: middle; margin-left: 6px; }
+.fx-modal-corpo .numerador { border-bottom: 1px solid var(--fx-ink); padding: 0 4px; }
+.fx-modal-corpo .denominador { padding: 0 4px; }
+.fx-modal-corpo .text-muted { color: var(--fx-muted); }
+.fx-modal-corpo .text-nowrap { white-space: nowrap; }
+
+/* ---- 7. Responsivo ---- */
+@media (max-width: 1100px) {
+  .fx-filtros--home { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .fx-filtros--home { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fx-home-grafico-area { height: 360px; }
+  .fx-home-grafico { padding: 14px 10px 8px; }
+  .fx-seg .toggle-option,
+  .fx-seg--radio label span { padding: 5px 8px; font-size: 11.5px; }
+}
+
+@media (max-width: 560px) {
+  .fx-stat--par { grid-template-columns: 1fr; }
+  .fx-stat--par > div + div { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+}
