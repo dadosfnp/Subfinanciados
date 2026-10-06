@@ -28,6 +28,7 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
     <link rel="stylesheet" href="{% static 'detail_agg/css/style_agg_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'global/css/fx-secoes.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
@@ -117,10 +118,12 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
                 <select id="filtro-subgrupo"><option value="todos" selected>Todos</option></select>
             </div>
         </div>
+        {# Trilho anterior / atual / proxima: montado pelo global/js/fx-secoes.js. #}
+        <div data-fx-secoes-barra></div>
     </div>
 
     {# ==================== HERO ==================== #}
-    <section class="fx-faixa fx-faixa--escura fx-hero">
+    <section class="fx-faixa fx-faixa--escura fx-hero" data-secao="Visão geral">
         <div class="fx-container">
             <div class="fx-hero-grid">
                 <div>
@@ -154,7 +157,7 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
     </section>
 
     {# ==================== ESTRUTURA DE RECEITAS ==================== #}
-    <section class="fx-faixa fx-faixa--creme">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Estrutura de Receitas">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">De onde vem a receita</p>
@@ -251,7 +254,7 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 
     {# ==================== SINTESE FISCAL E DEMOGRAFICA ==================== #}
     {# display:none ate o script.js confirmar que ha dado de 2000 para o conjunto. #}
-    <section class="fx-faixa fx-faixa--branca" id="sintese-fiscal-container" style="display:none;">
+    <section class="fx-faixa fx-faixa--branca" id="sintese-fiscal-container" style="display:none;" data-secao="Síntese Fiscal e Demográfica">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Como evoluiu · 2000 a 2025</p>
@@ -348,7 +351,7 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 
     {# ==================== SAUDE FISCAL E RISCOS CLIMATICOS ==================== #}
     {# Os dois containers sao preenchidos pela /api/fiscal-details/?layout=folheto. #}
-    <section class="fx-faixa fx-faixa--creme">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Saúde Fiscal e Riscos">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Contas e riscos</p>
@@ -376,4 +379,5 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 <script src="{% static 'detail_agg/js/script.js' %}"></script>
 <script src="{% static 'detail_agg/js/script_density.js' %}"></script>
 <script src="{% static 'detail_agg/js/script_agg_folheto.js' %}"></script>
+<script src="{% static 'global/js/fx-secoes.js' %}"></script>
 {% endblock content %}

@@ -24,6 +24,7 @@ estrutura de modal dele, so com o acabamento do folheto.
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
     <link rel="stylesheet" href="{% static 'detail_agg/css/style_agg_folheto.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/style_home_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'global/css/fx-secoes.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
@@ -116,10 +117,12 @@ estrutura de modal dele, so com o acabamento do folheto.
                 <button type="button" class="fx-btn-limpar" id="btn-limpar-filtros">Limpar filtros</button>
             </div>
         </div>
+        {# Trilho anterior / atual / proxima: montado pelo global/js/fx-secoes.js. #}
+        <div data-fx-secoes-barra></div>
     </div>
 
     {# ==================== HERO ==================== #}
-    <section class="fx-faixa fx-faixa--escura fx-hero">
+    <section class="fx-faixa fx-faixa--escura fx-hero" data-secao="Resumo">
         <div class="fx-container">
             <div class="fx-hero-grid">
                 <div>
@@ -161,7 +164,7 @@ estrutura de modal dele, so com o acabamento do folheto.
     </section>
 
     {# ==================== GRAFICO ==================== #}
-    <section class="fx-faixa fx-faixa--creme">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Distribuição">
         <div class="fx-container">
             <div class="fx-secao-head fx-home-grafico-head">
                 <p class="fx-eyebrow">Distribuição por grupo de receita</p>
@@ -258,7 +261,7 @@ estrutura de modal dele, so com o acabamento do folheto.
     </section>
 
     {# ==================== TABELAS ==================== #}
-    <section class="fx-faixa fx-faixa--branca">
+    <section class="fx-faixa fx-faixa--branca" data-secao="Faixas populacionais">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Por tamanho de município</p>
@@ -311,4 +314,5 @@ bootstrap.Modal, que o head global ja carrega. Estrutura do Bootstrap, visual do
 
 <script src="{% static 'home/js/script_home_folheto.js' %}"></script>
 <script src="{% static 'home/js/script.js' %}"></script>
+<script src="{% static 'global/js/fx-secoes.js' %}"></script>
 {% endblock content %}

@@ -43,6 +43,7 @@ O QUE MUDA em relacao a pagina publica:
     {% endcomment %}
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun.css' %}">
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'global/css/fx-secoes.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
@@ -96,10 +97,12 @@ O QUE MUDA em relacao a pagina publica:
                 <span>Baixar</span>
             </button>
         </div>
+        {# Trilho anterior / atual / proxima: montado pelo global/js/fx-secoes.js. #}
+        <div data-fx-secoes-barra></div>
     </div>
 
     {# ==================== HERO ==================== #}
-    <section class="fx-faixa fx-faixa--escura fx-hero">
+    <section class="fx-faixa fx-faixa--escura fx-hero" data-secao="Perfil fiscal">
         <div class="fx-container">
             <div class="fx-hero-grid">
                 <div>
@@ -166,7 +169,7 @@ O QUE MUDA em relacao a pagina publica:
     </section>
 
     {# ==================== ESTRUTURA DE RECEITAS ==================== #}
-    <section class="fx-faixa fx-faixa--creme">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Estrutura de Receitas">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">De onde vem a receita</p>
@@ -272,7 +275,7 @@ O QUE MUDA em relacao a pagina publica:
     </section>
 
     {# ==================== SINTESE FISCAL E DEMOGRAFICA ==================== #}
-    <section class="fx-faixa fx-faixa--branca">
+    <section class="fx-faixa fx-faixa--branca" data-secao="Síntese Fiscal e Demográfica">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Como evoluiu · 2000 a 2025</p>
@@ -421,7 +424,7 @@ O QUE MUDA em relacao a pagina publica:
 
     {# ==================== SAUDE FISCAL E RISCOS CLIMATICOS ==================== #}
     {% if saude_fiscal_data or adapta_brasil_data %}
-    <section class="fx-faixa fx-faixa--creme">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Saúde Fiscal e Riscos">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Contas e riscos</p>
@@ -562,4 +565,5 @@ script_mun_folheto.js depois, so acrescentando o comportamento novo.
 <script src="{% static 'detail_mun/js/script_mun.js' %}"></script>
 <script src="{% static 'detail_mun/js/script_density_mun.js' %}"></script>
 <script src="{% static 'detail_mun/js/script_mun_folheto.js' %}"></script>
+<script src="{% static 'global/js/fx-secoes.js' %}"></script>
 {% endblock content %}
