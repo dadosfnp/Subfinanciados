@@ -50,7 +50,7 @@
   var fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   function reais(v) {
-    if (v === null || v === undefined || isNaN(v)) return '—';
+    if (v === null || v === undefined || isNaN(v)) return 'n/d';
     var abs = Math.abs(v);
     if (abs >= 1e9) return 'R$ ' + fmt1.format(v / 1e9) + ' bi';
     if (abs >= 1e6) return 'R$ ' + fmt1.format(v / 1e6) + ' mi';
@@ -102,7 +102,7 @@
     var elSupera = linha.querySelector('.fx-supera');
     var nome = ((linha.querySelector('.fx-nome') || {}).textContent || 'esta rubrica').trim();
 
-    if (elPct) elPct.textContent = temDado ? Math.round(pct) + '%' : '—';
+    if (elPct) elPct.textContent = temDado ? Math.round(pct) + '%' : 'n/d';
     if (elBarra) elBarra.style.width = temDado ? Math.max(pct, 0) + '%' : '0%';
 
     // Tooltip com as DUAS leituras: o percentual sozinho contava metade da
@@ -213,7 +213,7 @@
 
     var r = (DADOS.rank || {})[baseAtual];
     if (elRankLabel) elRankLabel.textContent = esc.posicao;
-    if (elRankValor) elRankValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : '—';
+    if (elRankValor) elRankValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : 'n/d';
     if (elRankSub) elRankSub.textContent = r && r.total ? 'de ' + fmtInt.format(r.total) + ' municípios' : 'sem ranking disponível';
 
     if (elCrescSub) {
@@ -247,6 +247,34 @@
       baseAtual = base;
       pintarTabela();
       atualizarHero();
+    });
+  });
+
+  // ==========================================================================
+  // 3b. SINCRONIA COM O TOGGLE DE MEDIA / MEDIANA
+  // ==========================================================================
+  /*
+   * O script_mun.js ja troca os VALORES das colunas (.estatistica-media e
+   * .estatistica-mediana), mas o cabecalho e a nota do card "Como ler" sao
+   * desta pagina e continuavam dizendo "Media" com a mediana na tela.
+   */
+  var ROTULO_ESTATISTICA = {
+    media: { cabecalho: 'Média', nota: 'médio' },
+    mediana: { cabecalho: 'Mediana', nota: 'mediano' }
+  };
+  var elHeadMediasRot = document.getElementById('fx-head-medias-rot');
+  var elComoLerEst = document.getElementById('fx-como-ler-est');
+
+  function atualizarRotuloEstatistica(est) {
+    var rotulo = ROTULO_ESTATISTICA[est];
+    if (!rotulo) return;
+    if (elHeadMediasRot) elHeadMediasRot.textContent = rotulo.cabecalho;
+    if (elComoLerEst) elComoLerEst.textContent = rotulo.nota;
+  }
+
+  document.querySelectorAll('#estatistica-toggle .segmented-option').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+      atualizarRotuloEstatistica(botao.getAttribute('data-est'));
     });
   });
 
