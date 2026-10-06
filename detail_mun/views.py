@@ -1,4 +1,5 @@
 import json
+from .saude_fiscal import montar_saude_fiscal
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -778,6 +779,8 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
         'capag_data': capag_data,
         'adapta_brasil_data': adapta_brasil_data,
         'adapta_brasil_media': adapta_brasil_media,
+        # Saude Fiscal (CAPAG, RGF e equilibrio): ver detail_mun/saude_fiscal.py
+        'saude_fiscal_data': montar_saude_fiscal(getattr(municipio, 'dados_atuais', None)),
         'evolucao_historica': evolucao_historica,
 
         'media_nacional_rc_pc': round(media_nacional_rc_pc, 2),
