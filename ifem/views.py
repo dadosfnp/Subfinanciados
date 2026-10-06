@@ -3,6 +3,47 @@ from django.http import JsonResponse
 from django.db.models import Avg
 from home.models import Municipio
 
+import logging
+
+from home.models import Noticia
+
+from .apresentacao import montar_apresentacao
+
+logger = logging.getLogger(__name__)
+
+
+def inicio_preview(request):
+    """Landing em formato de apresentacao (/preview/inicio/), fora do menu.
+
+    A narrativa vem de ifem/apresentacao.py (modulos) e os numeros, do banco,
+    via ifem/apresentacao_dados.py. Abaixo dela, plataforma, FAQ e noticias.
+    """
+    blocos, compartilhados = montar_apresentacao()
+
+    # Dados que o JS precisa para desenhar os visuais, indexados pelo id do passo.
+    visuais = {}
+    for bloco in blocos:
+        for passo in bloco.get('passos', []):
+            visuais[passo['id']] = {
+                'visual': passo['visual'],
+                'opcoes': passo['opcoes'],
+                'dados': passo['dados'],
+            }
+
+    try:
+        noticias = list(Noticia.objects.order_by('-data')[:8])
+    except Exception:
+        # Noticias sao acessorias: sem elas, a pagina ainda conta a historia.
+        logger.exception('Falha ao carregar noticias da landing de preview')
+        noticias = []
+
+    return render(request, 'ifem/inicio_folheto.html', {
+        'blocos': blocos,
+        'apresentacao_json': {'visuais': visuais, 'mapa': compartilhados.get('mapa')},
+        'noticias': noticias,
+    })
+
+
 def landing_page(request):
     return render(request, 'ifem/index.html')
 
