@@ -23,6 +23,7 @@ partir do JSON #apresentacao-dados.
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link rel="stylesheet" href="{% static 'ifem/css/inicio_folheto.css' %}">
+    <link rel="stylesheet" href="{% static 'global/css/fx-secoes.css' %}">
 {% endblock extra_head %}
 
 {% block content %}
@@ -30,22 +31,25 @@ partir do JSON #apresentacao-dados.
 
 {% for bloco in blocos %}
 
-    {% if bloco.tipo == 'capa' %}
-    {# ==================== CAPA ==================== #}
-    <section class="ap-capa">
-        <div class="ap-capa-imagem" style="background-image: url('{% static bloco.imagem %}');" role="img" aria-label="Textura de palha trançada nas cores do Brasil"></div>
-        <div class="ap-capa-texto">
-            <p class="ap-eyebrow">IFEM · Frente Nacional de Prefeitas e Prefeitos</p>
-            <h1 class="ap-capa-titulo">{{ bloco.titulo }}</h1>
-            <p class="ap-capa-sub">{{ bloco.subtitulo }}</p>
-            <a class="ap-capa-rolar" href="#inicio-historia">Role para baixo <span aria-hidden="true">↓</span></a>
+    {% if bloco.tipo == 'hero' %}
+    {# ==================== HERO (video da landing atual) ==================== #}
+    <section class="ap-hero" data-secao="{{ bloco.secao }}">
+        <video class="ap-hero-video" autoplay loop muted playsinline poster="{% static 'ifem/apresentacao/cidade-azul.webp' %}" aria-hidden="true">
+            <source src="{% static bloco.video %}" type="video/mp4">
+        </video>
+        <div class="ap-hero-veu" aria-hidden="true"></div>
+        <div class="ap-hero-texto">
+            <p class="ap-eyebrow ap-eyebrow--claro">Indicadores de Financiamento e Equidade Municipal</p>
+            <h1 class="ap-hero-titulo">{{ bloco.titulo|safe }}</h1>
+            <p class="ap-hero-sub">{{ bloco.subtitulo }}</p>
+            <a class="ap-hero-botao" href="#inicio-historia">{{ bloco.botao }} <span aria-hidden="true">↓</span></a>
         </div>
     </section>
     <span id="inicio-historia"></span>
 
     {% elif bloco.tipo == 'capitulo' %}
     {# ==================== CAPITULO ==================== #}
-    <section class="ap-capitulo" style="background-image: url('{% static bloco.imagem %}');">
+    <section class="ap-capitulo" data-secao="{{ bloco.secao }}" style="background-image: url('{% static bloco.imagem %}');">
         <div class="ap-capitulo-caixa">
             <h2 class="ap-capitulo-titulo">{{ bloco.titulo|safe }}</h2>
         </div>
@@ -59,8 +63,8 @@ partir do JSON #apresentacao-dados.
     saem prontos daqui; graficos e mapa o JS desenha na primeira vez que o
     passo fica ativo.
     {% endcomment %}
-    <section class="ap-trilha" data-trilha="{{ bloco.id }}">
-        <div class="ap-trilha-textos">
+    <section class="ap-trilha" data-trilha="{{ bloco.id }}" data-secao="{{ bloco.secao }}">
+        <div class="ap-trilha-textos" data-fx-sem-revelar>
             {% for passo in bloco.passos %}
             <article class="ap-passo" data-passo="{{ passo.id }}">
                 <div class="ap-passo-cartao">
@@ -72,7 +76,7 @@ partir do JSON #apresentacao-dados.
             {% endfor %}
         </div>
 
-        <div class="ap-trilha-palco" aria-live="polite">
+        <div class="ap-trilha-palco" aria-live="polite" data-fx-sem-revelar>
             {% for passo in bloco.passos %}
             <figure class="ap-visual ap-visual--{{ passo.visual }}" data-visual="{{ passo.id }}" {% if forloop.first %}data-ativo="1"{% endif %}>
 
@@ -112,6 +116,30 @@ partir do JSON #apresentacao-dados.
                         <div class="ap-quintis-eixo"><span>menor receita por habitante</span><span>maior receita por habitante</span></div>
                     </div>
 
+                {% elif passo.visual == 'descompasso' %}
+                    <div class="ap-grafico">
+                        <p class="ap-grafico-titulo">População dos dois extremos</p>
+                        <p class="ap-grafico-sub">Milhões de habitantes nos 20% de municípios com menor e com maior receita por habitante</p>
+                        {% with q1=passo.dados.q1 q5=passo.dados.q5 %}
+                        <div class="ap-desc-grupo" style="--q: var(--ap-q1);">
+                            <h4>Menor receita por habitante <small>(1º quintil)</small></h4>
+                            <div class="ap-desc-linha"><span>2000</span><b class="ap-desc-barra is-claro"><i data-valor="{{ q1.p2000|stringformat:'s' }}"></i></b><em data-mi="{{ q1.p2000|stringformat:'s' }}"></em></div>
+                            <div class="ap-desc-linha"><span>2025</span><b class="ap-desc-barra"><i data-valor="{{ q1.p2025|stringformat:'s' }}"></i></b><em data-mi="{{ q1.p2025|stringformat:'s' }}"></em></div>
+                            <span class="ap-desc-var" data-var="{{ q1.var|stringformat:'s' }}"></span>
+                        </div>
+                        <div class="ap-desc-grupo" style="--q: var(--ap-q5);">
+                            <h4>Maior receita por habitante <small>(5º quintil)</small></h4>
+                            <div class="ap-desc-linha"><span>2000</span><b class="ap-desc-barra is-claro"><i data-valor="{{ q5.p2000|stringformat:'s' }}"></i></b><em data-mi="{{ q5.p2000|stringformat:'s' }}"></em></div>
+                            <div class="ap-desc-linha"><span>2025</span><b class="ap-desc-barra"><i data-valor="{{ q5.p2025|stringformat:'s' }}"></i></b><em data-mi="{{ q5.p2025|stringformat:'s' }}"></em></div>
+                            <span class="ap-desc-var" data-var="{{ q5.var|stringformat:'s' }}"></span>
+                        </div>
+                        {% endwith %}
+                        <div class="ap-desc-insight">
+                            <strong>O descompasso.</strong> As regras de transferência, praticamente paradas há décadas,
+                            mandam menos recursos por habitante justamente para onde a população cresceu.
+                        </div>
+                    </div>
+
                 {% elif passo.visual == 'mapa' %}
                     <div class="ap-grafico ap-grafico--mapa">
                         <div class="ap-mapa-legenda" aria-hidden="true">
@@ -138,11 +166,11 @@ partir do JSON #apresentacao-dados.
 
     {% elif bloco.tipo == 'fechamento' %}
     {# ==================== FECHAMENTO ==================== #}
-    <section class="ap-fechamento">
+    <section class="ap-fechamento" data-secao="{{ bloco.secao }}">
         <div class="ap-fechamento-texto">
             <h2 class="ap-fechamento-titulo">{{ bloco.titulo|safe }}</h2>
             {% for grupo in bloco.grupos %}
-            <div class="ap-fechamento-grupo">
+            <div class="ap-fechamento-grupo" data-fx-revelar>
                 <h3>{{ grupo.titulo }}</h3>
                 <ul>{% for item in grupo.itens %}<li>{{ item }}</li>{% endfor %}</ul>
             </div>
@@ -155,7 +183,7 @@ partir do JSON #apresentacao-dados.
 {% endfor %}
 
     {# ==================== PLATAFORMA ==================== #}
-    <section class="ap-secao ap-secao--escura" id="plataforma">
+    <section class="ap-secao ap-secao--escura" id="plataforma" data-secao="Plataforma">
         <div class="ap-container">
             <p class="ap-eyebrow ap-eyebrow--claro">A plataforma</p>
             <h2 class="ap-secao-titulo">Veja os números do seu município</h2>
@@ -174,7 +202,7 @@ partir do JSON #apresentacao-dados.
             </div>
 
             <div class="ap-ferramentas">
-                <a class="ap-ferramenta" href="/analise/">
+                <a class="ap-ferramenta" data-fx-revelar href="/analise/">
                     <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_grafica.mp4' %}" type="video/mp4"></video>
                     <div class="ap-ferramenta-info">
                         <h3>Gráficos</h3>
@@ -182,7 +210,7 @@ partir do JSON #apresentacao-dados.
                         <span>Abrir gráficos &rarr;</span>
                     </div>
                 </a>
-                <a class="ap-ferramenta" href="/mapa/">
+                <a class="ap-ferramenta" data-fx-revelar href="/mapa/">
                     <img src="{% static 'ifem/images/mapa_red.png' %}" alt="" loading="lazy">
                     <div class="ap-ferramenta-info">
                         <h3>Mapa</h3>
@@ -190,7 +218,7 @@ partir do JSON #apresentacao-dados.
                         <span>Abrir mapa &rarr;</span>
                     </div>
                 </a>
-                <a class="ap-ferramenta" href="/selecionar-municipio/">
+                <a class="ap-ferramenta" data-fx-revelar href="/selecionar-municipio/">
                     <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_municipal.mp4' %}" type="video/mp4"></video>
                     <div class="ap-ferramenta-info">
                         <h3>Município</h3>
@@ -198,7 +226,7 @@ partir do JSON #apresentacao-dados.
                         <span>Escolher município &rarr;</span>
                     </div>
                 </a>
-                <a class="ap-ferramenta" href="/analise-municipal/">
+                <a class="ap-ferramenta" data-fx-revelar href="/analise-municipal/">
                     <video autoplay muted loop playsinline preload="none" aria-hidden="true"><source src="{% static 'ifem/videos/analise_agregada.mp4' %}" type="video/mp4"></video>
                     <div class="ap-ferramenta-info">
                         <h3>Agregado</h3>
@@ -211,7 +239,7 @@ partir do JSON #apresentacao-dados.
     </section>
 
     {# ==================== FAQ ==================== #}
-    <section class="ap-secao" id="faq">
+    <section class="ap-secao" id="faq" data-secao="Perguntas">
         <div class="ap-container ap-faq">
             <div>
                 <p class="ap-eyebrow">Perguntas frequentes</p>
@@ -254,13 +282,13 @@ partir do JSON #apresentacao-dados.
 
     {# ==================== NOTICIAS ==================== #}
     {% if noticias %}
-    <section class="ap-secao ap-secao--creme" id="noticias">
+    <section class="ap-secao ap-secao--creme" id="noticias" data-secao="Notícias">
         <div class="ap-container">
             <p class="ap-eyebrow">Na imprensa</p>
             <h2 class="ap-secao-titulo ap-secao-titulo--escuro">Notícias</h2>
             <div class="ap-noticias">
                 {% for noticia in noticias %}
-                <a class="ap-noticia" href="{{ noticia.link|default:'#' }}" target="_blank" rel="noopener noreferrer">
+                <a class="ap-noticia" data-fx-revelar href="{{ noticia.link|default:'#' }}" target="_blank" rel="noopener noreferrer">
                     {% if noticia.imagem_embed_url %}
                     <img src="{{ noticia.imagem_embed_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">
                     {% endif %}
@@ -290,4 +318,5 @@ partir do JSON #apresentacao-dados.
 
 {{ apresentacao_json|json_script:"apresentacao-dados" }}
 <script src="{% static 'ifem/js/inicio_folheto.js' %}"></script>
+<script src="{% static 'global/js/fx-secoes.js' %}"></script>
 {% endblock content %}

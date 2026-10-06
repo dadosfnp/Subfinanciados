@@ -254,3 +254,122 @@ def pontos_do_mapa():
             'abaixo_80_mil': sum(1 for p in doq if p[3] < 80),
         }
     return {'pontos': pontos, 'regioes': regioes, 'resumo': resumo}
+
+
+# ---------------------------------------------------------------------------
+# Módulos vindos da landing antiga (ifem/index.html)
+# ---------------------------------------------------------------------------
+def composicao_receita():
+    """Quanto da receita corrente dos municípios vem de transferências (%).
+
+    Mesma conta da view da landing antiga (home.views.index): transferências
+    correntes contra impostos + contribuições + outras receitas, somadas no país.
+    """
+    from home.models import ContaDetalhada
+
+    agg = ContaDetalhada.objects.aggregate(
+        trf=Sum('transferencias_correntes'),
+        imp=Sum('imposto_taxas_contribuicoes'),
+        con=Sum('contribuicoes'),
+        out=Sum('outras_receita'),
+    )
+    trf = agg['trf'] or 0
+    propria = (agg['imp'] or 0) + (agg['con'] or 0) + (agg['out'] or 0)
+    total = trf + propria
+    pct_trf = round(trf / total * 100) if total else 0
+    return {
+        'rotulos': ['Transferências', 'Arrecadação própria'],
+        'valores': [pct_trf, 100 - pct_trf],
+        'cores': ['#1B3A6B', '#FFC72C'],
+        'pct_transferencias': pct_trf,
+        'pct_propria': 100 - pct_trf,
+    }
+
+
+def descompasso():
+    """População do 1º e do 5º quintil em 2000 e 2025, com a variação (%)."""
+    d = populacao_por_quintil()
+
+    def var(a, b):
+        return round((b / a - 1) * 100, 1) if a else None
+
+    return {
+        'q1': {'p2000': d['pop_1q_2000'], 'p2025': d['pop_1q_2025'], 'var': var(d['pop_1q_2000'], d['pop_1q_2025'])},
+        'q5': {'p2000': d['pop_5q_2000'], 'p2025': d['pop_5q_2025'], 'var': var(d['pop_5q_2000'], d['pop_5q_2025'])},
+    }
+
+
+def receita_por_porte():
+    """Crescimento real da receita por habitante (2000 a 2025) por porte, em
+    relação ao crescimento do país (%).
+
+    Receita por habitante de cada faixa = soma da receita / soma da população,
+    em 2000 e em 2025 (valores de 2000 já corrigidos para 2025 na base). O
+    número é quanto a faixa cresceu ACIMA (+) ou ABAIXO (-) do Brasil:
+    (1 + crescimento da faixa) / (1 + crescimento do país) - 1.
+    """
+    soma = defaultdict(lambda: [0, 0, 0, 0])  # pop00, pop25, rc00, rc25
+    tot = [0, 0, 0, 0]
+    linhas = _universo().values_list(
+        'dados_2000__populacao_00', 'dados_atuais__populacao_atual', 'dados_2000__rc_00', 'dados_atuais__rc_atual'
+    )
+    for p00, p25, r00, r25 in linhas:
+        if not (p00 and p25 and r00 and r25):
+            continue
+        for ini, fim, nome in _FAIXAS_PORTE:
+            if ini <= p25 < fim:
+                for i, v in enumerate((p00, p25, r00, r25)):
+                    soma[nome][i] += v
+                    tot[i] += v
+                break
+    if not tot[0]:
+        return {'rotulos': [], 'valores': []}
+    cresc_pais = (tot[3] / tot[1]) / (tot[2] / tot[0])
+    valores = []
+    for _, _, nome in _FAIXAS_PORTE:
+        p00, p25, r00, r25 = soma[nome]
+        valores.append(round(((r25 / p25) / (r00 / p00) / cresc_pais - 1) * 100, 1) if p00 and p25 and r00 else None)
+    return {'rotulos': [n for _, _, n in _FAIXAS_PORTE], 'valores': valores, 'unidade': '%'}
+
+
+def participacao_80_mil():
+    """Parcela da população em municípios acima e abaixo de 80 mil habitantes, 2000 e 2025.
+
+    O corte usa a população de cada ano: um município que passou de 80 mil
+    entre 2000 e 2025 muda de grupo, que é justamente o movimento retratado.
+    """
+    acima = {'2000': 0, '2025': 0}
+    total = {'2000': 0, '2025': 0}
+    for p00, p25 in Municipio.objects.values_list('dados_2000__populacao_00', 'dados_atuais__populacao_atual'):
+        for ano, p in (('2000', p00), ('2025', p25)):
+            if not p:
+                continue
+            total[ano] += p
+            if p > 80_000:
+                acima[ano] += p
+    pct = {ano: round(acima[ano] / total[ano] * 100, 1) if total[ano] else 0 for ano in total}
+    return {
+        'rotulos': ['2000', '2025'],
+        'series': [
+            {'nome': 'Acima de 80 mil habitantes', 'valores': [pct['2000'], pct['2025']], 'cor': '#122747'},
+            {'nome': 'Até 80 mil habitantes', 'valores': [round(100 - pct['2000'], 1), round(100 - pct['2025'], 1)], 'cor': '#EEAF19'},
+        ],
+        'acima_2000': pct['2000'],
+        'acima_2025': pct['2025'],
+    }
+
+
+def medias_decis():
+    """Receita média por habitante de cada decil (para o passo "ordenar para entender")."""
+    linhas = dict(
+        _universo().values_list('dados_atuais__decil_atual').annotate(m=Avg('dados_atuais__rc_atual_pc'))
+    )
+
+    def chave(nome):
+        try:
+            return int(str(nome).split('º')[0])
+        except (TypeError, ValueError):
+            return 99
+
+    ordem = sorted(linhas, key=chave)
+    return [{'decil': d, 'media': round(linhas[d] or 0)} for d in ordem if chave(d) <= 10]
