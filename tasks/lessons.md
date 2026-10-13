@@ -21,6 +21,16 @@ substituição e ele vazou de novo no rodapé da preview de Gráficos. Antes de
 entregar qualquer template, conferir o HTML renderizado:
 `curl -s <url> | grep -c "{#"` precisa dar 0.
 
+**Terceira vez (13/out/2026), em produção:** os templates públicos do Agregado e
+do Município tinham `{# #}` de várias linhas desde antes das previews, e o texto
+aparecia no rodapé. Eu tinha visto num screenshot e não reportei.
+
+**Regra definitiva:** o check `ifem.E001` (home/checks.py) barra qualquer `{# #}`
+multilinha no `manage.py check` e no `migrate` do deploy (o deploy aborta antes
+de trocar o container). Além disso, antes de entregar, varrer o
+`document.body.innerText` de todas as páginas tocadas atrás de `{#`, `{%`, `{{`.
+Viu defeito em print, mesmo fora do escopo: avisar na hora.
+
 ### `runserver --noreload` não recarrega templates
 **Erro:** duas rodadas de correção "sem efeito" porque o servidor servia os
 templates carregados no boot.
