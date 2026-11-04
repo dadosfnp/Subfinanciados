@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 from home import views as home_views
+from home import api_sistema as home_api_sistema
 from detail_mun import views as detail_mun_views
 from detail_agg import views as detail_agg_views
 from map import views as map_views
@@ -51,6 +52,10 @@ urlpatterns = [
     ),
     # Landing em formato de apresentacao (scrollytelling), modulos em ifem/apresentacao.py.
     path('preview/inicio/', ifem_views.inicio_preview, name='inicio_folheto'),
+
+    # --- API: SISTEMA FNP (leitura com token, home/api_sistema.py) ---
+    path('api/sistema-fnp/indicadores-municipais/', home_api_sistema.indicadores_municipais,
+         name='api_sistema_indicadores_municipais'),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),
