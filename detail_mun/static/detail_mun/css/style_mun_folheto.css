@@ -667,6 +667,62 @@ html, body {
   margin-top: 10px;
 }
 
+/* Valor + tag do quintil na mesma linha; quebra para baixo se nao couber. */
+.fx-hero-valor-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+/* Tag do quintil oficial. Cor do proprio quintil (1 vermelho ... 5 verde),
+   com fundo tingido para destacar sem competir com o valor em amarelo. */
+.fx-tag-quintil {
+  --q: var(--fx-q0);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--q);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--q) 18%, transparent);
+  color: #ffffff;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.fx-tag-quintil-num {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fx-tag-quintil-sub {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--q);
+}
+
+/* Variantes claras (mesmas do `escuro` no JS): legiveis sobre o azul. */
+.fx-tag-q1 { --q: #FF6B66; }
+.fx-tag-q2 { --q: #FF9F5A; }
+.fx-tag-q3 { --q: #F4D01D; }
+.fx-tag-q4 { --q: #7FD48A; }
+.fx-tag-q5 { --q: #3DCB73; }
+
+/* Habitantes: o divisor da receita, entao ganha peso proprio na frase. */
+.fx-hero-pop {
+  font-size: 1.4em;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Régua de quintis: onde o município cai na distribuição nacional.
    Mesmo gradiente das barras da tabela, então a leitura de cor aprendida
    aqui vale para a página inteira. */
@@ -729,9 +785,23 @@ html, body {
 
 /* As posicoes sao os numeros da frase: brancos, maiores, tabulares para nao
    "pular" de largura quando a base muda. */
+/* A leitura que explica a distancia entre as duas posicoes: menor e mais
+   apagada que a frase, como nota editorial. */
+.fx-pos-leitura {
+  display: block;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.62em;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--fx-blue-light);
+}
+
+/* Cor do quintil da posicao vem inline do JS (corPorPercentil().escuro). */
 .fx-pos-num {
-  font-size: 1.3em;
-  font-weight: 700;
+  font-size: 1.45em;
+  font-weight: 800;
   letter-spacing: -0.01em;
   color: #ffffff;
   font-variant-numeric: tabular-nums;

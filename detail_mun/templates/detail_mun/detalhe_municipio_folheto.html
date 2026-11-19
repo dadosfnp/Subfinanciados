@@ -102,7 +102,21 @@ O QUE MUDA em relacao a pagina publica:
 
                     {# A comparacao e montada no JS: o texto muda com a base escolhida. #}
                     <p class="fx-hero-veredito" id="fx-veredito">
-                        <span class="fx-hero-destaque fx-hero-destaque--grande" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
+                        <span class="fx-hero-valor-linha">
+                            <span class="fx-hero-destaque fx-hero-destaque--grande" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
+                            {% comment %}
+                            Quintil oficial do IFEM (nacional, fixo): vira tag ao lado do
+                            numero em vez de frase no fim do paragrafo, onde se perdia.
+                            O banco grava "4º quintil"; o primeiro caractere e o numero.
+                            {% endcomment %}
+                            {% if municipio.quintil24 %}
+                            <span class="fx-tag-quintil fx-tag-q{{ municipio.quintil24|slice:':1' }}"
+                                  title="Quintis do IFEM: o 1º reúne os 20% de municípios com menor receita corrente per capita; o 5º, os 20% com maior.">
+                                <span class="fx-tag-quintil-num">{{ municipio.quintil24 }}</span>
+                                <span class="fx-tag-quintil-sub">IFEM</span>
+                            </span>
+                            {% endif %}
+                        </span>
                         <span class="fx-hero-rotulo">por habitante em receita corrente.</span>
                         <span class="fx-hero-comparacao" id="fx-veredito-texto"></span>
                     </p>
@@ -133,9 +147,9 @@ O QUE MUDA em relacao a pagina publica:
                 <div class="fx-hero-posicao">
                     <p class="fx-eyebrow" id="fx-posicao-titulo">Posição no Brasil</p>
                     <p class="fx-hero-posicao-texto" id="fx-posicao-texto">
-                        {{ municipio.name_muni }} está em
+                        Em receita corrente per capita, {{ municipio.name_muni }} ocupa o
                         <strong class="fx-pos-num">{{ municipio.rank_nacional|br_integer }}º</strong>
-                        de {{ municipio.total_nacional|br_integer }} em receita por habitante.
+                        lugar entre {{ municipio.total_nacional|br_integer }} municípios.
                     </p>
                 </div>
             </div>
