@@ -33,3 +33,5 @@ staticfiles/
 
 # Contexto Gemini
 GEMINI.md
+# Malha da animacao da landing (gerada por export_malha_inicio.py)
+!ifem/static/ifem/dados/*.json

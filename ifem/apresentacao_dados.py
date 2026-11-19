@@ -122,7 +122,23 @@ _FAIXAS_PORTE = [
 ]
 
 
-def crescimento_por_porte():
+# Faixas da landing animada (/preview/inicio-animado/). Comecam no corte de
+# 80 mil habitantes, o de "cidade grande" no resto do IFEM. Com 80 a 200 mil
+# (escolha da equipe, out/2026), a receita por habitante dessa faixa cresce
+# mais que a de 30 a 80 mil: a queda por porte nao e continua a partir de 30
+# mil. So 80 a 500 mil numa faixa unica mantinha essa ordem.
+_FAIXAS_PORTE_ANIMACAO = [
+    (0, 5_000, 'Até 5 mil'),
+    (5_000, 10_000, '5 a 10 mil'),
+    (10_000, 30_000, '10 a 30 mil'),
+    (30_000, 80_000, '30 a 80 mil'),
+    (80_000, 200_000, '80 a 200 mil'),
+    (200_000, 500_000, '200 a 500 mil'),
+    (500_000, 10 ** 10, 'Acima de 500 mil'),
+]
+
+
+def crescimento_por_porte(faixas=_FAIXAS_PORTE):
     """Crescimento da população 2000 a 2025 por faixa de porte (população de 2025).
 
     Taxa do agregado (soma de 2025 / soma de 2000 - 1), não a média das taxas
@@ -133,16 +149,16 @@ def crescimento_por_porte():
     for p00, p25 in _universo().values_list('dados_2000__populacao_00', 'dados_atuais__populacao_atual'):
         if not p00 or not p25:
             continue
-        for ini, fim, nome in _FAIXAS_PORTE:
+        for ini, fim, nome in faixas:
             if ini <= p25 < fim:
                 soma[nome][0] += p00
                 soma[nome][1] += p25
                 break
     valores = []
-    for _, _, nome in _FAIXAS_PORTE:
+    for _, _, nome in faixas:
         p00, p25 = soma[nome]
         valores.append(round((p25 / p00 - 1) * 100, 1) if p00 else None)
-    return {'rotulos': [n for _, _, n in _FAIXAS_PORTE], 'valores': valores, 'unidade': '%'}
+    return {'rotulos': [n for _, _, n in faixas], 'valores': valores, 'unidade': '%'}
 
 
 def capag_por_quintil():
@@ -299,7 +315,7 @@ def descompasso():
     }
 
 
-def receita_por_porte():
+def receita_por_porte(faixas=_FAIXAS_PORTE):
     """Crescimento real da receita por habitante (2000 a 2025) por porte, em
     relação ao crescimento do país (%).
 
@@ -316,7 +332,7 @@ def receita_por_porte():
     for p00, p25, r00, r25 in linhas:
         if not (p00 and p25 and r00 and r25):
             continue
-        for ini, fim, nome in _FAIXAS_PORTE:
+        for ini, fim, nome in faixas:
             if ini <= p25 < fim:
                 for i, v in enumerate((p00, p25, r00, r25)):
                     soma[nome][i] += v
@@ -326,10 +342,10 @@ def receita_por_porte():
         return {'rotulos': [], 'valores': []}
     cresc_pais = (tot[3] / tot[1]) / (tot[2] / tot[0])
     valores = []
-    for _, _, nome in _FAIXAS_PORTE:
+    for _, _, nome in faixas:
         p00, p25, r00, r25 = soma[nome]
         valores.append(round(((r25 / p25) / (r00 / p00) / cresc_pais - 1) * 100, 1) if p00 and p25 and r00 else None)
-    return {'rotulos': [n for _, _, n in _FAIXAS_PORTE], 'valores': valores, 'unidade': '%'}
+    return {'rotulos': [n for _, _, n in faixas], 'valores': valores, 'unidade': '%'}
 
 
 def participacao_80_mil():
@@ -373,3 +389,112 @@ def medias_decis():
 
     ordem = sorted(linhas, key=chave)
     return [{'decil': d, 'media': round(linhas[d] or 0)} for d in ordem if chave(d) <= 10]
+
+
+# ---------------------------------------------------------------------------
+# Landing animada (/preview/inicio-animado/)
+# ---------------------------------------------------------------------------
+def _num_quintil(valor):
+    """'1º quintil' -> 1. Sem quintil -> 0."""
+    try:
+        return int(str(valor)[0])
+    except (TypeError, ValueError):
+        return 0
+
+
+_LIMITE_GRANDES = 80000
+
+
+def municipios_animacao():
+    """Um registro por município do país, para a animação mapa > grade > barras.
+
+    Cada linha: [cod_ibge, lon, lat, receita por hab. 2025, quintil 2025,
+    população 2025, quintil 2000, população 2000, parcela das transferências
+    na receita corrente (0 a 1, ou None)]. Quintil 0 = fora do universo
+    daquele ano (sem receita corrente informada), com as mesmas regras de
+    `populacao_por_quintil`: as barras desenhadas no navegador somam os mesmos
+    totais do texto e da página de Gráficos.
+
+    Também leva os números dos passos finais: crescimento por porte, origem
+    da receita e a simulação do FPM.
+    """
+    from home.models import ContaDetalhada
+
+    transf = {}
+    for cod, trf, imp, con, out in ContaDetalhada.objects.values_list(
+        'municipio__cod_ibge', 'transferencias_correntes', 'imposto_taxas_contribuicoes',
+        'contribuicoes', 'outras_receita',
+    ):
+        total = (trf or 0) + (imp or 0) + (con or 0) + (out or 0)
+        if total > 0:
+            transf[str(cod)] = round((trf or 0) / total, 3)
+
+    linhas = Municipio.objects.values_list(
+        'cod_ibge', 'coordx', 'coordy',
+        'dados_atuais__rc_atual', 'dados_atuais__rc_atual_pc', 'dados_atuais__quintil_atual',
+        'dados_atuais__populacao_atual',
+        'dados_2000__rc_00', 'dados_2000__quintil_00', 'dados_2000__populacao_00',
+    )
+    municipios = []
+    for cod, x, y, rc25, rc25_pc, q25, p25, rc00, q00, p00 in linhas:
+        q25 = _num_quintil(q25) if rc25 and rc25 > 0 else 0
+        q00 = _num_quintil(q00) if rc00 and rc00 > 0 else 0
+        municipios.append([
+            str(cod),
+            round(x, 3) if x is not None else None,
+            round(y, 3) if y is not None else None,
+            round(rc25_pc, 2) if q25 and rc25_pc is not None else None,
+            q25, p25 or 0, q00, p00 or 0,
+            transf.get(str(cod)) if q25 else None,
+        ])
+
+    # Crescimento da população do país, no mesmo universo de crescimento_por_porte.
+    p00_tot = p25_tot = 0
+    for p00, p25 in _universo().values_list('dados_2000__populacao_00', 'dados_atuais__populacao_atual'):
+        if p00 and p25:
+            p00_tot += p00
+            p25_tot += p25
+
+    com_transf = [m[8] for m in municipios if m[8] is not None]
+    total = len(municipios)
+    declarantes = sum(1 for m in municipios if m[4])
+
+    # Passos de abertura: as cidades com mais de 80 mil habitantes em 2025 (o
+    # mesmo corte "acima de 80 mil" dos filtros) e quanto da população vive nelas.
+    pop_total = sum(m[5] for m in municipios)
+    pop_grandes = sum(m[5] for m in municipios if m[5] > _LIMITE_GRANDES)
+    n_grandes = sum(1 for m in municipios if m[5] > _LIMITE_GRANDES)
+    # Quantas delas caem em cada quintil de 2025 (índice 0 = sem receita declarada).
+    grandes_quintil = [0] * 6
+    for m in municipios:
+        if m[5] > _LIMITE_GRANDES:
+            grandes_quintil[m[4]] += 1
+    return {
+        'municipios': municipios,
+        'total': total,
+        'declarantes': declarantes,
+        'pct_declarantes': round(declarantes / total * 100, 1) if total else 0,
+        'grandes': {
+            'limite': _LIMITE_GRANDES,
+            'n': n_grandes,
+            'pct_municipios': round(n_grandes / total * 100, 1) if total else 0,
+            'populacao': pop_grandes,
+            'populacao_total': pop_total,
+            'pct_populacao': round(pop_grandes / pop_total * 100, 1) if pop_total else 0,
+            'por_quintil': grandes_quintil,
+        },
+        'quintis': resumo_quintis(),
+        'populacao': populacao_por_quintil(),
+        'porte': {
+            # Limites das faixas, para o navegador agrupar os municípios igual.
+            'limites': [[ini, fim] for ini, fim, _ in _FAIXAS_PORTE_ANIMACAO],
+            'rotulos': [nome for _, _, nome in _FAIXAS_PORTE_ANIMACAO],
+            'populacao': crescimento_por_porte(_FAIXAS_PORTE_ANIMACAO)['valores'],
+            'receita': receita_por_porte(_FAIXAS_PORTE_ANIMACAO)['valores'],
+            'populacao_brasil': round((p25_tot / p00_tot - 1) * 100, 1) if p00_tot else None,
+        },
+        'composicao': composicao_receita(),
+        'transf_maioria': sum(1 for v in com_transf if v > 0.5),
+        'transf_total': len(com_transf),
+        'fpm': fpm_mais_50_bi(),
+    }

@@ -52,6 +52,8 @@ urlpatterns = [
     ),
     # Landing em formato de apresentacao (scrollytelling), modulos em ifem/apresentacao.py.
     path('preview/inicio/', ifem_views.inicio_preview, name='inicio_folheto'),
+    # Landing animada: mapa > grade > quintis > populacao, guiada pelo scroll.
+    path('preview/inicio-animado/', ifem_views.inicio_animado_preview, name='inicio_animado'),
 
     # --- API: SISTEMA FNP (leitura com token, home/api_sistema.py) ---
     path('api/sistema-fnp/indicadores-municipais/', home_api_sistema.indicadores_municipais,
