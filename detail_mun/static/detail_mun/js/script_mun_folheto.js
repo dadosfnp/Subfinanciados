@@ -23,14 +23,16 @@
   // do script_mun.js. `txt` é a variante escurecida para texto: no papel o
   // número sai na cor da barra, mas amarelo e verde-claro sobre branco ficam
   // em ~2:1 de contraste. Ver o topo de style_mun_folheto.css.
+  // `escuro` é a variante clara para texto sobre o azul do hero: o vermelho e
+  // o verde de barra (#A81C21, #1C9148) somem nesse fundo.
   var QUINTIS = [
-    { bar: '#A81C21', txt: '#A81C21' }, // 1 — supera até 20%
-    { bar: '#E47326', txt: '#B0530E' }, // 2 — até 40%
-    { bar: '#F4D01D', txt: '#8A6A00' }, // 3 — até 60%
-    { bar: '#6AC074', txt: '#2E7D45' }, // 4 — até 80%
-    { bar: '#1C9148', txt: '#167A3C' }  // 5 — acima de 80%
+    { bar: '#A81C21', txt: '#A81C21', escuro: '#FF6B66' }, // 1 — supera até 20%
+    { bar: '#E47326', txt: '#B0530E', escuro: '#FF9F5A' }, // 2 — até 40%
+    { bar: '#F4D01D', txt: '#8A6A00', escuro: '#F4D01D' }, // 3 — até 60%
+    { bar: '#6AC074', txt: '#2E7D45', escuro: '#7FD48A' }, // 4 — até 80%
+    { bar: '#1C9148', txt: '#167A3C', escuro: '#3DCB73' }  // 5 — acima de 80%
   ];
-  var SEM_DADO = { bar: '#B9BFC7', txt: '#6B7280' };
+  var SEM_DADO = { bar: '#B9BFC7', txt: '#6B7280', escuro: '#AABBCC' };
 
   /**
    * Converte um percentil (0–100) no par de cores do quintil.
@@ -71,9 +73,9 @@
   if (!DADOS) return;
 
   var ESCOPO = {
-    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', onde: 'no país', titulo: 'Posição no Brasil' },
-    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', onde: 'em ' + (DADOS.uf || '').toUpperCase(), titulo: 'Posição em ' + (DADOS.uf || '').toUpperCase() },
-    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', onde: 'no porte', titulo: 'Posição entre os de mesmo porte' }
+    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', onde: 'no país', lista: 'municípios do país', titulo: 'Posição no Brasil' },
+    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', onde: 'em ' + (DADOS.uf || '').toUpperCase(), lista: 'municípios de ' + (DADOS.uf || '').toUpperCase(), titulo: 'Posição em ' + (DADOS.uf || '').toUpperCase() },
+    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', onde: 'no porte', lista: 'municípios do mesmo porte', titulo: 'Posição entre os de mesmo porte' }
   };
 
   var baseAtual = 'nacional';
@@ -190,22 +192,16 @@
     if (elVeredValor) elVeredValor.textContent = reais(DADOS.receita.pc);
 
     if (elVeredito) {
-      // Habitantes entram na frase, no lugar do card que ficava a direita.
-      var trechoPop = DADOS.populacao
-        ? ' e tem <strong>' + fmtInt.format(DADOS.populacao) + '</strong> habitantes'
-        : '';
-      // O quintil e o oficial do IFEM (nacional), qualquer que seja a base:
-      // e a classificacao que o municipio tem no resto da plataforma. Fica em
-      // frase propria para a primeira nao virar uma lista de tres clausulas.
-      var quintil = parseInt(DADOS.quintil, 10);
-      var fraseQuintil = quintil >= 1 && quintil <= 5
-        ? ' Faz parte do <strong>' + quintil + 'º quintil</strong> de subfinanciamento.'
-        : '';
-      var fraseComparacao = temDado
-        ? 'Arrecada mais que <strong style="color:' + cor.bar + '">' + Math.round(pct) + '%</strong> ' +
-          esc.frase + trechoPop + '.'
+      // A populacao abre a frase porque e o divisor da receita: o leitor ve
+      // quanta gente o valor precisa atender antes de ver a comparacao.
+      // O quintil saiu daqui e virou tag ao lado do valor (template).
+      var abertura = DADOS.populacao
+        ? 'São <span class="fx-hero-pop">' + fmtInt.format(DADOS.populacao) + '</span> habitantes para atender, com uma receita per capita'
+        : 'Tem uma receita per capita';
+      elVeredito.innerHTML = temDado
+        ? abertura + ' maior que a de <strong style="color:' + cor.escuro + '">' +
+          Math.round(pct) + '%</strong> ' + esc.frase + '.'
         : '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
-      elVeredito.innerHTML = fraseComparacao + fraseQuintil;
     }
 
     // Leitura da linha "Receita corrente" na tabela: mesma base do hero.
@@ -230,37 +226,72 @@
   }
 
   /**
-   * Frase de posicao do lado direito do hero, na base ativa:
-   *   "São Paulo está em 1.866º de 5.479 em receita por habitante,
-   *    mas em população vai para 1º de 5.479!"
+   * Percentil de uma posicao no ranking pela regra oficial do IFEM
+   * (ver percentilGeral): posicao 1 ~ 100, ultima ~ 0.
+   */
+  function percentilDaPosicao(r) {
+    if (!r || !r.pos || !r.total) return null;
+    return (r.total - r.pos) / r.total * 100;
+  }
+
+  /**
+   * Frase de posicao do lado direito do hero, na base ativa. Duas posicoes
+   * (receita corrente per capita e porte populacional), cada numero na cor do
+   * quintil em que a posicao cai, e uma leitura final que explica a distancia
+   * entre elas na linguagem do IFEM:
    *
-   * O "mas ... !" so aparece quando as duas posicoes contam historias
-   * diferentes (distancia de pelo menos 1/4 do ranking). Entre 10º e 12º o
-   * contraste seria forcado, entao a frase vira "e em população está em".
+   *  - populacao bem a frente da receita: o descompasso que o indice mede
+   *    (muita demanda, pouca receita por habitante);
+   *  - receita bem a frente da populacao: o caso inverso;
+   *  - posicoes proximas: as duas caminham juntas.
+   *
+   * "Bem a frente" = distancia de pelo menos 1/4 do ranking; abaixo disso o
+   * contraste seria forcado.
    *
    * @param {Object} esc - entrada de ESCOPO da base ativa.
-   * @returns {string} HTML da frase; nomes vem do JSON e sao escapados.
+   * @returns {string} HTML da frase; o nome vem do JSON e e escapado.
    */
   function frasePosicao(esc) {
     var rRec = (DADOS.rank || {})[baseAtual] || {};
     var rPop = (DADOS.rank_populacao || {})[baseAtual] || {};
-    var nome = escaparHtml(DADOS.nome || 'O município');
+    var nome = escaparHtml(DADOS.nome || 'o município');
 
-    function pos(r) {
-      return '<strong class="fx-pos-num">' + fmtInt.format(r.pos) + 'º</strong>' +
-        (r.total ? ' de ' + fmtInt.format(r.total) : '');
+    function pos(r, pct) {
+      var cor = corPorPercentil(pct);
+      return '<strong class="fx-pos-num" style="color:' + cor.escuro + '">' + fmtInt.format(r.pos) + 'º</strong>';
     }
 
     if (!rRec.pos) return 'Sem ranking de receita disponível ' + esc.onde + '.';
 
-    var frase = nome + ' está em ' + pos(rRec) + ' em receita por habitante';
-    if (!rPop.pos) return frase + '.';
+    // Na base nacional a receita usa o percentil oficial gravado na base, o
+    // mesmo da regua; nas outras, a conta pela posicao.
+    var pctRec = baseAtual === 'nacional' && DADOS.percentil_nacional != null
+      ? DADOS.percentil_nacional
+      : percentilDaPosicao(rRec);
+
+    var frase = 'Em receita corrente per capita, ' + nome + ' ocupa o ' + pos(rRec, pctRec) +
+      ' lugar entre ' + fmtInt.format(rRec.total) + ' ' + esc.lista + '.';
+    if (!rPop.pos) return frase;
 
     var total = rRec.total || rPop.total || 0;
-    var contraste = total && Math.abs(rRec.pos - rPop.pos) / total >= 0.25;
-    return frase + (contraste
-      ? ', mas em população vai para ' + pos(rPop) + '!'
-      : ' e em população está em ' + pos(rPop) + '.');
+    var distancia = total ? (rRec.pos - rPop.pos) / total : 0;
+    var posPop = pos(rPop, percentilDaPosicao(rPop));
+    var dePop = ' de ' + fmtInt.format(rPop.total);
+
+    if (distancia >= 0.25) {
+      return frase + ' Em porte populacional, salta para o ' + posPop + dePop + '.' +
+        '<span class="fx-pos-leitura">A distância entre as duas posições expõe o descompasso que o IFEM mede: ' +
+        'a demanda por serviços públicos cresce com a população, mas a capacidade de financiamento ' +
+        'por habitante não acompanha.</span>';
+    }
+    if (distancia <= -0.25) {
+      return frase + ' Em porte populacional, fica no ' + posPop + dePop + '.' +
+        '<span class="fx-pos-leitura">O inverso do subfinanciamento: uma base populacional menor concentra ' +
+        'mais receita corrente por habitante e amplia a capacidade de financiar os serviços públicos.</span>';
+    }
+    return frase + ' Em porte populacional, está no ' + posPop + dePop + '.' +
+      '<span class="fx-pos-leitura">As duas posições caminham juntas: a capacidade de financiamento ' +
+      'por habitante acompanha o porte do município.</span>';
   }
 
   function escaparHtml(texto) {
