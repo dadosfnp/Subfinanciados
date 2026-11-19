@@ -71,9 +71,9 @@
   if (!DADOS) return;
 
   var ESCOPO = {
-    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', posicao: 'Posição no Brasil', grupo: 'Brasil' },
-    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', posicao: 'Posição em ' + (DADOS.uf || '').toUpperCase(), grupo: (DADOS.uf || '').toUpperCase() },
-    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', posicao: 'Posição no porte', grupo: 'mesmo porte' }
+    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', onde: 'no país', grupo: 'Brasil' },
+    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', onde: 'em ' + (DADOS.uf || '').toUpperCase(), grupo: (DADOS.uf || '').toUpperCase() },
+    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', onde: 'no porte', grupo: 'mesmo porte' }
   };
 
   var baseAtual = 'nacional';
@@ -154,9 +154,10 @@
   var elVeredito = document.getElementById('fx-veredito-texto');
   var elVeredValor = document.getElementById('fx-veredito-valor');
   var elMarcador = document.getElementById('fx-regua-marcador');
-  var elRankLabel = document.getElementById('fx-rank-label');
   var elRankValor = document.getElementById('fx-rank-valor');
   var elRankSub = document.getElementById('fx-rank-sub');
+  var elRankPopValor = document.getElementById('fx-rank-pop-valor');
+  var elRankPopDe = document.getElementById('fx-rank-pop-de');
   var elCrescSub = document.getElementById('fx-cresc-sub');
   var elHeadEscopo = document.getElementById('fx-head-escopo');
   var elComoLerEscopo = document.getElementById('fx-como-ler-escopo');
@@ -191,13 +192,18 @@
     if (elVeredValor) elVeredValor.textContent = reais(DADOS.receita.pc);
 
     if (elVeredito) {
+      // O quintil e o oficial do IFEM (nacional), qualquer que seja a base:
+      // e a classificacao que o municipio tem no resto da plataforma.
+      var quintil = parseInt(DADOS.quintil, 10);
+      var trechoQuintil = quintil >= 1 && quintil <= 5
+        ? ' e faz parte do <strong>' + quintil + 'º quintil</strong> de subfinanciamento'
+        : '';
       if (temDado) {
-        var n = Math.round(pct);
-        elVeredito.innerHTML = 'por habitante em receita corrente. Arrecada mais que ' +
-          '<strong style="color:' + cor.bar + '">' + n + '%</strong> ' + esc.frase +
-          ' <span class="fx-veredito-inverso">e menos que os outros ' + (100 - n) + '%</span>.';
+        elVeredito.innerHTML = 'Arrecada mais que ' +
+          '<strong style="color:' + cor.bar + '">' + Math.round(pct) + '%</strong> ' + esc.frase +
+          trechoQuintil + '.';
       } else {
-        elVeredito.innerHTML = 'por habitante em receita corrente. <span style="opacity:.7">Sem dado comparativo para esta base.</span>';
+        elVeredito.innerHTML = '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
       }
     }
 
@@ -211,10 +217,13 @@
       q.classList.toggle('is-ativo', Number(q.getAttribute('data-q')) === quintilAtivo);
     });
 
-    var r = (DADOS.rank || {})[baseAtual];
-    if (elRankLabel) elRankLabel.textContent = esc.posicao;
-    if (elRankValor) elRankValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : 'n/d';
-    if (elRankSub) elRankSub.textContent = r && r.total ? 'de ' + fmtInt.format(r.total) + ' municípios' : 'sem ranking disponível';
+    /** "1.866º" no valor e " de 5.479 no país" em letra menor ao lado. */
+    function ranking(elValor, elDe, r) {
+      if (elValor) elValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : 'n/d';
+      if (elDe) elDe.textContent = r && r.pos && r.total ? ' de ' + fmtInt.format(r.total) + ' ' + esc.onde : '';
+    }
+    ranking(elRankValor, elRankSub, (DADOS.rank || {})[baseAtual]);
+    ranking(elRankPopValor, elRankPopDe, (DADOS.rank_populacao || {})[baseAtual]);
 
     if (elCrescSub) {
       var c = DADOS.crescimento || {};
