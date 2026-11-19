@@ -86,16 +86,6 @@ O QUE MUDA em relacao a pagina publica:
                 </div>
             </div>
 
-            <button type="button" class="fx-btn-baixar" id="fx-baixar"
-                    title="Abre a caixa de impressao do navegador; escolha &quot;Salvar como PDF&quot;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Baixar</span>
-            </button>
         </div>
         {# Trilho anterior / atual / proxima: montado pelo global/js/fx-secoes.js. #}
         <div data-fx-secoes-barra></div>
@@ -109,10 +99,11 @@ O QUE MUDA em relacao a pagina publica:
                     <p class="fx-eyebrow">Perfil fiscal · 2025</p>
                     <h1 class="fx-hero-nome">{{ municipio.name_muni_uf }}</h1>
 
-                    {# Montado no JS: o texto muda com a base escolhida. #}
+                    {# A comparacao e montada no JS: o texto muda com a base escolhida. #}
                     <p class="fx-hero-veredito" id="fx-veredito">
-                        <span class="fx-hero-destaque" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
-                        <span id="fx-veredito-texto">por habitante em receita corrente.</span>
+                        <span class="fx-hero-destaque fx-hero-destaque--grande" id="fx-veredito-valor">R$ {{ municipio.rc_24_pc|br_integer }}</span>
+                        <span class="fx-hero-rotulo">por habitante em receita corrente.</span>
+                        <span class="fx-hero-comparacao" id="fx-veredito-texto"></span>
                     </p>
 
                     <div class="fx-regua">
@@ -148,21 +139,27 @@ O QUE MUDA em relacao a pagina publica:
                         {% endif %}
                     </div>
 
+                    {# Os dois rankings seguem a base escolhida em "Comparar com" (script_mun_folheto.js). #}
                     <div class="fx-stat">
-                        <span class="fx-stat-label" id="fx-rank-label">Posição no Brasil</span>
-                        <span class="fx-stat-valor" id="fx-rank-valor">&nbsp;</span>
-                        <span class="fx-stat-sub" id="fx-rank-sub">em receita por habitante</span>
+                        <span class="fx-stat-label">Ranking populacional</span>
+                        <span class="fx-stat-valor">
+                            <span id="fx-rank-pop-valor">&nbsp;</span><span class="fx-stat-de" id="fx-rank-pop-de"></span>
+                        </span>
                     </div>
 
-                    {% if evolucao_historica.has_2000_data %}
                     <div class="fx-stat">
-                        <span class="fx-stat-label">Crescimento da receita desde 2000</span>
+                        <span class="fx-stat-label">Ranking de receita</span>
                         <span class="fx-stat-valor">
-                            {% if evolucao_historica.delta_rc_pc >= 0 %}+{% endif %}{{ evolucao_historica.delta_rc_pc|br_float }}%
+                            <span id="fx-rank-valor">&nbsp;</span><span class="fx-stat-de" id="fx-rank-sub"></span>
                         </span>
-                        <span class="fx-stat-sub" id="fx-cresc-sub">&nbsp;</span>
+                        {% if evolucao_historica.has_2000_data %}
+                        <span class="fx-stat-sub {% if evolucao_historica.delta_rc_pc >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
+                            {% if evolucao_historica.delta_rc_pc >= 0 %}&#9650;{% else %}&#9660;{% endif %}
+                            {{ evolucao_historica.delta_rc_pc|br_float }}% desde 2000
+                        </span>
+                        <span class="fx-stat-sub fx-stat-sub--junto" id="fx-cresc-sub">&nbsp;</span>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -424,7 +421,7 @@ O QUE MUDA em relacao a pagina publica:
 
     {# ==================== SAUDE FISCAL E RISCOS CLIMATICOS ==================== #}
     {% if saude_fiscal_data or adapta_brasil_data %}
-    <section class="fx-faixa fx-faixa--creme" data-secao="Saúde Fiscal e Riscos">
+    <section class="fx-faixa fx-faixa--creme" data-secao="Saúde Fiscal e Riscos Climáticos">
         <div class="fx-container">
             <div class="fx-secao-head">
                 <p class="fx-eyebrow">Contas e riscos</p>
@@ -539,10 +536,16 @@ atual em /api/distribuicao/ em vez de receber 9,9 MB no HTML.
     "nome": "{{ municipio.name_muni|escapejs }}",
     "uf": "{{ municipio.uf|escapejs }}",
     "percentil_nacional": {{ municipio.percentil24_n|default_if_none:"null" }},
+    "quintil": "{{ municipio.quintil24|default_if_none:''|escapejs }}",
     "rank": {
         "nacional": {"pos": {{ municipio.rank_nacional|default_if_none:"null" }}, "total": {{ municipio.total_nacional|default_if_none:"null" }}},
         "estadual": {"pos": {{ municipio.rank_estadual|default_if_none:"null" }}, "total": {{ municipio.total_estadual|default_if_none:"null" }}},
         "faixa":    {"pos": {{ municipio.rank_faixa|default_if_none:"null" }},    "total": {{ municipio.total_faixa|default_if_none:"null" }}}
+    },
+    "rank_populacao": {
+        "nacional": {"pos": {{ municipio.populacao24_rank_nacional|default_if_none:"null" }}, "total": {{ municipio.populacao24_total_nacional|default_if_none:"null" }}},
+        "estadual": {"pos": {{ municipio.populacao24_rank_estadual|default_if_none:"null" }}, "total": {{ municipio.populacao24_total_estadual|default_if_none:"null" }}},
+        "faixa":    {"pos": {{ municipio.populacao24_rank_faixa|default_if_none:"null" }},    "total": {{ municipio.populacao24_total_faixa|default_if_none:"null" }}}
     },
     "receita": {
         "pc": {{ municipio.rc_24_pc|default_if_none:"null" }},

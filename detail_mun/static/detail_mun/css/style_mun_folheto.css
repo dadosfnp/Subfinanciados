@@ -596,6 +596,27 @@ html, body {
   margin-bottom: 2px;
 }
 
+/* Detalhe do municipio: a receita corrente por habitante e o numero da
+   pagina, entao cresce ate perto do nome e ganha rotulo proprio, em branco.
+   A comparacao com os outros municipios vem embaixo, no tom do texto. */
+.fx-hero-destaque--grande {
+  font-size: clamp(46px, 6.6vw, 64px);
+}
+
+.fx-hero-rotulo {
+  display: block;
+  font-size: clamp(18px, 2.3vw, 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+  margin-top: 4px;
+}
+
+.fx-hero-comparacao {
+  display: block;
+  margin-top: 10px;
+}
+
 /* Régua de quintis: onde o município cai na distribuição nacional.
    Mesmo gradiente das barras da tabela, então a leitura de cor aprendida
    aqui vale para a página inteira. */
@@ -682,6 +703,17 @@ html, body {
 
 .fx-stat-sub.is-positivo { color: #7FD4A0; }
 .fx-stat-sub.is-negativo { color: #F0A08A; }
+
+/* Segunda linha de nota sob o mesmo numero: cola na primeira. */
+.fx-stat-sub--junto { margin-top: 2px; }
+
+/* Total do ranking ao lado da posicao ("1.866º de 5.479 no país"). */
+.fx-stat-de {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fx-blue-light);
+}
 
 /* ---- 8.4 Layout receitas: leitura, tabela, gráficos ----
    A tabela ocupa a largura inteira. Os dois gráficos vêm depois dela, lado a
@@ -913,10 +945,6 @@ html, body {
 
 .fx-btn-baixar:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.5); }
 .fx-btn-baixar:focus-visible { outline: 2px solid #FFC72C; outline-offset: 2px; }
-
-/* A leitura invertida ("e menos que os outros X%") vem em tom menor: completa
-   a frase sem competir com o numero principal. */
-.fx-veredito-inverso { opacity: 0.72; font-size: 0.86em; }
 
 /* ---- 8.12 Impressao ----
    O botao Baixar chama window.print(); o PDF sai daqui. Objetivo: caber em
