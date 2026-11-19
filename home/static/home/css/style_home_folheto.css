@@ -76,22 +76,12 @@
 
 .fx-btn-limpar:hover { background: rgba(255, 255, 255, 0.12); }
 
-/* ---- 2. Hero ---- */
-.fx-hero-veredito strong { color: #FFC72C; font-weight: 600; }
-
-/* Os dois últimos números dividem uma linha: são complementares e curtos. */
-.fx-stat--par {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.fx-stat--par > div + div { padding-left: 18px; border-left: 1px solid rgba(255, 255, 255, 0.14); }
-
-#summary-diff-nacional.positive { color: #7FD4A0; }
-#summary-diff-nacional.negative { color: #F0A08A; }
-#summary-diff-nacional-trend.positive { color: #7FD4A0; }
-#summary-diff-nacional-trend.negative { color: #F0A08A; }
+/* ---- 2. Hero ----
+   Mesmo desenho do hero do município (classes de style_mun_folheto.css):
+   média em destaque à esquerda, comparação em frase à direita. Os cards de
+   número saíram: valor e rótulo em caixas separadas deixavam os números
+   soltos, sem dizer o que significam. */
+.fx-pos-leitura strong { color: #FFC72C; font-weight: 600; }
 
 /* ---- 3. Título com select ---- */
 .fx-titulo--select {
@@ -219,6 +209,95 @@
 .fx-home-tabela td.highlight,
 .fx-home-tabela td.highlight2 { background: #FFF1C2 !important; }
 
+/* ---- 5b. Mapa de calor ----
+   O script_home_folheto.js marca a tabela (.fx-home-tabela--calor) e pinta cada célula do miolo
+   com a cor da rampa (--calor). Vira matriz: células separadas, número
+   centralizado e encorpado, para a cor e o valor serem lidos juntos. Faixa
+   (1ª coluna), Total e Total Geral ficam neutros: são margens, não miolo. */
+.fx-home-tabela--calor {
+  border-collapse: separate;
+  border-spacing: 4px;
+  padding: 2px 8px 8px;
+}
+
+.fx-home-tabela--calor thead th {
+  background: transparent;
+  color: var(--fx-blue-dark);
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 6px 10px;
+}
+
+.fx-home-tabela--calor thead th:first-child { text-align: left; padding-left: 4px; }
+.fx-home-tabela--calor thead th[data-cor]::after { left: 6px; right: 6px; height: 4px; border-radius: 2px; }
+
+.fx-home-tabela--calor tbody td,
+.fx-home-tabela--calor tbody tr:nth-child(even) td,
+.fx-home-tabela--calor tbody tr:hover td {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  text-align: center;
+  padding: 11px 8px;
+}
+
+.fx-home-tabela--calor tbody td:first-child,
+.fx-home-tabela--calor tbody tr:nth-child(even) td:first-child,
+.fx-home-tabela--calor tbody tr:hover td:first-child {
+  text-align: left;
+  padding-left: 4px;
+  white-space: nowrap;
+}
+
+.fx-home-tabela--calor tbody td:last-child,
+.fx-home-tabela--calor tbody tr:nth-child(even) td:last-child,
+.fx-home-tabela--calor tbody tr:hover td:last-child {
+  background: var(--fx-paper);
+  color: var(--fx-blue-dark);
+}
+
+.fx-home-tabela--calor tbody tr.linha-total td {
+  background: var(--fx-cream-dark);
+  border-top: 0;
+}
+
+.fx-home-tabela--calor tbody td.fx-calor {
+  background: var(--calor, var(--fx-paper)) !important;
+  color: #4A2108;
+  font-size: 15px;
+  font-weight: 700 !important;
+  transition: box-shadow 0.12s ease;
+}
+
+.fx-home-tabela--calor tbody td.fx-calor--forte { color: #ffffff; }
+.fx-home-tabela--calor tbody td.fx-calor--zero { color: #B49A7A; font-weight: 500 !important; }
+.fx-home-tabela--calor tbody td.fx-calor--nd { color: var(--fx-muted); font-weight: 500 !important; }
+
+/* No mapa de calor o hover não troca o fundo (apagaria a cor do dado):
+   marca a célula e a correspondente do outro ano com um anel. */
+.fx-home-tabela--calor td.highlight,
+.fx-home-tabela--calor td.highlight2 { box-shadow: inset 0 0 0 2.5px var(--fx-blue-dark); }
+
+.fx-calor-legenda {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fx-muted);
+}
+
+/* Mesmas paradas da RAMPA_CALOR do JS. */
+.fx-calor-legenda-barra {
+  width: 160px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--fx-rule);
+  background: linear-gradient(90deg, rgb(255, 246, 224), rgb(254, 227, 162) 20%,
+    rgb(253, 184, 99) 45%, rgb(240, 123, 63) 70%, rgb(178, 34, 44));
+}
+
 /* ---- 6. Pop-up de ajuda ----
    Modal do Bootstrap (o head global já o carrega); aqui só o acabamento. */
 .fx-modal .fx-modal-caixa { border: 0; border-radius: 8px; overflow: hidden; background: #ffffff; }
@@ -267,6 +346,16 @@
 }
 
 @media (max-width: 560px) {
-  .fx-stat--par { grid-template-columns: 1fr; }
-  .fx-stat--par > div + div { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+  .fx-home-tabela--calor { border-spacing: 3px; padding: 2px 4px 6px; }
+  .fx-home-tabela--calor tbody td { padding: 9px 6px; }
+  .fx-home-tabela--calor tbody td.fx-calor { font-size: 13.5px; }
+  /* A matriz rola de lado dentro do card: a faixa fica presa à esquerda
+     para a linha nunca perder o rótulo. */
+  .fx-home-tabela--calor th:first-child,
+  .fx-home-tabela--calor tbody tr td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #ffffff;
+  }
 }
