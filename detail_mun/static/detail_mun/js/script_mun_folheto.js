@@ -8,8 +8,8 @@
  *   script_mun.js  → toggles (base / per capita / média-mediana), gráficos de
  *                    composição, densidade, síntese fiscal, ordenação das
  *                    rubricas por valor, sticky header, rankings.
- *   este arquivo   → tabela de barras do folheto, hero com régua de quintis,
- *                    e o botão de baixar.
+ *   este arquivo   → tabela de barras do folheto (inclusive a linha de total)
+ *                    e o hero: frases de comparação e posição, régua de quintis.
  *
  * A tabela reaproveita as classes que o script original já manipula
  * (.valor-per-capita / .valor-absoluto / .estatistica-media / .estatistica-mediana),
@@ -71,9 +71,9 @@
   if (!DADOS) return;
 
   var ESCOPO = {
-    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', onde: 'no país', grupo: 'Brasil' },
-    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', onde: 'em ' + (DADOS.uf || '').toUpperCase(), grupo: (DADOS.uf || '').toUpperCase() },
-    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', onde: 'no porte', grupo: 'mesmo porte' }
+    nacional: { frase: 'dos municípios do país', curto: '% dos municípios do país', onde: 'no país', titulo: 'Posição no Brasil' },
+    estadual: { frase: 'dos municípios do estado', curto: '% dos municípios do estado', onde: 'em ' + (DADOS.uf || '').toUpperCase(), titulo: 'Posição em ' + (DADOS.uf || '').toUpperCase() },
+    faixa: { frase: 'dos municípios do mesmo porte', curto: '% dos municípios do mesmo porte', onde: 'no porte', titulo: 'Posição entre os de mesmo porte' }
   };
 
   var baseAtual = 'nacional';
@@ -154,11 +154,9 @@
   var elVeredito = document.getElementById('fx-veredito-texto');
   var elVeredValor = document.getElementById('fx-veredito-valor');
   var elMarcador = document.getElementById('fx-regua-marcador');
-  var elRankValor = document.getElementById('fx-rank-valor');
-  var elRankSub = document.getElementById('fx-rank-sub');
-  var elRankPopValor = document.getElementById('fx-rank-pop-valor');
-  var elRankPopDe = document.getElementById('fx-rank-pop-de');
-  var elCrescSub = document.getElementById('fx-cresc-sub');
+  var elPosicaoTitulo = document.getElementById('fx-posicao-titulo');
+  var elPosicaoTexto = document.getElementById('fx-posicao-texto');
+  var elTotalLeitura = document.getElementById('fx-total-leitura');
   var elHeadEscopo = document.getElementById('fx-head-escopo');
   var elComoLerEscopo = document.getElementById('fx-como-ler-escopo');
   var quintisRegua = Array.prototype.slice.call(document.querySelectorAll('.fx-regua-q'));
@@ -192,19 +190,29 @@
     if (elVeredValor) elVeredValor.textContent = reais(DADOS.receita.pc);
 
     if (elVeredito) {
-      // O quintil e o oficial do IFEM (nacional), qualquer que seja a base:
-      // e a classificacao que o municipio tem no resto da plataforma.
-      var quintil = parseInt(DADOS.quintil, 10);
-      var trechoQuintil = quintil >= 1 && quintil <= 5
-        ? ' e faz parte do <strong>' + quintil + 'º quintil</strong> de subfinanciamento'
+      // Habitantes entram na frase, no lugar do card que ficava a direita.
+      var trechoPop = DADOS.populacao
+        ? ' e tem <strong>' + fmtInt.format(DADOS.populacao) + '</strong> habitantes'
         : '';
-      if (temDado) {
-        elVeredito.innerHTML = 'Arrecada mais que ' +
-          '<strong style="color:' + cor.bar + '">' + Math.round(pct) + '%</strong> ' + esc.frase +
-          trechoQuintil + '.';
-      } else {
-        elVeredito.innerHTML = '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
-      }
+      // O quintil e o oficial do IFEM (nacional), qualquer que seja a base:
+      // e a classificacao que o municipio tem no resto da plataforma. Fica em
+      // frase propria para a primeira nao virar uma lista de tres clausulas.
+      var quintil = parseInt(DADOS.quintil, 10);
+      var fraseQuintil = quintil >= 1 && quintil <= 5
+        ? ' Faz parte do <strong>' + quintil + 'º quintil</strong> de subfinanciamento.'
+        : '';
+      var fraseComparacao = temDado
+        ? 'Arrecada mais que <strong style="color:' + cor.bar + '">' + Math.round(pct) + '%</strong> ' +
+          esc.frase + trechoPop + '.'
+        : '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
+      elVeredito.innerHTML = fraseComparacao + fraseQuintil;
+    }
+
+    // Leitura da linha "Receita corrente" na tabela: mesma base do hero.
+    if (elTotalLeitura) {
+      elTotalLeitura.textContent = temDado
+        ? 'supera ' + Math.round(pct) + '% ' + esc.frase
+        : 'sem dado comparativo para esta base';
     }
 
     if (elMarcador) {
@@ -217,27 +225,48 @@
       q.classList.toggle('is-ativo', Number(q.getAttribute('data-q')) === quintilAtivo);
     });
 
-    /** "1.866º" no valor e " de 5.479 no país" em letra menor ao lado. */
-    function ranking(elValor, elDe, r) {
-      if (elValor) elValor.textContent = r && r.pos ? fmtInt.format(r.pos) + 'º' : 'n/d';
-      if (elDe) elDe.textContent = r && r.pos && r.total ? ' de ' + fmtInt.format(r.total) + ' ' + esc.onde : '';
-    }
-    ranking(elRankValor, elRankSub, (DADOS.rank || {})[baseAtual]);
-    ranking(elRankPopValor, elRankPopDe, (DADOS.rank_populacao || {})[baseAtual]);
+    if (elPosicaoTitulo) elPosicaoTitulo.textContent = esc.titulo;
+    if (elPosicaoTexto) elPosicaoTexto.innerHTML = frasePosicao(esc);
+  }
 
-    if (elCrescSub) {
-      var c = DADOS.crescimento || {};
-      var mediaGrupo = { nacional: c.receita_nac, estadual: c.receita_est, faixa: c.receita_faixa }[baseAtual];
-      if (c.receita_mun !== null && mediaGrupo !== null && mediaGrupo !== undefined && !isNaN(mediaGrupo)) {
-        var dif = c.receita_mun - mediaGrupo;
-        elCrescSub.textContent = (dif >= 0 ? 'acima' : 'abaixo') + ' da média ' + esc.grupo +
-          ' (' + fmt1.format(mediaGrupo) + '%)';
-        elCrescSub.className = 'fx-stat-sub ' + (dif >= 0 ? 'is-positivo' : 'is-negativo');
-      } else {
-        elCrescSub.textContent = 'sem comparativo';
-        elCrescSub.className = 'fx-stat-sub';
-      }
+  /**
+   * Frase de posicao do lado direito do hero, na base ativa:
+   *   "São Paulo está em 1.866º de 5.479 em receita por habitante,
+   *    mas em população vai para 1º de 5.479!"
+   *
+   * O "mas ... !" so aparece quando as duas posicoes contam historias
+   * diferentes (distancia de pelo menos 1/4 do ranking). Entre 10º e 12º o
+   * contraste seria forcado, entao a frase vira "e em população está em".
+   *
+   * @param {Object} esc - entrada de ESCOPO da base ativa.
+   * @returns {string} HTML da frase; nomes vem do JSON e sao escapados.
+   */
+  function frasePosicao(esc) {
+    var rRec = (DADOS.rank || {})[baseAtual] || {};
+    var rPop = (DADOS.rank_populacao || {})[baseAtual] || {};
+    var nome = escaparHtml(DADOS.nome || 'O município');
+
+    function pos(r) {
+      return '<strong class="fx-pos-num">' + fmtInt.format(r.pos) + 'º</strong>' +
+        (r.total ? ' de ' + fmtInt.format(r.total) : '');
     }
+
+    if (!rRec.pos) return 'Sem ranking de receita disponível ' + esc.onde + '.';
+
+    var frase = nome + ' está em ' + pos(rRec) + ' em receita por habitante';
+    if (!rPop.pos) return frase + '.';
+
+    var total = rRec.total || rPop.total || 0;
+    var contraste = total && Math.abs(rRec.pos - rPop.pos) / total >= 0.25;
+    return frase + (contraste
+      ? ', mas em população vai para ' + pos(rPop) + '!'
+      : ' e em população está em ' + pos(rPop) + '.');
+  }
+
+  function escaparHtml(texto) {
+    return String(texto).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
   }
 
   // ==========================================================================
@@ -288,29 +317,7 @@
   });
 
   // ==========================================================================
-  // 4. BAIXAR
-  // ==========================================================================
-  /*
-   * window.print() em vez de html2canvas/jsPDF: o navegador gera PDF com texto
-   * selecionável e vetorial, respeitando o @media print do CSS, sem carregar
-   * duas bibliotecas nem rasterizar a página. O mapa usa html2canvas porque
-   * precisa capturar o canvas do Mapbox — aqui não é o caso.
-   */
-  var btnBaixar = document.getElementById('fx-baixar');
-  if (btnBaixar) {
-    btnBaixar.addEventListener('click', function () {
-      // Abre a árvore inteira antes de imprimir: o que está recolhido não sai
-      // no papel, e um PDF com metade das rubricas ocultas seria pior que inútil.
-      document.querySelectorAll('.fx-row.fx-clickable').forEach(function (linha) {
-        var alvo = document.getElementById(linha.getAttribute('data-target'));
-        if (alvo && !alvo.classList.contains('is-open')) alternarLinha(linha);
-      });
-      window.setTimeout(function () { window.print(); }, 350);
-    });
-  }
-
-  // ==========================================================================
-  // 5. BOOT
+  // 4. BOOT
   // ==========================================================================
   /*
    * Abre as rubricas de nível 0 na carga: o folheto impresso mostra os níveis

@@ -163,6 +163,56 @@
 
 .fx-row[data-level="0"]::before { width: 4px; }
 
+/* Linha de total ("Receita corrente"): a primeira coisa que o olho pega na
+   tabela. Fundo azul do cabecalho, para ler como continuacao dele e nao como
+   mais uma rubrica; numero grande na cor do quintil (variante clara, que tem
+   contraste sobre o azul). As caixas de media ficam em branco para seguirem
+   legiveis no fundo escuro. */
+.fx-row--total {
+  background: var(--fx-blue);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid var(--fx-blue-dark);
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.fx-row--total::before { width: 6px; }
+
+.fx-total-textos { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.fx-row--total .fx-nome {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.fx-total-leitura {
+  font-size: 12px;
+  color: var(--fx-blue-light);
+  line-height: 1.3;
+}
+
+.fx-row--total .fx-pct { font-size: 14px; color: var(--fx-cor, var(--fx-q0)); }
+.fx-row--total .fx-bar-track { height: 12px; background: rgba(255, 255, 255, 0.14); }
+
+.fx-row--total .fx-valor {
+  font-size: 21px;
+  color: #FFC72C;
+}
+
+.fx-row--total .fx-box {
+  font-size: 12.5px;
+  padding: 5px 4px;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.fx-row--total .fx-box.is-vazio { color: var(--fx-blue-light); }
+
+/* No mobile a coluna de media ganha rotulo proprio (::before, secao 7). */
+.fx-row--total .fx-media::before { color: var(--fx-blue-light); }
+
 .fx-row.fx-clickable { cursor: pointer; }
 .fx-row.fx-clickable:hover { background: var(--fx-cream); }
 .fx-row[data-level="0"].fx-clickable:hover { background: #E9E2D6; }
@@ -657,62 +707,35 @@ html, body {
   color: var(--fx-blue-light);
 }
 
-/* Blocos de número do hero (população, posição, crescimento).
-   Um por linha, separados por fio: lado a lado na coluna direita os valores
-   longos ("11.904.961") encostavam no vizinho e a fonte não podia crescer. */
-.fx-hero-stats {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 26px;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+/* Posicao em texto (coluna direita do hero).
+   Substitui os tres cards de numero: a frase poe receita e populacao lado a
+   lado, e o contraste entre as duas posicoes e o que interessa. O fio amarelo
+   a esquerda amarra o bloco ao valor em destaque da coluna da esquerda. */
+.fx-hero-posicao {
+  border-left: 3px solid #FFC72C;
+  padding: 4px 0 4px 26px;
+  align-self: center;
 }
 
-.fx-stat { padding: 18px 0; }
-.fx-stat + .fx-stat { border-top: 1px solid rgba(255, 255, 255, 0.14); }
-
-.fx-stat-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--fx-blue-light);
-  margin-bottom: 6px;
+.fx-hero-posicao-texto {
+  font-size: clamp(21px, 2.5vw, 27px);
+  font-weight: 500;
+  line-height: 1.45;
+  color: #E8EDF4;
+  margin: 10px 0 0;
+  max-width: 30ch;
+  text-wrap: pretty;
 }
 
-.fx-stat-valor {
-  display: block;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  font-size: 36px;
+/* As posicoes sao os numeros da frase: brancos, maiores, tabulares para nao
+   "pular" de largura quando a base muda. */
+.fx-pos-num {
+  font-size: 1.3em;
   font-weight: 700;
-  line-height: 1.05;
   letter-spacing: -0.01em;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
-}
-
-.fx-stat-sub {
-  display: block;
-  font-size: 13px;
-  color: var(--fx-blue-light);
-  margin-top: 6px;
-  line-height: 1.4;
-}
-
-.fx-stat-sub.is-positivo { color: #7FD4A0; }
-.fx-stat-sub.is-negativo { color: #F0A08A; }
-
-/* Segunda linha de nota sob o mesmo numero: cola na primeira. */
-.fx-stat-sub--junto { margin-top: 2px; }
-
-/* Total do ranking ao lado da posicao ("1.866º de 5.479 no país"). */
-.fx-stat-de {
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--fx-blue-light);
+  white-space: nowrap;
 }
 
 /* ---- 8.4 Layout receitas: leitura, tabela, gráficos ----
@@ -924,30 +947,8 @@ html, body {
 
 .fx-como-ler .fx-escala { margin-bottom: 0; }
 
-/* ---- 8.10 Botao de baixar ---- */
-.fx-btn-baixar {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: transparent;
-  color: #ffffff;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.fx-btn-baixar:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.5); }
-.fx-btn-baixar:focus-visible { outline: 2px solid #FFC72C; outline-offset: 2px; }
-
 /* ---- 8.12 Impressao ----
-   O botao Baixar chama window.print(); o PDF sai daqui. Objetivo: caber em
+   Vale para o Ctrl+P do navegador (o botao Baixar saiu da pagina). Objetivo: caber em
    retrato sem cortar coluna e sem gastar tinta com cromo de navegacao. */
 @media print {
   @page { size: A4 portrait; margin: 12mm 10mm; }
@@ -957,8 +958,7 @@ html, body {
   .fx-controles,
   .sticky-header,
   .segmented,
-  .fx-seg,
-  .fx-btn-baixar { display: none !important; }
+  .fx-seg { display: none !important; }
 
   .fx-page { background: #ffffff !important; }
 
@@ -979,6 +979,7 @@ html, body {
   .fx-regua-q,
   .fx-escala-item i,
   .fx-risco-tag,
+  .fx-row--total,
   .fx-head {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

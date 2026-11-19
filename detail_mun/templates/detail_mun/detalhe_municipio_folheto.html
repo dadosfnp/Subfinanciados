@@ -17,12 +17,13 @@ PRINCIPIO: reaproveitar, nao reescrever.
 
 O QUE MUDA em relacao a pagina publica:
   1. Os toggles espalhados viram uma barra unica, rotulada e fixa no topo.
-  2. Hero responde em texto ("arrecada mais que X%") com regua de quintis.
+  2. Hero responde em texto ("arrecada mais que X%") com regua de quintis, e a
+     posicao no ranking (receita x populacao) tambem vira frase.
   3. Estrutura de Receitas vira a tabela de barras do folheto, com a leitura
-     da barra antes dela e os graficos depois.
+     da barra antes dela, a Receita corrente total em destaque na primeira
+     linha e os graficos depois.
   4. Sintese Fiscal em cards de comparacao (municipio x media do grupo).
   5. Saude Fiscal e Riscos Climaticos na mesma linguagem de tabela.
-  6. Botao de baixar (PDF pela caixa de impressao do navegador).
 {% endcomment %}
 {% load static %}
 {% load currency_filters %}
@@ -123,43 +124,19 @@ O QUE MUDA em relacao a pagina publica:
                 </div>
 
                 {% comment %}
-                Os tres numeros ficam empilhados, um por linha, separados por fio.
-                Lado a lado, na coluna direita, os valores de 10 digitos encostavam
-                um no outro e a fonte nao podia crescer.
+                Posicao em texto, no lugar dos tres cards de numero. Os cards
+                davam tres numeros soltos; a frase poe receita e populacao lado a
+                lado e deixa o contraste entre as duas posicoes aparecer. Montada
+                no script_mun_folheto.js porque segue a base de "Comparar com".
+                O conteudo inicial e o fallback sem JS.
                 {% endcomment %}
-                <div class="fx-hero-stats">
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Habitantes</span>
-                        <span class="fx-stat-valor">{{ municipio.populacao24|br_integer }}</span>
-                        {% if evolucao_historica.has_2000_data %}
-                        <span class="fx-stat-sub {% if evolucao_historica.delta_populacao >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
-                            {% if evolucao_historica.delta_populacao >= 0 %}&#9650;{% else %}&#9660;{% endif %}
-                            {{ evolucao_historica.delta_populacao|br_float }}% desde 2000
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    {# Os dois rankings seguem a base escolhida em "Comparar com" (script_mun_folheto.js). #}
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Ranking populacional</span>
-                        <span class="fx-stat-valor">
-                            <span id="fx-rank-pop-valor">&nbsp;</span><span class="fx-stat-de" id="fx-rank-pop-de"></span>
-                        </span>
-                    </div>
-
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Ranking de receita</span>
-                        <span class="fx-stat-valor">
-                            <span id="fx-rank-valor">&nbsp;</span><span class="fx-stat-de" id="fx-rank-sub"></span>
-                        </span>
-                        {% if evolucao_historica.has_2000_data %}
-                        <span class="fx-stat-sub {% if evolucao_historica.delta_rc_pc >= 0 %}is-positivo{% else %}is-negativo{% endif %}">
-                            {% if evolucao_historica.delta_rc_pc >= 0 %}&#9650;{% else %}&#9660;{% endif %}
-                            {{ evolucao_historica.delta_rc_pc|br_float }}% desde 2000
-                        </span>
-                        <span class="fx-stat-sub fx-stat-sub--junto" id="fx-cresc-sub">&nbsp;</span>
-                        {% endif %}
-                    </div>
+                <div class="fx-hero-posicao">
+                    <p class="fx-eyebrow" id="fx-posicao-titulo">Posição no Brasil</p>
+                    <p class="fx-hero-posicao-texto" id="fx-posicao-texto">
+                        {{ municipio.name_muni }} está em
+                        <strong class="fx-pos-num">{{ municipio.rank_nacional|br_integer }}º</strong>
+                        de {{ municipio.total_nacional|br_integer }} em receita por habitante.
+                    </p>
                 </div>
             </div>
         </div>
@@ -232,6 +209,50 @@ O QUE MUDA em relacao a pagina publica:
                             </div>
                         </div>
                     </div>
+
+                    {% comment %}
+                    Total antes das rubricas e FORA do #main-revenue-details-container:
+                    o script_mun.js reordena tudo la dentro por valor. A linha usa as
+                    mesmas colunas (e os mesmos data-pct-*), entao o folheto a pinta
+                    junto com as outras quando a base muda.
+                    {% endcomment %}
+                    {% if receita_corrente_item %}
+                    {% with item=receita_corrente_item %}
+                    <div class="fx-row fx-row--total"
+                         data-level="total"
+                         data-pct-nacional="{{ item.percentiles.nacional|default_if_none:'' }}"
+                         data-pct-estadual="{{ item.percentiles.estadual|default_if_none:'' }}"
+                         data-pct-faixa="{{ item.percentiles.faixa|default_if_none:'' }}">
+                        <div class="fx-rubrica">
+                            <span class="fx-total-textos">
+                                <span class="fx-nome">{{ item.name }}</span>
+                                {# Preenchido pelo script_mun_folheto.js: "supera 66% dos municipios do pais". #}
+                                <span class="fx-total-leitura" id="fx-total-leitura"></span>
+                            </span>
+                        </div>
+                        <div class="fx-supera" title="">
+                            <span class="fx-pct"></span>
+                            <div class="fx-bar-track"><div class="fx-bar-fill"></div></div>
+                        </div>
+                        <span class="fx-valor">
+                            <span class="valor-per-capita">R$ {{ item.value_pc|br_integer }}</span>
+                            <span class="valor-absoluto hidden">R$ {{ item.value_abs|br_abrev }}</span>
+                        </span>
+                        <div class="fx-media estatistica-media" data-rotulo="{{ municipio.uf|upper }}">
+                            <span class="fx-box {% if not item.media_estadual %}is-vazio{% endif %}">{% if item.media_estadual %}R$ {{ item.media_estadual|br_integer }}{% endif %}</span>
+                        </div>
+                        <div class="fx-media estatistica-media" data-rotulo="Brasil">
+                            <span class="fx-box fx-box-br {% if not item.media_nacional %}is-vazio{% endif %}">{% if item.media_nacional %}R$ {{ item.media_nacional|br_integer }}{% endif %}</span>
+                        </div>
+                        <div class="fx-media estatistica-mediana invisible-by-est" data-rotulo="{{ municipio.uf|upper }}">
+                            <span class="fx-box {% if not item.mediana_estadual %}is-vazio{% endif %}">{% if item.mediana_estadual %}R$ {{ item.mediana_estadual|br_integer }}{% endif %}</span>
+                        </div>
+                        <div class="fx-media estatistica-mediana invisible-by-est" data-rotulo="Brasil">
+                            <span class="fx-box fx-box-br {% if not item.mediana_nacional %}is-vazio{% endif %}">{% if item.mediana_nacional %}R$ {{ item.mediana_nacional|br_integer }}{% endif %}</span>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% endif %}
 
                     <div id="main-revenue-details-container">
                         {% for item in revenue_tree %}
@@ -547,15 +568,10 @@ atual em /api/distribuicao/ em vez de receber 9,9 MB no HTML.
         "estadual": {"pos": {{ municipio.populacao24_rank_estadual|default_if_none:"null" }}, "total": {{ municipio.populacao24_total_estadual|default_if_none:"null" }}},
         "faixa":    {"pos": {{ municipio.populacao24_rank_faixa|default_if_none:"null" }},    "total": {{ municipio.populacao24_total_faixa|default_if_none:"null" }}}
     },
+    "populacao": {{ municipio.populacao24|default_if_none:"null" }},
     "receita": {
         "pc": {{ municipio.rc_24_pc|default_if_none:"null" }},
         "total": {{ municipio.rc_2024|default_if_none:"null" }}
-    },
-    "crescimento": {
-        "receita_mun": {{ evolucao_historica.delta_rc_pc|default_if_none:"null" }},
-        "receita_nac": {{ media_nacional_rc_pc|default_if_none:"null" }},
-        "receita_est": {{ media_estadual_rc_pc|default_if_none:"null" }},
-        "receita_faixa": {{ media_faixa_rc_pc|default_if_none:"null" }}
     }
 }
 </script>
