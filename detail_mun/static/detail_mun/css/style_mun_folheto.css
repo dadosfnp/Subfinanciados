@@ -827,6 +827,77 @@ html, body {
   white-space: nowrap;
 }
 
+/* ---- 8.3b Blocos de numero do hero e botao do topo (COMPARTILHADOS) ----
+   O municipio nao usa mais estes blocos, mas a preview do agregado
+   (detalhe_conjunto_folheto.html) usa .fx-hero-stats/.fx-stat e as duas
+   previews (agregado e analise) usam .fx-btn-baixar como base dos botoes da
+   barra. Este arquivo e a base comum das tres: nao remover sem conferir
+   detail_agg/ e home/. */
+.fx-hero-stats {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 26px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.fx-stat { padding: 18px 0; }
+.fx-stat + .fx-stat { border-top: 1px solid rgba(255, 255, 255, 0.14); }
+
+.fx-stat-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fx-blue-light);
+  margin-bottom: 6px;
+}
+
+.fx-stat-valor {
+  display: block;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-stat-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--fx-blue-light);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.fx-stat-sub.is-positivo { color: #7FD4A0; }
+.fx-stat-sub.is-negativo { color: #F0A08A; }
+
+.fx-btn-baixar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.fx-btn-baixar:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.5); }
+.fx-btn-baixar:focus-visible { outline: 2px solid #FFC72C; outline-offset: 2px; }
+
 /* ---- 8.4 Layout receitas: leitura, tabela, gráficos ----
    A tabela ocupa a largura inteira. Os dois gráficos vêm depois dela, lado a
    lado: numa coluna ao lado da tabela, disputavam a atenção com ela. */
@@ -1047,7 +1118,8 @@ html, body {
   .fx-controles,
   .sticky-header,
   .segmented,
-  .fx-seg { display: none !important; }
+  .fx-seg,
+  .fx-btn-baixar { display: none !important; }
 
   .fx-page { background: #ffffff !important; }
 
