@@ -194,13 +194,15 @@
     if (elVeredito) {
       // A populacao abre a frase porque e o divisor da receita: o leitor ve
       // quanta gente o valor precisa atender antes de ver a comparacao.
-      // O quintil saiu daqui e virou tag ao lado do valor (template).
+      // Abaixo de 50% entra o "apenas": "maior que 32%" sozinho soa como
+      // elogio, quando na verdade 68% dos municipios arrecadam mais.
+      var n = Math.round(pct);
       var abertura = DADOS.populacao
-        ? 'São <span class="fx-hero-pop">' + fmtInt.format(DADOS.populacao) + '</span> habitantes para atender, com uma receita per capita'
-        : 'Tem uma receita per capita';
+        ? 'São <span class="fx-hero-pop">' + fmtInt.format(DADOS.populacao) + '</span> habitantes e possuem'
+        : 'Possui';
       elVeredito.innerHTML = temDado
-        ? abertura + ' maior que a de <strong style="color:' + cor.escuro + '">' +
-          Math.round(pct) + '%</strong> ' + esc.frase + '.'
+        ? abertura + ' a receita per capita maior que ' + (n < 50 ? 'apenas ' : '') +
+          '<strong style="color:' + cor.escuro + '">' + n + '%</strong> ' + esc.frase + '.'
         : '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
     }
 
@@ -235,10 +237,16 @@
   }
 
   /**
-   * Frase de posicao do lado direito do hero, na base ativa. Duas posicoes
-   * (receita corrente per capita e porte populacional), cada numero na cor do
-   * quintil em que a posicao cai, e uma leitura final que explica a distancia
-   * entre elas na linguagem do IFEM:
+   * Frase de posicao do lado direito do hero, na base ativa. Populacao
+   * primeiro (costuma ser a posicao mais alta e e a que salta aos olhos),
+   * receita depois, para o contraste aparecer na ordem de leitura.
+   *
+   * Cor de cada numero: o quintil em que AQUELA posicao cai no ranking geral
+   * da base (percentil = (total - posicao) / total), e nao o quintil IFEM do
+   * municipio. 1º em populacao e verde mesmo num municipio do 1º quintil de
+   * receita.
+   *
+   * A leitura final explica a distancia entre as posicoes na linguagem do IFEM:
    *
    *  - populacao bem a frente da receita: o descompasso que o indice mede
    *    (muita demanda, pouca receita por habitante);
@@ -269,27 +277,35 @@
       ? DADOS.percentil_nacional
       : percentilDaPosicao(rRec);
 
-    var frase = 'Em receita corrente per capita, ' + nome + ' ocupa o ' + pos(rRec, pctRec) +
-      ' lugar entre ' + fmtInt.format(rRec.total) + ' ' + esc.lista + '.';
-    if (!rPop.pos) return frase;
+    var posRec = pos(rRec, pctRec);
+    var deRec = ' de ' + fmtInt.format(rRec.total);
 
+    // Sem ranking populacional: so a receita, na forma completa.
+    if (!rPop.pos) {
+      return 'Em receita corrente per capita, ' + nome + ' ocupa o ' + posRec +
+        ' lugar entre ' + fmtInt.format(rRec.total) + ' ' + esc.lista + '.';
+    }
+
+    var abertura = 'Em porte populacional, ' + nome + ' ocupa o ' +
+      pos(rPop, percentilDaPosicao(rPop)) + ' lugar entre ' +
+      fmtInt.format(rPop.total) + ' ' + esc.lista + '.';
+
+    // distancia > 0: a receita esta atras da populacao no ranking.
     var total = rRec.total || rPop.total || 0;
     var distancia = total ? (rRec.pos - rPop.pos) / total : 0;
-    var posPop = pos(rPop, percentilDaPosicao(rPop));
-    var dePop = ' de ' + fmtInt.format(rPop.total);
 
     if (distancia >= 0.25) {
-      return frase + ' Em porte populacional, salta para o ' + posPop + dePop + '.' +
+      return abertura + ' Já em receita corrente per capita, cai para o ' + posRec + deRec + '.' +
         '<span class="fx-pos-leitura">A distância entre as duas posições expõe o descompasso que o IFEM mede: ' +
         'a demanda por serviços públicos cresce com a população, mas a capacidade de financiamento ' +
         'por habitante não acompanha.</span>';
     }
     if (distancia <= -0.25) {
-      return frase + ' Em porte populacional, fica no ' + posPop + dePop + '.' +
+      return abertura + ' Já em receita corrente per capita, sobe para o ' + posRec + deRec + '.' +
         '<span class="fx-pos-leitura">O inverso do subfinanciamento: uma base populacional menor concentra ' +
         'mais receita corrente por habitante e amplia a capacidade de financiar os serviços públicos.</span>';
     }
-    return frase + ' Em porte populacional, está no ' + posPop + dePop + '.' +
+    return abertura + ' Em receita corrente per capita, está no ' + posRec + deRec + '.' +
       '<span class="fx-pos-leitura">As duas posições caminham juntas: a capacidade de financiamento ' +
       'por habitante acompanha o porte do município.</span>';
   }

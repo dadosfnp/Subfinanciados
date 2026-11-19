@@ -620,7 +620,30 @@ html, body {
   line-height: 0.94;
   letter-spacing: -0.015em;
   color: #ffffff;
-  margin: 6px 0 0;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* Nome + tag do quintil. Flex com quebra: em nome longo a tag desce para a
+   linha de baixo em vez de espremer o nome. align-items center deixa a tag
+   no meio da primeira linha do nome quando cabe ao lado. */
+.fx-hero-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 6px;
+}
+
+.fx-hero-titulo .fx-tag-quintil { flex-shrink: 0; }
+
+/* Nome com mais de 24 caracteres (marcado no template): ate 37, como "Vila
+   Bela Da Santissima Trindade - MT". Na fonte cheia ocupava 4 linhas no
+   celular e empurrava o valor para fora da primeira dobra. */
+.fx-hero-nome--longo {
+  font-size: clamp(32px, 4.8vw, 48px);
+  line-height: 1;
 }
 
 .fx-hero-veredito {
@@ -665,14 +688,6 @@ html, body {
 .fx-hero-comparacao {
   display: block;
   margin-top: 10px;
-}
-
-/* Valor + tag do quintil na mesma linha; quebra para baixo se nao couber. */
-.fx-hero-valor-linha {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 16px;
 }
 
 /* Tag do quintil oficial. Cor do proprio quintil (1 vermelho ... 5 verde),
@@ -773,18 +788,18 @@ html, body {
   align-self: center;
 }
 
+/* Mesmo corpo da frase da esquerda (.fx-hero-veredito): as duas colunas se
+   leem como um texto so, e quem chama o olho sao os numeros. */
 .fx-hero-posicao-texto {
-  font-size: clamp(21px, 2.5vw, 27px);
-  font-weight: 500;
-  line-height: 1.45;
+  font-size: clamp(16px, 2vw, 19px);
+  font-weight: 400;
+  line-height: 1.6;
   color: #E8EDF4;
   margin: 10px 0 0;
-  max-width: 30ch;
+  max-width: 46ch;
   text-wrap: pretty;
 }
 
-/* As posicoes sao os numeros da frase: brancos, maiores, tabulares para nao
-   "pular" de largura quando a base muda. */
 /* A leitura que explica a distancia entre as duas posicoes: menor e mais
    apagada que a frase, como nota editorial. */
 .fx-pos-leitura {
@@ -792,15 +807,19 @@ html, body {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 0.62em;
+  font-size: 0.82em;
   font-weight: 400;
   line-height: 1.55;
   color: var(--fx-blue-light);
 }
 
-/* Cor do quintil da posicao vem inline do JS (corPorPercentil().escuro). */
+/* Posicoes: mesmo peso do numero de habitantes da esquerda, para as duas
+   colunas falarem a mesma lingua. A cor vem inline do JS: o quintil em que a
+   posicao cai no ranking (corPorPercentil().escuro). Tabular para o numero
+   nao "pular" de largura quando a base muda. */
 .fx-pos-num {
-  font-size: 1.45em;
+  font-size: 1.4em;
+  line-height: 1.1;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: #ffffff;
