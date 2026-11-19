@@ -278,7 +278,10 @@
       : percentilDaPosicao(rRec);
 
     var posRec = pos(rRec, pctRec);
-    var deRec = ' de ' + fmtInt.format(rRec.total);
+    // Populacao e receita sao dois rankings independentes: a frase diz o lugar
+    // em cada um ("ocupa o Xº lugar"), nunca "cai" ou "sobe", que sugeririam
+    // movimento de uma lista para a outra.
+    var lugarRec = ' ocupa o ' + posRec + ' lugar entre ' + fmtInt.format(rRec.total) + '.';
 
     // Sem ranking populacional: so a receita, na forma completa.
     if (!rPop.pos) {
@@ -295,17 +298,17 @@
     var distancia = total ? (rRec.pos - rPop.pos) / total : 0;
 
     if (distancia >= 0.25) {
-      return abertura + ' Já em receita corrente per capita, cai para o ' + posRec + deRec + '.' +
+      return abertura + ' Já em receita corrente per capita,' + lugarRec +
         '<span class="fx-pos-leitura">A distância entre as duas posições expõe o descompasso que o IFEM mede: ' +
         'a demanda por serviços públicos cresce com a população, mas a capacidade de financiamento ' +
         'por habitante não acompanha.</span>';
     }
     if (distancia <= -0.25) {
-      return abertura + ' Já em receita corrente per capita, sobe para o ' + posRec + deRec + '.' +
+      return abertura + ' Já em receita corrente per capita,' + lugarRec +
         '<span class="fx-pos-leitura">O inverso do subfinanciamento: uma base populacional menor concentra ' +
         'mais receita corrente por habitante e amplia a capacidade de financiar os serviços públicos.</span>';
     }
-    return abertura + ' Em receita corrente per capita, está no ' + posRec + deRec + '.' +
+    return abertura + ' Em receita corrente per capita,' + lugarRec +
       '<span class="fx-pos-leitura">As duas posições caminham juntas: a capacidade de financiamento ' +
       'por habitante acompanha o porte do município.</span>';
   }

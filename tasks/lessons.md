@@ -122,3 +122,13 @@ para o topo.
 e depois. Na validação, medir a altura de elementos fixos/sticky
 (`getBoundingClientRect().height`): se passar da altura da tela, há tag aberta.
 
+
+### Rankings diferentes não "caem" nem "sobem" um em relação ao outro
+**Erro:** a frase de posição do hero dizia "Em porte populacional, São Paulo
+ocupa o 1º lugar... Já em receita corrente per capita, cai para o 1.866º".
+População e receita são dois rankings independentes; "cai" e "sobe" sugerem
+movimento de uma lista para a outra.
+
+**Regra:** ao comparar posições em rankings distintos, descrever o lugar em
+cada um ("ocupa o Xº lugar entre N"). Verbos de movimento (cai, sobe, salta)
+só para o MESMO ranking em momentos diferentes (ex.: 2000 x 2025).
