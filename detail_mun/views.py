@@ -1,5 +1,6 @@
 import json
 from .saude_fiscal import montar_saude_fiscal
+from .receita_corrente import montar_receita_corrente
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -774,6 +775,8 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
+        # Linha de total no topo da tabela da preview: ver detail_mun/receita_corrente.py
+        'receita_corrente_item': montar_receita_corrente(municipio),
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
         'capag_data': capag_data,
