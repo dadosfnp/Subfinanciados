@@ -158,8 +158,11 @@
 </nav>
 
     <section class="hero-section">
-        <video class="hero-video-bg" autoplay loop muted playsinline>
-            <source src="/static/ifem/videos/videohero.mp4" type="video/mp4">
+        {% comment %}{% static %} em vez do caminho fixo: o WhiteNoise poe o hash do
+           arquivo no nome, entao trocar o video invalida o cache da Cloudflare
+           (o caminho fixo ficava 4 h servindo a versao antiga).{% endcomment %}
+        <video class="hero-video-bg" autoplay loop muted playsinline preload="auto">
+            <source src="{% static 'ifem/videos/videohero.mp4' %}" type="video/mp4">
         </video>
                 
         <div class="hero-video-overlay"></div>
@@ -796,7 +799,7 @@
                 
                 <a href="/analise/" class="feature-card video-card">
                     <div class="media-container">
-                        <video autoplay muted loop playsinline class="card-video">
+                        <video muted loop playsinline preload="none" class="card-video" data-video-lazy>
                             <source src="{% static 'ifem/videos/analise_grafica.mp4' %}" type="video/mp4">
                         </video>
                         <div class="video-overlay"></div> 
@@ -823,7 +826,7 @@
 
                 <a href="/mapa/" class="feature-card video-card">
                     <div class="media-container">
-                        <video autoplay muted loop playsinline class="card-video">
+                        <video muted loop playsinline preload="none" class="card-video" data-video-lazy>
                             <source src="{% static 'ifem/videos/analise_municipal.mp4' %}" type="video/mp4">
                         </video>
                         <div class="video-overlay"></div> 
@@ -848,7 +851,7 @@
 
                 <a href="/analise-municipal/" class="feature-card video-card">
                     <div class="media-container">
-                        <video autoplay muted loop playsinline class="card-video">
+                        <video muted loop playsinline preload="none" class="card-video" data-video-lazy>
                             <source src="{% static 'ifem/videos/analise_agregada.mp4' %}" type="video/mp4">
                         </video>
                         <div class="video-overlay"></div> 

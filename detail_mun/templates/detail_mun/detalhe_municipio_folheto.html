@@ -1,10 +1,12 @@
 {% extends "global/head.html" %}
 {% comment %}
-PREVIEW - Detalhe do municipio no layout editorial do folheto IFEM.
+Detalhe do municipio no layout editorial do folheto IFEM.
 
-Rota: /preview/municipio/<cod_ibge>/  (name: municipio_detalhe_folheto)
-Para aprovacao da diretoria. A pagina publica (detalhe_municipio.html) usa a
-MESMA view; so muda o template.
+Rotas: /municipio/<cod_ibge>/ (publica, name: municipio_detalhe) e
+/preview/municipio/<cod_ibge>/ (name: municipio_detalhe_folheto). Aprovado
+pela diretoria e publicado em 2026-11. O layout antigo (detalhe_municipio.html)
+continua no repositorio, e e o default da view: voltar e so tirar o
+template_name da rota publica em config/urls.py.
 
 PRINCIPIO: reaproveitar, nao reescrever.
   - Composicao, Densidade e Sintese Fiscal mantem os IDs da pagina publica.
@@ -30,9 +32,9 @@ O QUE MUDA em relacao a pagina publica:
 {% load l10n %}
 
 {% block extra_head %}
-    <title>{{ municipio.name_muni_uf }} - Preview IFEM</title>
-    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
-    <meta name="robots" content="noindex, nofollow">
+    <title>{{ municipio.name_muni_uf }} | IFEM</title>
+    {# O mesmo template serve a rota publica e a /preview/; so a preview fica fora dos buscadores. #}
+    {% if '/preview/' in request.path %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>

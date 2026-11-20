@@ -1,9 +1,11 @@
 {% extends "global/head.html" %}
 {% comment %}
-PREVIEW - Agregado (conjunto de municipios) no layout editorial do folheto IFEM.
+Agregado (conjunto de municipios) no layout editorial do folheto IFEM.
 
-Rota: /preview/agregado/  (name: conjunto_detalhe_folheto)
-Mesma view da pagina publica (conjunto_detalhe_view), so muda o template.
+Rotas: /analise-municipal/ (publica, name: analise_municipal) e
+/preview/agregado/ (name: conjunto_detalhe_folheto). Aprovado e publicado em
+2026-11. Mesma view (conjunto_detalhe_view); o layout antigo
+(detalhe_conjunto.html) segue como default dela, para voltar se preciso.
 
 PRINCIPIO: o detail_agg/js/script.js continua dono de tudo que ja fazia
 (filtros, KPIs, arvore de receitas, graficos, sintese). Por isso os IDs abaixo
@@ -11,7 +13,8 @@ sao os mesmos da pagina publica. A diferenca:
   - window.IFEM_LAYOUT = 'folheto' faz a /api/fiscal-details/ devolver os
     partials no layout novo, mais a Saude Fiscal do conjunto;
   - script_agg_folheto.js cuida so do que e novo: titulo do hero a partir dos
-    filtros, numeros grandes da sintese, filtros no celular e o botao Baixar.
+    filtros, hero em frase, linha Receita corrente, sintese e filtros no celular.
+    O botao Baixar saiu (como no municipio); o Ctrl+P segue usando o CSS de impressao.
 
 Visual compartilhado com a preview do municipio: carrega o
 style_mun_folheto.css e acrescenta o style_agg_folheto.css.
@@ -20,9 +23,9 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 {% load currency_filters %}
 
 {% block extra_head %}
-    <title>Análise agregada - Preview IFEM</title>
-    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
-    <meta name="robots" content="noindex, nofollow">
+    <title>Análise agregada | IFEM</title>
+    {# O mesmo template serve a rota publica e a /preview/; so a preview fica fora dos buscadores. #}
+    {% if '/preview/' in request.path %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
@@ -57,16 +60,6 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 
             <button type="button" class="fx-btn-baixar" id="btn-limpar-filtros">Limpar filtros</button>
 
-            <button type="button" class="fx-btn-baixar" id="fx-baixar"
-                    title="Abre a caixa de impressao do navegador; escolha &quot;Salvar como PDF&quot;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Baixar</span>
-            </button>
         </div>
 
         {# IDs dos selects iguais aos da pagina publica: o script.js os le e repovoa. #}
