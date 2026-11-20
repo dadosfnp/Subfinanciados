@@ -376,6 +376,7 @@ Para manter a integridade e uniformidade do projeto, seguimos padrões rigorosos
 
 *   **Commits:** Seguimos o padrão [Conventional Commits](https://www.conventionalcommits.org/).
 *   **Branching:** Nunca trabalhe diretamente na branch principal (`main`). Use `feat/` ou `fix/`.
+*   **Layout das páginas (folheto IFEM):** Município, Agregado e Gráficos seguem o layout descrito em [docs/layout-folheto.md](./docs/layout-folheto.md): rotas, scripts, eventos, textos aprovados, rollback e como validar.
 *   **Fluxo Multi-Agente:** Consulte o arquivo [GEMINI.md](./GEMINI.md) para diretrizes específicas de coordenação entre agentes e regras de branch por tarefa.
 
 ### Atualizar o projeto e enviar mudanças (passo a passo)

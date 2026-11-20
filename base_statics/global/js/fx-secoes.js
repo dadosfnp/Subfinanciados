@@ -18,6 +18,12 @@
  *   - entrada suave (fade + leve subida) dos blocos de cada seção.
  *
  * Respeita prefers-reduced-motion: sem animação e rolagem instantânea.
+ *
+ * Topo fixo: em página com barra de filtros (.fx-controles), o menu do site
+ * (.page-header, do head global) também gruda no topo, logo acima da barra,
+ * para trocar de página sem rolar até o início. Ao rolar ele fica compacto
+ * (classe is-compacto) e a barra se encaixa embaixo dele pela variável CSS
+ * --fx-topo-h, mantida em dia por ResizeObserver. Ver iniciarTopoFixo().
  * ========================================================================== */
 (function () {
   'use strict';
@@ -46,11 +52,13 @@
       return Math.min.apply(null, s.elementos.map(function (el) { return el.getBoundingClientRect().top + window.scrollY; }));
     }
 
-    // Altura da barra fixa da página: a rolagem para a seção desconta, senão o
-    // título fica escondido atrás dela.
+    // Altura do que fica fixo no topo (menu do site + barra da página): a
+    // rolagem para a seção desconta, senão o título fica escondido atrás.
+    // O menu entra com a altura compacta, que é a que ele terá ao chegar lá.
     function deslocamento() {
       var barra = document.querySelector('.fx-controles');
-      return barra ? barra.getBoundingClientRect().height + 8 : 12;
+      var topo = document.body.classList.contains('fx-topo-fixo') ? alturaTopoCompacto() : 0;
+      return barra ? barra.getBoundingClientRect().height + topo + 8 : 12;
     }
 
     function irPara(s) {
@@ -199,6 +207,60 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
-  else iniciar();
+  // ---- Topo fixo -----------------------------------------------------------
+  // Altura do menu compacto: medida uma vez com a classe aplicada, porque é a
+  // que vale quando a página já rolou (destino de qualquer irPara()).
+  var topoCompactoPx = null;
+  function alturaTopoCompacto() {
+    if (topoCompactoPx !== null) return topoCompactoPx;
+    var h = document.querySelector('.page-header');
+    if (!h) return 0;
+    var tinha = h.classList.contains('is-compacto');
+    h.classList.add('is-compacto');
+    topoCompactoPx = h.getBoundingClientRect().height;
+    if (!tinha) h.classList.remove('is-compacto');
+    return topoCompactoPx;
+  }
+
+  /**
+   * Gruda o menu do site acima da barra de filtros da página.
+   * Só age quando existem os dois (.page-header e .fx-controles): landing,
+   * mapa e metodologia não têm barra e seguem como estão.
+   */
+  function iniciarTopoFixo() {
+    var topo = document.querySelector('.page-header');
+    if (!topo || !document.querySelector('.fx-controles')) return;
+    document.body.classList.add('fx-topo-fixo');
+
+    var raiz = document.documentElement;
+    function medir() {
+      raiz.style.setProperty('--fx-topo-h', topo.getBoundingClientRect().height + 'px');
+    }
+
+    // Compacta depois de 40px de rolagem e só volta acima de 10px: a folga
+    // evita o menu "piscar" entre os dois tamanhos perto do limite (a
+    // própria troca de altura mexe no scroll).
+    var compacto = false;
+    function aoRolar() {
+      var y = window.scrollY;
+      var novo = compacto ? y > 10 : y > 40;
+      if (novo === compacto) return;
+      compacto = novo;
+      topo.classList.toggle('is-compacto', compacto);
+    }
+
+    medir();
+    aoRolar();
+    window.addEventListener('scroll', aoRolar, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(medir).observe(topo);
+    else window.addEventListener('resize', medir);
+  }
+
+  function iniciarTudo() {
+    iniciarTopoFixo();
+    iniciar();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarTudo);
+  else iniciarTudo();
 })();
