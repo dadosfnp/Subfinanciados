@@ -175,3 +175,47 @@
   .fx-secoes-flutuante,
   .fx-secoes-pontos button { transition: none; }
 }
+
+/* ---- Topo fixo (fx-secoes.js, iniciarTopoFixo) ----
+   Páginas com barra de filtros: o menu do site gruda no topo e a barra
+   (.fx-controles, já sticky) passa a grudar logo abaixo dele. O head global
+   põe position: relative inline no .page-header, daí o !important. */
+.fx-topo-fixo .page-header {
+  position: sticky !important;
+  top: 0;
+  z-index: 1045 !important;
+  transition: box-shadow 0.2s ease;
+}
+
+.fx-topo-fixo .fx-controles { top: var(--fx-topo-h, 0px); }
+
+/* Compacto: logos menores e menos respiro, para menu + barra não ocuparem
+   meia tela. Os logos do celular têm altura inline com !important no head
+   global; lá só o respiro diminui. */
+.fx-topo-fixo .page-header.is-compacto { box-shadow: 0 2px 10px rgba(18, 39, 71, 0.12); }
+.fx-topo-fixo .page-header header.d-lg-flex { transition: padding 0.2s ease; }
+.fx-topo-fixo .page-header.is-compacto header.d-lg-flex { padding-top: 2px; padding-bottom: 2px; }
+
+.fx-topo-fixo .page-header .logo-ifem,
+.fx-topo-fixo .page-header .logo-fnp { transition: height 0.2s ease, max-height 0.2s ease, transform 0.2s ease; }
+
+.fx-topo-fixo .page-header.is-compacto .logo-ifem { height: 46px; transform: scale(1.35); margin-left: -10px; }
+.fx-topo-fixo .page-header.is-compacto .logo-fnp { max-height: 38px; }
+
+.fx-topo-fixo .page-header.is-compacto header.d-grid {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-topo-fixo .page-header,
+  .fx-topo-fixo .page-header header,
+  .fx-topo-fixo .page-header .logo-ifem,
+  .fx-topo-fixo .page-header .logo-fnp { transition: none; }
+}
+
+/* Impressão: nada fixo (o menu já some no print do folheto). */
+@media print {
+  .fx-topo-fixo .page-header { position: static !important; }
+  .fx-topo-fixo .fx-controles { top: 0; }
+}
