@@ -8,8 +8,11 @@
    ========================================================================== */
 
 /* O script.js esconde e mostra controles com d-none. O Bootstrap do head
-   global já define a classe; repetida aqui para a página não depender disso. */
-.d-none { display: none !important; }
+   global já define a classe; repetida aqui para a página não depender disso.
+   Escopada em .fx-page e no modal: solta, ela vinha depois do Bootstrap e
+   anulava o .d-lg-flex do menu do topo (head global), que sumia no desktop. */
+.fx-page .d-none,
+.fx-modal .d-none { display: none !important; }
 
 /* ---- 1. Barra fixa ---- */
 .fx-filtros--home { grid-template-columns: repeat(6, minmax(0, 1fr)); }
