@@ -132,3 +132,13 @@ movimento de uma lista para a outra.
 **Regra:** ao comparar posições em rankings distintos, descrever o lugar em
 cada um ("ocupa o Xº lugar entre N"). Verbos de movimento (cai, sobe, salta)
 só para o MESMO ranking em momentos diferentes (ex.: 2000 x 2025).
+
+## CSS das previews é compartilhado: grep antes de apagar classe
+- `style_mun_folheto.css` é a base das três previews (município, agregado, análise). No #108 removi `.fx-stat`/`.fx-hero-stats`/`.fx-btn-baixar` porque o município não usava mais, e quebrei o hero do agregado e da análise (números soltos, sem caixa).
+- Regra: antes de remover qualquer classe `fx-*`, rodar `grep -rn "classe" --include=*.html --include=*.css --include=*.js detail_mun detail_agg home ifem` e tirar print das outras previews.
+
+## Vocabulário do IFEM em texto visível
+- Nunca "pobre/rico": usar "com menor receita" / "com maior receita".
+- Não usar "seleção" para o conjunto filtrado: "municípios do filtro", "desses municípios".
+- Não trazer estatística técnica sem pedido (ex.: coeficiente de variação) no texto de destaque.
+- Texto que descreve grupos deve refletir o toggle Quintis "Do país" x "Do filtro" (e Quintil x Decil).

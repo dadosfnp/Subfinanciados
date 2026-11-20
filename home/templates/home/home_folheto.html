@@ -133,21 +133,22 @@ estrutura de modal dele, so com o acabamento do folheto.
                        script_home_folheto.js no evento ifem:dados-dashboard.{% endcomment %}
                     <p class="fx-hero-veredito">
                         <span class="fx-hero-destaque fx-hero-destaque--grande" id="fx-home-media">&nbsp;</span>
-                        <span class="fx-hero-rotulo">por habitante em receita corrente, na média da seleção.</span>
+                        <span class="fx-hero-rotulo">por habitante em receita corrente, em média.</span>
                         <span class="fx-hero-comparacao" id="fx-home-quantidade">&nbsp;</span>
                     </p>
                     <div class="fx-agg-chips" id="fx-agg-chips"></div>
                 </div>
 
                 <div class="fx-hero-posicao">
-                    <p class="fx-eyebrow" id="fx-home-comparacao-titulo">Comparação com o país</p>
+                    {% comment %}Frase muda com o toggle Quintis (do pais / do filtro), com
+                       Quintil/Decil e com os filtros: script_home_folheto.js.{% endcomment %}
+                    <p class="fx-eyebrow">Como os grupos são formados</p>
                     <p class="fx-hero-posicao-texto">
                         <span id="fx-home-comparacao">&nbsp;</span>
                         <span class="fx-pos-leitura">
-                            Os municípios são ordenados pela receita corrente por habitante e divididos em grupos
-                            do mesmo tamanho. O gráfico mostra como a <strong>população</strong>, a
+                            O gráfico mostra como a <strong>população</strong>, a
                             <strong>saúde fiscal</strong> e o <strong>risco climático</strong> se distribuem entre
-                            esses grupos, do mais pobre (1º) ao mais rico.
+                            esses grupos.
                         </span>
                     </p>
                 </div>
@@ -271,8 +272,8 @@ estrutura de modal dele, so com o acabamento do folheto.
                 <h2 class="fx-titulo">Faixas populacionais por grupo</h2>
                 <p class="fx-dek">
                     Cada linha é uma faixa de população; cada coluna, um grupo de receita por habitante.
-                    A tabela mostra se os municípios de um tamanho tendem a estar entre os mais pobres ou os
-                    mais ricos do país.
+                    A tabela mostra se os municípios de um tamanho tendem a estar entre os de menor ou os
+                    de maior receita do país.
                 </p>
                 {# Legenda do mapa de calor: o texto da ponta muda com Numero/% (JS). #}
                 <div class="fx-calor-legenda" aria-hidden="true">

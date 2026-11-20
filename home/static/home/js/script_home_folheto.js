@@ -115,9 +115,14 @@
   }
 
   /**
-   * Monta o hero em frases a partir de summaryCards da API:
-   * esquerda = media em destaque + quantidade; direita = distancia da media
-   * nacional e dispersao (coeficiente de variacao) dentro da selecao.
+   * Monta o hero em frases a partir de summaryCards da API.
+   * Esquerda: media em destaque + quantidade de municipios.
+   * Direita: como os grupos sao formados, que depende de tres controles:
+   *   - filtro aplicado ou nao (percTotalMunicipios < 100);
+   *   - toggle Quintis "Do pais" x "Do filtro" (calculation_mode);
+   *   - Quintil x Decil.
+   * Sem filtro os dois modos dao o mesmo resultado, entao a frase e uma so.
+   * Vocabulario do IFEM: "menor receita" / "maior receita", nunca pobre/rico.
    */
   function preencherHero(resumo) {
     if (!resumo) return;
@@ -129,15 +134,25 @@
     var perc = Number(resumo.percTotalMunicipios) || 0;
     var media = Number(resumo.mediaReceitaPerCapita);
     var diff = Number(resumo.diffMediaNacional);
-    var cv = Number(resumo.giniIndex);
+    var filtrado = perc < 99.95;
+
+    var elDecil = document.getElementById('quantilDecil');
+    var elModoFiltro = document.getElementById('calcModeFiltered');
+    var decil = !!(elDecil && elDecil.checked);
+    var modoFiltro = !!(elModoFiltro && elModoFiltro.checked);
+    var grupos = decil ? 'decis' : 'quintis';
+    var n = decil ? 10 : 5;
+    var primeiro = num('1º', VERMELHO_ESCURO);
+    var ultimo = num(n + 'º', VERDE_ESCURO);
+    var qtdNum = num(fmtInt.format(total));
 
     if (elMedia) elMedia.textContent = isFinite(media) && total > 0 ? 'R$ ' + fmtInt.format(Math.round(media)) : 'Sem dados';
 
     if (elQtd) {
       var qtd = '<span class="fx-hero-pop">' + fmtInt.format(total) + '</span>';
       if (total === 0) {
-        elQtd.textContent = 'Nenhum município com dados de receita nesta seleção.';
-      } else if (perc >= 99.95) {
+        elQtd.textContent = 'Nenhum município com dados de receita neste filtro.';
+      } else if (!filtrado) {
         elQtd.innerHTML = 'São ' + qtd + ' municípios, todos os que têm dados de receita no país.';
       } else {
         elQtd.innerHTML = (total === 1 ? 'É ' + qtd + ' município, ' : 'São ' + qtd + ' municípios, ') +
@@ -149,21 +164,26 @@
     if (total === 0) { elComp.textContent = ''; return; }
 
     var frase;
-    if (!isFinite(diff) || Math.abs(diff) < 0.05) {
-      frase = 'A média da seleção é a própria média nacional.';
+    if (!filtrado) {
+      frase = 'Os municípios do país são ordenados pela receita corrente por habitante e divididos em ' +
+        num(String(n)) + ' grupos do mesmo tamanho, os ' + grupos + ': do ' + primeiro +
+        ', com menor receita, ao ' + ultimo + ', com maior receita.';
+    } else if (modoFiltro) {
+      frase = 'Os ' + grupos + ' são recalculados só entre os ' + qtdNum + ' municípios do filtro: o ' +
+        primeiro + ' reúne os de menor receita entre eles, e o ' + ultimo +
+        ', os de maior receita. Cada grupo tem o mesmo número de municípios.';
     } else {
-      var acima = diff > 0;
-      frase = 'Essa média fica ' + num(fmtPct.format(Math.abs(diff)) + '% ' + (acima ? 'acima' : 'abaixo'),
-        acima ? VERDE_ESCURO : VERMELHO_ESCURO) + ' da média nacional.';
+      frase = 'Os ' + grupos + ' são os do país: cada um dos ' + qtdNum +
+        ' municípios do filtro mantém o grupo que ocupa no ranking nacional, do ' + primeiro +
+        ', com menor receita, ao ' + ultimo + ', com maior receita. Por isso os grupos podem ter tamanhos diferentes.';
     }
 
-    // Com um municipio so nao ha dispersao a medir.
-    if (total > 1 && isFinite(cv)) {
-      var leitura = cv >= 30 ? 'sinal de alta desigualdade entre os municípios.'
-        : cv >= 15 ? 'desigualdade moderada entre os municípios.'
-          : 'receitas por habitante parecidas entre os municípios.';
-      frase += ' Dentro da seleção, o coeficiente de variação da receita por habitante é de ' +
-        num(fmtPct.format(cv) + '%', '#FFC72C') + ', ' + leitura;
+    // Distancia da media nacional: so faz sentido com filtro (sem ele e 0).
+    if (filtrado && isFinite(diff) && Math.abs(diff) >= 0.05) {
+      var acima = diff > 0;
+      frase += ' A receita média desses municípios fica ' +
+        num(fmtPct.format(Math.abs(diff)) + '% ' + (acima ? 'acima' : 'abaixo'), acima ? VERDE_ESCURO : VERMELHO_ESCURO) +
+        ' da média nacional.';
     }
     elComp.innerHTML = frase;
   }
