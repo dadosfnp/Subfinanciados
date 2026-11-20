@@ -209,6 +209,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const elDiff = document.getElementById('kpi-diferenca-media');
       elDiff.textContent = diff.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 1 });
       colorizeDiffKpi(diff);
+
+      // A preview do folheto (/preview/agregado/) monta o hero em frase com
+      // estes KPIs. Na pagina publica ninguem escuta, entao nada muda la.
+      document.dispatchEvent(new CustomEvent('ifem:kpis-conjunto', { detail: d.kpis || {} }));
     } catch(e) {
       console.error('[kpis] erro', e);
     }

@@ -1,5 +1,37 @@
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
+/*
+ * Videos dos cards (data-video-lazy): so baixam e tocam quando o card chega
+ * perto da tela, e pausam ao sair. Antes os tres (53 MB) comecavam a baixar
+ * no carregamento, junto com o video do topo, e atrasavam o primeiro quadro
+ * dele. rootMargin de 200px comeca a carregar um pouco antes de aparecer.
+ * Sem IntersectionObserver (navegador antigo): toca direto, como era antes.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const videos = document.querySelectorAll('video[data-video-lazy]');
+    if (!videos.length) return;
+
+    const tocar = (v) => {
+        const p = v.play();
+        // play() rejeita se o navegador bloquear autoplay ou o video sair da
+        // tela antes de carregar; nao e erro da pagina, so registra.
+        if (p && p.catch) p.catch((error) => console.debug('[landing] video do card nao tocou', { src: v.currentSrc, error }));
+    };
+
+    if (!('IntersectionObserver' in window)) {
+        videos.forEach(tocar);
+        return;
+    }
+
+    const obs = new IntersectionObserver((entradas) => {
+        entradas.forEach((e) => {
+            if (e.isIntersecting) tocar(e.target);
+            else e.target.pause();
+        });
+    }, { rootMargin: '200px 0px' });
+    videos.forEach((v) => obs.observe(v));
+});
+
 document.addEventListener("DOMContentLoaded", () => {
 
     

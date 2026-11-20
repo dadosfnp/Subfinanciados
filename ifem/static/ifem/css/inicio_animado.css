@@ -1,0 +1,269 @@
+/* ============================================================================
+   Landing animada (/preview/inicio-animado/)
+   ----------------------------------------------------------------------------
+   Reaproveita o hero, a paleta e o rodapé de inicio_folheto.css. Aqui só a
+   seção animada: o palco (canvas) fica preso na tela enquanto os cartões de
+   texto rolam por cima. Cada cartão ocupa uma tela de altura; o JS lê quanto
+   da seção já rolou e desenha o estado correspondente.
+   ========================================================================== */
+
+/* ---- Hero ----
+   Copia do "HERO SECTION" de ifem/css/style.css (landing publica), para a
+   abertura ficar identica. O style.css inteiro nao entra aqui: ele redefine
+   body, h1-h6 e p para a pagina toda e desmontaria os cartoes. Se o hero de la
+   mudar, atualizar aqui tambem. */
+.hero-section {
+  position: relative;
+  width: 100%;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  overflow: hidden;
+}
+
+.hero-video-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 30, 60, 0.65);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1000px;
+  text-align: center;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes fadeInUpHero {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-content .big-title,
+.hero-content .hero-subtitle,
+.hero-content .scroll-indicator {
+  opacity: 0;
+  animation: fadeInUpHero 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+.hero-content .big-title { animation-delay: 0.2s; }
+.hero-content .hero-subtitle { animation-delay: 0.5s; }
+.hero-content .scroll-indicator { animation-delay: 0.8s; }
+
+.big-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  margin: 0 0 30px 0;
+}
+
+.highlight-contramao {
+  color: #EEAF19;
+  display: inline-block;
+  font-weight: 900;
+  transform: skewX(12deg);
+  margin: 0 6px;
+  text-shadow: 0 4px 15px rgba(243, 169, 18, 0.25);
+}
+
+.hero-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 auto 50px auto;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+/* Aqui o botao e um link para a animacao (la e um <button> com JS). */
+.scroll-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 16px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.scroll-indicator:hover {
+  background-color: #ffffff;
+  color: #2F80ED;
+  border-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 575.98px) {
+  .hero-content .hero-subtitle {
+    white-space: nowrap;
+    font-size: clamp(0.7rem, 3.8vw, 0.95rem);
+    letter-spacing: -0.01em;
+    padding: 0;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content .big-title,
+  .hero-content .hero-subtitle,
+  .hero-content .scroll-indicator { animation: none; opacity: 1; }
+}
+
+/* ---- Animacao ---- */
+.an-scrolly {
+  position: relative;
+  background: var(--ap-papel);
+}
+
+.an-palco {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.an-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.an-carregando {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ap-cinza);
+  transition: opacity 0.4s ease;
+}
+
+.an-scrolly.is-pronto .an-carregando { opacity: 0; pointer-events: none; }
+
+/* Os passos sobem por cima do palco: começam no mesmo ponto que ele. */
+.an-passos {
+  position: relative;
+  margin-top: -100vh;
+  margin-top: -100svh;
+  pointer-events: none;
+}
+
+.an-passo {
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 0 clamp(24px, 4vw, 64px);
+}
+
+/* O último passo fica mais tempo na tela antes de a seção acabar. O espaço
+   extra vai embaixo, para o cartão aparecer no mesmo lugar dos outros. */
+.an-passo:last-child { min-height: 130vh; padding-bottom: 30vh; }
+
+.an-cartao {
+  pointer-events: auto;
+  width: min(400px, 32vw);
+  padding: 26px 28px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--ap-fio);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(18, 39, 71, 0.08);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ap-tinta);
+  opacity: 0.35;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.an-passo.is-ativo .an-cartao { opacity: 1; transform: none; }
+
+.an-cartao p { margin: 0 0 12px; }
+.an-cartao p:last-child { margin-bottom: 0; }
+
+.an-cartao-titulo {
+  font-family: var(--ap-serifa);
+  font-size: clamp(24px, 2.2vw, 30px);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--ap-azul-escuro);
+  margin: 0 0 14px;
+}
+
+/* Cores de quintil em texto: variantes escuras, contraste >= 4.5:1. */
+.an-txt-q1 { color: #A81C21; font-weight: 700; }
+.an-txt-q5 { color: #157A3A; font-weight: 700; }
+
+.an-nota, .an-fonte { font-size: 13px; line-height: 1.5; color: var(--ap-cinza); }
+
+.an-legenda { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 6px; font-size: 14px; }
+.an-legenda li { display: flex; align-items: center; gap: 10px; }
+.an-cor { width: 14px; height: 14px; border-radius: 2px; flex: none; }
+.an-cor--verde { background: #1C9148; }
+.an-cor--cinza { background: #C5CAD1; }
+.an-cor--azul { background: #1B3A6B; }
+.an-cor--claro { background: #DCDFE4; }
+.an-cor--q1 { background: #A81C21; }
+.an-cor--q2 { background: #E47326; }
+.an-cor--q3 { background: #F4D01D; }
+.an-cor--q4 { background: #6AC074; }
+.an-cor--q5 { background: #1C9148; }
+
+/* Cinco quadradinhos colados: a escala de quintis numa linha só da legenda. */
+.an-cor-escala { display: inline-flex; flex: none; }
+.an-cor-escala .an-cor { border-radius: 0; }
+.an-cor-escala .an-cor:first-child { border-radius: 2px 0 0 2px; }
+.an-cor-escala .an-cor:last-child { border-radius: 0 2px 2px 0; }
+
+.an-fim-botoes { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+.an-fim-botoes .ap-hero-botao span { animation: none; }
+
+/* Celular e tablet em pé: o visual ocupa a parte de cima da tela e o cartão
+   passa embaixo dele, largura inteira. */
+@media (max-width: 860px) {
+  .an-passo { align-items: flex-end; padding: 0 16px 6vh; }
+  .an-passo:last-child { padding-bottom: 36vh; }
+  .an-cartao { width: 100%; padding: 18px 20px; font-size: 15px; }
+  .an-cartao-titulo { font-size: 22px; margin-bottom: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an-cartao { transition: none; transform: none; }
+}

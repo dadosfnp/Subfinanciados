@@ -1,5 +1,7 @@
 import json
 from .saude_fiscal import montar_saude_fiscal
+from .receita_corrente import montar_receita_corrente
+from .posicao_conjunto import posicao_do_conjunto
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -774,6 +776,8 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     context = {
         'municipio': municipio,
         'revenue_tree': revenue_tree,
+        # Linha de total no topo da tabela da preview: ver detail_mun/receita_corrente.py
+        'receita_corrente_item': montar_receita_corrente(municipio),
         'chart_data_json': json.dumps(chart_data),
         'percentile_data_json': json.dumps(percentile_data),
         'capag_data': capag_data,
@@ -856,6 +860,15 @@ def municipio_details_api(request):
             "delta_pop": delta_pop,
             "media_nacional_rc_pc": 316.74,
             "media_nacional_pop": 16.04,
+            # Lugar do conjunto nos rankings nacionais, como se fosse um
+            # municipio so (hero da preview do agregado). Ver posicao_conjunto.py.
+            "posicao": posicao_do_conjunto(pop24, rc_pc_24),
+            # Media nacional da receita corrente per capita, a mesma base do
+            # diferenca_media acima: coluna "Media Brasil" da linha Receita
+            # corrente na preview do agregado.
+            "media_nacional_receita_pc": national_avg_rc,
+            # Municipios com receita no pais: diz ao hero se ha filtro ativo.
+            "quantidade_pais": Municipio.objects.filter(dados_atuais__rc_atual__gt=0).count(),
             "hist_data": {
                 "pop00": pop00,
                 "rc00": rc00,

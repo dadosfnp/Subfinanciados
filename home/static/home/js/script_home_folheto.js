@@ -7,10 +7,198 @@
  *   1. (o pop-up de ajuda usa o bootstrap.Modal do head global, sem codigo aqui);
  *   2. titulo e chips do hero a partir dos filtros;
  *   3. faixa de cor do grupo no cabecalho das tabelas;
- *   4. filtros recolhiveis no celular e teclado nos botoes de ano.
+ *   4. filtros recolhiveis no celular e teclado nos botoes de ano;
+ *   5. hero em texto e mapa de calor das tabelas, a partir do evento
+ *      'ifem:dados-dashboard' que o script.js dispara com a resposta da API.
  * ========================================================================== */
 (function () {
   'use strict';
+
+  var fmtInt = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+  var fmtPct = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+
+  // Mesmas variantes claras do hero do municipio (QUINTIS.escuro em
+  // script_mun_folheto.js): legiveis sobre o azul escuro.
+  var VERDE_ESCURO = '#3DCB73';
+  var VERMELHO_ESCURO = '#FF6B66';
+
+  /**
+   * Rampa quente do mapa de calor: creme (poucos municipios) ate vermelho
+   * escuro (muitos). Sequencial de proposito: o que se le aqui e quantidade,
+   * nao bom/ruim, entao nao reaproveita a paleta divergente dos quintis.
+   */
+  var RAMPA_CALOR = [
+    [0, [255, 246, 224]],
+    [0.2, [254, 227, 162]],
+    [0.45, [253, 184, 99]],
+    [0.7, [240, 123, 63]],
+    [1, [178, 34, 44]]
+  ];
+
+  /**
+   * Cor da rampa para t em [0, 1], interpolando em RGB entre as paradas.
+   * @param {number} t intensidade normalizada pelo maior valor da matriz
+   * @returns {string} cor rgb() pronta para o CSS
+   */
+  function corCalor(t) {
+    t = Math.max(0, Math.min(1, t));
+    for (var i = 1; i < RAMPA_CALOR.length; i++) {
+      var b = RAMPA_CALOR[i];
+      if (t > b[0]) continue;
+      var a = RAMPA_CALOR[i - 1];
+      var f = (t - a[0]) / (b[0] - a[0] || 1);
+      var rgb = a[1].map(function (c, k) { return Math.round(c + (b[1][k] - c) * f); });
+      return 'rgb(' + rgb.join(',') + ')';
+    }
+    return 'rgb(' + RAMPA_CALOR[RAMPA_CALOR.length - 1][1].join(',') + ')';
+  }
+
+  /** Le "1.088", "67,5%" ou "n/d" da celula; NaN quando nao ha numero. */
+  function numeroDaCelula(td) {
+    var txt = (td.textContent || '').trim().replace(/\./g, '').replace(',', '.').replace('%', '');
+    return txt === '' ? NaN : Number(txt);
+  }
+
+  /**
+   * Pinta o miolo das tabelas visiveis (sem a coluna de faixa, a coluna Total
+   * e a linha Total Geral) numa escala unica. Com 2000 e 2025 na tela, o
+   * maior valor e o das duas juntas: a mesma cor vale a mesma quantidade nos
+   * dois anos, senao a comparacao lado a lado enganaria.
+   */
+  function pintarMapaDeCalor() {
+    var celulas = [];
+    ['#table-2025', '#table-2000'].forEach(function (sel) {
+      var tabela = document.querySelector(sel);
+      if (!tabela || tabela.closest('.d-none')) return;
+      tabela.classList.add('fx-home-tabela--calor');
+      tabela.querySelectorAll('tbody tr').forEach(function (tr) {
+        var tds = tr.querySelectorAll('td');
+        // O script.js so marca .linha-total quando a coluna se chama
+        // "Faixas"; aqui ela vem como "Faixas Populacionais" (ou outro
+        // rotulo de agrupamento). Reconhece pelo texto e marca, senao o
+        // Total Geral entra na escala e vira o maximo.
+        var rotulo = tds[0] ? tds[0].textContent.trim() : '';
+        if (/^Total/i.test(rotulo)) tr.classList.add('linha-total');
+        if (tr.classList.contains('linha-total')) return;
+        for (var i = 1; i < tds.length - 1; i++) celulas.push(tds[i]);
+      });
+    });
+
+    var max = 0;
+    celulas.forEach(function (td) {
+      var v = numeroDaCelula(td);
+      if (isFinite(v) && v > max) max = v;
+    });
+
+    celulas.forEach(function (td) {
+      var v = numeroDaCelula(td);
+      td.classList.add('fx-calor');
+      if (!isFinite(v) || max <= 0) {
+        td.classList.add('fx-calor--nd');
+        return;
+      }
+      var t = v / max;
+      td.style.setProperty('--calor', corCalor(t));
+      // Acima de ~55% da rampa o fundo ja e laranja forte: texto branco.
+      td.classList.toggle('fx-calor--forte', t > 0.55);
+      td.classList.toggle('fx-calor--zero', v === 0);
+    });
+
+    var fim = document.getElementById('fx-calor-legenda-fim');
+    var pct = document.getElementById('formatPorcentagem');
+    if (fim) fim.textContent = pct && pct.checked ? 'maior parcela da faixa' : 'mais municípios';
+  }
+
+  /** Numero destacado do hero, com cor opcional (inline: varia com o dado). */
+  function num(texto, cor) {
+    return '<strong class="fx-pos-num"' + (cor ? ' style="color:' + cor + '"' : '') + '>' + texto + '</strong>';
+  }
+
+  /**
+   * Monta o hero em frases a partir de summaryCards da API.
+   * Esquerda: media em destaque + quantidade de municipios.
+   * Direita: como os grupos sao formados, que depende de tres controles:
+   *   - filtro aplicado ou nao (percTotalMunicipios < 100);
+   *   - toggle Quintis "Do pais" x "Do filtro" (calculation_mode);
+   *   - Quintil x Decil.
+   * Sem filtro os dois modos dao o mesmo resultado, entao a frase e uma so.
+   * Vocabulario do IFEM: "menor/maior receita por habitante", nunca pobre/rico.
+   */
+  function preencherHero(resumo) {
+    if (!resumo) return;
+    var elMedia = document.getElementById('fx-home-media');
+    var elQtd = document.getElementById('fx-home-quantidade');
+    var elComp = document.getElementById('fx-home-comparacao');
+
+    var total = Number(resumo.totalMunicipios) || 0;
+    var perc = Number(resumo.percTotalMunicipios) || 0;
+    var media = Number(resumo.mediaReceitaPerCapita);
+    var diff = Number(resumo.diffMediaNacional);
+    var filtrado = perc < 99.95;
+
+    var elDecil = document.getElementById('quantilDecil');
+    var elModoFiltro = document.getElementById('calcModeFiltered');
+    var decil = !!(elDecil && elDecil.checked);
+    var modoFiltro = !!(elModoFiltro && elModoFiltro.checked);
+    var grupos = decil ? 'decis' : 'quintis';
+    var n = decil ? 10 : 5;
+    var primeiro = num('1º', VERMELHO_ESCURO);
+    var ultimo = num(n + 'º', VERDE_ESCURO);
+    var qtdNum = num(fmtInt.format(total));
+
+    if (elMedia) elMedia.textContent = isFinite(media) && total > 0 ? 'R$ ' + fmtInt.format(Math.round(media)) : 'Sem dados';
+
+    if (elQtd) {
+      var qtd = '<span class="fx-hero-pop">' + fmtInt.format(total) + '</span>';
+      if (total === 0) {
+        elQtd.textContent = 'Nenhum município com dados de receita neste filtro.';
+      } else if (!filtrado) {
+        elQtd.innerHTML = 'São ' + qtd + ' municípios, todos os que têm dados de receita no país.';
+      } else {
+        elQtd.innerHTML = (total === 1 ? 'É ' + qtd + ' município, ' : 'São ' + qtd + ' municípios, ') +
+          fmtPct.format(perc) + '% dos que têm dados de receita no país.';
+      }
+    }
+
+    if (!elComp) return;
+    if (total === 0) { elComp.textContent = ''; return; }
+
+    var frase;
+    if (!filtrado) {
+      frase = 'Os municípios do país são ordenados pela receita corrente por habitante e divididos em ' +
+        num(String(n)) + ' grupos do mesmo tamanho, os ' + grupos + ': do ' + primeiro +
+        ', com menor receita por habitante, ao ' + ultimo + ', com maior receita por habitante.';
+    } else if (modoFiltro) {
+      frase = 'Os ' + grupos + ' são recalculados só entre os ' + qtdNum + ' municípios do filtro: o ' +
+        primeiro + ' reúne os de menor receita por habitante entre eles, e o ' + ultimo +
+        ', os de maior receita por habitante. Cada grupo tem o mesmo número de municípios.';
+    } else {
+      frase = 'Os ' + grupos + ' são os do país: cada um dos ' + qtdNum +
+        ' municípios do filtro mantém o grupo que ocupa no ranking nacional, do ' + primeiro +
+        ', com menor receita por habitante, ao ' + ultimo + ', com maior receita por habitante. Por isso os grupos podem ter tamanhos diferentes.';
+    }
+
+    // Distancia da media nacional: so faz sentido com filtro (sem ele e 0).
+    if (filtrado && isFinite(diff) && Math.abs(diff) >= 0.05) {
+      var acima = diff > 0;
+      frase += ' A receita média desses municípios fica ' +
+        num(fmtPct.format(Math.abs(diff)) + '% ' + (acima ? 'acima' : 'abaixo'), acima ? VERDE_ESCURO : VERMELHO_ESCURO) +
+        ' da média nacional.';
+    }
+    elComp.innerHTML = frase;
+  }
+
+  document.addEventListener('ifem:dados-dashboard', function (ev) {
+    var data = ev.detail || {};
+    try {
+      preencherHero(data.summaryCards);
+      pintarMapaDeCalor();
+    } catch (error) {
+      // Falha aqui nao pode derrubar o resto da pagina (grafico e tabelas ja
+      // foram desenhados pelo script.js); registra com o que chegou.
+      console.error('[analise-folheto] falha ao montar hero/mapa de calor', { resumo: data.summaryCards, error: error });
+    }
+  });
 
   // Paleta dos grupos: a mesma do grafico e da preview do municipio.
   var QUINTIS = { 1: '#A81C21', 2: '#E47326', 3: '#F4D01D', 4: '#6AC074', 5: '#1C9148' };

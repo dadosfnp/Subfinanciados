@@ -1,9 +1,11 @@
 {% extends "global/head.html" %}
 {% comment %}
-PREVIEW - Agregado (conjunto de municipios) no layout editorial do folheto IFEM.
+Agregado (conjunto de municipios) no layout editorial do folheto IFEM.
 
-Rota: /preview/agregado/  (name: conjunto_detalhe_folheto)
-Mesma view da pagina publica (conjunto_detalhe_view), so muda o template.
+Rotas: /analise-municipal/ (publica, name: analise_municipal) e
+/preview/agregado/ (name: conjunto_detalhe_folheto). Aprovado e publicado em
+2026-11. Mesma view (conjunto_detalhe_view); o layout antigo
+(detalhe_conjunto.html) segue como default dela, para voltar se preciso.
 
 PRINCIPIO: o detail_agg/js/script.js continua dono de tudo que ja fazia
 (filtros, KPIs, arvore de receitas, graficos, sintese). Por isso os IDs abaixo
@@ -11,7 +13,8 @@ sao os mesmos da pagina publica. A diferenca:
   - window.IFEM_LAYOUT = 'folheto' faz a /api/fiscal-details/ devolver os
     partials no layout novo, mais a Saude Fiscal do conjunto;
   - script_agg_folheto.js cuida so do que e novo: titulo do hero a partir dos
-    filtros, numeros grandes da sintese, filtros no celular e o botao Baixar.
+    filtros, hero em frase, linha Receita corrente, sintese e filtros no celular.
+    O botao Baixar saiu (como no municipio); o Ctrl+P segue usando o CSS de impressao.
 
 Visual compartilhado com a preview do municipio: carrega o
 style_mun_folheto.css e acrescenta o style_agg_folheto.css.
@@ -20,9 +23,9 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 {% load currency_filters %}
 
 {% block extra_head %}
-    <title>Análise agregada - Preview IFEM</title>
-    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
-    <meta name="robots" content="noindex, nofollow">
+    <title>Análise agregada | IFEM</title>
+    {# O mesmo template serve a rota publica e a /preview/; so a preview fica fora dos buscadores. #}
+    {% if '/preview/' in request.path %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
@@ -57,16 +60,6 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
 
             <button type="button" class="fx-btn-baixar" id="btn-limpar-filtros">Limpar filtros</button>
 
-            <button type="button" class="fx-btn-baixar" id="fx-baixar"
-                    title="Abre a caixa de impressao do navegador; escolha &quot;Salvar como PDF&quot;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Baixar</span>
-            </button>
         </div>
 
         {# IDs dos selects iguais aos da pagina publica: o script.js os le e repovoa. #}
@@ -130,28 +123,47 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
                     <p class="fx-eyebrow">Análise agregada · 2025</p>
                     {# Montado no JS a partir dos filtros ativos. #}
                     <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-agg-titulo">Todos os municípios do Brasil</h1>
+                    {% comment %}Mesmo hero do municipio (texto aprovado): valor em
+                       destaque, rotulo, frase com habitantes e percentil, regua dos
+                       quintis. O valor e escrito pelo script.js (kpi-receita-per-capita);
+                       frase, regua e posicao pelo script_agg_folheto.js no evento
+                       ifem:kpis-conjunto.{% endcomment %}
                     <p class="fx-hero-veredito">
-                        <span class="fx-hero-destaque" id="kpi-receita-per-capita">&nbsp;</span>
-                        por habitante em receita corrente, na média dos municípios do conjunto.
+                        <span class="fx-hero-destaque fx-hero-destaque--grande" id="kpi-receita-per-capita">&nbsp;</span>
+                        <span class="fx-hero-rotulo">por habitante em receita corrente.</span>
+                        <span class="fx-hero-comparacao" id="fx-agg-veredito-texto">&nbsp;</span>
                     </p>
+
+                    <div class="fx-regua">
+                        <div class="fx-regua-track">
+                            <div class="fx-regua-q" data-q="1" style="background: var(--fx-q1);"></div>
+                            <div class="fx-regua-q" data-q="2" style="background: var(--fx-q2);"></div>
+                            <div class="fx-regua-q" data-q="3" style="background: var(--fx-q3);"></div>
+                            <div class="fx-regua-q" data-q="4" style="background: var(--fx-q4);"></div>
+                            <div class="fx-regua-q" data-q="5" style="background: var(--fx-q5);"></div>
+                            <div class="fx-regua-marcador" id="fx-agg-regua-marcador" style="left: 0%; display: none;"></div>
+                        </div>
+                        <div class="fx-regua-escala">
+                            <span>0%</span><span>20%</span><span>40%</span>
+                            <span>60%</span><span>80%</span><span>100%</span>
+                        </div>
+                    </div>
                     <div class="fx-agg-chips" id="fx-agg-chips"></div>
                 </div>
 
-                <div class="fx-hero-stats">
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">População</span>
-                        <span class="fx-stat-valor" id="kpi-populacao">&nbsp;</span>
-                    </div>
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Municípios no conjunto</span>
-                        <span class="fx-stat-valor" id="kpi-quantidade">&nbsp;</span>
-                    </div>
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Diferença para a média nacional</span>
-                        <span class="fx-stat-valor" id="kpi-diferenca-media">&nbsp;</span>
-                        <span class="fx-stat-sub">na receita corrente por habitante</span>
-                    </div>
+                <div class="fx-hero-posicao">
+                    <p class="fx-eyebrow">Posição no Brasil</p>
+                    <p class="fx-hero-posicao-texto" id="fx-agg-posicao-texto">&nbsp;</p>
                 </div>
+            </div>
+
+            {% comment %}Alvos do detail_agg/js/script.js, que escreve neles sem
+               checar se existem. Escondidos: o texto visivel acima usa os mesmos
+               dados ja em frase.{% endcomment %}
+            <div hidden>
+                <span id="kpi-populacao"></span>
+                <span id="kpi-quantidade"></span>
+                <span id="kpi-diferenca-media"></span>
             </div>
         </div>
     </section>
@@ -210,6 +222,34 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
                     <div class="fx-head-rot fx-head-centro">
                         Média Brasil
                         <span class="fx-head-sub">R$ por habitante</span>
+                    </div>
+                </div>
+                {% comment %}Receita corrente: a rubrica geral, primeira linha e em
+                   destaque, como no municipio. Fica FORA do container porque o
+                   script.js reordena por valor tudo o que esta dentro dele e o
+                   total sempre venceria (e seria substituido a cada filtro).
+                   Preenchida pelo script_agg_folheto.js no evento
+                   ifem:kpis-conjunto.{% endcomment %}
+                <div class="fx-row fx-row--agg fx-row--total" data-level="total" id="fx-agg-total">
+                    <div class="fx-rubrica">
+                        <span class="fx-total-textos">
+                            <span class="fx-nome">Receita corrente</span>
+                            <span class="fx-total-leitura" id="fx-agg-total-leitura"></span>
+                        </span>
+                    </div>
+                    <div class="fx-diverge">
+                        <span class="fx-diverge-pct" id="fx-agg-total-pct"></span>
+                        <div class="fx-diverge-track">
+                            <span class="fx-diverge-meio" aria-hidden="true"></span>
+                            <span class="fx-diverge-fill" id="fx-agg-total-barra" style="width: 0%;"></span>
+                        </div>
+                    </div>
+                    <span class="fx-valor">
+                        <span class="valor-per-capita" id="fx-agg-total-pc">&nbsp;</span>
+                        <span class="valor-absoluto hidden" id="fx-agg-total-abs">&nbsp;</span>
+                    </span>
+                    <div class="fx-media" data-rotulo="Brasil">
+                        <span class="fx-box fx-box-br" id="fx-agg-total-media">&nbsp;</span>
                     </div>
                 </div>
                 <div id="main-revenue-details-container">

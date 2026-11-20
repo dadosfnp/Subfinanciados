@@ -8,8 +8,8 @@
  *   script_mun.js  → toggles (base / per capita / média-mediana), gráficos de
  *                    composição, densidade, síntese fiscal, ordenação das
  *                    rubricas por valor, sticky header, rankings.
- *   este arquivo   → tabela de barras do folheto, hero com régua de quintis,
- *                    e o botão de baixar.
+ *   este arquivo   → tabela de barras do folheto (inclusive a linha de total)
+ *                    e o hero: frases de comparação e posição, régua de quintis.
  *
  * A tabela reaproveita as classes que o script original já manipula
  * (.valor-per-capita / .valor-absoluto / .estatistica-media / .estatistica-mediana),
@@ -23,14 +23,16 @@
   // do script_mun.js. `txt` é a variante escurecida para texto: no papel o
   // número sai na cor da barra, mas amarelo e verde-claro sobre branco ficam
   // em ~2:1 de contraste. Ver o topo de style_mun_folheto.css.
+  // `escuro` é a variante clara para texto sobre o azul do hero: o vermelho e
+  // o verde de barra (#A81C21, #1C9148) somem nesse fundo.
   var QUINTIS = [
-    { bar: '#A81C21', txt: '#A81C21' }, // 1 — supera até 20%
-    { bar: '#E47326', txt: '#B0530E' }, // 2 — até 40%
-    { bar: '#F4D01D', txt: '#8A6A00' }, // 3 — até 60%
-    { bar: '#6AC074', txt: '#2E7D45' }, // 4 — até 80%
-    { bar: '#1C9148', txt: '#167A3C' }  // 5 — acima de 80%
+    { bar: '#A81C21', txt: '#A81C21', escuro: '#FF6B66' }, // 1 — supera até 20%
+    { bar: '#E47326', txt: '#B0530E', escuro: '#FF9F5A' }, // 2 — até 40%
+    { bar: '#F4D01D', txt: '#8A6A00', escuro: '#F4D01D' }, // 3 — até 60%
+    { bar: '#6AC074', txt: '#2E7D45', escuro: '#7FD48A' }, // 4 — até 80%
+    { bar: '#1C9148', txt: '#167A3C', escuro: '#3DCB73' }  // 5 — acima de 80%
   ];
-  var SEM_DADO = { bar: '#B9BFC7', txt: '#6B7280' };
+  var SEM_DADO = { bar: '#B9BFC7', txt: '#6B7280', escuro: '#AABBCC' };
 
   /**
    * Converte um percentil (0–100) no par de cores do quintil.
@@ -159,6 +161,7 @@
   var elRankPopValor = document.getElementById('fx-rank-pop-valor');
   var elRankPopDe = document.getElementById('fx-rank-pop-de');
   var elCrescSub = document.getElementById('fx-cresc-sub');
+  var elTotalLeitura = document.getElementById('fx-total-leitura');
   var elHeadEscopo = document.getElementById('fx-head-escopo');
   var elComoLerEscopo = document.getElementById('fx-como-ler-escopo');
   var quintisRegua = Array.prototype.slice.call(document.querySelectorAll('.fx-regua-q'));
@@ -200,11 +203,18 @@
         : '';
       if (temDado) {
         elVeredito.innerHTML = 'Arrecada mais que ' +
-          '<strong style="color:' + cor.bar + '">' + Math.round(pct) + '%</strong> ' + esc.frase +
+          '<strong style="color:' + cor.escuro + '">' + Math.round(pct) + '%</strong> ' + esc.frase +
           trechoQuintil + '.';
       } else {
         elVeredito.innerHTML = '<span style="opacity:.7">Sem dado comparativo para esta base.</span>';
       }
+    }
+
+    // Leitura da linha "Receita corrente" na tabela: mesma base do hero.
+    if (elTotalLeitura) {
+      elTotalLeitura.textContent = temDado
+        ? 'supera ' + Math.round(pct) + '% ' + esc.frase
+        : 'sem dado comparativo para esta base';
     }
 
     if (elMarcador) {
@@ -232,10 +242,10 @@
         var dif = c.receita_mun - mediaGrupo;
         elCrescSub.textContent = (dif >= 0 ? 'acima' : 'abaixo') + ' da média ' + esc.grupo +
           ' (' + fmt1.format(mediaGrupo) + '%)';
-        elCrescSub.className = 'fx-stat-sub ' + (dif >= 0 ? 'is-positivo' : 'is-negativo');
+        elCrescSub.className = 'fx-stat-sub fx-stat-sub--junto ' + (dif >= 0 ? 'is-positivo' : 'is-negativo');
       } else {
         elCrescSub.textContent = 'sem comparativo';
-        elCrescSub.className = 'fx-stat-sub';
+        elCrescSub.className = 'fx-stat-sub fx-stat-sub--junto';
       }
     }
   }
@@ -288,29 +298,7 @@
   });
 
   // ==========================================================================
-  // 4. BAIXAR
-  // ==========================================================================
-  /*
-   * window.print() em vez de html2canvas/jsPDF: o navegador gera PDF com texto
-   * selecionável e vetorial, respeitando o @media print do CSS, sem carregar
-   * duas bibliotecas nem rasterizar a página. O mapa usa html2canvas porque
-   * precisa capturar o canvas do Mapbox — aqui não é o caso.
-   */
-  var btnBaixar = document.getElementById('fx-baixar');
-  if (btnBaixar) {
-    btnBaixar.addEventListener('click', function () {
-      // Abre a árvore inteira antes de imprimir: o que está recolhido não sai
-      // no papel, e um PDF com metade das rubricas ocultas seria pior que inútil.
-      document.querySelectorAll('.fx-row.fx-clickable').forEach(function (linha) {
-        var alvo = document.getElementById(linha.getAttribute('data-target'));
-        if (alvo && !alvo.classList.contains('is-open')) alternarLinha(linha);
-      });
-      window.setTimeout(function () { window.print(); }, 350);
-    });
-  }
-
-  // ==========================================================================
-  // 5. BOOT
+  // 4. BOOT
   // ==========================================================================
   /*
    * Abre as rubricas de nível 0 na carga: o folheto impresso mostra os níveis

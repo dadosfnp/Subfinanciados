@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 from home import views as home_views
+from home import api_sistema as home_api_sistema
 from detail_mun import views as detail_mun_views
 from detail_agg import views as detail_agg_views
 from map import views as map_views
@@ -18,14 +19,21 @@ urlpatterns = [
 
     # --- PÁGINAS PRINCIPAIS ---
     path('', home_views.index, name='index'),
-    path('analise/', home_views.home, name='home'),
+    # Analise, agregado e municipio usam o layout do folheto IFEM, aprovado
+    # pela diretoria em 2026-11. Os templates antigos seguem como default das
+    # views: para voltar, basta tirar o dict {'template_name': ...} da rota.
+    path('analise/', home_views.home, {'template_name': 'home/home_folheto.html'}, name='home'),
     path('mapa/', map_views.map, name='mapa'),
     path('selecionar-municipio/', detail_mun_views.selecionar_municipio_view, name='selecionar_municipio'), # NOVA ROTA AQUI
-    path('analise-municipal/', detail_agg_views.conjunto_detalhe_view, name='analise_municipal'),
-    path('municipio/<str:municipio_id>/', detail_mun_views.municipio_detalhe_view, name='municipio_detalhe'),
+    path('analise-municipal/', detail_agg_views.conjunto_detalhe_view,
+         {'template_name': 'detail_agg/detalhe_conjunto_folheto.html'}, name='analise_municipal'),
+    path('municipio/<str:municipio_id>/', detail_mun_views.municipio_detalhe_view,
+         {'template_name': 'detail_mun/detalhe_municipio_folheto.html'}, name='municipio_detalhe'),
     path('metodologia/', metodologia_views.metodologia_page, name='metodologia'),
 
     # --- PREVIEW (nao publicado no menu) ---
+    # Municipio, agregado e analise ja sao publicos no mesmo layout (acima);
+    # as rotas abaixo ficam para links antigos e para testar mudancas novas.
     # Mesma view do detalhe do municipio, so troca o template: a Estrutura de
     # Receitas sai dos cards e vira a tabela de barras do folheto IFEM.
     # Rota temporaria, para aprovacao da diretoria antes de virar o padrao.
@@ -51,6 +59,12 @@ urlpatterns = [
     ),
     # Landing em formato de apresentacao (scrollytelling), modulos em ifem/apresentacao.py.
     path('preview/inicio/', ifem_views.inicio_preview, name='inicio_folheto'),
+    # Landing animada: mapa > grade > quintis > populacao, guiada pelo scroll.
+    path('preview/inicio-animado/', ifem_views.inicio_animado_preview, name='inicio_animado'),
+
+    # --- API: SISTEMA FNP (leitura com token, home/api_sistema.py) ---
+    path('api/sistema-fnp/indicadores-municipais/', home_api_sistema.indicadores_municipais,
+         name='api_sistema_indicadores_municipais'),
 
     # --- APIS: HOME ---
     path('api/get-dependent-filters/', home_views.api_get_dependent_filters, name='api_get_dependent_filters'),

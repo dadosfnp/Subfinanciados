@@ -452,6 +452,12 @@ async function atualizarFiltros() {
 
         enableSynchronizedHover('#table-2025', '#table-2000');
 
+        // Avisa quem desenha mais coisas a partir da mesma resposta: a preview
+        // do folheto (/preview/analise/) monta o hero em texto e o mapa de
+        // calor das tabelas com estes dados. Disparado depois das tabelas
+        // prontas. Na pagina publica ninguem escuta, entao nada muda la.
+        document.dispatchEvent(new CustomEvent('ifem:dados-dashboard', { detail: data }));
+
     } catch (error) {
         console.error('Erro ao atualizar filtros:', error);
         alert('Ocorreu um erro ao carregar os dados do dashboard. Por favor, tente novamente.');
