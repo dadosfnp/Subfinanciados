@@ -7,7 +7,8 @@
  *   1. titulo e chips do hero a partir dos filtros ativos;
  *   2. numeros grandes da sintese (o script.js escreve frases, aqui sao cards);
  *   3. filtros recolhiveis no celular;
- *   4. botao Baixar (impressao do navegador).
+ *   4. hero em frase e linha Receita corrente (evento ifem:kpis-conjunto).
+ * O botao Baixar saiu, como no municipio.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -295,23 +296,6 @@
         barra.classList.remove('is-filtros-abertos');
         btnFiltros.setAttribute('aria-expanded', 'false');
       });
-    });
-  }
-
-  // ---- Baixar ----
-  // window.print(), como na preview do municipio. A arvore inteira e aberta
-  // antes: rubrica recolhida nao sai no papel.
-  var btnBaixar = document.getElementById('fx-baixar');
-  if (btnBaixar) {
-    btnBaixar.addEventListener('click', function () {
-      document.querySelectorAll('.fx-row[data-target]').forEach(function (linha) {
-        var alvo = document.getElementById(linha.getAttribute('data-target'));
-        if (alvo && alvo.classList.contains('hidden')) {
-          alvo.classList.remove('hidden');
-          linha.classList.add('open');
-        }
-      });
-      window.setTimeout(function () { window.print(); }, 350);
     });
   }
 

@@ -16,9 +16,9 @@ estrutura de modal dele, so com o acabamento do folheto.
 {% load static %}
 
 {% block extra_head %}
-    <title>Análise gráfica - Preview IFEM</title>
-    {# Rota de preview fora do menu: acessivel por link direto, mas sem indexacao. #}
-    <meta name="robots" content="noindex, nofollow">
+    <title>Análise gráfica | IFEM</title>
+    {# O mesmo template serve a rota publica e a /preview/; so a preview fica fora dos buscadores. #}
+    {% if '/preview/' in request.path %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link rel="stylesheet" href="{% static 'detail_mun/css/style_mun_folheto.css' %}">
