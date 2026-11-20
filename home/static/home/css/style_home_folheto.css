@@ -83,6 +83,25 @@
    soltos, sem dizer o que significam. */
 .fx-pos-leitura strong { color: #FFC72C; font-weight: 600; }
 
+/* Titulo na largura toda (fora da grade); a grade comeca no valor. As duas
+   colunas alinham pelo topo: o eyebrow da direita fica na altura do R$. */
+.fx-hero-grid--home { margin-top: 22px; align-items: start; }
+/* Sem o limite de 46ch do municipio: a frase da quantidade cabe em uma
+   linha na coluna e nao deixa "no pais" sozinho embaixo. */
+.fx-hero-grid--home .fx-hero-veredito { margin-top: 0; max-width: none; }
+.fx-hero-grid--home .fx-hero-posicao { align-self: start; padding-top: 2px; padding-bottom: 2px; }
+.fx-hero-grid--home .fx-hero-posicao .fx-eyebrow { margin-top: 0; }
+.fx-hero-grid--home .fx-hero-posicao-texto { margin-top: 12px; }
+
+/* Quebra equilibrada: evita a ultima linha com uma palavra so ("no pais"). */
+.fx-hero-grid--home .fx-hero-comparacao,
+.fx-hero-grid--home .fx-hero-posicao-texto { text-wrap: pretty; }
+
+/* Numeros maiores dentro da frase (5, 1º, 5º, 22,8%) abriam o espaco so da
+   linha onde caiam e o paragrafo ficava com entrelinha irregular. Com
+   line-height menor que o do texto eles cabem na linha sem empurra-la. */
+.fx-hero-grid--home .fx-pos-num { line-height: 0.8; }
+
 /* ---- 3. Título com select ---- */
 .fx-titulo--select {
   display: flex;
