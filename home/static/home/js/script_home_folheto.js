@@ -122,7 +122,7 @@
    *   - toggle Quintis "Do pais" x "Do filtro" (calculation_mode);
    *   - Quintil x Decil.
    * Sem filtro os dois modos dao o mesmo resultado, entao a frase e uma so.
-   * Vocabulario do IFEM: "menor receita" / "maior receita", nunca pobre/rico.
+   * Vocabulario do IFEM: "menor/maior receita por habitante", nunca pobre/rico.
    */
   function preencherHero(resumo) {
     if (!resumo) return;
@@ -167,15 +167,15 @@
     if (!filtrado) {
       frase = 'Os municípios do país são ordenados pela receita corrente por habitante e divididos em ' +
         num(String(n)) + ' grupos do mesmo tamanho, os ' + grupos + ': do ' + primeiro +
-        ', com menor receita, ao ' + ultimo + ', com maior receita.';
+        ', com menor receita por habitante, ao ' + ultimo + ', com maior receita por habitante.';
     } else if (modoFiltro) {
       frase = 'Os ' + grupos + ' são recalculados só entre os ' + qtdNum + ' municípios do filtro: o ' +
-        primeiro + ' reúne os de menor receita entre eles, e o ' + ultimo +
-        ', os de maior receita. Cada grupo tem o mesmo número de municípios.';
+        primeiro + ' reúne os de menor receita por habitante entre eles, e o ' + ultimo +
+        ', os de maior receita por habitante. Cada grupo tem o mesmo número de municípios.';
     } else {
       frase = 'Os ' + grupos + ' são os do país: cada um dos ' + qtdNum +
         ' municípios do filtro mantém o grupo que ocupa no ranking nacional, do ' + primeiro +
-        ', com menor receita, ao ' + ultimo + ', com maior receita. Por isso os grupos podem ter tamanhos diferentes.';
+        ', com menor receita por habitante, ao ' + ultimo + ', com maior receita por habitante. Por isso os grupos podem ter tamanhos diferentes.';
     }
 
     // Distancia da media nacional: so faz sentido com filtro (sem ele e 0).

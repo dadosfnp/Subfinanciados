@@ -231,6 +231,34 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
                         <span class="fx-head-sub">R$ por habitante</span>
                     </div>
                 </div>
+                {% comment %}Receita corrente: a rubrica geral, primeira linha e em
+                   destaque, como no municipio. Fica FORA do container porque o
+                   script.js reordena por valor tudo o que esta dentro dele e o
+                   total sempre venceria (e seria substituido a cada filtro).
+                   Preenchida pelo script_agg_folheto.js no evento
+                   ifem:kpis-conjunto.{% endcomment %}
+                <div class="fx-row fx-row--agg fx-row--total" data-level="total" id="fx-agg-total">
+                    <div class="fx-rubrica">
+                        <span class="fx-total-textos">
+                            <span class="fx-nome">Receita corrente</span>
+                            <span class="fx-total-leitura" id="fx-agg-total-leitura"></span>
+                        </span>
+                    </div>
+                    <div class="fx-diverge">
+                        <span class="fx-diverge-pct" id="fx-agg-total-pct"></span>
+                        <div class="fx-diverge-track">
+                            <span class="fx-diverge-meio" aria-hidden="true"></span>
+                            <span class="fx-diverge-fill" id="fx-agg-total-barra" style="width: 0%;"></span>
+                        </div>
+                    </div>
+                    <span class="fx-valor">
+                        <span class="valor-per-capita" id="fx-agg-total-pc">&nbsp;</span>
+                        <span class="valor-absoluto hidden" id="fx-agg-total-abs">&nbsp;</span>
+                    </span>
+                    <div class="fx-media" data-rotulo="Brasil">
+                        <span class="fx-box fx-box-br" id="fx-agg-total-media">&nbsp;</span>
+                    </div>
+                </div>
                 <div id="main-revenue-details-container">
                     {% include "detail_agg/partials/_fiscal_details_folheto.html" %}
                 </div>

@@ -177,6 +177,60 @@
   var elMarcador = document.getElementById('fx-agg-regua-marcador');
   var quintisRegua = document.querySelectorAll('.fx-regua-q');
 
+  var fmt1Abrev = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  /** Valor total abreviado, como o filtro br_abrev das outras linhas. */
+  function reaisAbrev(v) {
+    var n = Number(v);
+    if (!isFinite(n)) return 'n/d';
+    var a = Math.abs(n);
+    if (a >= 1e9) return 'R$ ' + fmt1Abrev.format(n / 1e9) + ' bi';
+    if (a >= 1e6) return 'R$ ' + fmt1Abrev.format(n / 1e6) + ' mi';
+    if (a >= 1e3) return 'R$ ' + fmt1Abrev.format(n / 1e3) + ' mil';
+    return 'R$ ' + fmtInt.format(n);
+  }
+
+  /**
+   * Linha "Receita corrente" no topo da Estrutura de Receitas.
+   * Barra e faixa de cor com a MESMA regra das outras linhas do agregado
+   * (_prepare_revenue_item_aggregated em detail_agg/views.py): metade do
+   * trilho para cada lado saturando em +-100%; faixas -60/-20/20/60.
+   * A leitura repete a do municipio: "supera X% dos municipios do pais".
+   */
+  function preencherLinhaTotal(k, percentil) {
+    var linha = document.getElementById('fx-agg-total');
+    if (!linha) return;
+    var pc = Number(k.receita_per_capita);
+    var media = Number(k.media_nacional_receita_pc);
+    var diffPct = Number(k.diferenca_media) * 100;
+    var ok = isFinite(diffPct);
+    var faixa = !ok ? 0 : diffPct <= -60 ? 1 : diffPct <= -20 ? 2 : diffPct <= 20 ? 3 : diffPct <= 60 ? 4 : 5;
+
+    linha.style.setProperty('--fx-cor', 'var(--fx-q' + faixa + ')');
+    linha.style.setProperty('--fx-cor-txt', QUINTIS_ESCURO[faixa - 1] || SEM_DADO_ESCURO);
+
+    var elPct = document.getElementById('fx-agg-total-pct');
+    if (elPct) elPct.textContent = ok ? (diffPct > 0 ? '+' : '') + fmtInt.format(Math.round(diffPct)) + '%' : '';
+    var elBarra = document.getElementById('fx-agg-total-barra');
+    if (elBarra) {
+      elBarra.style.width = (ok ? Math.min(Math.abs(diffPct), 100) / 2 : 0) + '%';
+      elBarra.classList.toggle('is-neg', diffPct < 0);
+      elBarra.classList.toggle('is-pos', !(diffPct < 0));
+    }
+    var elPc = document.getElementById('fx-agg-total-pc');
+    if (elPc) elPc.textContent = isFinite(pc) ? 'R$ ' + fmtInt.format(Math.round(pc)) : 'n/d';
+    var elAbs = document.getElementById('fx-agg-total-abs');
+    if (elAbs) elAbs.textContent = reaisAbrev(k.receita_corrente);
+    var elMedia = document.getElementById('fx-agg-total-media');
+    if (elMedia) elMedia.textContent = isFinite(media) && media > 0 ? 'R$ ' + fmtInt.format(Math.round(media)) : '';
+    var elLeit = document.getElementById('fx-agg-total-leitura');
+    if (elLeit) {
+      elLeit.textContent = percentil !== null
+        ? 'supera ' + Math.round(percentil) + '% dos municípios do país'
+        : 'sem dado comparativo';
+    }
+  }
+
   /** Disparado pelo script.js depois de cada /api/dados-detalhados/. */
   document.addEventListener('ifem:kpis-conjunto', function (ev) {
     var k = ev.detail || {};
@@ -209,6 +263,8 @@
       quintisRegua.forEach(function (q) {
         q.classList.toggle('is-ativo', Number(q.getAttribute('data-q')) === ativo);
       });
+
+      preencherLinhaTotal(k, temDado ? p : null);
 
       if (elPosicao) {
         // Sem filtro o conjunto e o pais inteiro: 1º em populacao por

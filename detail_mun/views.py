@@ -863,6 +863,10 @@ def municipio_details_api(request):
             # Lugar do conjunto nos rankings nacionais, como se fosse um
             # municipio so (hero da preview do agregado). Ver posicao_conjunto.py.
             "posicao": posicao_do_conjunto(pop24, rc_pc_24),
+            # Media nacional da receita corrente per capita, a mesma base do
+            # diferenca_media acima: coluna "Media Brasil" da linha Receita
+            # corrente na preview do agregado.
+            "media_nacional_receita_pc": national_avg_rc,
             # Municipios com receita no pais: diz ao hero se ha filtro ativo.
             "quantidade_pais": Municipio.objects.filter(dados_atuais__rc_atual__gt=0).count(),
             "hist_data": {

@@ -153,6 +153,13 @@
 .fx-diverge-fill.is-pos { left: 50%; }
 .fx-diverge-fill.is-neg { right: 50%; }
 
+/* Linha "Receita corrente" (rubrica geral) sobre o fundo azul de
+   .fx-row--total: trilho, fio do meio e percentual em tons claros. A cor do
+   texto (--fx-cor-txt) vem do JS na variante clara do quintil. */
+.fx-row--agg.fx-row--total .fx-diverge-track { background: rgba(255, 255, 255, 0.14); }
+.fx-row--agg.fx-row--total .fx-diverge-meio { background: #ffffff; }
+.fx-row--agg.fx-row--total .fx-diverge-pct { font-size: 14px; font-weight: 700; }
+
 /* ---- 4. Árvore ----
    O script.js abre e fecha alternando 'hidden' no container de filhos e
    'open' na linha; .hidden é a classe do Tailwind (display: none). */
