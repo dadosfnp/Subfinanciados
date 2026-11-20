@@ -130,28 +130,47 @@ style_mun_folheto.css e acrescenta o style_agg_folheto.css.
                     <p class="fx-eyebrow">Análise agregada · 2025</p>
                     {# Montado no JS a partir dos filtros ativos. #}
                     <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-agg-titulo">Todos os municípios do Brasil</h1>
+                    {% comment %}Mesmo hero do municipio (texto aprovado): valor em
+                       destaque, rotulo, frase com habitantes e percentil, regua dos
+                       quintis. O valor e escrito pelo script.js (kpi-receita-per-capita);
+                       frase, regua e posicao pelo script_agg_folheto.js no evento
+                       ifem:kpis-conjunto.{% endcomment %}
                     <p class="fx-hero-veredito">
-                        <span class="fx-hero-destaque" id="kpi-receita-per-capita">&nbsp;</span>
-                        por habitante em receita corrente, na média dos municípios do conjunto.
+                        <span class="fx-hero-destaque fx-hero-destaque--grande" id="kpi-receita-per-capita">&nbsp;</span>
+                        <span class="fx-hero-rotulo">por habitante em receita corrente.</span>
+                        <span class="fx-hero-comparacao" id="fx-agg-veredito-texto">&nbsp;</span>
                     </p>
+
+                    <div class="fx-regua">
+                        <div class="fx-regua-track">
+                            <div class="fx-regua-q" data-q="1" style="background: var(--fx-q1);"></div>
+                            <div class="fx-regua-q" data-q="2" style="background: var(--fx-q2);"></div>
+                            <div class="fx-regua-q" data-q="3" style="background: var(--fx-q3);"></div>
+                            <div class="fx-regua-q" data-q="4" style="background: var(--fx-q4);"></div>
+                            <div class="fx-regua-q" data-q="5" style="background: var(--fx-q5);"></div>
+                            <div class="fx-regua-marcador" id="fx-agg-regua-marcador" style="left: 0%; display: none;"></div>
+                        </div>
+                        <div class="fx-regua-escala">
+                            <span>0%</span><span>20%</span><span>40%</span>
+                            <span>60%</span><span>80%</span><span>100%</span>
+                        </div>
+                    </div>
                     <div class="fx-agg-chips" id="fx-agg-chips"></div>
                 </div>
 
-                <div class="fx-hero-stats">
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">População</span>
-                        <span class="fx-stat-valor" id="kpi-populacao">&nbsp;</span>
-                    </div>
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Municípios no conjunto</span>
-                        <span class="fx-stat-valor" id="kpi-quantidade">&nbsp;</span>
-                    </div>
-                    <div class="fx-stat">
-                        <span class="fx-stat-label">Diferença para a média nacional</span>
-                        <span class="fx-stat-valor" id="kpi-diferenca-media">&nbsp;</span>
-                        <span class="fx-stat-sub">na receita corrente por habitante</span>
-                    </div>
+                <div class="fx-hero-posicao">
+                    <p class="fx-eyebrow">Posição no Brasil</p>
+                    <p class="fx-hero-posicao-texto" id="fx-agg-posicao-texto">&nbsp;</p>
                 </div>
+            </div>
+
+            {% comment %}Alvos do detail_agg/js/script.js, que escreve neles sem
+               checar se existem. Escondidos: o texto visivel acima usa os mesmos
+               dados ja em frase.{% endcomment %}
+            <div hidden>
+                <span id="kpi-populacao"></span>
+                <span id="kpi-quantidade"></span>
+                <span id="kpi-diferenca-media"></span>
             </div>
         </div>
     </section>

@@ -1,6 +1,7 @@
 import json
 from .saude_fiscal import montar_saude_fiscal
 from .receita_corrente import montar_receita_corrente
+from .posicao_conjunto import posicao_do_conjunto
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -859,6 +860,11 @@ def municipio_details_api(request):
             "delta_pop": delta_pop,
             "media_nacional_rc_pc": 316.74,
             "media_nacional_pop": 16.04,
+            # Lugar do conjunto nos rankings nacionais, como se fosse um
+            # municipio so (hero da preview do agregado). Ver posicao_conjunto.py.
+            "posicao": posicao_do_conjunto(pop24, rc_pc_24),
+            # Municipios com receita no pais: diz ao hero se ha filtro ativo.
+            "quantidade_pais": Municipio.objects.filter(dados_atuais__rc_atual__gt=0).count(),
             "hist_data": {
                 "pop00": pop00,
                 "rc00": rc00,

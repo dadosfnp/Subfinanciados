@@ -124,10 +124,14 @@ estrutura de modal dele, so com o acabamento do folheto.
     {# ==================== HERO ==================== #}
     <section class="fx-faixa fx-faixa--escura fx-hero" data-secao="Resumo">
         <div class="fx-container">
-            <div class="fx-hero-grid">
+            {% comment %}Titulo fora da grade, na largura toda: assim o valor em
+               destaque e o bloco da direita comecam na mesma linha e as duas
+               colunas ficam alinhadas pelo topo (antes a direita flutuava
+               centralizada contra um bloco que incluia o titulo).{% endcomment %}
+            <p class="fx-eyebrow">Análise gráfica · IFEM</p>
+            <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-home-titulo">Todos os municípios do Brasil</h1>
+            <div class="fx-hero-grid fx-hero-grid--home">
                 <div>
-                    <p class="fx-eyebrow">Análise gráfica · IFEM</p>
-                    <h1 class="fx-hero-nome fx-hero-nome--agg" id="fx-home-titulo">Todos os municípios do Brasil</h1>
                     {% comment %}Mesmo desenho do hero do municipio: o valor em destaque, o
                        rotulo, e a frase com a quantidade. Preenchido pelo
                        script_home_folheto.js no evento ifem:dados-dashboard.{% endcomment %}
