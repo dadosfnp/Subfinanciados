@@ -630,19 +630,30 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     # pageview, dos quais a curva de densidade usa uma coluna de cada vez.
     # Agora o grafico busca a rubrica atual em /api/distribuicao/.
 
-    # Calcula a variacao percentual da populacao e da receita corrente per capita
+    # Calcula a variacao percentual da populacao e da receita corrente per capita.
+    # Nem todo municipio tem as duas linhas: 265 nao tem a de 2000 (criados
+    # depois, ou sem dado na base) e 91 nao tem a atual (sem DCA 2025). _d2() e
+    # _da() devolvem None em vez de RelatedObjectDoesNotExist.
+    d2, da = municipio._d2(), municipio._da()
+    pop_00 = d2.populacao_00 if d2 else None
+    rc_00_pc = d2.rc_00_pc if d2 else None
+    pop_atual = da.populacao_atual if da else None
+    rc_atual_pc = da.rc_atual_pc if da else None
+    quintil_atual = da.quintil_atual if da else None
+    decil_atual = da.decil_atual if da else None
+
     delta_populacao = 0.0
-    if municipio.dados_2000.populacao_00 and municipio.dados_atuais.populacao_atual and municipio.dados_2000.populacao_00 > 0:
-        delta_populacao = ((municipio.dados_atuais.populacao_atual / municipio.dados_2000.populacao_00) - 1)  * 100
+    if pop_00 and pop_atual and pop_00 > 0:
+        delta_populacao = ((pop_atual / pop_00) - 1)  * 100
 
     delta_rc_pc = 0.0
-    if municipio.dados_2000.rc_00_pc and municipio.dados_atuais.rc_atual_pc and municipio.dados_2000.rc_00_pc > 0:
-        delta_rc_pc = ((municipio.dados_atuais.rc_atual_pc / municipio.dados_2000.rc_00_pc) - 1)  * 100
+    if rc_00_pc and rc_atual_pc and rc_00_pc > 0:
+        delta_rc_pc = ((rc_atual_pc / rc_00_pc) - 1)  * 100
 
     evolucao_historica = {
         'delta_populacao': round(delta_populacao, 2),
         'delta_rc_pc': round(delta_rc_pc, 2),
-        'has_2000_data': bool(municipio.dados_2000.populacao_00 or municipio.dados_2000.rc_00_pc)
+        'has_2000_data': bool(pop_00 or rc_00_pc)
     }
 
     media_nacional_rc_pc = 316.7372  # Valor fixo da média nacional para 2024
@@ -656,24 +667,24 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
     # Usado no card "Valor por Habitante" pra contextualizar o município dentro
     # do seu grupo de classificação (trend ▲/▼ + texto, igual à evolução populacional).
     media_quintil_pc = None
-    if municipio.dados_atuais.quintil_atual:
+    if quintil_atual:
         media_quintil_pc = (Municipio.objects
-                            .filter(dados_atuais__quintil_atual=municipio.dados_atuais.quintil_atual)
+                            .filter(dados_atuais__quintil_atual=quintil_atual)
                             .exclude(dados_atuais__rc_atual_pc__isnull=True)
                             .aggregate(media=Avg('dados_atuais__rc_atual_pc'))['media'])
 
     media_decil_pc = None
-    if municipio.dados_atuais.decil_atual:
+    if decil_atual:
         media_decil_pc = (Municipio.objects
-                          .filter(dados_atuais__decil_atual=municipio.dados_atuais.decil_atual)
+                          .filter(dados_atuais__decil_atual=decil_atual)
                           .exclude(dados_atuais__rc_atual_pc__isnull=True)
                           .aggregate(media=Avg('dados_atuais__rc_atual_pc'))['media'])
 
     def _trend_grupo(media_grupo, nome_grupo):
         """Pré-monta os campos exibidos no trend (seta, %, classe, texto)."""
-        if media_grupo is None or municipio.dados_atuais.rc_atual_pc is None or media_grupo == 0:
+        if media_grupo is None or rc_atual_pc is None or media_grupo == 0:
             return None
-        pct = (municipio.dados_atuais.rc_atual_pc / media_grupo - 1) * 100
+        pct = (rc_atual_pc / media_grupo - 1) * 100
         positivo = pct >= 0
         return {
             'pct_fmt': f'{abs(pct):.1f}'.replace('.', ','),
@@ -684,8 +695,8 @@ def municipio_detalhe_view(request, municipio_id, template_name='detail_mun/deta
             'grupo_nome': nome_grupo or '—',
         }
 
-    trend_quintil = _trend_grupo(media_quintil_pc, municipio.dados_atuais.quintil_atual)
-    trend_decil = _trend_grupo(media_decil_pc, municipio.dados_atuais.decil_atual)
+    trend_quintil = _trend_grupo(media_quintil_pc, quintil_atual)
+    trend_decil = _trend_grupo(media_decil_pc, decil_atual)
 
     # AdaptaBrasil data preparation
     adapta_brasil_data = []
