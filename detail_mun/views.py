@@ -991,8 +991,8 @@ def municipio_details_api(request):
 
 
 
-
-
+
+
 def distribuicao_api(request):
     """Distribuicao nacional de UMA rubrica, para a curva de densidade.
 
