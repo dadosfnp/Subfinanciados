@@ -2,25 +2,32 @@
  * inicio_animado.js: landing animada (/preview/inicio-animado/)
  * ----------------------------------------------------------------------------
  * Uma animacao em canvas guiada pelo scroll. Cada municipio e uma forma que
- * passa por treze ESTADOS, um por cartao de texto:
+ * passa por dezessete ESTADOS, um por cartao de texto:
  *
  *   0 brasil    contorno do municipio, todos na mesma cor
  *   1 grandes   o mesmo mapa; em destaque so os com mais de 80 mil habitantes
- *   2 maioria   fatia da barra "grandes" ou "demais", altura = populacao 2025
- *   3 mapa      contorno do municipio; verde se declarou receita em 2025
- *   4 grade     um quadrado por municipio, do menor para o maior receita/hab.
- *   5 quintis   a mesma grade aberta em cinco blocos (so desce ou sobe)
- *   6 2000      fatia da barra do seu quintil de 2000, altura = populacao
- *   7 2025      fatia da barra de 2025; a de 2000 fica ao lado, hachurada
- *   8 porte     quadradinho no grupo do seu porte; graficos de crescimento
- *   9 transf.   grade pela parcela da receita que vem de transferencias
- *  10 regras    o mapa de volta; as cidades com mais de 80 mil em azul
- *  11 oposta    o mesmo mapa; as cidades com mais de 80 mil na cor do quintil
- *  12 fpm       fatia da barra de 2025 ao lado da simulacao com +R$ 50 bi
+ *   2 bolhas    circulo no centroide, area = populacao 2025; as cores do 1
+ *   3 tendencia parcela da populacao nas grandes, 2000 a 2025: fatia da coluna
+ *               de 2025 (barras 100%) ou, com ?tendencia=linhas, some no
+ *               ponto de 2025 da linha do seu grupo
+ *   4 mapa      contorno do municipio; verde se declarou receita em 2025
+ *   5 grade     um quadrado por municipio, do menor para o maior receita/hab.
+ *   6 quintis   a mesma grade aberta em cinco blocos (so desce ou sobe)
+ *   7 migracao  a cor de 2025, mas nos blocos dos quintis de 2000
+ *   8 2000      fatia da barra do seu quintil de 2000, altura = populacao
+ *   9 2025      fatia da barra de 2025; a de 2000 fica ao lado, hachurada
+ *  10 anos      fatia da barra de 2025 no trio 2023, 2024 e 2025 (numeros fixos)
+ *  11 indic.    os graficos da aba Graficos, pelo seletor; municipios ocultos
+ *  12 porte     quadradinho no grupo do seu porte; graficos de crescimento
+ *  13 transf.   grade pela parcela da receita que vem de transferencias
+ *  14 fpm       fatia da barra de 2025 ao lado da simulacao com +R$ 50 bi
+ *  15 regras    o mapa de volta; as cidades com mais de 80 mil em azul
+ *  16 oposta    o mesmo mapa; as cidades com mais de 80 mil na cor do quintil
  *
  * A forma de cada municipio e um anel de n pontos. O mesmo anel e desenhado
- * como poligono (mapa), quadrado ou retangulo (grade e barras): como os tres
- * tem os mesmos n pontos, a transicao e so interpolar ponto a ponto. Cada
+ * como poligono (mapa), circulo (bolhas), quadrado ou retangulo (grade e
+ * barras): como todos tem os mesmos n pontos, a transicao e so interpolar
+ * ponto a ponto. Cada
  * municipio comeca a se mover com um pequeno atraso proprio, e o scroll e
  * suavizado, para o movimento nunca dar tranco.
  *
@@ -61,7 +68,10 @@
   var TINTA = '#1E2530';
   var CINZA_TXT = '#5F6670';
   var FONTE = '"Inter", system-ui, -apple-system, sans-serif';
-  var N_ESTADOS = 13;
+  var N_ESTADOS = 17;
+  var RAIO_MAIOR = 2;         // bolhas: raio da cidade mais populosa, em graus do mapa
+  var RAIO_MIN = 0.6;         // bolhas: raio minimo (px), para as cidades pequenas nao sumirem
+  var RAIO_ANEL = 2.5;        // bolhas: so as a partir deste raio (px) ganham o anel de papel
   var ATRASO = 0.4;           // fatia do tempo de transicao usada para escalonar a partida
   var SUAVIZACAO = 0.14;      // segundos: quanto o desenho "persegue" o scroll
   var REDUZIR = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -103,6 +113,15 @@
   });
   for (var q = 1; q <= 5; q++) { porQ25[q].sort(ordemGrade); porQ00[q].sort(ordemGrade); }
 
+  // Migracao (estado 7): os blocos dos quintis de 2000, cada um na ordem da
+  // grade de 2025 (quintil e receita). Assim cada bloco se le como a
+  // composicao do grupo em 2025; quem nao declarou em 2025 fica no fim.
+  var MIGRA = [].concat(porQ00[1], porQ00[2], porQ00[3], porQ00[4], porQ00[5]);
+  var posMigra = new Int32Array(N).fill(-1);
+  MIGRA.forEach(function (i, j) { posMigra[i] = j; });
+  var NM = MIGRA.length;
+  var MIG = DADOS.migracao || { continua_pct: [] };
+
   // Abertura: cidades com mais de 80 mil habitantes x demais, da maior para a
   // menor (as maiores ficam na base da barra).
   var GR = DADOS.grandes || { limite: 80000, n: 0, pct_populacao: 0, populacao: 0, populacao_total: 0 };
@@ -113,6 +132,20 @@
   var popGrandes = 0, popDemais = 0;
   GRANDES.forEach(function (i) { popGrandes += MUN[i].p25; });
   DEMAIS.forEach(function (i) { popDemais += MUN[i].p25; });
+
+  // Tendencia (estado 3): parcela da populacao nas grandes, ano a ano. Preview
+  // das duas versoes: barras 100% (padrao) ou linhas, com ?tendencia=linhas.
+  var TEND = DADOS.tendencia || { anos: [2025], pct: [GR.pct_populacao] };
+  var NA = TEND.anos.length;
+  var LINHAS = /[?&]tendencia=linhas(&|$)/.test(window.location.search);
+  var CINZA_LINHA = [124, 133, 145]; // "ate 80 mil" na versao em linhas: CLARO some numa linha fina
+
+  // Bolhas: o raio cresce com a raiz da populacao (a area, com a populacao).
+  var popMax = Math.max.apply(null, MUN.map(function (m) { return m.p25; }).concat([1]));
+
+  // Ordem de desenho: da menor para a maior populacao, para as bolhas grandes
+  // ficarem por cima das pequenas. Nos outros estados as formas nao se cruzam.
+  var ORDEM = indices.slice().sort(function (a, b) { return MUN[a].p25 - MUN[b].p25; });
 
   // Porte (populacao de 2025), com os mesmos limites do servidor.
   var PORTE = DADOS.porte || { limites: [], rotulos: [], populacao: [], receita: [] };
@@ -132,7 +165,8 @@
   var posTransf = new Int32Array(N).fill(-1);
   TRANSF.forEach(function (i, j) { posTransf[i] = j; });
   var NT = TRANSF.length;
-  var nMaioria = TRANSF.filter(function (i) { return MUN[i].tr > 0.5; }).length;
+  var CORTE_TRANSF = DADOS.transf_corte || 0.5; // azul acima desta parcela (o mesmo corte do cartao)
+  var nAcima = TRANSF.filter(function (i) { return MUN[i].tr > CORTE_TRANSF; }).length;
 
   // Simulacao do FPM: numeros fixos da FNP (milhoes). As fatias de 2025 sao
   // reescaladas para a barra bater com o numero da simulacao.
@@ -140,6 +174,43 @@
   var fpmAntes = [0].concat(FPM.series[0].valores);
   var fpmDepois = [0].concat(FPM.series[1].valores);
   var fatorFpm = [0, 1, 2, 3, 4, 5].map(function (q) { return q && soma25[q] ? fpmAntes[q] * 1e6 / soma25[q] : 0; });
+
+  // Populacao por quintil, ano a ano (estado 10): numeros fixos (milhoes), uma
+  // serie por ano. As fatias assentam na barra do ultimo ano, reescaladas para
+  // ela bater com o numero dele, como no FPM.
+  var ANOS = DADOS.pop_anos || { anos: [], series: [] };
+  var NANOS = ANOS.anos.length, kUlt = NANOS - 1;
+  var fatorAnos = [0, 1, 2, 3, 4, 5].map(function (q) { return q && soma25[q] && NANOS ? ANOS.series[kUlt][q - 1] * 1e6 / soma25[q] : 0; });
+
+  // Indicadores (estado 11): os graficos da aba Graficos, um por opcao do
+  // seletor do cartao. 'media': uma barra por quintil; 'contagem': municipios
+  // por faixa, empilhados nas cores da aba (home/js/script.js).
+  var IND = DADOS.indicadores || [];
+  var COR_FAIXA = {
+    'A': '#2D8A4E', 'B': '#72BA6A', 'C': '#E8C83E', 'D e outros': '#A33242',
+    'Muito baixo': '#2D8A4E', 'Baixo': '#72BA6A', 'Médio': '#E8C83E', 'Alto': '#D97636', 'Muito alto': '#A33242'
+  };
+  var FAIXA_CLARA = { '#72BA6A': 1, '#E8C83E': 1 }; // fundos em que o numero vai em tinta escura
+  var indSel = 0;      // opcao escolhida no seletor
+  var indTroca = 1;    // 0 a 1: barras subindo depois de uma troca de opcao
+  var indInicio = 0;
+
+  /** Formato pela unidade, como formatadorDaUnidade da aba Graficos; inteiro tira as casas. */
+  function formatoUnidade(unidade) {
+    var casas = { nota: 2, taxa: 1, reais: 2 }[unidade];
+    if (casas === undefined) casas = 1;
+    return function (v, inteiro) {
+      var n = inteiro ? 0 : casas;
+      var txt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: n, maximumFractionDigits: n }).format(v);
+      return unidade === 'reais' ? 'R$ ' + txt : txt; // espaco fixo: "R$" nao quebra longe do numero
+    };
+  }
+
+  /** Passo "redondo" (1, 2, 2,5 ou 5 vezes uma potencia de 10) a partir de x. */
+  function passoRedondo(x) {
+    var e = Math.pow(10, Math.floor(Math.log(x) / Math.LN10)), m = x / e;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e;
+  }
 
   // Sorteio com semente: o mesmo "acaso" a cada visita.
   var semente = 2025;
@@ -158,19 +229,24 @@
       var r = sorteio();
       var frac = posGrade[i] >= 0 ? posGrade[i] / Math.max(NG - 1, 1) : r;
       var fracT = posTransf[i] >= 0 ? posTransf[i] / Math.max(NT - 1, 1) : r;
+      var fracM = posMigra[i] >= 0 ? posMigra[i] / Math.max(NM - 1, 1) : r;
       var q25 = MUN[i].q25 || 3;
       ATRASOS[0][i] = ATRASO * r;                                  // as grandes acendem espalhadas pelo mapa
-      ATRASOS[1][i] = ATRASO * (0.5 * r + (grande[i] ? 0 : 0.5));  // as grandes saem do mapa primeiro
-      ATRASOS[2][i] = ATRASO * r;                                  // as fatias voltam ao mapa
-      ATRASOS[3][i] = ATRASO * (0.45 * r + 0.55 * frac);          // a grade se enche de cima para baixo
-      ATRASOS[4][i] = ATRASO * 0.25 * r;                           // os blocos se abrem juntos
-      ATRASOS[5][i] = ATRASO * (0.8 * frac + 0.2 * r);             // os quintis descem para as barras na ordem
-      ATRASOS[6][i] = ATRASO * (0.5 * r + 0.5 * (q25 - 1) / 4);
-      ATRASOS[7][i] = ATRASO * (0.6 * r + 0.4 * Math.max(faixa[i], 0) / Math.max(NF - 1, 1));
-      ATRASOS[8][i] = ATRASO * (0.7 * fracT + 0.3 * r);
-      ATRASOS[9][i] = ATRASO * r;                                  // a grade se desfaz de volta no mapa
-      ATRASOS[10][i] = ATRASO * r;                                 // as grandes trocam de cor espalhadas pelo mapa
-      ATRASOS[11][i] = ATRASO * (0.5 * r + 0.5 * (q25 - 1) / 4);
+      ATRASOS[1][i] = ATRASO * r;                                  // cada contorno vira bolha
+      ATRASOS[2][i] = ATRASO * (0.5 * r + (grande[i] ? 0 : 0.5));  // as grandes saem do mapa primeiro
+      ATRASOS[3][i] = ATRASO * r;                                  // as fatias voltam ao mapa
+      ATRASOS[4][i] = ATRASO * (0.45 * r + 0.55 * frac);          // a grade se enche de cima para baixo
+      ATRASOS[5][i] = ATRASO * 0.25 * r;                           // os blocos se abrem juntos
+      ATRASOS[6][i] = ATRASO * (0.7 * (q25 - 1) / 4 + 0.3 * r);   // cada cor de 2025 se espalha pelos blocos de 2000, uma de cada vez
+      ATRASOS[7][i] = ATRASO * (0.8 * fracM + 0.2 * r);            // os blocos de 2000 descem para as barras na ordem
+      ATRASOS[8][i] = ATRASO * (0.5 * r + 0.5 * (q25 - 1) / 4);
+      ATRASOS[9][i] = ATRASO * (0.5 * r + 0.5 * (q25 - 1) / 4);   // as barras de 2025 vao para o trio de anos
+      ATRASOS[10][i] = ATRASO * r;                                 // as fatias somem para dar lugar aos indicadores
+      ATRASOS[11][i] = ATRASO * (0.6 * r + 0.4 * Math.max(faixa[i], 0) / Math.max(NF - 1, 1));
+      ATRASOS[12][i] = ATRASO * (0.7 * fracT + 0.3 * r);
+      ATRASOS[13][i] = ATRASO * (0.5 * r + 0.5 * (q25 - 1) / 4);   // a grade desce para as barras do FPM, quintil a quintil
+      ATRASOS[14][i] = ATRASO * r;                                 // as fatias voltam ao mapa
+      ATRASOS[15][i] = ATRASO * r;                                 // as grandes trocam de cor espalhadas pelo mapa
     }
   })();
 
@@ -180,7 +256,10 @@
   var LAT_C = -14;
   var KX = Math.cos(LAT_C * Math.PI / 180);
   var poliX = new Array(N), poliY = new Array(N), quadX = new Array(N), quadY = new Array(N);
+  var circX = new Array(N), circY = new Array(N);
+  var ANEL_X = [poliX, quadX, circX], ANEL_Y = [poliY, quadY, circY]; // por tipo de forma
   var geoX = new Float32Array(N), geoY = new Float32Array(N);
+  var centroX = new Float32Array(N), centroY = new Float32Array(N); // onde fica a bolha
   var GEO = null; // limites do pais em unidades geograficas projetadas
 
   /** Garante pelo menos `min` pontos, partindo a aresta mais longa ao meio. */
@@ -220,6 +299,24 @@
     return [xs, ys];
   }
 
+  /**
+   * Circulo unitario com n pontos, com o mesmo ponto de partida (a direita) e
+   * o mesmo sentido do quadrado. Somente leitura: um por n, dividido entre os
+   * municipios.
+   */
+  var circulos = {};
+  function circuloUnitario(n) {
+    if (!circulos[n]) {
+      var xs = new Float32Array(n), ys = new Float32Array(n);
+      for (var j = 0; j < n; j++) {
+        xs[j] = Math.cos(2 * Math.PI * j / n);
+        ys[j] = Math.sin(2 * Math.PI * j / n);
+      }
+      circulos[n] = [xs, ys];
+    }
+    return circulos[n];
+  }
+
   function preparaFormas(malha) {
     var escala = malha ? malha.escala : 1;
     var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -244,7 +341,9 @@
       if (xs.length >= 3 && bx1 > bx0 && by1 > by0) {
         cx = (bx0 + bx1) / 2; cy = (by0 + by1) / 2;
         for (k = 0; k < xs.length; k++) { xs[k] -= cx; ys[k] -= cy; }
-        adensa(xs, ys, 8);
+        // As grandes viram bolhas grandes (estado 2): com mais pontos, o circulo
+        // nao sai poligonal no meio da transicao.
+        adensa(xs, ys, grande[i] ? 24 : 8);
         // sentido unico (area com sinal positivo na tela, y para baixo)
         var a = 0;
         for (k = 0; k < xs.length; k++) {
@@ -271,6 +370,12 @@
       poliY[i] = Float32Array.from(ys);
       var qd = quadradoUnitario(xs.length);
       quadX[i] = qd[0]; quadY[i] = qd[1];
+      var ci = circuloUnitario(xs.length);
+      circX[i] = ci[0]; circY[i] = ci[1];
+      // Bolha no centroide do cadastro (coordx/coordy); sem ele, no centro do contorno.
+      var temCentro = m.lon !== null && m.lon !== undefined && m.lat !== null && m.lat !== undefined;
+      centroX[i] = temCentro ? m.lon * KX : cx;
+      centroY[i] = temCentro ? -m.lat : cy;
       x0 = Math.min(x0, cx + bx0); x1 = Math.max(x1, cx + bx1);
       y0 = Math.min(y0, cy + by0); y1 = Math.max(y1, cy + by1);
     }
@@ -281,14 +386,14 @@
   // Layout e estados
   // --------------------------------------------------------------------------
   var W = 0, H = 0, DPR = 1, MOBILE = false;
-  var CAIXA, GRID, BARRAS, GRANDES_L, PORTE_L, TRANSF_L, FPM_L;
+  var CAIXA, MAPA, GRID, BARRAS, TEND_L, ANOS_L, PORTE_L, TRANSF_L, FPM_L;
   var ESTADOS = [];
 
   function novoEstado() {
     return {
       cx: new Float32Array(N), cy: new Float32Array(N),
       hw: new Float32Array(N), hh: new Float32Array(N),
-      tipo: new Uint8Array(N), // 0 poligono, 1 retangulo
+      tipo: new Uint8Array(N), // 0 poligono, 1 retangulo, 2 circulo
       r: new Float32Array(N), g: new Float32Array(N), b: new Float32Array(N),
       a: new Float32Array(N),
       css: new Array(N)        // cor pronta, para os quadros parados nao montarem string
@@ -308,6 +413,10 @@
 
   function retangulo(e, i, cx, cy, hw, hh) {
     e.cx[i] = cx; e.cy[i] = cy; e.hw[i] = hw; e.hh[i] = hh; e.tipo[i] = 1;
+  }
+
+  function circulo(e, i, cx, cy, raio) {
+    e.cx[i] = cx; e.cy[i] = cy; e.hw[i] = e.hh[i] = raio; e.tipo[i] = 2;
   }
 
   function corGradiente(f) {
@@ -342,22 +451,27 @@
     }
     var cw = CAIXA.x1 - CAIXA.x0, ch = CAIXA.y1 - CAIXA.y0;
 
-    // ---- maioria (estado 2): duas barras, grandes e demais ----
-    var plotG = {
-      x0: CAIXA.x0, x1: CAIXA.x1,
-      y0: CAIXA.y0 + (MOBILE ? 46 : 64), y1: CAIXA.y1 - (MOBILE ? 40 : 54)
+    // ---- tendencia (estado 3): um ano por coluna (barras) ou por ponto (linhas) ----
+    // Barras: os valores vao dentro das colunas, que ocupam a largura toda.
+    // Linhas: o eixo a esquerda e os valores do ultimo ano a direita.
+    var plotT = {
+      x0: CAIXA.x0 + (LINHAS ? (MOBILE ? 30 : 40) : 0), x1: CAIXA.x1 - (LINHAS ? (MOBILE ? 38 : 52) : 0),
+      y0: CAIXA.y0 + (MOBILE ? 46 : 64), y1: CAIXA.y1 - (MOBILE ? 22 : 30)
     };
-    GRANDES_L = {
-      plot: plotG,
-      slot: (plotG.x1 - plotG.x0) / 2,
-      larg: Math.min((plotG.x1 - plotG.x0) * 0.24, 170),
-      yMax: Math.max(popGrandes, popDemais) * 1.12
+    var slotT = (plotT.x1 - plotT.x0) / Math.max(NA, 1);
+    // Linhas: escala de 10 em 10 pontos que cabe as duas series (grandes e demais).
+    var vals = TEND.pct.concat(TEND.pct.map(function (v) { return 100 - v; }));
+    TEND_L = {
+      plot: plotT, slot: slotT, larg: Math.max(slotT - 2, 1), // 2 px de papel entre colunas
+      yMin: Math.floor((Math.min.apply(null, vals) - 2) / 10) * 10,
+      yMax: Math.ceil((Math.max.apply(null, vals) + 2) / 10) * 10
     };
 
-    // ---- grade (estados 4 e 5): a mesma grade; nos quintis so abre vaos ----
+    // ---- grade (estados 5, 6 e 7): a mesma grade; nos quintis so abre vaos ----
+    // A migracao usa as mesmas celulas, com os municipios que declararam em 2000.
     var resEsq = MOBILE ? 46 : 74, resDir = MOBILE ? 72 : 118, resV = MOBILE ? 20 : 28;
     var gap = MOBILE ? 8 : 14;
-    var g = encaixa(NG, cw - resEsq - resDir, ch - 2 * resV - 4 * gap);
+    var g = encaixa(Math.max(NG, NM), cw - resEsq - resDir, ch - 2 * resV - 4 * gap);
     var largGrade = g.cols * g.cel;
     var altG = Math.ceil(NG / g.cols) * g.cel;
     var meioY = (CAIXA.y0 + CAIXA.y1) / 2;
@@ -365,11 +479,12 @@
       cols: g.cols, cel: g.cel, gap: gap, altG: altG,
       x0: CAIXA.x0 + resEsq + (cw - resEsq - resDir - largGrade) / 2,
       y0G: meioY - altG / 2,
-      y0Q: meioY - (altG + 4 * gap) / 2
+      y0Q: meioY - (altG + 4 * gap) / 2,
+      y0M: meioY - (Math.ceil(NM / g.cols) * g.cel + 4 * gap) / 2
     };
     GRID.x1 = GRID.x0 + largGrade;
 
-    // ---- barras (estados 6, 7 e 12) ----
+    // ---- barras (estados 8, 9, 10, 11 e 14) ----
     var plot = {
       x0: CAIXA.x0 + (MOBILE ? 34 : 52), x1: CAIXA.x1,
       y0: CAIXA.y0 + (MOBILE ? 46 : 64), y1: CAIXA.y1 - (MOBILE ? 26 : 34)
@@ -390,8 +505,13 @@
       plot: plot,
       yMax: Math.max.apply(null, fpmAntes.concat(fpmDepois)) * 1e6 * 1.1
     };
+    // Anos (estado 10): o mesmo plano, com uma barra por ano em cada quintil.
+    ANOS_L = {
+      larg: Math.min(slot * 0.26, 64), vao: Math.min(slot * 0.05, 6),
+      yMax: Math.max.apply(null, [].concat.apply([1], ANOS.series)) * 1e6 * 1.1
+    };
 
-    // ---- porte (estado 8): dois graficos e, entre eles, os municipios de cada faixa ----
+    // ---- porte (estado 12): dois graficos e, entre eles, os municipios de cada faixa ----
     var slotP = cw / Math.max(NF, 1);
     // No celular o cartao deste passo e mais alto que o dos outros: o visual
     // termina antes (36% da tela) e fica so com os dois graficos, sem os
@@ -408,10 +528,10 @@
       slot: slotP, cel: w.cel, cols: w.cols,
       yTit1: CAIXA.y0 + 8, yTopo: yTopo, yBaseTopo: yBaseTopo,
       yRot: yBaseTopo + (MOBILE ? 12 : 16), yW0: yW0, yW1: yW1,
-      yTit2: yTit2, yB0: yTit2 + (MOBILE ? 14 : 22), yB1: yFimP - 6
+      yTit2: yTit2, yB0: yTit2 + (MOBILE ? 27 : 22), yB1: yFimP - 6 // celular: titulo de baixo em duas linhas
     };
 
-    // ---- transferencias (estado 9): barra 100% em cima, grade embaixo ----
+    // ---- transferencias (estado 13): barra 100% em cima, grade embaixo ----
     var yBarra0 = CAIXA.y0 + (MOBILE ? 22 : 30), yBarra1 = yBarra0 + (MOBILE ? 28 : 40);
     var yG0 = yBarra1 + (MOBILE ? 22 : 34), yG1 = CAIXA.y1 - (MOBILE ? 34 : 44);
     var t = encaixa(NT, cw, yG1 - yG0);
@@ -426,14 +546,27 @@
   function centroSlot(q) { return BARRAS.plot.x0 + BARRAS.slot * (q - 0.5); }
   function x2000(q) { return centroSlot(q) - BARRAS.larg4 / 2 - BARRAS.vao4 / 2; }
   function x2025(q) { return centroSlot(q) + BARRAS.larg4 / 2 + BARRAS.vao4 / 2; }
+  /** Centro da barra do ano k (0 = o mais antigo) no quintil q, no trio de anos. */
+  function xAnoBarra(q, k) { return centroSlot(q) + (k - kUlt / 2) * (ANOS_L.larg + ANOS_L.vao); }
   function centroFaixa(f) { return CAIXA.x0 + PORTE_L.slot * (f + 0.5); }
-  function centroGrandes(k) { return GRANDES_L.plot.x0 + GRANDES_L.slot * (k + 0.5); }
+  function xAno(k) { return TEND_L.plot.x0 + TEND_L.slot * (k + 0.5); }
+  /** Tendencia: altura de uma parcela (%) nas barras 100% ou na escala das linhas. */
+  function yPct(v) {
+    var P = TEND_L.plot, lo = LINHAS ? TEND_L.yMin : 0, hi = LINHAS ? TEND_L.yMax : 100;
+    return P.y1 - (v - lo) / (hi - lo) * (P.y1 - P.y0);
+  }
 
-  /** Posicao vertical de um quadrado da grade (estado 4) ou dos quintis (estado 5). */
+  /** Posicao vertical de um quadrado da grade (estado 5) ou dos quintis (estado 6). */
   function yGrade(j, quintis) {
     var linha = Math.floor(j / GRID.cols);
     var base = quintis ? GRID.y0Q + (MUN[GRADE[j]].q25 - 1) * GRID.gap : GRID.y0G;
     return base + (linha + 0.5) * GRID.cel;
+  }
+
+  /** Posicao vertical de um quadrado nos blocos dos quintis de 2000 (estado 7). */
+  function yMigra(j) {
+    var base = GRID.y0M + (MUN[MIGRA[j]].q00 - 1) * GRID.gap;
+    return base + (Math.floor(j / GRID.cols) + 0.5) * GRID.cel;
   }
 
   function montaEstados() {
@@ -441,16 +574,17 @@
     for (var k = 0; k < N_ESTADOS; k++) E.push(novoEstado());
     var i, j, q;
 
-    // 0, 1, 3, 10 e 11. o mesmo mapa, com cores diferentes
+    // 0, 1, 4, 15 e 16. o mesmo mapa, com cores diferentes
     var cw = CAIXA.x1 - CAIXA.x0, ch = CAIXA.y1 - CAIXA.y0;
     var gw = GEO.x1 - GEO.x0, gh = GEO.y1 - GEO.y0;
     var s = Math.min(cw / gw, ch / gh) * 0.98;
     var ox = CAIXA.x0 + (cw - gw * s) / 2, oy = CAIXA.y0 + (ch - gh * s) / 2;
+    MAPA = { x0: ox, y0: oy, x1: ox + gw * s, y1: oy + gh * s, s: s };
     [[0, function () { return NEUTRO; }],
      [1, function (i) { return grande[i] ? AZUL_GRANDE : CLARO; }],
-     [3, function (i) { return MUN[i].q25 ? VERDE : CINZA; }],
-     [10, function (i) { return grande[i] ? AZUL_GRANDE : CLARO; }],
-     [11, function (i) { return !grande[i] ? CLARO : (MUN[i].q25 ? COR_Q[MUN[i].q25] : CINZA); }]].forEach(function (par) {
+     [4, function (i) { return MUN[i].q25 ? VERDE : CINZA; }],
+     [15, function (i) { return grande[i] ? AZUL_GRANDE : CLARO; }],
+     [16, function (i) { return !grande[i] ? CLARO : (MUN[i].q25 ? COR_Q[MUN[i].q25] : CINZA); }]].forEach(function (par) {
       var e = E[par[0]];
       for (i = 0; i < N; i++) {
         e.cx[i] = ox + (geoX[i] - GEO.x0) * s;
@@ -461,19 +595,35 @@
       }
     });
 
-    // 4 e 5. a mesma grade; nos quintis cada bloco so desce ou sobe
+    // 2. bolhas: um circulo no centroide de cada municipio, com area
+    // proporcional a populacao de 2025 e as cores do estado 1. Sem populacao, some.
+    var rMax = s * RAIO_MAIOR;
+    for (i = 0; i < N; i++) {
+      var raio = rMax * Math.sqrt(MUN[i].p25 / popMax);
+      circulo(E[2], i, ox + (centroX[i] - GEO.x0) * s, oy + (centroY[i] - GEO.y0) * s, Math.max(raio, RAIO_MIN));
+      pinta(E[2], i, grande[i] ? AZUL_GRANDE : CINZA, MUN[i].p25 > 0 ? 1 : 0);
+    }
+
+    // 5 e 6. a mesma grade; nos quintis cada bloco so desce ou sobe
     var meio = GRID.cel * 0.41;
     for (i = 0; i < N; i++) {
       j = posGrade[i];
-      if (j < 0) { copia(E[4], E[3], i, 0); copia(E[5], E[3], i, 0); continue; }
+      if (j < 0) { copia(E[5], E[4], i, 0); copia(E[6], E[4], i, 0); continue; }
       var x = GRID.x0 + (j % GRID.cols + 0.5) * GRID.cel;
-      retangulo(E[4], i, x, yGrade(j, false), meio, meio);
-      pinta(E[4], i, corGradiente(j / Math.max(NG - 1, 1)), 1);
-      retangulo(E[5], i, x, yGrade(j, true), meio, meio);
-      pinta(E[5], i, COR_Q[MUN[i].q25], 1);
+      retangulo(E[5], i, x, yGrade(j, false), meio, meio);
+      pinta(E[5], i, corGradiente(j / Math.max(NG - 1, 1)), 1);
+      retangulo(E[6], i, x, yGrade(j, true), meio, meio);
+      pinta(E[6], i, COR_Q[MUN[i].q25], 1);
     }
 
-    // 2, 6, 7 e 12. barras: cada municipio vira uma fatia, altura proporcional a populacao
+    // 7. migracao: a cor do quintil de 2025 nos blocos dos quintis de 2000;
+    // cinza para quem nao declarou receita em 2025
+    MIGRA.forEach(function (idx, j) {
+      retangulo(E[7], idx, GRID.x0 + (j % GRID.cols + 0.5) * GRID.cel, yMigra(j), meio, meio);
+      pinta(E[7], idx, MUN[idx].q25 ? COR_Q[MUN[idx].q25] : CINZA, 1);
+    });
+
+    // 3, 8, 9, 10 e 14. barras: cada municipio vira uma fatia, altura proporcional a populacao
     var P = BARRAS.plot, alt = P.y1 - P.y0;
     function empilha(est, lista, cor, pop, x, larg, yMax, base, altura) {
       lista.forEach(function (idx) {
@@ -483,45 +633,66 @@
         base -= h;
       });
     }
-    var G = GRANDES_L.plot;
-    empilha(E[2], GRANDES, AZUL_GRANDE, function (m) { return m.p25; }, centroGrandes(0), GRANDES_L.larg, GRANDES_L.yMax, G.y1, G.y1 - G.y0);
-    empilha(E[2], DEMAIS, CLARO, function (m) { return m.p25; }, centroGrandes(1), GRANDES_L.larg, GRANDES_L.yMax, G.y1, G.y1 - G.y0);
+    // 3. tendencia: o ultimo ano (2025) e feito dos municipios. Nas barras, cada
+    // um e uma fatia da coluna (grandes embaixo); nas linhas, cada um encolhe ate
+    // o ponto do seu grupo e some nele.
+    var T = TEND_L.plot, kFim = NA - 1;
+    if (LINHAS) {
+      var yG = yPct(TEND.pct[kFim]), yD = yPct(100 - TEND.pct[kFim]), rPonto = MOBILE ? 3.5 : 4.5;
+      for (i = 0; i < N; i++) {
+        circulo(E[3], i, xAno(kFim), grande[i] ? yG : yD, rPonto);
+        pinta(E[3], i, grande[i] ? AZUL_GRANDE : CINZA_LINHA, 0);
+      }
+    } else {
+      var popTotal = popGrandes + popDemais || 1, altT = T.y1 - T.y0;
+      empilha(E[3], GRANDES, AZUL_GRANDE, function (m) { return m.p25; }, xAno(kFim), TEND_L.larg, popTotal, T.y1, altT);
+      empilha(E[3], DEMAIS, CLARO, function (m) { return m.p25; }, xAno(kFim), TEND_L.larg, popTotal, T.y1 - popGrandes / popTotal * altT, altT);
+    }
     var F = FPM_L.plot;
     for (q = 1; q <= 5; q++) {
-      empilha(E[6], porQ00[q], COR_Q[q], function (m) { return m.p00; }, centroSlot(q), BARRAS.larg3, BARRAS.yMax3, P.y1, alt);
-      empilha(E[7], porQ25[q], COR_Q[q], function (m) { return m.p25; }, x2025(q), BARRAS.larg4, BARRAS.yMax4, P.y1, alt);
+      empilha(E[8], porQ00[q], COR_Q[q], function (m) { return m.p00; }, centroSlot(q), BARRAS.larg3, BARRAS.yMax3, P.y1, alt);
+      empilha(E[9], porQ25[q], COR_Q[q], function (m) { return m.p25; }, x2025(q), BARRAS.larg4, BARRAS.yMax4, P.y1, alt);
+      var fa = fatorAnos[q];
+      if (NANOS) empilha(E[10], porQ25[q], COR_Q[q], function (m) { return m.p25 * fa; }, xAnoBarra(q, kUlt), ANOS_L.larg, ANOS_L.yMax, P.y1, alt);
       var fq = fatorFpm[q];
-      empilha(E[12], porQ25[q], COR_Q[q], function (m) { return m.p25 * fq; }, x2000(q), BARRAS.larg4, FPM_L.yMax, F.y1, F.y1 - F.y0);
+      empilha(E[14], porQ25[q], COR_Q[q], function (m) { return m.p25 * fq; }, x2000(q), BARRAS.larg4, FPM_L.yMax, F.y1, F.y1 - F.y0);
     }
 
-    // 8. porte: quadradinhos de cada faixa, na cor do quintil
+    // 12. porte: quadradinhos de cada faixa, na cor do quintil
     var Lp = PORTE_L, mp = Lp.cel * 0.4;
     porFaixa.forEach(function (lista, f) {
       var x0 = centroFaixa(f) - Lp.cols * Lp.cel / 2;
       lista.sort(ordemGrade).forEach(function (idx, k) {
-        if (MOBILE) { copia(E[8], E[7], idx, 0); return; } // sem espaco: os quadrados saem de cena
-        retangulo(E[8], idx, x0 + (k % Lp.cols + 0.5) * Lp.cel, Lp.yW0 + (Math.floor(k / Lp.cols) + 0.5) * Lp.cel, mp, mp);
-        pinta(E[8], idx, COR_Q[MUN[idx].q25], 1);
+        if (MOBILE) { copia(E[12], E[11], idx, 0); return; } // sem espaco: os quadrados saem de cena
+        retangulo(E[12], idx, x0 + (k % Lp.cols + 0.5) * Lp.cel, Lp.yW0 + (Math.floor(k / Lp.cols) + 0.5) * Lp.cel, mp, mp);
+        pinta(E[12], idx, COR_Q[MUN[idx].q25], 1);
       });
     });
 
-    // 9. transferencias: azul quando mais da metade da receita vem delas
+    // 13. transferencias: azul quando elas passam do corte (CORTE_TRANSF) da receita
     var Lt = TRANSF_L, mt = Lt.cel * 0.41;
     TRANSF.forEach(function (idx, k) {
-      retangulo(E[9], idx, Lt.x0 + (k % Lt.cols + 0.5) * Lt.cel, Lt.y0 + (Math.floor(k / Lt.cols) + 0.5) * Lt.cel, mt, mt);
-      pinta(E[9], idx, MUN[idx].tr > 0.5 ? AZUL : AMARELO, 1);
+      retangulo(E[13], idx, Lt.x0 + (k % Lt.cols + 0.5) * Lt.cel, Lt.y0 + (Math.floor(k / Lt.cols) + 0.5) * Lt.cel, mt, mt);
+      pinta(E[13], idx, MUN[idx].tr > CORTE_TRANSF ? AZUL : AMARELO, 1);
     });
 
     // Quem nao entra num estado aparece ou some no lugar, sem viajar.
     for (i = 0; i < N; i++) {
       var m = MUN[i];
+      // Migracao: sem 2000, o quadrado some na grade de 2025; so com 2000, ele
+      // ja espera (invisivel) no bloco de 2000 e aparece ali, em cinza.
+      if (!m.q00) copia(E[7], E[6], i, 0);
+      else if (!m.q25) copia(E[6], E[7], i, 0);
       if (!m.q00) {
-        if (m.q25) copia(E[6], E[7], i, 0); else copia(E[6], E[5], i, 0);
+        if (m.q25) copia(E[8], E[9], i, 0); else copia(E[8], E[7], i, 0);
       }
-      if (!m.q25) copia(E[7], E[6], i, 0);
-      if (faixa[i] < 0) copia(E[8], E[7], i, 0);
-      if (posTransf[i] < 0) copia(E[9], E[8], i, 0);
-      if (!m.q25) copia(E[12], E[11], i, 0);
+      if (!m.q25) copia(E[9], E[8], i, 0);
+      if (!NANOS) copia(E[10], E[9], i, E[9].a[i]); // sem a serie, o passo repete o anterior
+      else if (!m.q25) copia(E[10], E[9], i, 0);
+      copia(E[11], E[10], i, 0); // indicadores: o grafico e desenhado; os municipios somem no lugar
+      if (faixa[i] < 0) copia(E[12], E[11], i, 0);
+      if (posTransf[i] < 0) copia(E[13], E[12], i, 0);
+      if (!m.q25) copia(E[14], E[13], i, 0); // FPM: quem nao tem quintil some onde estava (na grade das transferencias)
     }
 
     ESTADOS = E;
@@ -582,12 +753,37 @@
     return hachura;
   }
 
+  /** Pontilhado branco em quincunce: a terceira textura, ao lado da solida e da hachurada. */
+  var pontos = null;
+  function padraoPontos() {
+    if (pontos) return pontos;
+    var c = document.createElement('canvas');
+    c.width = c.height = 7;
+    var g = c.getContext('2d');
+    g.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    g.beginPath();
+    g.arc(1.75, 1.75, 1.25, 0, 2 * Math.PI);
+    g.arc(5.25, 5.25, 1.25, 0, 2 * Math.PI);
+    g.fill();
+    pontos = ctx.createPattern(c, 'repeat');
+    return pontos;
+  }
+
   function texto(str, x, y, opt) {
     ctx.font = (opt.peso || 400) + ' ' + opt.tam + 'px ' + FONTE;
     ctx.fillStyle = opt.cor || TINTA;
     ctx.textAlign = opt.alinha || 'left';
     ctx.textBaseline = opt.base || 'middle';
     ctx.fillText(str, x, y);
+  }
+
+  /** Texto girado 90 graus (lido de baixo para cima), ancorado em (x, y). */
+  function textoVertical(str, x, y, opt) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 2);
+    texto(str, 0, 0, opt);
+    ctx.restore();
   }
 
   /** Texto que quebra em duas linhas se nao couber na largura. */
@@ -605,18 +801,33 @@
     var escalaT = 1 - ATRASO;
     var alfaAtual = -1;
 
-    for (var i = 0; i < N; i++) {
+    for (var o = 0; o < N; o++) {
+      var i = ORDEM[o];
       var e = suave(corta((t - D[i]) / escalaT));
       var alfa = A.a[i] + (B.a[i] - A.a[i]) * e;
       if (alfa < 0.004) continue;
       if (alfa !== alfaAtual) { ctx.globalAlpha = alfa; alfaAtual = alfa; }
 
-      // Parado num dos lados: cor pronta e, se for retangulo, um fillRect.
+      // Parado num dos lados: cor pronta e, se for retangulo ou circulo, a primitiva do canvas.
       var E = e === 0 ? A : (e === 1 ? B : null);
       if (E) {
         ctx.fillStyle = E.css[i];
         if (E.tipo[i] === 1) {
           ctx.fillRect(E.cx[i] - E.hw[i], E.cy[i] - E.hh[i], E.hw[i] * 2, E.hh[i] * 2);
+          continue;
+        }
+        if (E.tipo[i] === 2) {
+          ctx.beginPath();
+          ctx.arc(E.cx[i], E.cy[i], E.hw[i], 0, 2 * Math.PI);
+          ctx.fill();
+          // Anel da cor do papel: separa as bolhas que se sobrepoem. Nas
+          // pequenas ele cobriria o circulo inteiro.
+          if (E.hw[i] >= RAIO_ANEL) {
+            var linha = ctx.lineWidth;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.lineWidth = linha;
+          }
           continue;
         }
       } else {
@@ -629,9 +840,9 @@
         ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
         continue;
       }
-      // Pelo menos um dos lados e o contorno do municipio: interpola o anel.
-      var ax = A.tipo[i] === 0 ? poliX[i] : quadX[i], ay = A.tipo[i] === 0 ? poliY[i] : quadY[i];
-      var bx = B.tipo[i] === 0 ? poliX[i] : quadX[i], by = B.tipo[i] === 0 ? poliY[i] : quadY[i];
+      // Pelo menos um dos lados e o contorno do municipio ou a bolha: interpola o anel.
+      var ax = ANEL_X[A.tipo[i]][i], ay = ANEL_Y[A.tipo[i]][i];
+      var bx = ANEL_X[B.tipo[i]][i], by = ANEL_Y[B.tipo[i]][i];
       var awx = A.hw[i] * (1 - e), awy = A.hh[i] * (1 - e), bwx = B.hw[i] * e, bwy = B.hh[i] * e;
       var n = ax.length;
       ctx.beginPath();
@@ -648,42 +859,134 @@
     ctx.globalAlpha = 1;
   }
 
-  /** Estado 2: barras de fundo, valores e rotulos das cidades grandes x demais. */
-  function desenhaGrandes(p) {
+  /**
+   * Estado 2: legenda do tamanho das bolhas, no mar a sudeste do mapa. Circulos
+   * de referencia encaixados pela base, cada um com o rotulo na altura do topo.
+   */
+  function desenhaBolhas(p) {
     var a = peso(2, p);
     if (a < 0.01) return;
-    var L = GRANDES_L, P = L.plot, alt = P.y1 - P.y0;
-    var aBase = presenca(p, 2, 2, 0.85);
-    var total = popGrandes + popDemais || 1;
-    var grupos = [
-      { pop: popGrandes, cor: AZUL_GRANDE, n: GRANDES.length, rot: 'Mais de ' + fmt0.format(GR.limite / 1000) + ' mil habitantes' },
-      { pop: popDemais, cor: CLARO, n: DEMAIS.length, rot: 'Até ' + fmt0.format(GR.limite / 1000) + ' mil habitantes' }
-    ];
+    var rMax = MAPA.s * RAIO_MAIOR, tam = MOBILE ? 10 : 12;
+    var itens = [[1e5, '100 mil'], [1e6, '1 milhão'], [1e7, '10 milhões']]; // do menor para o maior
+    ctx.font = '400 ' + tam + 'px ' + FONTE;
+    var largTxt = Math.max.apply(null, itens.map(function (it) { return ctx.measureText(it[1]).width; }));
+    var rG = rMax * Math.sqrt(itens[2][0] / popMax);
+    var vao = MOBILE ? 6 : 10;
+    var xc = MAPA.x1 - largTxt - vao - rG, yb = MAPA.y1 - (MOBILE ? 4 : 8), xt = xc + rG + vao;
     ctx.globalAlpha = a;
-    texto('População em 2025', P.x0, P.y0 - (MOBILE ? 30 : 42), { tam: MOBILE ? 11 : 13, peso: 700, cor: TINTA });
-    ctx.strokeStyle = '#B9B2A4'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(P.x0, P.y1 + 0.5); ctx.lineTo(P.x1, P.y1 + 0.5); ctx.stroke();
-
-    grupos.forEach(function (g, k) {
-      var x = centroGrandes(k), h = g.pop / L.yMax * alt;
-      if (aBase > 0.01) {
-        ctx.globalAlpha = a * aBase;
-        ctx.fillStyle = css(g.cor);
-        ctx.fillRect(x - L.larg / 2, P.y1 - h, L.larg, h);
-      }
-      ctx.globalAlpha = a;
-      var yv = P.y1 - h - (MOBILE ? 10 : 14);
-      texto(fmt1.format(g.pop / total * 100) + '%', x, yv - (MOBILE ? 16 : 22), { tam: MOBILE ? 18 : 26, peso: 700, cor: k === 0 ? css(AZUL_GRANDE) : CINZA_TXT, alinha: 'center' });
-      texto(fmt1.format(g.pop / 1e6) + ' milhões de pessoas', x, yv, { tam: MOBILE ? 10 : 13, cor: TINTA, alinha: 'center' });
-      texto(fmt0.format(g.n) + ' municípios', x, P.y1 + (MOBILE ? 14 : 20), { tam: MOBILE ? 11 : 14, peso: 700, cor: TINTA, alinha: 'center' });
-      texto(g.rot, x, P.y1 + (MOBILE ? 28 : 38), { tam: MOBILE ? 9 : 12, cor: CINZA_TXT, alinha: 'center' });
+    ctx.strokeStyle = CINZA_TXT; ctx.lineWidth = 1;
+    var yRot = Infinity;
+    itens.forEach(function (it) {
+      var r = rMax * Math.sqrt(it[0] / popMax), yTopo = yb - 2 * r;
+      // Os circulos pequenos tem o topo quase junto: o rotulo sobe o que faltar.
+      yRot = Math.min(yTopo, yRot - tam * 1.15);
+      ctx.beginPath(); ctx.arc(xc, yb - r, r, 0, 2 * Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xc, yTopo); ctx.lineTo(xt - 4, yRot); ctx.stroke();
+      texto(it[1], xt, yRot, { tam: tam, cor: CINZA_TXT });
     });
+    texto('Habitantes em 2025', xc - rG, Math.min(yb - 2 * rG, yRot) - tam * 1.6, { tam: tam, peso: 700, cor: TINTA });
     ctx.globalAlpha = 1;
   }
 
+  /**
+   * Estado 3: parcela da populacao nas cidades com mais de 80 mil, de 2000 a
+   * 2025. Os municipios chegam em 2025 e a serie volta no tempo a partir dali:
+   * as colunas (ou as linhas) aparecem do ultimo ano para o primeiro.
+   */
+  function desenhaTendencia(p) {
+    var a = peso(3, p);
+    if (a < 0.01 || !NA) return;
+    var L = TEND_L, P = L.plot, kFim = NA - 1, k;
+    var frente = kFim * (1 - suave(a)); // ano (indice, continuo) ate onde a serie ja voltou
+    var revela = function (k) { return corta(k - frente + 1); };
+    var tamT = MOBILE ? 11 : 13, tamV = MOBILE ? 10 : 13, tamR = MOBILE ? 10 : 12;
+    var corDemais = LINHAS ? CINZA_LINHA : CLARO, limite = fmt0.format(GR.limite / 1000);
+    var demais = TEND.pct.map(function (v) { return 100 - v; });
+
+    ctx.globalAlpha = a;
+    texto('Parcela da população, ' + TEND.anos[0] + ' a ' + TEND.anos[kFim], CAIXA.x0, P.y0 - (MOBILE ? 32 : 46), { tam: tamT, peso: 700, cor: TINTA });
+    var xl = CAIXA.x0, yLeg = P.y0 - (MOBILE ? 16 : 22);
+    [[AZUL_GRANDE, 'Mais de ' + limite + ' mil habitantes'], [corDemais, 'Até ' + limite + ' mil habitantes']].forEach(function (it) {
+      ctx.fillStyle = css(it[0]); ctx.fillRect(xl, yLeg - 5, 10, 10);
+      texto(it[1], xl + 15, yLeg, { tam: tamR, cor: TINTA });
+      ctx.font = '400 ' + tamR + 'px ' + FONTE;
+      xl += 15 + ctx.measureText(it[1]).width + (MOBILE ? 12 : 20);
+    });
+    for (k = 0; k < NA; k++) {
+      if (TEND.anos[k] % 5 && k !== kFim) continue;
+      ctx.globalAlpha = a * revela(k);
+      texto(String(TEND.anos[k]), xAno(k), P.y1 + (MOBILE ? 12 : 16), { tam: tamR, cor: CINZA_TXT, alinha: 'center' });
+    }
+
+    if (!LINHAS) {
+      // Colunas 100%. A de 2025 e feita dos municipios; o fundo dela so fecha
+      // as frestas entre as fatias quando elas terminam de chegar.
+      var aBase = presenca(p, 3, 3, 0.85);
+      // Valores de todos os anos, dentro das colunas: na vertical, porque na
+      // horizontal "55,2%" nao cabe numa coluna estreita.
+      var tamC = Math.min(MOBILE ? 9 : 12, L.larg - 3);
+      for (k = 0; k < NA; k++) {
+        var al = k === kFim ? aBase : revela(k);
+        if (al < 0.01) continue;
+        var xc = xAno(k), x = xc - L.larg / 2, yb = yPct(TEND.pct[k]);
+        ctx.globalAlpha = a * al;
+        ctx.fillStyle = css(corDemais); ctx.fillRect(x, P.y0, L.larg, yb - P.y0);
+        ctx.fillStyle = css(AZUL_GRANDE); ctx.fillRect(x, yb, L.larg, P.y1 - yb);
+        if (tamC < 6) continue;
+        textoVertical(fmt1.format(TEND.pct[k]) + '%', xc, (yb + P.y1) / 2, { tam: tamC, peso: 700, cor: '#ffffff', alinha: 'center' });
+        textoVertical(fmt1.format(demais[k]) + '%', xc, (P.y0 + yb) / 2, { tam: tamC, peso: 700, cor: CINZA_TXT, alinha: 'center' });
+      }
+    } else {
+      // Linhas: grade de 10 em 10 pontos (o eixo nao comeca no zero).
+      ctx.globalAlpha = a; ctx.lineWidth = 1;
+      for (var v = L.yMin; v <= L.yMax; v += 10) {
+        var y = yPct(v);
+        ctx.strokeStyle = v === L.yMin ? '#B9B2A4' : '#E9E3D7';
+        ctx.beginPath(); ctx.moveTo(P.x0, y + 0.5); ctx.lineTo(P.x1, y + 0.5); ctx.stroke();
+        texto(v + '%', P.x0 - 8, y, { tam: MOBILE ? 9 : 11, cor: CINZA_TXT, alinha: 'right' });
+      }
+      var rPonto = MOBILE ? 3.5 : 4.5, a0 = revela(0);
+      // [serie, cor da linha, cor do texto, rotulo do primeiro ano acima (-1) ou abaixo (1)]
+      [[TEND.pct, AZUL_GRANDE, css(AZUL_GRANDE), -1], [demais, CINZA_LINHA, CINZA_TXT, 1]].forEach(function (s) {
+        var serie = s[0], cor = css(s[1]);
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = cor; ctx.fillStyle = cor; ctx.lineWidth = MOBILE ? 2 : 2.5;
+        ctx.beginPath();
+        ctx.moveTo(xAno(kFim), yPct(serie[kFim]));
+        for (var j = kFim - 1; j >= 0 && j + 1 > frente; j--) {
+          var f = corta(j + 1 - frente); // quanto do trecho j+1 -> j ja foi desenhado
+          ctx.lineTo(lerp(xAno(j + 1), xAno(j), f), lerp(yPct(serie[j + 1]), yPct(serie[j]), f));
+        }
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(xAno(kFim), yPct(serie[kFim]), rPonto, 0, 2 * Math.PI); ctx.fill();
+        texto(fmt1.format(serie[kFim]) + '%', xAno(kFim) + rPonto + 6, yPct(serie[kFim]), { tam: tamV, peso: 700, cor: s[2] });
+        if (a0 > 0.01) {
+          ctx.globalAlpha = a * a0;
+          ctx.beginPath(); ctx.arc(xAno(0), yPct(serie[0]), rPonto, 0, 2 * Math.PI); ctx.fill();
+          texto(fmt1.format(serie[0]) + '%', xAno(0), yPct(serie[0]) + s[3] * (MOBILE ? 13 : 17), { tam: tamV, peso: 700, cor: s[2], alinha: 'center' });
+        }
+      });
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Colchete a esquerda de um bloco da grade (de y0 a y1), como na arte dos
+   * quintis, com dois rotulos a esquerda e dois a direita.
+   */
+  function rotulaBloco(y0, y1, q, dirNum, dirTxt) {
+    var ym = (y0 + y1) / 2, xb = GRID.x0 - (MOBILE ? 6 : 10), xd = GRID.x1 + (MOBILE ? 8 : 14);
+    ctx.strokeStyle = '#B9B2A4'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xb + 4, y0); ctx.lineTo(xb, y0); ctx.lineTo(xb, y1); ctx.lineTo(xb + 4, y1); ctx.stroke();
+    texto('20%', xb - (MOBILE ? 5 : 9), ym - (MOBILE ? 6 : 8), { tam: MOBILE ? 13 : 17, peso: 700, cor: TINTA, alinha: 'right' });
+    texto(q + 'º quintil', xb - (MOBILE ? 5 : 9), ym + (MOBILE ? 8 : 11), { tam: MOBILE ? 9 : 11, peso: 600, cor: COR_Q_TXT[q], alinha: 'right' });
+    texto(dirNum, xd, ym - (MOBILE ? 6 : 8), { tam: MOBILE ? 13 : 17, peso: 700, cor: TINTA });
+    texto(dirTxt, xd, ym + (MOBILE ? 8 : 11), { tam: MOBILE ? 9 : 11, cor: CINZA_TXT });
+  }
+
   function desenhaGrade(p) {
-    var a1 = peso(4, p), a2 = peso(5, p);
-    var tamR = MOBILE ? 11 : 13;
+    var a1 = peso(5, p), a2 = peso(6, p), a3 = peso(7, p);
+    var tamR = MOBILE ? 11 : 13, q, lista;
 
     if (a1 > 0.01) {
       ctx.globalAlpha = a1;
@@ -698,28 +1001,37 @@
 
     if (a2 > 0.01) {
       ctx.globalAlpha = a2;
-      for (var q = 1; q <= 5; q++) {
-        var lista = porQ25[q];
+      for (q = 1; q <= 5; q++) {
+        lista = porQ25[q];
         if (!lista.length) continue;
-        var j0 = posGrade[lista[0]], j1 = posGrade[lista[lista.length - 1]];
-        var y0 = yGrade(j0, true) - GRID.cel / 2, y1 = yGrade(j1, true) + GRID.cel / 2, ym = (y0 + y1) / 2;
-        var xb = GRID.x0 - (MOBILE ? 6 : 10);
-        // colchete a esquerda do bloco, como na arte dos quintis
-        ctx.strokeStyle = '#B9B2A4'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(xb + 4, y0); ctx.lineTo(xb, y0); ctx.lineTo(xb, y1); ctx.lineTo(xb + 4, y1); ctx.stroke();
-        texto('20%', xb - (MOBILE ? 5 : 9), ym - (MOBILE ? 6 : 8), { tam: MOBILE ? 13 : 17, peso: 700, cor: TINTA, alinha: 'right' });
-        texto(q + 'º quintil', xb - (MOBILE ? 5 : 9), ym + (MOBILE ? 8 : 11), { tam: MOBILE ? 9 : 11, peso: 600, cor: COR_Q_TXT[q], alinha: 'right' });
-        var xd = GRID.x1 + (MOBILE ? 8 : 14);
-        texto(fmt0.format(lista.length), xd, ym - (MOBILE ? 6 : 8), { tam: MOBILE ? 13 : 17, peso: 700, cor: TINTA });
-        texto('municípios', xd, ym + (MOBILE ? 8 : 11), { tam: MOBILE ? 9 : 11, cor: CINZA_TXT });
+        rotulaBloco(yGrade(posGrade[lista[0]], true) - GRID.cel / 2, yGrade(posGrade[lista[lista.length - 1]], true) + GRID.cel / 2,
+          q, fmt0.format(lista.length), 'municípios');
+      }
+    }
+
+    // Migracao: os blocos agora sao os quintis de 2000; a direita, quantos
+    // continuam no mesmo quintil em 2025.
+    if (a3 > 0.01) {
+      ctx.globalAlpha = a3;
+      texto('Quintis de 2000, com a cor de 2025', GRID.x0, GRID.y0M - (MOBILE ? 9 : 13), { tam: tamR, peso: 700, cor: TINTA });
+      for (q = 1; q <= 5; q++) {
+        lista = porQ00[q];
+        if (!lista.length) continue;
+        var fica = MIG.continua_pct[q];
+        rotulaBloco(yMigra(posMigra[lista[0]]) - GRID.cel / 2, yMigra(posMigra[lista[lista.length - 1]]) + GRID.cel / 2,
+          q, fica === null || fica === undefined ? '–' : fmt0.format(fica) + '%', 'continuam');
       }
     }
     ctx.globalAlpha = 1;
   }
 
-  /** Linhas horizontais do eixo Y, a cada `passo`, na escala yMax. */
-  function eixoY(P, yMax, passo, alfa) {
+  /**
+   * Linhas horizontais do eixo Y, a cada `passo`, na escala yMax. Os rotulos
+   * saem em milhoes ("10M"), salvo quando vem outro formato em `rotulo`.
+   */
+  function eixoY(P, yMax, passo, alfa, rotulo) {
     var alt = P.y1 - P.y0;
+    rotulo = rotulo || function (v) { return fmt0.format(v / 1e6) + 'M'; };
     ctx.globalAlpha = alfa;
     ctx.lineWidth = 1;
     for (var v = passo; v <= yMax * 1.0001; v += passo) {
@@ -727,25 +1039,25 @@
       if (y < P.y0) break;
       ctx.strokeStyle = '#E9E3D7';
       ctx.beginPath(); ctx.moveTo(P.x0, y); ctx.lineTo(P.x1, y); ctx.stroke();
-      texto(fmt0.format(v / 1e6) + 'M', P.x0 - 8, y, { tam: MOBILE ? 9 : 11, cor: CINZA_TXT, alinha: 'right' });
+      texto(rotulo(v), P.x0 - 8, y, { tam: MOBILE ? 9 : 11, cor: CINZA_TXT, alinha: 'right' });
     }
     ctx.strokeStyle = '#B9B2A4';
     ctx.beginPath(); ctx.moveTo(P.x0, P.y1 + 0.5); ctx.lineTo(P.x1, P.y1 + 0.5); ctx.stroke();
     texto('0', P.x0 - 8, P.y1, { tam: MOBILE ? 9 : 11, cor: CINZA_TXT, alinha: 'right' });
   }
 
-  /** Estados 6 e 7: eixos, barras de fundo (2000 hachurada e 2025 solida), valores e legenda. */
+  /** Estados 8 e 9: eixos, barras de fundo (2000 hachurada e 2025 solida), valores e legenda. */
   function desenhaBarras(p) {
-    if (p <= 5 || p >= 8) return;
+    if (p <= 7 || p >= 10) return;
     var P = BARRAS.plot, alt = P.y1 - P.y0;
     var s = segmento(p), t = s.t;
 
-    var aEixo = p < 6 ? entra(t) : (p <= 7 ? 1 : sai(t));
-    var t34 = p <= 6 ? 0 : (p >= 7 ? 1 : suave(t));
+    var aEixo = p < 8 ? entra(t) : (p <= 9 ? 1 : sai(t));
+    var t34 = p <= 8 ? 0 : (p >= 9 ? 1 : suave(t));
     var yMax = lerp(BARRAS.yMax3, BARRAS.yMax4, t34);
     // A barra de 2000 se fecha quando as fatias terminam de chegar.
-    var aBase00 = presenca(p, 6, 7, 0.82);
-    var aBase25 = presenca(p, 7, 7, 0.85);
+    var aBase00 = presenca(p, 8, 9, 0.82);
+    var aBase25 = presenca(p, 9, 9, 0.85);
 
     eixoY(P, yMax, 10e6, aEixo);
     for (var q = 1; q <= 5; q++) {
@@ -753,7 +1065,7 @@
     }
 
     // legenda / titulo do grafico
-    var a3 = peso(6, p), a4 = peso(7, p);
+    var a3 = peso(8, p), a4 = peso(9, p);
     var yLeg = P.y0 - (MOBILE ? 30 : 42);
     if (a3 > 0.01) {
       ctx.globalAlpha = a3;
@@ -801,9 +1113,137 @@
     ctx.globalAlpha = 1;
   }
 
-  /** Estado 8: crescimento da populacao (em cima) e da receita por habitante (embaixo), por porte. */
+  /**
+   * Retangulo de um ano no trio de anos: o mais recente solido, o anterior
+   * hachurado (como 2000 x 2025) e os mais antigos pontilhados.
+   */
+  function pintaAno(x, y, larg, alt, cor, k, alfa) {
+    ctx.globalAlpha = alfa;
+    ctx.fillStyle = cor; ctx.fillRect(x, y, larg, alt);
+    if (k === kUlt) return;
+    ctx.fillStyle = k === kUlt - 1 ? padraoHachura() : padraoPontos();
+    ctx.fillRect(x, y, larg, alt);
+  }
+
+  /**
+   * Estado 10: populacao por quintil, ano a ano, no padrao das barras de 2000
+   * x 2025. As fatias assentam na barra do ultimo ano (solida, a direita); as
+   * dos anos anteriores crescem do eixo.
+   */
+  function desenhaAnos(p) {
+    var a = peso(10, p);
+    if (a < 0.01 || !NANOS) return;
+    var L = ANOS_L, P = BARRAS.plot, alt = P.y1 - P.y0, s = segmento(p), q, k;
+    var cresce = p >= 10 ? 1 : suave(corta((s.t - 0.55) / 0.45));
+    var aBase = presenca(p, 10, 10, 0.85);
+    eixoY(P, L.yMax, 10e6, a);
+    ctx.globalAlpha = a;
+    for (q = 1; q <= 5; q++) {
+      texto(q + 'º quintil', centroSlot(q), P.y1 + (MOBILE ? 13 : 18), { tam: MOBILE ? 10 : 12, peso: 700, cor: TINTA, alinha: 'center' });
+    }
+
+    // legenda: uma amostra neutra por ano, no estilo da barra dele
+    var yLeg = P.y0 - (MOBILE ? 30 : 42), xl = P.x0, tamL = MOBILE ? 11 : 13;
+    for (k = 0; k < NANOS; k++) {
+      pintaAno(xl, yLeg - 6, 22, 12, k === kUlt ? '#4A5260' : '#7C8591', k, a);
+      ctx.globalAlpha = a;
+      texto(String(ANOS.anos[k]), xl + 28, yLeg, { tam: tamL, peso: 600, cor: TINTA });
+      xl += MOBILE ? 66 : 80;
+    }
+    texto('milhões de habitantes', xl, yLeg, { tam: MOBILE ? 10 : 12, cor: CINZA_TXT });
+
+    // No celular, com tres barras por quintil, o valor perde o " mi" para caber.
+    var mi = MOBILE ? '' : ' mi';
+    for (q = 1; q <= 5; q++) {
+      var cor = css(COR_Q[q]);
+      for (k = 0; k < NANOS; k++) {
+        var ultimo = k === kUlt, al = ultimo ? aBase : 1;
+        if (al < 0.01) continue;
+        var v = ANOS.series[k][q - 1], x = xAnoBarra(q, k);
+        var h = v * 1e6 / L.yMax * alt * (ultimo ? 1 : cresce);
+        pintaAno(x - L.larg / 2, P.y1 - h, L.larg, h, cor, k, a * al);
+        if (!ultimo && cresce < 0.98) continue;
+        ctx.globalAlpha = a * al;
+        texto(fmt1.format(v) + mi, x, P.y1 - h - (MOBILE ? 8 : 11), {
+          tam: MOBILE ? 8 : 12, peso: 700, cor: ultimo ? TINTA : CINZA_TXT, alinha: 'center'
+        });
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Estado 11: o grafico da aba Graficos para a opcao do seletor, no plano das
+   * outras barras. 'media': uma barra por quintil, na cor dele, com o valor em
+   * cima; 'contagem': municipios por faixa, empilhados, com a legenda das faixas.
+   */
+  function desenhaIndicadores(p) {
+    var a = peso(11, p), ind = IND[indSel];
+    if (a < 0.01 || !ind) return;
+    var P = BARRAS.plot, alt = P.y1 - P.y0, s = segmento(p), q;
+    var cresce = (p >= 11 ? 1 : suave(corta((s.t - 0.55) / 0.45))) * suave(indTroca);
+    var media = ind.tipo === 'media', f = formatoUnidade(ind.unidade);
+    var larg = BARRAS.larg3;
+
+    // Escala: a maior barra (ou pilha) com folga, em passos redondos.
+    var tot = [0, 0, 0, 0, 0];
+    ind.series.forEach(function (se) { se.valores.forEach(function (v, i) { tot[i] += v || 0; }); });
+    var maior = Math.max.apply(null, tot) || 1, passo = passoRedondo(maior / 4);
+    var yMax = Math.ceil(maior * 1.1 / passo) * passo;
+    eixoY(P, yMax, passo, a, function (v) {
+      if (!media) return fmt0.format(v);
+      if (ind.unidade === 'reais' && MOBILE) return fmt0.format(v / 1000) + ' mil'; // "R$ 20.000" nao cabe a esquerda
+      return f(v, true);
+    });
+
+    ctx.globalAlpha = a;
+    var tamL = MOBILE ? 10 : 12, yT = P.y0 - (MOBILE ? 34 : 46);
+    texto(media ? ind.titulo : 'Municípios por faixa: ' + ind.nome, P.x0, yT, { tam: MOBILE ? 11 : 13, peso: 700, cor: TINTA });
+    if (!media) {
+      // Legenda das faixas; quebra a linha se nao couber.
+      var xl = P.x0, yl = yT + (MOBILE ? 16 : 22);
+      ind.series.forEach(function (se) {
+        ctx.font = '400 ' + tamL + 'px ' + FONTE;
+        var w = 15 + ctx.measureText(se.rotulo).width + (MOBILE ? 10 : 16);
+        if (xl > P.x0 && xl + w > P.x1) { xl = P.x0; yl += tamL + 4; }
+        ctx.fillStyle = COR_FAIXA[se.rotulo] || '#9E9E9E'; ctx.fillRect(xl, yl - 5, 10, 10);
+        texto(se.rotulo, xl + 15, yl, { tam: tamL, cor: TINTA });
+        xl += w;
+      });
+    }
+    for (q = 1; q <= 5; q++) {
+      texto(q + 'º quintil', centroSlot(q), P.y1 + (MOBILE ? 13 : 18), { tam: MOBILE ? 10 : 12, peso: 700, cor: TINTA, alinha: 'center' });
+    }
+
+    for (q = 1; q <= 5; q++) {
+      var x = centroSlot(q) - larg / 2, base = P.y1;
+      if (media) {
+        var v = ind.series[0].valores[q - 1];
+        if (v === null || v === undefined) continue;
+        var h = v / yMax * alt * cresce;
+        ctx.fillStyle = css(COR_Q[q]); ctx.fillRect(x, base - h, larg, h);
+        if (cresce > 0.98) {
+          // No celular os centavos saem do rotulo em reais, como na aba.
+          texto(f(v, MOBILE && ind.unidade === 'reais'), centroSlot(q), base - h - (MOBILE ? 8 : 11), { tam: MOBILE ? 10 : 13, peso: 700, cor: TINTA, alinha: 'center' });
+        }
+        continue;
+      }
+      ind.series.forEach(function (se) {
+        var n = se.valores[q - 1] || 0, hs = n / yMax * alt * cresce, cor = COR_FAIXA[se.rotulo] || '#9E9E9E';
+        if (hs <= 0) return;
+        ctx.fillStyle = cor; ctx.fillRect(x, base - hs, larg, hs);
+        if (cresce > 0.98 && hs >= (MOBILE ? 11 : 14)) {
+          texto(fmt0.format(n), centroSlot(q), base - hs / 2, { tam: MOBILE ? 9 : 11, peso: 700, cor: FAIXA_CLARA[cor] ? TINTA : '#ffffff', alinha: 'center' });
+        }
+        base -= hs;
+      });
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Estado 12: crescimento da populacao (em cima) e da receita por habitante (embaixo), por porte. */
   function desenhaPorte(p) {
-    var a = peso(8, p);
+    var a = peso(12, p);
     if (a < 0.01 || !NF) return;
     var L = PORTE_L;
     var cresce = suave(corta(a)); // as barras crescem enquanto aparecem
@@ -840,7 +1280,14 @@
     }
 
     // --- embaixo: receita por habitante em relacao ao pais ---
-    texto('Receita por habitante: crescimento acima (+) ou abaixo (−) do país', CAIXA.x0, L.yTit2, { tam: tamT, peso: 700, cor: TINTA });
+    // No celular o titulo nao cabe numa linha: quebra depois dos dois-pontos.
+    var tit2 = ['Receita por habitante:', 'comparação em relação ao crescimento médio do país'];
+    if (MOBILE) {
+      texto(tit2[0], CAIXA.x0, L.yTit2, { tam: tamT, peso: 700, cor: TINTA });
+      texto(tit2[1], CAIXA.x0, L.yTit2 + tamT * 1.2, { tam: tamT, peso: 700, cor: TINTA });
+    } else {
+      texto(tit2.join(' '), CAIXA.x0, L.yTit2, { tam: tamT, peso: 700, cor: TINTA });
+    }
     var vals = rec.filter(function (v) { return v !== null; });
     var hi = Math.max.apply(null, vals.concat([0])) * 1.3, lo = Math.min.apply(null, vals.concat([0])) * 1.3;
     var y0 = L.yB0 + 10, y1 = L.yB1 - 10;
@@ -860,9 +1307,9 @@
     ctx.globalAlpha = 1;
   }
 
-  /** Estado 9: barra 100% (transferencias x arrecadacao propria) e legenda da grade. */
+  /** Estado 13: barra 100% (transferencias x arrecadacao propria) e legenda da grade. */
   function desenhaTransf(p) {
-    var a = peso(9, p);
+    var a = peso(13, p);
     if (a < 0.01) return;
     var L = TRANSF_L, comp = DADOS.composicao || { pct_transferencias: 0, pct_propria: 0 };
     var cw = CAIXA.x1 - CAIXA.x0, tam = MOBILE ? 11 : 14;
@@ -877,11 +1324,12 @@
 
     var tamL = MOBILE ? 10 : 12, xl = CAIXA.x0;
     ctx.fillStyle = css(AZUL); ctx.fillRect(xl, L.yLeg - 5, 10, 10);
-    var t1 = 'Mais da metade vem de transferências (' + fmt0.format(nMaioria) + ')';
+    var corte = fmt0.format(CORTE_TRANSF * 100) + '%';
+    var t1 = 'Mais de ' + corte + ' vem de transferências (' + fmt0.format(nAcima) + ')';
     texto(t1, xl + 15, L.yLeg, { tam: tamL, cor: TINTA });
     ctx.font = '400 ' + tamL + 'px ' + FONTE;
     xl += 15 + ctx.measureText(t1).width + (MOBILE ? 10 : 18);
-    var t2 = 'Metade ou menos (' + fmt0.format(NT - nMaioria) + ')';
+    var t2 = corte + ' ou menos (' + fmt0.format(NT - nAcima) + ')';
     if (MOBILE && xl + 15 + ctx.measureText(t2).width > CAIXA.x1) { xl = CAIXA.x0; L = { yLeg: L.yLeg + 15 }; }
     ctx.fillStyle = css(AMARELO); ctx.fillRect(xl, L.yLeg - 5, 10, 10);
     texto(t2, xl + 15, L.yLeg, { tam: tamL, cor: TINTA });
@@ -889,17 +1337,17 @@
   }
 
   /**
-   * Estado 12: simulacao do FPM no mesmo padrao das barras de 2000 x 2025.
+   * Estado 14: simulacao do FPM no mesmo padrao das barras de 2000 x 2025.
    * As fatias assentam na barra de 2025 (hachurada, a esquerda, como 2000 la);
    * a barra com mais R$ 50 bi (solida) cresce do eixo ao lado.
    */
   function desenhaFpm(p) {
-    var a = peso(12, p);
+    var a = peso(14, p);
     if (a < 0.01) return;
     var L = FPM_L, P = L.plot, alt = P.y1 - P.y0;
     var s = segmento(p);
-    var cresce = p >= 12 ? 1 : suave(corta((s.t - 0.55) / 0.45));
-    var aBase = presenca(p, 12, 12, 0.85);
+    var cresce = p >= 14 ? 1 : suave(corta((s.t - 0.55) / 0.45));
+    var aBase = presenca(p, 14, 14, 0.85);
     eixoY(P, L.yMax, 10e6, a);
     ctx.globalAlpha = a;
 
@@ -966,9 +1414,12 @@
     ctx.lineWidth = MOBILE ? 0.3 : 0.45;
     ctx.lineJoin = 'round';
     desenhaMunicipios(p);
-    desenhaGrandes(p);
+    desenhaBolhas(p);
+    desenhaTendencia(p);
     desenhaGrade(p);
     desenhaBarras(p);
+    desenhaAnos(p);
+    desenhaIndicadores(p);
     desenhaPorte(p);
     desenhaTransf(p);
     desenhaFpm(p);
@@ -1038,6 +1489,53 @@
     desenha(pAtual);
   }
 
+  // --------------------------------------------------------------------------
+  // Seletor de indicadores (estado 11)
+  // --------------------------------------------------------------------------
+  var seletor = document.getElementById('an-indicador');
+
+  /** Frase e nota do cartao, e o rotulo do canvas, para a opcao escolhida. */
+  function atualizaCartaoIndicador() {
+    var ind = IND[indSel];
+    if (!ind) return;
+    var leitura = document.getElementById('an-indicador-leitura'), nota = document.getElementById('an-indicador-nota');
+    if (nota) nota.textContent = ind.nota || '';
+    if (leitura) {
+      if (ind.tipo === 'media') {
+        var v = ind.series[0] ? ind.series[0].valores : [], f = formatoUnidade(ind.unidade);
+        leitura.textContent = ind.titulo + ': ' + f(v[0]) + ' no 1º quintil e ' + f(v[4]) + ' no 5º.';
+      } else {
+        // Contagem: soma as faixas em destaque (nota A; risco alto ou muito alto).
+        var soma = [0, 0, 0, 0, 0];
+        ind.series.forEach(function (se) {
+          if ((ind.destaque || []).indexOf(se.rotulo) < 0) return;
+          se.valores.forEach(function (n, i) { soma[i] += n || 0; });
+        });
+        leitura.textContent = 'Municípios ' + ind.destaque_txt + ': ' + fmt0.format(soma[0]) + ' no 1º quintil e ' + fmt0.format(soma[4]) + ' no 5º.';
+      }
+    }
+    if (passos[11]) passos[11].setAttribute('data-rotulo', 'Indicadores por quintil de receita por habitante: ' + ind.nome);
+    if (passoAtivo === 11) canvas.setAttribute('aria-label', passos[11].getAttribute('data-rotulo'));
+  }
+
+  /** Depois de trocar a opcao, as barras sobem do eixo (600 ms). */
+  function animaTroca(agora) {
+    indTroca = REDUZIR ? 1 : corta((agora - indInicio) / 600);
+    desenha(pAtual);
+    if (indTroca < 1) requestAnimationFrame(animaTroca);
+  }
+
+  if (seletor) {
+    seletor.addEventListener('change', function () {
+      indSel = Math.max(0, seletor.selectedIndex);
+      atualizaCartaoIndicador();
+      if (!pronto) return;
+      indInicio = performance.now();
+      indTroca = 0;
+      requestAnimationFrame(animaTroca);
+    });
+  }
+
   function inicia(malha) {
     if (passos.length !== N_ESTADOS) {
       console.error('[inicio_animado] o template tem', passos.length, 'cartoes, mas a animacao tem', N_ESTADOS, 'estados');
@@ -1045,6 +1543,9 @@
     preparaFormas(malha);
     pronto = true;
     secao.classList.add('is-pronto');
+    // O navegador pode restaurar a opcao do seletor ao recarregar a pagina.
+    if (seletor) indSel = Math.max(0, seletor.selectedIndex);
+    atualizaCartaoIndicador();
     calculaLayout();
     mede();
     pAlvo = pAtual = alvo();

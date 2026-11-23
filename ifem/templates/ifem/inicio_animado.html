@@ -7,20 +7,29 @@ animacao guiada pelo scroll. O palco (canvas) fica fixo; os cartoes de texto
 rolam por cima e cada um corresponde a um estado da animacao:
   0. brasil: o mapa com todos os municipios, numa cor so;
   1. grandes: o mesmo mapa, pintando so os com mais de 80 mil habitantes;
-  2. maioria: cada municipio vira uma fatia de duas barras (grandes x demais),
-     com altura proporcional a populacao de 2025;
-  3. mapa: municipios que declararam receita (verde) e os que nao (cinza);
-  4. grade: um quadrado por municipio, do menor para o maior receita por hab.;
-  5. quintis: a grade dividida em cinco grupos iguais;
-  6. 2000: cada quadrado vira uma fatia da barra do seu quintil, com altura
+  2. bolhas: cada municipio vira um circulo no seu centroide, com area
+     proporcional a populacao de 2025 (as mesmas cores do passo 1);
+  3. tendencia: parcela da populacao nas cidades com mais de 80 mil, de 2000
+     a 2025, em barras 100% (cada municipio vira uma fatia da coluna de 2025)
+     ou, com ?tendencia=linhas, em linhas (cada um se junta ao ponto de 2025);
+  4. mapa: municipios que declararam receita (verde) e os que nao (cinza);
+  5. grade: um quadrado por municipio, do menor para o maior receita por hab.;
+  6. quintis: a grade dividida em cinco grupos iguais;
+  7. migracao: os quadrados mantem a cor de 2025, mas vao para os blocos dos
+     quintis de 2000 (os municipios mudam de quintil);
+  8. 2000: cada quadrado vira uma fatia da barra do seu quintil, com altura
      proporcional a populacao de 2000;
-  7. 2025: as fatias migram para as barras de 2025, ao lado das de 2000;
-  8. porte: crescimento da populacao e da receita por habitante por porte;
-  9. transferencias: quanto da receita vem de transferencias;
-  10. regras: o mapa de volta, com as cidades de mais de 80 mil habitantes em
+  9. 2025: as fatias migram para as barras de 2025, ao lado das de 2000;
+  10. anos: populacao por quintil em 2023, 2024 e 2025 (numeros fixos); as
+      fatias assentam na barra de 2025;
+  11. indicadores: os graficos da aba Graficos (receita media, clima, CAPAG,
+      IDEB, renda e seguranca), trocados pelo seletor do cartao;
+  12. porte: crescimento da populacao e da receita por habitante por porte;
+  13. transferencias: quanto da receita vem de transferencias;
+  14. fpm: populacao por quintil com mais R$ 50 bi no FPM (simulacao da FNP);
+  15. regras: o mapa de volta, com as cidades de mais de 80 mil habitantes em
       azul (regras de repasse da decada de 1960);
-  11. oposta: as mesmas cidades trocam o azul pela cor do seu quintil;
-  12. fpm: populacao por quintil com mais R$ 50 bi no FPM (simulacao da FNP).
+  16. oposta: as mesmas cidades trocam o azul pela cor do seu quintil.
 A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.js.
 {% endcomment %}
 {% load static %}
@@ -65,7 +74,7 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 <div class="an-cartao">
                     <p class="ap-eyebrow">Os municípios brasileiros</p>
                     <h2 class="an-cartao-titulo">{{ t.total }} municípios</h2>
-                    <p>Este é o Brasil desenhado município por município. Cada forma no mapa é uma das
+                    <p>Este é o Brasil desenhado município por município. Cada polígono no mapa é uma das
                         <strong>{{ t.total }} cidades</strong> do país.</p>
                 </div>
             </article>
@@ -83,24 +92,43 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="2" data-rotulo="Barras com a população de 2025 nas cidades com mais de {{ t.grandes_limite }} mil habitantes e nas demais">
+            <article class="an-passo" data-estado="2" data-rotulo="Mapa do Brasil com um círculo por município, de área proporcional à população">
                 <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">Onde moram os brasileiros?</h2>
-                    <p>Nessas {{ t.grandes_n }} cidades vivem <strong class="fx-num-destaque">{{ t.grandes_pop }} milhões</strong>
-                        de pessoas: <strong class="fx-num-destaque">{{ t.grandes_pct_pop }}%</strong> da população. Os outros
-                        {{ t.demais_n }} municípios somam {{ t.demais_pct_pop }}%.</p>
+                    <h2 class="an-cartao-titulo">O mapa medido em pessoas</h2>
+                    <p>Agora cada município vira um círculo com <strong>área proporcional à sua população</strong>,
+                        no mesmo lugar do mapa.</p>
+                    <p>No território, as {{ t.grandes_n }} cidades com mais de {{ t.grandes_limite }} mil habitantes
+                        ocupam uma pequena parte do país. Medidas em gente, dominam o mapa: nelas vivem
+                        <strong class="fx-num-destaque">{{ t.grandes_pop }} milhões</strong> de pessoas,
+                        <strong class="fx-num-destaque">{{ t.grandes_pct_pop }}%</strong> da população.</p>
+                    <ul class="an-legenda">
+                        <li><i class="an-cor an-cor--bola an-cor--azul"></i> Mais de {{ t.grandes_limite }} mil habitantes</li>
+                        <li><i class="an-cor an-cor--bola an-cor--cinza"></i> Até {{ t.grandes_limite }} mil habitantes</li>
+                    </ul>
                     <p class="an-nota">População de 2025 (IBGE).</p>
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="3" data-rotulo="Mapa dos municípios brasileiros que declararam receita corrente em 2025">
+            <article class="an-passo" data-estado="3" data-rotulo="Parcela da população que vive nas cidades com mais de {{ t.grandes_limite }} mil habitantes, de {{ t.tend_ano_ini }} a {{ t.tend_ano_fim }}">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">Onde moram os brasileiros?</h2>
+                    <p>Cada vez mais gente vive nas cidades com mais de {{ t.grandes_limite }} mil habitantes. Em
+                        {{ t.tend_ano_ini }}, elas reuniam <strong class="fx-num-destaque">{{ t.tend_pct_ini }}%</strong>
+                        da população. Em {{ t.tend_ano_fim }}, <strong class="fx-num-destaque">{{ t.tend_pct_fim }}%</strong>.</p>
+                    {% if t.tend_sobe_todo_ano %}
+                    <p>A parcela cresceu em todos os anos desde {{ t.tend_ano_ini }}.</p>
+                    {% endif %}
+                    <p class="an-nota">Em cada ano, o grupo considera a população daquele ano.</p>
+                </div>
+            </article>
+
+            <article class="an-passo" data-estado="4" data-rotulo="Mapa dos municípios brasileiros que declararam receita corrente em 2025">
                 <div class="an-cartao">
                     <p class="ap-eyebrow">Como o IFEM funciona</p>
                     <h2 class="an-cartao-titulo">Receita Corrente por Habitante</h2>
-                    <p>Cada município declara suas <strong>receitas correntes</strong> ao Tesouro Nacional, 
-                        pela <strong> Declaração de Contas Anuais (DCA)</strong> todo ano. Dividimos esse valor 
-                        pelo número de habitantes que representa quantos reais a cidade tem para cada morador em um 
-                        determinado ano.</p>
+                    <p>Cada município declara anualmente suas <strong>receitas correntes</strong> ao Tesouro Nacional, 
+                        pela <strong> Declaração de Contas Anuais (DCA)</strong>. Dividimos esse valor pelo número de habitantes de cada município. 
+                        Esse resultado mostra quantos reais cada cidade possui para cada morador em um determinado ano.</p>
                     <p>Dos {{ t.total }} municípios do país, <strong class="fx-num-destaque">{{ t.declarantes }}</strong>
                         declararam receita: <strong class="fx-num-destaque">{{ t.pct_declarantes }}%</strong>.</p>
                     <ul class="an-legenda">
@@ -110,7 +138,7 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="4" data-rotulo="Grade com um quadrado por município, ordenada da menor para a maior receita por habitante">
+            <article class="an-passo" data-estado="5" data-rotulo="Grade com um quadrado por município, ordenada da menor para a maior receita por habitante">
                 <div class="an-cartao">
                     <h2 class="an-cartao-titulo">Metodologia dos quintis</h2>
                     <p>Agora cada quadrado é um dos {{ t.declarantes }} municípios.</p>
@@ -120,10 +148,11 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="5" data-rotulo="A grade dividida em cinco grupos com o mesmo número de municípios: os quintis">
+            <article class="an-passo" data-estado="6" data-rotulo="A grade dividida em cinco grupos com o mesmo número de municípios: os quintis">
                 <div class="an-cartao">
                     <h2 class="an-cartao-titulo">Cinco grupos iguais</h2>
-                    <p>Depois dividimos a fila em <strong>cinco grupos com o mesmo número de municípios</strong>,
+                    <p>Após a ordenação em ordem crescente, do município com menor receita por habitante até aquele com maior, dividimos
+                         em <strong>cinco grupos com o mesmo número de municípios</strong>,
                         cerca de {{ t.por_grupo }} cada: os <strong>quintis</strong>.</p>
                     <p>O <span class="an-txt-q1">1º quintil</span> reúne os 20% com menor receita por habitante; o
                         <span class="an-txt-q5">5º quintil</span>, os 20% com maior.</p>
@@ -132,19 +161,35 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="6" data-rotulo="Barras com a população de cada quintil em 2000">
+            <article class="an-passo" data-estado="7" data-rotulo="A grade com a cor do quintil de 2025, reagrupada pelos quintis de 2000">
                 <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">Panorama em 2000</h2>
-                    <p>Cada quadrado vira uma fatia da barra do seu quintil, com altura proporcional aos seus
-                        habitantes.</p>
-                    <p>Em 2000, {{ t.p1_2000 }} milhões de pessoas viviam nos municípios do
-                        <span class="an-txt-q1">1º quintil</span> e {{ t.p5_2000 }} milhões nos do
-                        <span class="an-txt-q5">5º</span>.</p>
-                    <p class="an-nota">Em 2000, os quintis são os da receita por habitante daquele ano.</p>
+                    <h2 class="an-cartao-titulo">As cidades mudam de quintil</h2>
+                    <p>Os mesmos quadrados, com a cor de 2025, agora agrupados pelo quintil em que cada município
+                        estava em <strong>2000</strong>.</p>
+                    <p><strong class="fx-num-destaque">{{ t.mig_mudou }}%</strong> dos municípios trocaram de quintil.
+                        Dos que estavam no <span class="an-txt-q1">1º quintil</span> em 2000, {{ t.mig_fica_1q }}% continuam
+                        nele; no <span class="an-txt-q5">5º</span>, {{ t.mig_fica_5q }}%.</p>
+                    <ul class="an-legenda">
+                        <li><span class="an-cor-escala" aria-hidden="true"><i class="an-cor an-cor--q1"></i><i class="an-cor an-cor--q2"></i><i class="an-cor an-cor--q3"></i><i class="an-cor an-cor--q4"></i><i class="an-cor an-cor--q5"></i></span>
+                            Quintil em 2025, do 1º ao 5º</li>
+                        <li><i class="an-cor an-cor--cinza"></i> Sem receita declarada em 2025</li>
+                    </ul>
+                    <p class="an-nota">Só entram os municípios com receita declarada em 2000.</p>
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="7" data-rotulo="Barras com a população de cada quintil em 2000 e em 2025">
+            <article class="an-passo" data-estado="8" data-rotulo="Barras com a população de cada quintil em 2000">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">Panorama em 2000</h2>
+                    <p>Agora, cada barra representa o número de pessoas vivendo em cada quintil*.</p>
+                    <p>Em 2000, {{ t.p1_2000 }} milhões de pessoas viviam nos municípios do
+                        <span class="an-txt-q1">1º quintil</span> e {{ t.p5_2000 }} milhões nos do
+                        <span class="an-txt-q5">5º</span>.</p>
+                    <p class="an-nota">* Cada quintil reúne o mesmo número de municípios.</p>
+                </div>
+            </article>
+
+            <article class="an-passo" data-estado="9" data-rotulo="Barras com a população de cada quintil em 2000 e em 2025">
                 <div class="an-cartao">
                     <h2 class="an-cartao-titulo">E em 2025</h2>
                     <p>O <span class="an-txt-q1">1º quintil</span> passou a reunir
@@ -157,7 +202,36 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="8" data-rotulo="Crescimento da população e da receita por habitante por porte dos municípios, 2000 a 2025">
+            <article class="an-passo" data-estado="10" data-rotulo="Barras com a população de cada quintil, ano a ano, de {{ t.anos_ini }} a {{ t.anos_fim }}">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">De {{ t.anos_ini }} a {{ t.anos_fim }}</h2>
+                    <p>Em {{ t.anos_ini }}, o <span class="an-txt-q1">1º quintil</span> reunia {{ t.anos_1q_ini }} milhões de
+                        pessoas. Em {{ t.anos_fim }}, <strong class="fx-num-destaque">{{ t.anos_1q_fim }} milhões</strong>:
+                        {{ t.anos_1q_ganho }} milhões a mais.</p>
+                    {% if t.anos_5q_caiu %}
+                    <p>No <span class="an-txt-q5">5º</span>, a população caiu de {{ t.anos_5q_ini }} para {{ t.anos_5q_fim }} milhões. </p>
+                    <p>Os dados mostram que a situação de cada vez mais brasileiros viverem em municípios subfinanciados continua se agravando.</p>
+                    {% endif %}
+                    <p class="an-nota">População de cada ano (IBGE).</p>
+                </div>
+            </article>
+
+            {# O grafico deste passo troca com o seletor: inicio_animado.js (desenhaIndicadores). #}
+            <article class="an-passo" data-estado="11" data-rotulo="Indicadores por quintil de receita por habitante">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">Os quintis em outros indicadores</h2>
+                    <p>Os mesmos cinco grupos de receita por habitante, comparados em outros indicadores, como na aba
+                        <a href="/analise/">Gráficos</a>.</p>
+                    <label class="an-select-rotulo" for="an-indicador">Indicador</label>
+                    <select id="an-indicador" class="an-select">
+                        {% for id, nome in t.indicadores %}<option value="{{ id }}">{{ nome }}</option>{% endfor %}
+                    </select>
+                    <p class="an-indicador-leitura" id="an-indicador-leitura" aria-live="polite"></p>
+                    <p class="an-nota" id="an-indicador-nota"></p>
+                </div>
+            </article>
+
+            <article class="an-passo" data-estado="12" data-rotulo="Crescimento da população e da receita por habitante por porte dos municípios, 2000 a 2025">
                 <div class="an-cartao">
                     <h2 class="an-cartao-titulo">As cidades cresceram, a receita não acompanhou</h2>
                     {% if t.porte %}
@@ -170,50 +244,20 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="9" data-rotulo="Municípios pela parcela da receita corrente que vem de transferências">
+            <article class="an-passo" data-estado="13" data-rotulo="Municípios pela parcela da receita corrente que vem de transferências">
                 <div class="an-cartao">
                     <h2 class="an-cartao-titulo">Quem paga a conta: as transferências</h2>
                     <p>De toda a receita corrente dos municípios, <strong class="fx-num-destaque">{{ t.pct_transf }}%</strong>
                         vem de <strong>transferências</strong> da União e dos estados. Só {{ t.pct_propria }}% é arrecadação própria.</p>
-                    <p>Em {{ t.transf_maioria }} dos {{ t.transf_total }} municípios ({{ t.pct_transf_maioria }}%), as transferências
-                        são mais da metade da receita. Por isso as <strong>regras de repasse</strong> decidem quanto dinheiro cada
-                        cidade tem por habitante.</p>
+                    <p>Em {{ t.transf_acima }} dos {{ t.transf_total }} municípios ({{ t.pct_transf_acima }}%), as transferências
+                        são mais de {{ t.transf_corte }}% da receita. Por isso as <strong>regras de repasse</strong> são decisivas no montante de dinheiro que cada
+                        cidade arrecada por habitante.</p>
                 </div>
             </article>
 
-            <article class="an-passo" data-estado="10" data-rotulo="Mapa do Brasil com os municípios de mais de {{ t.grandes_limite }} mil habitantes em destaque">
+            <article class="an-passo" data-estado="14" data-rotulo="Simulação: população por quintil em 2025 e com mais R$ 50 bilhões no FPM">
                 <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">Regras dos anos 1960 para o Brasil de hoje</h2>
-                    <p>As transferências para os municípios ainda seguem regras da <strong>década de 1960</strong>.
-                        O Brasil mudou, as cidades mudaram, mas as regras de financiamento não acompanharam.</p>
-                    <p>As cidades mais populosas passaram a receber menos recursos por habitante, enquanto boa parte das
-                        transferências segue concentrada nos municípios menores.</p>
-                    <ul class="an-legenda">
-                        <li><i class="an-cor an-cor--azul"></i> Mais de {{ t.grandes_limite }} mil habitantes</li>
-                        <li><i class="an-cor an-cor--claro"></i> Até {{ t.grandes_limite }} mil habitantes</li>
-                    </ul>
-                </div>
-            </article>
-
-            <article class="an-passo" data-estado="11" data-rotulo="Mapa com os municípios de mais de {{ t.grandes_limite }} mil habitantes pintados pelo quintil de receita por habitante">
-                <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">O dinheiro na direção oposta à população</h2>
-                    <p>Das {{ t.grandes_n }} cidades com mais de {{ t.grandes_limite }} mil habitantes,
-                        <strong class="fx-num-destaque">{{ t.grandes_q1 }}</strong> estão no <span class="an-txt-q1">1º quintil</span>,
-                        o de menor receita por habitante. Só {{ t.grandes_q5 }} estão no <span class="an-txt-q5">5º</span>.</p>
-                    <p>O dinheiro caminha na <strong>direção oposta à população</strong>: amplia desigualdades e compromete os
-                        serviços públicos onde vive a maioria dos brasileiros.</p>
-                    <ul class="an-legenda">
-                        <li><span class="an-cor-escala" aria-hidden="true"><i class="an-cor an-cor--q1"></i><i class="an-cor an-cor--q2"></i><i class="an-cor an-cor--q3"></i><i class="an-cor an-cor--q4"></i><i class="an-cor an-cor--q5"></i></span>
-                            Mais de {{ t.grandes_limite }} mil hab., do 1º ao 5º quintil</li>
-                        <li><i class="an-cor an-cor--claro"></i> Até {{ t.grandes_limite }} mil habitantes</li>
-                    </ul>
-                </div>
-            </article>
-
-            <article class="an-passo" data-estado="12" data-rotulo="Simulação: população por quintil em 2025 e com mais R$ 50 bilhões no FPM">
-                <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">E se o FPM aumentasse em R$ 50 bi?</h2>
+                    <h2 class="an-cartao-titulo">Por exemplo: se o FPM aumentasse em R$ 50 bi?</h2>
                     <p>Distribuídos pelas regras atuais, mais R$ 50 bilhões no Fundo de Participação dos Municípios
                         {% if t.fpm_piora %}<strong>aumentariam</strong>{% else %}mudariam{% endif %} a população do
                         <span class="an-txt-q1">1º quintil</span>: de {{ t.fpm_1q_antes }} para
@@ -222,7 +266,37 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
                     {% if t.fpm_piora %}
                     <p>Dinheiro novo pela regra antiga <strong>aprofunda a desigualdade</strong> em vez de corrigi-la.</p>
                     {% endif %}
-                    <p class="an-fonte">Fonte: simulação da FNP; Siconfi/STN (DCA) e IBGE, organizado pelo IFEM (FNP). Malha municipal do IBGE.</p>
+                    <p class="an-fonte">Fonte: simulação da FNP; Siconfi/STN (DCA) e IBGE, organizado pelo IFEM (FNP).</p>
+                </div>
+            </article>
+
+            <article class="an-passo" data-estado="15" data-rotulo="Mapa do Brasil com os municípios de mais de {{ t.grandes_limite }} mil habitantes em destaque">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">Regras dos anos 1960 para o Brasil de hoje</h2>
+                    <p>As transferências para os municípios ainda seguem regras da <strong>década de 1960</strong>.
+                        O Brasil mudou, as cidades mudaram, mas as regras de financiamento não acompanharam.</p>
+                    <p>As cidades mais populosas passaram a receber menos recursos por habitante, enquanto as
+                        transferências seguem concentradas nos municípios menores.</p>
+                    <ul class="an-legenda">
+                        <li><i class="an-cor an-cor--azul"></i> Mais de {{ t.grandes_limite }} mil habitantes</li>
+                        <li><i class="an-cor an-cor--claro"></i> Até {{ t.grandes_limite }} mil habitantes</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="an-passo" data-estado="16" data-rotulo="Mapa com os municípios de mais de {{ t.grandes_limite }} mil habitantes pintados pelo quintil de receita por habitante">
+                <div class="an-cartao">
+                    <h2 class="an-cartao-titulo">O dinheiro na direção oposta à população</h2>
+                    <p>Das {{ t.grandes_n }} cidades com mais de {{ t.grandes_limite }} mil habitantes,
+                        <strong class="fx-num-destaque">{{ t.grandes_q1 }}</strong> estão no <span class="an-txt-q1">1º quintil</span>,
+                        o de menor receita por habitante. Só {{ t.grandes_q5 }} estão no <span class="an-txt-q5">5º</span>.</p>
+                    <p>O dinheiro tem ido na <strong>direção oposta à população</strong>: amplia desigualdades e compromete os
+                        serviços públicos onde vive a maioria dos brasileiros.</p>
+                    <ul class="an-legenda">
+                        <li><span class="an-cor-escala" aria-hidden="true"><i class="an-cor an-cor--q1"></i><i class="an-cor an-cor--q2"></i><i class="an-cor an-cor--q3"></i><i class="an-cor an-cor--q4"></i><i class="an-cor an-cor--q5"></i></span>
+                            Mais de {{ t.grandes_limite }} mil hab., do 1º ao 5º quintil</li>
+                        <li><i class="an-cor an-cor--claro"></i> Até {{ t.grandes_limite }} mil habitantes</li>
+                    </ul>
                 </div>
             </article>
         </div>

@@ -404,6 +404,81 @@ def _num_quintil(valor):
 
 _LIMITE_GRANDES = 80000
 
+# Passo "2023 a 2025": população (milhões) de cada quintil, ano a ano, do
+# gráfico "Distribuição da população entre 2023 e 2025 (IBGE) por grupo de
+# subfinanciamento dos municípios". Números fixos, como a simulação do FPM:
+# o 2025 daqui difere um pouco do de populacao_por_quintil (passo anterior).
+_POP_QUINTIL_ANOS = {
+    2023: [74.4, 51.2, 35.1, 34.5, 13.8],
+    2024: [81.9, 51.9, 33.7, 30.1, 13.2],
+    2025: [93.0, 46.0, 30.6, 28.1, 12.9],
+}
+
+# Passo das transferências: azul quando elas passam desta parcela da receita
+# corrente (0,7 = 70% transferências, 30% arrecadação própria).
+_CORTE_TRANSF = 0.7
+
+# Parcela da população (%) nos municípios com mais de 80 mil habitantes, ano a
+# ano. 2000 a 2024: transcritos do gráfico enviado pela equipe (a série anual
+# por município não está em base_datas). 2025 é calculado em
+# municipios_animacao, com a mesma base dos outros passos.
+_PCT_GRANDES_POR_ANO = {
+    2000: 55.2, 2001: 55.9, 2002: 56.4, 2003: 56.6, 2004: 57.0,
+    2005: 57.4, 2006: 57.6, 2007: 57.8, 2008: 58.1, 2009: 58.4,
+    2010: 58.7, 2011: 59.0, 2012: 59.3, 2013: 59.6, 2014: 59.8,
+    2015: 60.0, 2016: 60.3, 2017: 60.5, 2018: 60.7, 2019: 61.0,
+    2020: 61.2, 2021: 61.3, 2022: 61.4, 2023: 61.6, 2024: 61.7,
+}
+
+# Passo "Outros indicadores": os gráficos da aba Gráficos (/analise/), com o
+# seletor de variável. Cada item: (modo da API, nome no seletor, nota de
+# leitura, categorias somadas na frase dos gráficos de contagem e como a frase
+# as chama). As notas resumem o "Como ler" da aba.
+_INDICADORES_ANALISE = [
+    ('receita_media', 'Receita média por habitante',
+     'Média simples da receita corrente por habitante dos municípios do grupo, em 2025.', None, None),
+    ('risco_climatico', 'Mudanças climáticas',
+     'Municípios por nível do risco climático médio (AdaptaBrasil).', ['Muito alto', 'Alto'], 'com risco climático alto ou muito alto'),
+    ('saude_fiscal', 'CAPAG',
+     'Municípios por nota da Capacidade de Pagamento (CAPAG), do Tesouro Nacional.', ['A'], 'com nota A na CAPAG'),
+    ('educacao', 'IDEB',
+     'Nota média no IDEB das escolas municipais, anos iniciais do ensino fundamental. Municípios sem nota ficam fora.', None, None),
+    ('renda', 'Renda média das famílias',
+     'Rendimento médio mensal domiciliar por habitante (Censo 2022, IBGE), ponderado pela população.', None, None),
+    ('seguranca', 'Segurança pública',
+     'Homicídios por 100 mil habitantes (Atlas da Violência), ponderados pela população.', None, None),
+]
+
+
+def indicadores_analise():
+    """Os gráficos da aba Gráficos para a landing animada, um por indicador.
+
+    Os números saem da própria API da aba (home.views.api_get_dashboard_data),
+    com os filtros padrão dela: país inteiro, quintis, número de municípios.
+    Assim os dois gráficos não divergem. Cada item: id, nome, tipo ('media' =
+    uma barra por quintil; 'contagem' = municípios por faixa, empilhados),
+    unidade, título e as séries, na ordem da pilha (de baixo para cima).
+    """
+    import json
+    from django.http import HttpRequest, QueryDict
+    from home.views import api_get_dashboard_data
+
+    saida = []
+    for modo, nome, nota, destaque, destaque_txt in _INDICADORES_ANALISE:
+        req = HttpRequest()
+        req.method = 'GET'
+        req.GET = QueryDict(f'variavel_analisada={modo}')
+        grafico = json.loads(api_get_dashboard_data(req).content)['chartData']
+        saida.append({
+            'id': modo, 'nome': nome, 'nota': nota,
+            'tipo': grafico.get('tipo'), 'unidade': grafico.get('unidade'),
+            'titulo': grafico.get('yAxisTitle'),
+            'series': [{'rotulo': ds['label'].replace(' (2025)', ''), 'valores': ds['data']}
+                       for ds in grafico.get('datasets', [])],
+            'destaque': destaque, 'destaque_txt': destaque_txt,
+        })
+    return saida
+
 
 def municipios_animacao():
     """Um registro por município do país, para a animação mapa > grade > barras.
@@ -469,6 +544,16 @@ def municipios_animacao():
     for m in municipios:
         if m[5] > _LIMITE_GRANDES:
             grandes_quintil[m[4]] += 1
+    pct_grandes = round(pop_grandes / pop_total * 100, 1) if pop_total else 0
+    anos = sorted(_PCT_GRANDES_POR_ANO)
+
+    # Passo "As cidades mudam de quintil": quintil de 2000 x quintil de 2025,
+    # entre os municípios com receita declarada nos dois anos.
+    ambos = [(m[6], m[4]) for m in municipios if m[6] and m[4]]
+    continua_pct = [None]  # índice = quintil de 2000
+    for q in range(1, 6):
+        do_q = [q25 for q00, q25 in ambos if q00 == q]
+        continua_pct.append(round(do_q.count(q) / len(do_q) * 100, 1) if do_q else None)
     return {
         'municipios': municipios,
         'total': total,
@@ -480,9 +565,20 @@ def municipios_animacao():
             'pct_municipios': round(n_grandes / total * 100, 1) if total else 0,
             'populacao': pop_grandes,
             'populacao_total': pop_total,
-            'pct_populacao': round(pop_grandes / pop_total * 100, 1) if pop_total else 0,
+            'pct_populacao': pct_grandes,
             'por_quintil': grandes_quintil,
         },
+        # Passo "Onde moram os brasileiros?": a mesma parcela, de 2000 a 2025.
+        'tendencia': {
+            'anos': anos + [2025],
+            'pct': [_PCT_GRANDES_POR_ANO[a] for a in anos] + [pct_grandes],
+        },
+        'migracao': {
+            'mudou_pct': round(sum(1 for q00, q25 in ambos if q00 != q25) / len(ambos) * 100, 1) if ambos else 0,
+            'continua_pct': continua_pct,
+        },
+        # Municípios por quintil em 2000 (os de 2025 estão em quintis['por_grupo']).
+        'por_grupo_2000': round(sum(1 for m in municipios if m[6]) / 5),
         'quintis': resumo_quintis(),
         'populacao': populacao_por_quintil(),
         'porte': {
@@ -494,7 +590,13 @@ def municipios_animacao():
             'populacao_brasil': round((p25_tot / p00_tot - 1) * 100, 1) if p00_tot else None,
         },
         'composicao': composicao_receita(),
-        'transf_maioria': sum(1 for v in com_transf if v > 0.5),
+        'pop_anos': {
+            'anos': sorted(_POP_QUINTIL_ANOS),
+            'series': [_POP_QUINTIL_ANOS[a] for a in sorted(_POP_QUINTIL_ANOS)],  # uma lista por ano, do 1º ao 5º quintil
+        },
+        'indicadores': indicadores_analise(),
+        'transf_corte': _CORTE_TRANSF,
+        'transf_acima': sum(1 for v in com_transf if v > _CORTE_TRANSF),
         'transf_total': len(com_transf),
         'fpm': fpm_mais_50_bi(),
     }

@@ -216,6 +216,7 @@
 .an-passo.is-ativo .an-cartao { opacity: 1; transform: none; }
 
 .an-cartao p { margin: 0 0 12px; }
+.an-cartao a { color: var(--ap-azul-escuro); font-weight: 600; }
 .an-cartao p:last-child { margin-bottom: 0; }
 
 .an-cartao-titulo {
@@ -245,12 +246,32 @@
 .an-cor--q3 { background: #F4D01D; }
 .an-cor--q4 { background: #6AC074; }
 .an-cor--q5 { background: #1C9148; }
+.an-cor--bola { border-radius: 50%; } /* legenda das bolhas */
 
 /* Cinco quadradinhos colados: a escala de quintis numa linha só da legenda. */
 .an-cor-escala { display: inline-flex; flex: none; }
 .an-cor-escala .an-cor { border-radius: 0; }
 .an-cor-escala .an-cor:first-child { border-radius: 2px 0 0 2px; }
 .an-cor-escala .an-cor:last-child { border-radius: 0 2px 2px 0; }
+
+/* Seletor do passo de indicadores (o cartao recebe cliques: pointer-events). */
+.an-select-rotulo { display: block; margin: 14px 0 6px; font-size: 13px; font-weight: 600; color: var(--ap-cinza); }
+.an-select {
+  width: 100%;
+  padding: 9px 36px 9px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ap-tinta);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235F6670' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center / 12px 8px;
+  border: 1px solid var(--ap-fio);
+  border-radius: 6px;
+  appearance: none;
+  cursor: pointer;
+}
+.an-select:focus-visible { outline: 2px solid var(--ap-azul-escuro); outline-offset: 2px; }
+.an-indicador-leitura { margin-top: 12px; }
+.an-indicador-leitura:empty { display: none; }
 
 .an-fim-botoes { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
 .an-fim-botoes .ap-hero-botao span { animation: none; }
