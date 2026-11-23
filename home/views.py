@@ -28,6 +28,95 @@ def _pct_br(valor):
     return f"{valor:.1f}".replace('.', ',') + '%'
 
 
+def _num_br(valor, casas):
+    """'1.437,12', sem unidade: o mapa de calor das tabelas le o numero da celula."""
+    if valor is None:
+        return 'n/d'
+    return f'{valor:,.{casas}f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+# Modos de valor por grupo (Educação na nota média, Segurança Pública, Renda das
+# Famílias e Receita Média): em vez de contar municípios por faixa, cada grupo de
+# receita vira uma barra com o indicador agregado.
+#   peso 'pop': média ponderada pela população, o valor do grupo como se ele fosse
+#       um município só (homicídios do grupo / população do grupo; renda total /
+#       moradores). 'simples': média dos municípios, cada um vale o mesmo.
+#   faltante: valor de quem não tem dado. A planilha de homicídios não traz nenhuma
+#       taxa zero (a menor é 1,2): quem não está nela não teve homicídio registrado
+#       no Atlas da Violência, e contar como 0 é o que reproduz a taxa do grupo.
+#       None: quem não tem dado fica fora da conta.
+MODOS_MEDIA = {
+    'educacao': {
+        'campo': 'ideb__ideb_anos_inicias', 'peso': 'simples', 'faltante': None,
+        'titulo': 'Nota média no IDEB', 'unidade': 'nota', 'casas': 2,
+    },
+    'seguranca': {
+        'campo': 'taxa_homicidio__taxa_homicidio', 'peso': 'pop', 'faltante': 0,
+        'titulo': 'Taxa de homicídios por 100 mil habitantes', 'unidade': 'taxa', 'casas': 1,
+    },
+    'renda': {
+        'campo': 'renda_media__renda_media', 'peso': 'pop', 'faltante': None,
+        'titulo': 'Rendimento médio mensal domiciliar per capita', 'unidade': 'reais', 'casas': 2,
+    },
+    'receita_media': {
+        'campo': 'dados_atuais__rc_atual_pc', 'peso': 'simples', 'faltante': None,
+        'titulo': 'Receita corrente per capita média', 'unidade': 'reais', 'casas': 2,
+    },
+}
+
+
+def _media_do_grupo(itens, cfg):
+    """Valor agregado de um grupo de municípios pela regra de MODOS_MEDIA; None sem dado."""
+    soma = peso_total = 0.0
+    for m in itens:
+        valor = m.get(cfg['campo'])
+        if valor is None:
+            if cfg['faltante'] is None:
+                continue
+            valor = cfg['faltante']
+        peso = (m.get('dados_atuais__populacao_atual') or 0) if cfg['peso'] == 'pop' else 1
+        soma += valor * peso
+        peso_total += peso
+    return soma / peso_total if peso_total > 0 else None
+
+
+def _tabela_media(itens, chave, mapa, colunas, faixas, cfg, cabecalho):
+    """
+    Tabela dos modos de valor: faixa populacional x grupo de receita, cada celula
+    com o indicador agregado pela mesma conta do grafico. A linha Total Geral
+    repete as barras; a coluna Total e a faixa inteira.
+    """
+    por_coluna = defaultdict(list)
+    por_celula = defaultdict(list)
+    for m in itens:
+        coluna = mapa.get(m.get(chave))
+        if not coluna:
+            continue
+        por_coluna[coluna].append(m)
+        for rotulo, condicao in faixas:
+            if condicao(m):
+                por_celula[(rotulo, coluna)].append(m)
+                break
+
+    linhas = []
+    for rotulo, _ in faixas:
+        linha = {cabecalho: rotulo}
+        da_faixa = []
+        for coluna in colunas:
+            grupo = por_celula.get((rotulo, coluna), [])
+            da_faixa += grupo
+            linha[coluna] = _num_br(_media_do_grupo(grupo, cfg), cfg['casas'])
+        linha['Total'] = _num_br(_media_do_grupo(da_faixa, cfg), cfg['casas'])
+        linhas.append(linha)
+
+    total = {cabecalho: 'Total Geral'}
+    for coluna in colunas:
+        total[coluna] = _num_br(_media_do_grupo(por_coluna.get(coluna, []), cfg), cfg['casas'])
+    total['Total'] = _num_br(_media_do_grupo([m for g in por_coluna.values() for m in g], cfg), cfg['casas'])
+    linhas.append(total)
+    return linhas
+
+
 def _medias_por_grupo(field, prefix):
     """
     Agrega Avg(rc_atual_pc) por quintil/decil e devolve dict
@@ -295,6 +384,13 @@ def api_get_dashboard_data(request):
     incluir_00 = serie in ('2000', 'ambos')
     incluir_24 = serie in ('2025', 'ambos')
     variavel_analisada = request.GET.get('variavel_analisada', 'populacao')
+    # Educação tem dois gráficos: a nota média por grupo ('media', valor como MODOS_MEDIA,
+    # o que abre) e a distribuição por faixa de nota ('faixas', contagem como a Saúde Fiscal).
+    educacao_tipo = request.GET.get('educacao_tipo', 'media')
+    campo_indicador = MODOS_MEDIA[variavel_analisada]['campo'] if variavel_analisada in MODOS_MEDIA else None
+    cfg_media = None
+    if variavel_analisada in MODOS_MEDIA and not (variavel_analisada == 'educacao' and educacao_tipo != 'media'):
+        cfg_media = MODOS_MEDIA[variavel_analisada]
     # Filtros específicos de risco climático
     risco_campo = request.GET.get('risco_campo', 'media_ponderada')  # campo do AdaptaBrasil
     risco_nivel = request.GET.get('risco_nivel', 'todos')           # nível de intensidade
@@ -427,8 +523,9 @@ def api_get_dashboard_data(request):
 
     # Campos carregados apenas quando o filtro selecionado exige (media_ponderada e capag já vêm por padrão)
     extra_value_fields = list(dict.fromkeys(
-        campo for campo in (orm_risco_campo, orm_capag_campo, orm_capag_valor)
-        if campo and campo not in ('dados_adapta_brasil__media_ponderada', 'dados_atuais__capag')
+        campo for campo in (orm_risco_campo, orm_capag_campo, orm_capag_valor, campo_indicador)
+        if campo and campo not in ('dados_adapta_brasil__media_ponderada', 'dados_atuais__capag',
+                                   'dados_atuais__rc_atual_pc')
     ))
 
     # Limites dos quintis do indicador. O universo acompanha o modo de cálculo já usado
@@ -602,6 +699,25 @@ def api_get_dashboard_data(request):
             if val >= 0.2: return 'Baixo'
             return 'Muito baixo'
 
+        # Nota do IDEB (anos iniciais): 6 é a meta nacional; a nota tem uma casa decimal.
+        def get_faixa_ideb(val):
+            if val is None: return None
+            if val >= 7: return '7 ou acima'
+            if val >= 6: return 'Entre 6 e 6,9'
+            return 'Abaixo de 6'
+
+        # Faixas populacionais: linhas do modo População e da tabela dos modos de valor.
+        faixas_populacao = [
+            (label, lambda m, min_p=min_p, max_p=max_p: min_p <= (m.get('dados_atuais__populacao_atual') or 0) < max_p if max_p != float('inf') else (m.get('dados_atuais__populacao_atual') or 0) >= min_p)
+            for label, min_p, max_p in [
+                ('Até 5 mil', 0, 5000), ('5 mil a 10 mil', 5000, 10000), ('10 mil a 20 mil', 10000, 20000),
+                ('20 mil a 50 mil', 20000, 50000), ('50 mil a 100 mil', 50000, 100000),
+                ('100 mil a 200 mil', 100000, 200000), ('200 mil a 500 mil', 200000, 500000),
+                ('Acima de 500 mil', 500000, float('inf')),
+            ]
+        ]
+        table_title_24 = None
+
         # 'capag' é o nome antigo deste modo, aceito para não quebrar links já salvos
         if variavel_analisada in ('saude_fiscal', 'capag'):
             # Usa o campo selecionado (nota geral, indicador da CAPAG ou indicador do RGF)
@@ -690,16 +806,36 @@ def api_get_dashboard_data(request):
             table_row_header = 'Níveis de Risco Climático'
             chart_title = f'Distribuição por {campo_label}'
             is_count = True
-        else: # populacao
+        elif variavel_analisada == 'educacao' and cfg_media is None:
+            campo_key = campo_indicador
+            # Da melhor faixa para a pior, como as notas da CAPAG: o empilhado inverte
+            # e o vermelho fica na base, com o cinza de "Sem dados" embaixo dele.
+            faixas = ['7 ou acima', 'Entre 6 e 6,9', 'Abaixo de 6']
             row_configs = [
-                (label, lambda m, min_p=min_p, max_p=max_p: min_p <= (m.get('dados_atuais__populacao_atual') or 0) < max_p if max_p != float('inf') else (m.get('dados_atuais__populacao_atual') or 0) >= min_p)
-                for label, min_p, max_p in [
-                    ('Até 5 mil', 0, 5000), ('5 mil a 10 mil', 5000, 10000), ('10 mil a 20 mil', 10000, 20000),
-                    ('20 mil a 50 mil', 20000, 50000), ('50 mil a 100 mil', 50000, 100000),
-                    ('100 mil a 200 mil', 100000, 200000), ('200 mil a 500 mil', 200000, 500000),
-                    ('Acima de 500 mil', 500000, float('inf')),
-                ]
+                (faixa, lambda m, ck=campo_key, f=faixa: get_faixa_ideb(m.get(ck)) == f)
+                for faixa in faixas
             ]
+            if display_format == 'porcentagem':
+                # Em %, só entra quem tem nota: cada grupo soma 100% dos municípios
+                # avaliados, e não de todos os do grupo.
+                aggregated_data_list_24 = [m for m in aggregated_data_list_24 if m.get(campo_key) is not None]
+            else:
+                # Em número, quem não tem nota aparece numa faixa própria: as barras
+                # mostram o grupo inteiro.
+                row_configs.append(('Sem dados', lambda m, ck=campo_key: m.get(ck) is None))
+            y_axis_title = 'Quantidade de Municípios'
+            table_row_header = 'Nota no IDEB'
+            chart_title = 'Distribuição dos municípios por nota no IDEB'
+            is_count = True
+        elif cfg_media:
+            row_configs = faixas_populacao
+            y_axis_title = cfg_media['titulo']
+            table_row_header = 'Faixas Populacionais'
+            table_title_24 = f"{cfg_media['titulo']} por faixa populacional (2025)"
+            chart_title = f"{cfg_media['titulo']} por grupo"
+            is_count = False
+        else: # populacao
+            row_configs = faixas_populacao
             y_axis_title = 'População (milhões)'
             if display_format == 'porcentagem':
                  y_axis_title = 'População (%)'
@@ -743,6 +879,19 @@ def api_get_dashboard_data(request):
             
             # Reverte a ordem dos datasets para que o primeiro item da tabela (ex: A) fique no topo do gráfico empilhado
             datasets_to_send.reverse()
+        elif cfg_media:
+            # Uma barra por grupo com o indicador agregado (MODOS_MEDIA). Grupo sem
+            # nenhum dado vai como null: o Chart.js deixa o espaço vazio.
+            itens_por_grupo = defaultdict(list)
+            for item in aggregated_data_list_24:
+                label = classification_map_24.get(item.get(field_for_aggregation_24))
+                if label:
+                    itens_por_grupo[label].append(item)
+            valores = [_media_do_grupo(itens_por_grupo[l], cfg_media) for l in chart_labels]
+            datasets_to_send.append({
+                "label": f"{cfg_media['titulo']} (2025)",
+                "data": [round(v, cfg_media['casas']) if v is not None else None for v in valores]
+            })
         else:
             # Um único dataset somando população
             total_pop_for_chart_percentage_24 = sum(item.get('dados_atuais__populacao_atual', 0) for item in aggregated_data_list_24 if item.get('dados_atuais__populacao_atual') is not None)
@@ -784,70 +933,77 @@ def api_get_dashboard_data(request):
                 })
 
         # --- Tabela Dinâmica ---
-        table_data_24 = []
-        raw_grand_total_classification_counts_24 = {col: 0 for col in classification_columns}
-        total_municipios_24 = sum(column_totals_24.values())
-
-        for row_label, condition in row_configs:
-            row_data = {table_row_header: row_label}
-            range_data_24_filtered = [m for m in aggregated_data_list_24 if condition(m)]
-            
-            raw_counts_in_row_24 = {col: 0 for col in classification_columns}
-            for muni in range_data_24_filtered:
-                classification_key = muni.get(field_for_aggregation_24)
-                column_label = classification_map_24.get(classification_key)
-                if column_label:
-                    raw_counts_in_row_24[column_label] += 1
-            
-            current_range_total_raw_24 = len(range_data_24_filtered)
-            for col_label in classification_columns:
-                val = raw_counts_in_row_24.get(col_label, 0)
-                if display_format == 'porcentagem' and is_count:
-                    col_total = column_totals_24.get(col_label, 0)
-                    row_data[col_label] = _pct_br(val / col_total * 100) if col_total > 0 else _pct_br(0)
-                elif display_format == 'porcentagem':
-                    row_data[col_label] = _pct_br(val / current_range_total_raw_24 * 100) if current_range_total_raw_24 > 0 else _pct_br(0)
-                else:
-                    row_data[col_label] = val
-                
-                raw_grand_total_classification_counts_24[col_label] += val
-
-            if display_format == 'porcentagem' and is_count:
-                row_data['Total'] = _pct_br(current_range_total_raw_24 / total_municipios_24 * 100) if total_municipios_24 > 0 else _pct_br(0)
-            elif display_format == 'porcentagem':
-                row_data['Total'] = _pct_br(100)
-            else:
-                row_data['Total'] = current_range_total_raw_24
-            
-            table_data_24.append(row_data)
-
-        grand_total_row_24 = {table_row_header: 'Total Geral'}
-        raw_grand_total_rows_total_24 = sum(raw_grand_total_classification_counts_24.values())
-        total_municipios_for_table_24 = len(aggregated_data_list_24)
-
-        for col_label in classification_columns:
-            count = raw_grand_total_classification_counts_24.get(col_label, 0)
-            if display_format == 'porcentagem' and is_count:
-                grand_total_row_24[col_label] = _pct_br(100)
-            elif display_format == 'porcentagem':
-                grand_total_row_24[col_label] = _pct_br(count / total_municipios_for_table_24 * 100) if total_municipios_for_table_24 > 0 else _pct_br(0)
-            else:
-                grand_total_row_24[col_label] = count
-
-        if display_format == 'porcentagem' and is_count:
-            grand_total_row_24['Total'] = _pct_br(100)
-        elif display_format == 'porcentagem':
-            grand_total_row_24['Total'] = _pct_br(100)
+        if cfg_media:
+            table_data_24 = _tabela_media(
+                aggregated_data_list_24, field_for_aggregation_24, classification_map_24,
+                classification_columns, row_configs, cfg_media, table_row_header)
         else:
-            grand_total_row_24['Total'] = raw_grand_total_rows_total_24
+            table_data_24 = []
+            raw_grand_total_classification_counts_24 = {col: 0 for col in classification_columns}
+            total_municipios_24 = sum(column_totals_24.values())
+
+            for row_label, condition in row_configs:
+                row_data = {table_row_header: row_label}
+                range_data_24_filtered = [m for m in aggregated_data_list_24 if condition(m)]
             
-        table_data_24.append(grand_total_row_24)
+                raw_counts_in_row_24 = {col: 0 for col in classification_columns}
+                for muni in range_data_24_filtered:
+                    classification_key = muni.get(field_for_aggregation_24)
+                    column_label = classification_map_24.get(classification_key)
+                    if column_label:
+                        raw_counts_in_row_24[column_label] += 1
+            
+                current_range_total_raw_24 = len(range_data_24_filtered)
+                for col_label in classification_columns:
+                    val = raw_counts_in_row_24.get(col_label, 0)
+                    if display_format == 'porcentagem' and is_count:
+                        col_total = column_totals_24.get(col_label, 0)
+                        row_data[col_label] = _pct_br(val / col_total * 100) if col_total > 0 else _pct_br(0)
+                    elif display_format == 'porcentagem':
+                        row_data[col_label] = _pct_br(val / current_range_total_raw_24 * 100) if current_range_total_raw_24 > 0 else _pct_br(0)
+                    else:
+                        row_data[col_label] = val
+                
+                    raw_grand_total_classification_counts_24[col_label] += val
+
+                if display_format == 'porcentagem' and is_count:
+                    row_data['Total'] = _pct_br(current_range_total_raw_24 / total_municipios_24 * 100) if total_municipios_24 > 0 else _pct_br(0)
+                elif display_format == 'porcentagem':
+                    row_data['Total'] = _pct_br(100)
+                else:
+                    row_data['Total'] = current_range_total_raw_24
+            
+                table_data_24.append(row_data)
+
+            grand_total_row_24 = {table_row_header: 'Total Geral'}
+            raw_grand_total_rows_total_24 = sum(raw_grand_total_classification_counts_24.values())
+            total_municipios_for_table_24 = len(aggregated_data_list_24)
+
+            for col_label in classification_columns:
+                count = raw_grand_total_classification_counts_24.get(col_label, 0)
+                if display_format == 'porcentagem' and is_count:
+                    grand_total_row_24[col_label] = _pct_br(100)
+                elif display_format == 'porcentagem':
+                    grand_total_row_24[col_label] = _pct_br(count / total_municipios_for_table_24 * 100) if total_municipios_for_table_24 > 0 else _pct_br(0)
+                else:
+                    grand_total_row_24[col_label] = count
+
+            if display_format == 'porcentagem' and is_count:
+                grand_total_row_24['Total'] = _pct_br(100)
+            elif display_format == 'porcentagem':
+                grand_total_row_24['Total'] = _pct_br(100)
+            else:
+                grand_total_row_24['Total'] = raw_grand_total_rows_total_24
+            
+            table_data_24.append(grand_total_row_24)
         table_headers_24 = [table_row_header] + classification_columns + ['Total']
 
         # --- Tabela 2000 (Apenas se for população e a serie incluir 2000) ---
+        # Contagem e valor por grupo só têm 2025 (os indicadores não têm série de 2000).
+        so_2025 = is_count or cfg_media is not None
         table_data_00 = []
         table_headers_00 = []
-        if incluir_00 and not is_count:
+        if incluir_00 and not so_2025:
             raw_grand_total_classification_counts_00 = {col: 0 for col in classification_columns}
             for row_label, condition in row_configs:
                 row_data = {table_row_header: row_label}
@@ -914,15 +1070,23 @@ def api_get_dashboard_data(request):
                 "diffMediaNacional": round(diff_media_nacional, 2),
                 "giniIndex": round(coeficiente_de_variacao*100, 2)
             },
-            "chartData": {"labels": chart_labels, "datasets": datasets_to_send, "yAxisTitle": y_axis_title, "xAxisTitle": classification_filter.capitalize(), "chartTitle": chart_title},
+            "chartData": {
+                "labels": chart_labels, "datasets": datasets_to_send, "yAxisTitle": y_axis_title,
+                "xAxisTitle": classification_filter.capitalize(), "chartTitle": chart_title,
+                # Como desenhar: 'populacao' (barras por grupo, comparando anos),
+                # 'contagem' (empilhado por faixa) ou 'media' (uma barra por grupo,
+                # formatada pela unidade).
+                "tipo": 'media' if cfg_media else ('contagem' if is_count else 'populacao'),
+                "unidade": cfg_media['unidade'] if cfg_media else None,
+            },
             "serie": serie,
         }
-        # Modo de contagem nao tem serie de 2000: a tabela de 2025 vai sempre.
-        if incluir_24 or is_count:
+        # Contagem e valor por grupo nao tem serie de 2000: a tabela de 2025 vai sempre.
+        if incluir_24 or so_2025:
             response_data["tableData24"] = table_data_24
             response_data["tableHeaders24"] = table_headers_24
-            response_data["tableTitle24"] = f"Distribuição de Municípios por {table_row_header} (2025)"
-        if incluir_00 and not is_count:
+            response_data["tableTitle24"] = table_title_24 or f"Distribuição de Municípios por {table_row_header} (2025)"
+        if incluir_00 and not so_2025:
             response_data["tableData00"] = table_data_00
             response_data["tableHeaders00"] = table_headers_00
             response_data["tableTitle00"] = f"Distribuição de Municípios por {table_row_header} (2000)"

@@ -24,6 +24,37 @@ let toggle2000e2025;
 let populacaoQuintilCtx;
 let populacaoQuintilChart;
 
+// Formatador do valor nos modos de media (nulo nos demais): o tooltip, criado
+// uma vez na inicializacao do grafico, consulta este a cada atualizacao.
+let formatarValorMedia = null;
+
+/**
+ * Formatador dos modos de valor medio, pela unidade que a API manda em
+ * chartData.unidade ('nota', 'taxa' ou 'reais').
+ * @param {string} unidade
+ * @returns {function(number, boolean=): string} inteiro=true tira as casas decimais
+ */
+function formatadorDaUnidade(unidade) {
+    const casas = { nota: 2, taxa: 1, reais: 2 }[unidade] ?? 1;
+    return function (valor, inteiro) {
+        if (valor === null || valor === undefined) return '';
+        const n = inteiro ? 0 : casas;
+        const texto = Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: n, maximumFractionDigits: n });
+        return unidade === 'reais' ? 'R$ ' + texto : texto;
+    };
+}
+
+/**
+ * Modos em que o grafico mostra um valor por grupo (media ou taxa), e nao
+ * contagem de municipios. Espelha MODOS_MEDIA de home/views.py: Educacao so
+ * entra na opcao "Nota media".
+ */
+function ehModoMedia() {
+    const modo = document.getElementById('variavelAnalisadaSelect')?.value;
+    if (modo === 'educacao') return document.getElementById('educacaoTipoSelect')?.value === 'media';
+    return ['seguranca', 'renda', 'receita_media'].includes(modo);
+}
+
 // Variáveis das tabelas
 let tableCard2025;
 let table2025Head;
@@ -193,6 +224,8 @@ async function atualizarFiltros() {
     const riscoTipoSelect = document.getElementById('riscoTipoSelect');
     const riscoNivelSelect = document.getElementById('riscoNivelSelect');
 
+    const educacaoTipoSelect = document.getElementById('educacaoTipoSelect');
+
     const criterioSaudeFiscal = criterioSaudeFiscalAtual();
 
     const apiUrl =
@@ -210,7 +243,8 @@ async function atualizarFiltros() {
         `&capag_nota=${encodeURIComponent(capagNotaSelect ? capagNotaSelect.value : 'todos')}` +
         `&risco_campo=${encodeURIComponent(riscoTipoSelect ? riscoTipoSelect.value : 'media_ponderada')}` +
         `&risco_nivel=${encodeURIComponent(riscoNivelSelect ? riscoNivelSelect.value : 'todos')}` +
-        `&saude_fiscal_criterio=${criterioSaudeFiscal}`;
+        `&saude_fiscal_criterio=${criterioSaudeFiscal}` +
+        `&educacao_tipo=${encodeURIComponent(educacaoTipoSelect ? educacaoTipoSelect.value : 'media')}`;
 
     try {
         const response = await fetch(apiUrl);
@@ -332,6 +366,21 @@ async function atualizarFiltros() {
             'Muito alto': '#A33242'
         };
 
+        // IDEB: semaforo como os indicadores da CAPAG, com a meta nacional (6) no meio
+        const IDEB_PALETTE = {
+            '7 ou acima': '#2D8A4E',
+            'Entre 6 e 6,9': '#E8C83E',
+            'Abaixo de 6': '#A33242',
+            'Sem dados': '#9E9E9E'  // so vem em "Número"; em "%" a API tira quem nao tem nota
+        };
+
+        // 'media' (nota media do IDEB, homicidios, renda, receita media): uma barra
+        // por grupo na cor do grupo, como a Populacao, com o valor na unidade do indicador
+        const ehMedia = data.chartData.tipo === 'media';
+        const umaCorPorGrupo = variavelAnalisada === 'populacao' || ehMedia;
+        const fmtValor = ehMedia ? formatadorDaUnidade(data.chartData.unidade) : null;
+        formatarValorMedia = fmtValor;
+
         /* Retorna a paleta correta baseada no número de grupos (5 para Quintil, 10 para Decil) */
         const getColors = (count) => {
             if (count > 5) return DECIL_PALETTE; 
@@ -377,7 +426,7 @@ async function atualizarFiltros() {
 
             data.chartData.datasets.forEach((dataset) => {
                 let barColors;
-                if (variavelAnalisada === 'populacao') {
+                if (umaCorPorGrupo) {
                     // Cada barra recebe uma cor dependendo do seu índice (Quintil/Decil)
                     barColors = getColors(dataset.data.length);
                 } else {
@@ -388,6 +437,8 @@ async function atualizarFiltros() {
                         singleColor = paletaSaudeFiscal()[labelBase] || '#9E9E9E';
                     } else if (variavelAnalisada === 'risco_climatico') {
                         singleColor = RISCO_PALETTE[labelBase] || '#9E9E9E';
+                    } else if (variavelAnalisada === 'educacao') {
+                        singleColor = IDEB_PALETTE[labelBase] || '#9E9E9E';
                     }
                     barColors = Array(dataset.data.length).fill(singleColor);
                 }
@@ -409,9 +460,9 @@ async function atualizarFiltros() {
                     borderColor: barColors, 
                     borderWidth: 2,
                     fill: true,
-                    barPercentage: 0.6,      
-                    categoryPercentage: 0.6, 
-                    grouped: variavelAnalisada === 'populacao'
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.6,
+                    grouped: umaCorPorGrupo
                 });
             });
 
@@ -419,10 +470,15 @@ async function atualizarFiltros() {
             console.warn('A API não retornou dados para o gráfico.');
         }
 
-        populacaoQuintilChart.options.scales.x.stacked = variavelAnalisada !== 'populacao';
-        populacaoQuintilChart.options.scales.y.stacked = variavelAnalisada !== 'populacao';
+        populacaoQuintilChart.options.scales.x.stacked = !umaCorPorGrupo;
+        populacaoQuintilChart.options.scales.y.stacked = !umaCorPorGrupo;
         populacaoQuintilChart.options.scales.y.title.text = data.chartData.yAxisTitle;
+        // Uma serie so: o titulo do eixo ja diz o que e, a legenda so repetiria.
+        populacaoQuintilChart.options.plugins.legend.display = !ehMedia;
+        // Empilhado em % soma 100: sem teto fixo o Chart.js arredonda o eixo para 120%.
+        populacaoQuintilChart.options.scales.y.max = (!umaCorPorGrupo && formatPorcentagemRadio.checked) ? 100 : undefined;
         populacaoQuintilChart.options.scales.y.ticks.callback = function (value) {
+            if (ehMedia) return fmtValor(value, true);
             if (formatPorcentagemRadio.checked) return value.toFixed(0) + '%';
             return variavelAnalisada === 'populacao' 
                 ? value.toLocaleString('pt-BR') + 'M' 
@@ -430,17 +486,21 @@ async function atualizarFiltros() {
         };
 
         // Arrumando formatter dos tooltips (Datalabels plugin config in default init can't be changed here without replacing the whole formatter, but wait - there is datalabels plugin!)
-        populacaoQuintilChart.options.plugins.datalabels.formatter = function (value) {
+        populacaoQuintilChart.options.plugins.datalabels.formatter = function (value, context) {
+            // No celular os centavos saem do rotulo em reais: senao os valores se encostam.
+            if (ehMedia) return fmtValor(value, data.chartData.unidade === 'reais' && context.chart.width < 600);
             if (value === 0) return ''; // Hide 0 values for cleaner stacked charts
-            if (formatPorcentagemRadio.checked) return value.toFixed(1) + '%';
+            if (formatPorcentagemRadio.checked) {
+                return value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+            }
             return variavelAnalisada === 'populacao' 
                 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M'
                 : value.toLocaleString('pt-BR');
         };
 
         // Arrumando posição do datalabel para gráficos empilhados
-        populacaoQuintilChart.options.plugins.datalabels.align = variavelAnalisada === 'populacao' ? 'top' : 'center';
-        populacaoQuintilChart.options.plugins.datalabels.anchor = variavelAnalisada === 'populacao' ? 'end' : 'center';
+        populacaoQuintilChart.options.plugins.datalabels.align = umaCorPorGrupo ? 'top' : 'center';
+        populacaoQuintilChart.options.plugins.datalabels.anchor = umaCorPorGrupo ? 'end' : 'center';
 
         populacaoQuintilChart.update();
 
@@ -587,7 +647,38 @@ const COMO_LER_RISCO = [
     'Isso permite observar como os municípios mais vulneráveis a eventos climáticos estão distribuídos em relação à sua capacidade de arrecadação.'
 ];
 
+/* Educacao, Seguranca Publica, Renda das Familias e Receita Media: como ler, de
+   onde vem o dado e como o valor do grupo e calculado (regras em MODOS_MEDIA, home/views.py). */
+const COMO_LER_INDICADOR = {
+    'educacao_faixas': [
+        'O gráfico apresenta a quantidade de municípios em cada faixa de nota no IDEB, distribuídos por quintil de receita por habitante. Em "%", cada barra soma 100% dos municípios avaliados do grupo.',
+        'O primeiro quintil inclui os municípios com menor receita por habitante, e o último, os de maior receita por habitante.',
+        'A nota no IDEB corresponde ao desempenho dos municípios em suas escolas municipais nos anos iniciais do ensino fundamental, no IDEB 2025. Em "Número", os municípios sem nota aparecem em cinza, em "Sem dados"; em "%", ficam fora da conta.'
+    ],
+    'educacao_media': [
+        'Cada barra é a nota média no IDEB dos municípios do grupo: a média simples, em que cada município vale o mesmo.',
+        'A nota corresponde ao desempenho dos municípios em suas escolas municipais nos anos iniciais do ensino fundamental, no IDEB 2025. Municípios sem nota ficam fora da média.'
+    ],
+    'seguranca': [
+        'Cada barra é a taxa de homicídios do grupo, em homicídios por 100 mil habitantes, como se todos os municípios do grupo fossem um só: a média das taxas ponderada pela população.',
+        'Fonte: "homicídios registrados" do Atlas da Violência. Os municípios que não aparecem no Atlas entram com zero homicídio.'
+    ],
+    'renda': [
+        'Cada barra é o rendimento médio mensal domiciliar per capita do grupo: a média dos municípios ponderada pela população, que equivale a dividir a renda de todos os moradores do grupo pelo total de moradores.',
+        'Fonte: Tabela 10295 do SIDRA, Censo Demográfico de 2022, IBGE. É o rendimento nominal médio mensal domiciliar per capita dos moradores em domicílios particulares permanentes ocupados.'
+    ],
+    'receita_media': [
+        'Cada barra é a receita corrente por habitante média dos municípios do grupo em 2025: a média simples, em que cada município vale o mesmo.',
+        'Como os grupos são formados justamente pela receita por habitante, as barras sobem do primeiro ao último quintil. O que o gráfico mostra é o tamanho da distância entre eles.'
+    ]
+};
+
 function textoComoLer(modo, tipoSaudeFiscal, criterio) {
+    if (modo === 'educacao') {
+        const tipoEducacao = document.getElementById('educacaoTipoSelect')?.value === 'media' ? 'educacao_media' : 'educacao_faixas';
+        return COMO_LER_INDICADOR[tipoEducacao];
+    }
+    if (COMO_LER_INDICADOR[modo]) return COMO_LER_INDICADOR[modo];
     if (modo === 'risco_climatico') return COMO_LER_RISCO;
     if (modo !== 'saude_fiscal') return COMO_LER_POPULACAO;
 
@@ -792,6 +883,14 @@ function sincronizarControlesDoModo() {
     if (rt) { rt.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rt.value = 'media_ponderada'; }
     if (rn) { rn.classList.toggle('d-none', !mostraRisco); if (!mostraRisco) rn.value = 'todos'; }
 
+    const mostraEducacao = modo === 'educacao';
+    const et = document.getElementById('educacaoTipoSelect');
+    if (et) { et.classList.toggle('d-none', !mostraEducacao); if (!mostraEducacao) et.value = 'media'; }
+
+    // "Número / %" não tem leitura num valor médio: some nos modos de média.
+    const controleFormato = document.getElementById('controle-formato');
+    if (controleFormato) controleFormato.classList.toggle('d-none', ehModoMedia());
+
     atualizarCriterioSaudeFiscal();
     if (mostraCapag) atualizarOpcoesNotaCapag();
 }
@@ -904,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         label: function(context) {
                             // Usa tooltipLabel (com ano) se disponível, senão usa label normal
                             const fullLabel = context.dataset.tooltipLabel || context.dataset.label;
-                            const value = context.formattedValue;
+                            const value = formatarValorMedia ? formatarValorMedia(context.raw) : context.formattedValue;
                             return `${fullLabel}: ${value}`;
                         }
                     }
@@ -1000,6 +1099,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (riscoTipoSelectEl) riscoTipoSelectEl.addEventListener('change', atualizarFiltros);
     if (riscoNivelSelectEl) riscoNivelSelectEl.addEventListener('change', atualizarFiltros);
 
+    // Educação: trocar entre faixas e nota média muda também o controle "Número / %"
+    const educacaoTipoSelectEl = document.getElementById('educacaoTipoSelect');
+    if (educacaoTipoSelectEl) {
+        educacaoTipoSelectEl.addEventListener('change', () => {
+            sincronizarControlesDoModo();
+            atualizarFiltros();
+        });
+    }
+
     // Um binding para as tres opcoes de ano: antes havia um bloco identico por
     // opcao, e cada opcao nova pedia mais um. O escopo .chart-controls mantem
     // o toggle de criterio da Saude Fiscal fora disto.
@@ -1037,6 +1145,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cnEl) { cnEl.classList.add('d-none'); cnEl.value = 'todos'; }
             if (rtEl) { rtEl.classList.add('d-none'); rtEl.value = 'media_ponderada'; }
             if (rnEl) { rnEl.classList.add('d-none'); rnEl.value = 'todos'; }
+            const etEl = document.getElementById('educacaoTipoSelect');
+            const formatoEl = document.getElementById('controle-formato');
+            if (etEl) { etEl.classList.add('d-none'); etEl.value = 'media'; }
+            if (formatoEl) formatoEl.classList.remove('d-none');
             document.querySelectorAll('#criterio-saude-fiscal .toggle-option').forEach(b => {
                 b.classList.toggle('active', b.dataset.criterio === 'legal');
             });

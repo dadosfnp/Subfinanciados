@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand
-from home.models import Municipio, IndicadoresAtuais, Indicadores2000, SusDependente, Cadunico
+from home.models import Municipio, IndicadoresAtuais, Indicadores2000, SusDependente, Cadunico, Ideb, TaxaDeHomicidio, RendaMedia
 
 class Command(BaseCommand):
     help = 'Importa dados de municípios do arquivo Excel, limpando os nomes das colunas.'
@@ -14,7 +14,10 @@ class Command(BaseCommand):
         capag = pd.read_excel('base_datas/capag_12_09_26.xlsx')
         rgf = pd.read_excel('base_datas/indicadores_rgf.xlsx')
         equilibrio = pd.read_excel('base_datas/indicador_equilibrio_fiscal_2025.xlsx')
-        
+        ideb = pd.read_excel('base_datas/ideb.xlsx')
+        renda = pd.read_excel('base_datas/rendimento.xlsx')
+        homicidios = pd.read_excel('base_datas/taxa_homicidios.xlsx')
+
         # --- CORREÇÃO CRÍTICA 1: Garantir que o IBGE seja texto (Isso conserta o Merge!) ---
         pop['cod_ibge'] = pop['cod_ibge'].astype(str)
         rec24['cod_ibge'] = rec24['cod_ibge'].astype(str)
@@ -22,6 +25,9 @@ class Command(BaseCommand):
         capag['cod_ibge'] = capag['cod_ibge'].astype(str)
         rgf['cod_ibge'] = rgf['cod_ibge'].astype(str)
         equilibrio['cod_ibge'] = equilibrio['cod_ibge'].astype(str)
+        ideb['cod_ibge'] = ideb['cod_ibge'].astype(str)
+        renda['cod_ibge'] = renda['cod_ibge'].astype(str)
+        homicidios['cod_ibge'] = homicidios['cod_ibge'].astype(str)
         # 2. Converte todos os nomes de colunas para minúsculo
         pop.columns = pop.columns.str.lower()
         rec24.columns = rec24.columns.str.lower()
@@ -29,7 +35,10 @@ class Command(BaseCommand):
         capag.columns = capag.columns.str.lower()
         rgf.columns = rgf.columns.str.lower()
         equilibrio.columns = equilibrio.columns.str.lower()
-        
+        ideb.columns = ideb.columns.str.lower()
+        renda.columns = renda.columns.str.lower()
+        homicidios.columns = homicidios.columns.str.lower()
+
         # Ranking Nacional 2000
         rec00['rank_nacional00'] = rec00['receita_00_pc'].rank(method='min', ascending=False).astype(int)
         rec00['total_nacional00'] = len(rec00)
@@ -67,6 +76,11 @@ class Command(BaseCommand):
         # 56.245 vindos de denominador degenerado, que viram 'Déficit corrente' no gráfico.
         equilibrio.loc[equilibrio['status'] != 'ok', 'indicador'] = np.nan
         pop = pop.merge(equilibrio[['cod_ibge', 'indicador']].rename(columns={'indicador': 'indicador_equilibrio_fiscal'}), on='cod_ibge', how='left')
+        pop = pop.merge(ideb[['cod_ibge', 'ideb_anos_iniciais', 'ideb_anos_finais', 'ideb_ensino_medio']], on='cod_ibge', how='left')
+        pop = pop.merge(renda[['cod_ibge', 'rendimento_medio']], on='cod_ibge', how='left')
+        # A planilha de homicídios só traz parte dos municípios (3.853 em 5.570):
+        # quem não está nela fica sem registro, e não com taxa zero.
+        pop = pop.merge(homicidios[['cod_ibge', 'taxa_homicidios']], on='cod_ibge', how='left')
 
         pop['name_muni_uf'] = pop['nome_muni'] + ' - ' + pop['uf']
 
@@ -152,6 +166,28 @@ class Command(BaseCommand):
                     cadunico_total_estadual=row['total_uf_cad'],
                     cadunico_rank_faixa=row['rank_cadunico_faixas'],
                     cadunico_total_faixa=row['total_fax_cad']
+                )
+
+            # O IDEB de ensino médio só existe para poucos municípios: o registro
+            # é criado se houver pelo menos uma das três notas.
+            if any(row[c] is not None for c in ['ideb_anos_iniciais', 'ideb_anos_finais', 'ideb_ensino_medio']):
+                Ideb.objects.create(
+                    municipio=muni,
+                    ideb_anos_inicias=row['ideb_anos_iniciais'],
+                    ideb_anos_finais=row['ideb_anos_finais'],
+                    ideb_ensino_médio=row['ideb_ensino_medio']
+                )
+
+            if row['taxa_homicidios'] is not None:
+                TaxaDeHomicidio.objects.create(
+                    municipio=muni,
+                    taxa_homicidio=row['taxa_homicidios']
+                )
+
+            if row['rendimento_medio'] is not None:
+                RendaMedia.objects.create(
+                    municipio=muni,
+                    renda_media=row['rendimento_medio']
                 )
 
         self.stdout.write(self.style.SUCCESS('Dados importados com sucesso!'))

@@ -290,6 +290,44 @@ class Cadunico(models.Model):
     def __str__(self):
         return f"CadÚnico - {self.municipio.name_muni}"
 
+class Ideb(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='ideb'
+    )
+    ideb_anos_inicias = models.FloatField(null=True, blank=True)
+    ideb_anos_finais = models.FloatField(null=True, blank=True)
+    ideb_ensino_médio = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"IDEB - {self.municipio.name_muni}"
+
+class TaxaDeHomicidio(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='taxa_homicidio'
+    )
+    taxa_homicidio = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Taxa de Homicídio - {self.municipio.name_muni}"
+
+class RendaMedia(models.Model):
+    municipio = models.OneToOneField(
+        Municipio,
+        on_delete=models.CASCADE,
+        primary_key=True, 
+        related_name='renda_media'
+    )
+    renda_media = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Renda Média - {self.municipio.name_muni}"
+
 class IndicadoresAtuais(models.Model):
     municipio = models.OneToOneField(
         Municipio,
