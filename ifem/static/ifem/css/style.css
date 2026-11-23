@@ -2460,19 +2460,25 @@ a.btn-tutorial {
     height: 100%;
 }
 
+/* O padding reserva espaço para o rótulo do valor: a --bar-width é relativa
+   só à área de conteúdo, então uma barra de 100% não empurra nem espreme nada. */
 .chart-track {
     display: flex;
     align-items: center;
+    padding-right: 64px;
 }
 
 .chart-track.negative-track {
     justify-content: flex-end;
     border-right: 2px solid #e2e8f0;
+    padding-right: 0;
+    padding-left: 64px;
 }
 
 .chart-bar {
     height: 24px;
     width: var(--bar-width, 0%);
+    flex-shrink: 0;
     /*transition: width 0.5s ease-out;*/
 }
 
@@ -2510,6 +2516,8 @@ a.btn-tutorial {
 .chart-value {
     font-size: 0.85rem;
     font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .chart-value.positive-val { margin-left: 8px; }

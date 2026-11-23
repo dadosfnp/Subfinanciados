@@ -47,7 +47,7 @@ def inicio_preview(request):
     })
 
 
-INICIO_ANIMADO_CACHE = 'ifem:inicio_animado:v7'
+INICIO_ANIMADO_CACHE = 'ifem:inicio_animado:v13'
 
 
 def _faixa(rotulo):
@@ -141,7 +141,8 @@ def inicio_animado_preview(request):
         dados = apresentacao_dados.municipios_animacao()
         cache.set(INICIO_ANIMADO_CACHE, dados, 30 * 60)
 
-    q, pop, gr = dados['quintis'], dados['populacao'], dados['grandes']
+    q, pop, gr, tend, mig = dados['quintis'], dados['populacao'], dados['grandes'], dados['tendencia'], dados['migracao']
+    anos = dados['pop_anos']  # séries por ano, cada uma do 1º ao 5º quintil
     textos = {
         'total': br(dados['total']),
         'grandes_n': br(gr['n']),
@@ -149,27 +150,44 @@ def inicio_animado_preview(request):
         'grandes_pct_mun': br(gr['pct_municipios'], 1),
         'grandes_pop': br(gr['populacao'] / 1e6, 1),
         'grandes_pct_pop': br(gr['pct_populacao'], 1),
-        'demais_n': br(dados['total'] - gr['n']),
-        'demais_pct_pop': br(100 - gr['pct_populacao'], 1),
+        'tend_ano_ini': str(tend['anos'][0]),  # texto: o template poria separador de milhar ("2.000")
+        'tend_ano_fim': str(tend['anos'][-1]),
+        'tend_pct_ini': br(tend['pct'][0], 1),
+        'tend_pct_fim': br(tend['pct'][-1], 1),
+        'tend_sobe_todo_ano': all(b > a for a, b in zip(tend['pct'], tend['pct'][1:])),
         'grandes_q1': br(gr['por_quintil'][1]),
         'grandes_q5': br(gr['por_quintil'][5]),
         'declarantes': br(dados['declarantes']),
         'pct_declarantes': br(dados['pct_declarantes'], 1),
         'por_grupo': br(q['por_grupo']),
+        'por_grupo_2000': br(dados['por_grupo_2000']),
         'media_1q': br(q['media_1q']),
         'media_5q': br(q['media_5q']),
         'razao': br(q['razao_5q_1q'], 1),
+        'mig_mudou': br(mig['mudou_pct'], 1),
+        'mig_fica_1q': br(mig['continua_pct'][1] or 0),
+        'mig_fica_5q': br(mig['continua_pct'][5] or 0),
         'p1_2000': br(pop['pop_1q_2000'], 1),
         'p5_2000': br(pop['pop_5q_2000'], 1),
         'p1_2025': br(pop['pop_1q_2025'], 1),
         'p5_2025': br(pop['pop_5q_2025'], 1),
         'q1_cresceu': pop['pop_1q_2025'] > pop['pop_1q_2000'],
+        'anos_ini': str(anos['anos'][0]),
+        'anos_fim': str(anos['anos'][-1]),
+        'anos_1q_ini': _mi(anos['series'][0][0]),
+        'anos_1q_fim': _mi(anos['series'][-1][0]),
+        'anos_1q_ganho': _mi(anos['series'][-1][0] - anos['series'][0][0]),
+        'anos_5q_ini': _mi(anos['series'][0][4]),
+        'anos_5q_fim': _mi(anos['series'][-1][4]),
+        'anos_5q_caiu': anos['series'][-1][4] < anos['series'][0][4],
+        'indicadores': [(ind['id'], ind['nome']) for ind in dados['indicadores']],
         'porte': _texto_porte_receita(dados['porte']),
         'pct_transf': dados['composicao']['pct_transferencias'],
         'pct_propria': dados['composicao']['pct_propria'],
-        'transf_maioria': br(dados['transf_maioria']),
+        'transf_corte': br(dados['transf_corte'] * 100),
+        'transf_acima': br(dados['transf_acima']),
         'transf_total': br(dados['transf_total']),
-        'pct_transf_maioria': br(dados['transf_maioria'] / dados['transf_total'] * 100) if dados['transf_total'] else '0',
+        'pct_transf_acima': br(dados['transf_acima'] / dados['transf_total'] * 100) if dados['transf_total'] else '0',
         'fpm': dados['fpm'],
         'fpm_1q_antes': _mi(dados['fpm']['series'][0]['valores'][0]),
         'fpm_1q_depois': _mi(dados['fpm']['series'][1]['valores'][0]),

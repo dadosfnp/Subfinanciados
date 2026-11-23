@@ -65,7 +65,7 @@
    * maior valor e o das duas juntas: a mesma cor vale a mesma quantidade nos
    * dois anos, senao a comparacao lado a lado enganaria.
    */
-  function pintarMapaDeCalor() {
+  function pintarMapaDeCalor(tipo) {
     var celulas = [];
     ['#table-2025', '#table-2000'].forEach(function (sel) {
       var tabela = document.querySelector(sel);
@@ -104,9 +104,13 @@
       td.classList.toggle('fx-calor--zero', v === 0);
     });
 
+    // Nos modos de media a celula e o valor do indicador, nao contagem.
+    var inicio = document.getElementById('fx-calor-legenda-inicio');
     var fim = document.getElementById('fx-calor-legenda-fim');
     var pct = document.getElementById('formatPorcentagem');
-    if (fim) fim.textContent = pct && pct.checked ? 'maior parcela da faixa' : 'mais municípios';
+    var media = tipo === 'media';
+    if (inicio) inicio.textContent = media ? 'menor' : 'menos';
+    if (fim) fim.textContent = media ? 'maior valor' : (pct && pct.checked ? 'maior parcela da faixa' : 'mais municípios');
   }
 
   /** Numero destacado do hero, com cor opcional (inline: varia com o dado). */
@@ -192,7 +196,7 @@
     var data = ev.detail || {};
     try {
       preencherHero(data.summaryCards);
-      pintarMapaDeCalor();
+      pintarMapaDeCalor(data.chartData && data.chartData.tipo);
     } catch (error) {
       // Falha aqui nao pode derrubar o resto da pagina (grafico e tabelas ja
       // foram desenhados pelo script.js); registra com o que chegou.

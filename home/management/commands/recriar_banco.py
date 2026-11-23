@@ -57,6 +57,7 @@ from home.models import (
     ContaMaisEspecificaPercentil,
     CrescimentoMedioPorte,
     CrescimentoMedioUf,
+    Ideb,
     Indicadores2000,
     IndicadoresAtuais,
     MediaNacionalReceita,
@@ -68,7 +69,9 @@ from home.models import (
     Municipio,
     Percentis,
     RegiaoMetropolitana,
+    RendaMedia,
     SusDependente,
+    TaxaDeHomicidio,
 )
 
 # Tudo que não vem das planilhas e não pode ser reconstruído: conteúdo do admin e
@@ -124,6 +127,10 @@ MINIMOS_ESPERADOS = {
     IndicadoresAtuais: 5000,
     SusDependente: 5000,
     Cadunico: 5000,
+    Ideb: 5000,
+    RendaMedia: 5000,
+    # A planilha de homicídios cobre só parte dos municípios (3.853 hoje).
+    TaxaDeHomicidio: 3000,
     ContaDetalhada: 5000,
     ContaDetalhadaPercentil: 5000,
     ContaEspecifica: 5000,

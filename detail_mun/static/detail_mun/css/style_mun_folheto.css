@@ -200,6 +200,17 @@
   color: #FFC72C;
 }
 
+/* A 21px o valor nao cabe nos 92px da coluna: "R$ 14.084" pede 107px e
+   "R$ 524,0 mi" (Totais), 124px. Em vez de alargar a coluna da tabela toda
+   (compartilhada com agregado e home), o valor avanca 32px sobre a coluna da
+   barra, e a barra desta linha encolhe o mesmo tanto. O inicio da barra e as
+   caixas de media continuam alinhados com as linhas de baixo. No celular a
+   linha vira bloco e o valor ja tem a largura toda. */
+@media (min-width: 861px) {
+  .fx-row--total > .fx-supera { padding-right: 32px; }
+  .fx-row--total > .fx-supera + .fx-valor { margin-left: -32px; }
+}
+
 .fx-row--total .fx-box {
   font-size: 12.5px;
   padding: 5px 4px;

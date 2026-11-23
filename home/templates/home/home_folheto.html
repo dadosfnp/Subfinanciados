@@ -45,7 +45,8 @@ estrutura de modal dele, so com o acabamento do folheto.
                 </div>
             </div>
 
-            <div class="fx-controle">
+            {# Escondido nos modos de valor medio (script.js): media nao tem leitura em %. #}
+            <div class="fx-controle" id="controle-formato">
                 <span class="fx-controle-label">Mostrar</span>
                 <div class="fx-seg fx-seg--radio" role="radiogroup" aria-label="Base de visualização">
                     <label><input type="radio" name="displayFormat" id="formatNumero" value="numero" checked><span>Número</span></label>
@@ -151,8 +152,10 @@ estrutura de modal dele, so com o acabamento do folheto.
                         <span id="fx-home-comparacao">&nbsp;</span>
                         <span class="fx-pos-leitura">
                             O gráfico mostra como a <strong>população</strong>, a
-                            <strong>saúde fiscal</strong> e o <strong>risco climático</strong> se distribuem entre
-                            esses grupos.
+                            <strong>saúde fiscal</strong>, o <strong>risco climático</strong>, a
+                            <strong>educação</strong>, a <strong>segurança pública</strong>, a
+                            <strong>renda das famílias</strong> e a <strong>receita média</strong>
+                            se distribuem entre esses grupos.
                         </span>
                     </p>
                 </div>
@@ -182,6 +185,10 @@ estrutura de modal dele, so com o acabamento do folheto.
                         <option value="populacao">da População Municipal</option>
                         <option value="saude_fiscal">por Saúde Fiscal</option>
                         <option value="risco_climatico">por Risco Climático</option>
+                        <option value="educacao">por Educação</option>
+                        <option value="seguranca">por Segurança Pública</option>
+                        <option value="renda">por Renda das Famílias</option>
+                        <option value="receita_media">por Receita Média</option>
                     </select>
                 </h2>
 
@@ -248,6 +255,12 @@ estrutura de modal dele, so com o acabamento do folheto.
                         <option value="Muito alto">Muito alto (≥ 0,8)</option>
                     </select>
 
+                    {# Os dois graficos de Educacao: nota media (abre nele) ou contagem por faixa de nota. #}
+                    <select id="educacaoTipoSelect" class="fx-select fx-select--inline d-none" aria-label="Gráfico de educação">
+                        <option value="media">Nota média no IDEB</option>
+                        <option value="faixas">Municípios por faixa de nota no IDEB</option>
+                    </select>
+
                     {# Criterio das faixas: so no modo Saude Fiscal. #}
                     <div id="criterio-saude-fiscal" class="fx-seg fx-seg--claro d-none" role="group" aria-label="Critério das faixas">
                         <span class="toggle-option active" data-criterio="legal" role="button" tabindex="0">Limites legais</span>
@@ -281,7 +294,7 @@ estrutura de modal dele, so com o acabamento do folheto.
                 </p>
                 {# Legenda do mapa de calor: o texto da ponta muda com Numero/% (JS). #}
                 <div class="fx-calor-legenda" aria-hidden="true">
-                    <span>menos</span>
+                    <span id="fx-calor-legenda-inicio">menos</span>
                     <span class="fx-calor-legenda-barra"></span>
                     <span id="fx-calor-legenda-fim">mais municípios</span>
                 </div>
