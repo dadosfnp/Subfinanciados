@@ -47,7 +47,7 @@ def inicio_preview(request):
     })
 
 
-INICIO_ANIMADO_CACHE = 'ifem:inicio_animado:v13'
+INICIO_ANIMADO_CACHE = 'ifem:inicio_animado:v15'
 
 
 def _faixa(rotulo):

@@ -430,53 +430,121 @@ _PCT_GRANDES_POR_ANO = {
     2020: 61.2, 2021: 61.3, 2022: 61.4, 2023: 61.6, 2024: 61.7,
 }
 
+# Tipos de risco do AdaptaBrasil, na ordem e com os nomes do seletor da aba
+# Gráficos (home_folheto.html, riscoTipoSelect): (campo da API, nome, grupo).
+# O primeiro é o que abre.
+_RISCOS_CLIMATICOS = [
+    ('media_ponderada', 'Risco climático médio', None),
+    ('bio_int_bio', 'Integridade do Bioma', 'Biodiversidade'),
+    ('des_des_ter', 'Deslizamento de Terra', 'Desastres Geo-hidrológicos'),
+    ('des_in_enx_ala', 'Inundações e Alagamentos', 'Desastres Geo-hidrológicos'),
+    ('rec_ris_est_hid', 'Risco de Estresse Hídrico', 'Recursos Hídricos'),
+    ('sau_arb', 'Arboviroses (Dengue, Zika, Chikungunya)', 'Saúde'),
+    ('sau_lei_teg_ame', 'Leishmaniose Tegumentar Americana', 'Saúde'),
+    ('sau_lei_vis', 'Leishmaniose Visceral', 'Saúde'),
+    ('sau_mal', 'Malária', 'Saúde'),
+    ('seg_ali_ace_con_ali', 'Acesso e Consumo de Alimentos', 'Segurança Alimentar'),
+    ('seg_ali_dis', 'Disponibilidade de Alimentos', 'Segurança Alimentar'),
+    ('seg_ene_ace', 'Acesso à Energia', 'Segurança Energética'),
+    ('seg_ene_dis', 'Disponibilidade de Energia', 'Segurança Energética'),
+]
+
 # Passo "Outros indicadores": os gráficos da aba Gráficos (/analise/), com o
-# seletor de variável. Cada item: (modo da API, nome no seletor, nota de
-# leitura, categorias somadas na frase dos gráficos de contagem e como a frase
-# as chama). As notas resumem o "Como ler" da aba.
+# seletor de variável. Cada indicador tem uma ou mais opções (o segundo
+# seletor do cartão, com o rótulo 'sub_rotulo'). Cada opção: a consulta à API,
+# o nome no segundo seletor e o grupo (optgroup), 'pct' para a frequência
+# relativa (% dos municípios de cada quintil), o título do gráfico (o curto
+# entra quando o longo não cabe), a nota de leitura e as faixas somadas na
+# frase do cartão, com o jeito de chamá-las. As notas resumem o "Como ler" da aba.
+_NOTA_RISCO = ('Frequência relativa: a parcela dos municípios de cada quintil em cada nível de risco '
+               'do AdaptaBrasil, um índice de 0 a 1 (alto a partir de 0,6; muito alto a partir de 0,8). '
+               'Cada quintil soma 100%.')
+
 _INDICADORES_ANALISE = [
-    ('receita_media', 'Receita média por habitante',
-     'Média simples da receita corrente por habitante dos municípios do grupo, em 2025.', None, None),
-    ('risco_climatico', 'Mudanças climáticas',
-     'Municípios por nível do risco climático médio (AdaptaBrasil).', ['Muito alto', 'Alto'], 'com risco climático alto ou muito alto'),
-    ('saude_fiscal', 'CAPAG',
-     'Municípios por nota da Capacidade de Pagamento (CAPAG), do Tesouro Nacional.', ['A'], 'com nota A na CAPAG'),
-    ('educacao', 'IDEB',
-     'Nota média no IDEB das escolas municipais, anos iniciais do ensino fundamental. Municípios sem nota ficam fora.', None, None),
-    ('renda', 'Renda média das famílias',
-     'Rendimento médio mensal domiciliar por habitante (Censo 2022, IBGE), ponderado pela população.', None, None),
-    ('seguranca', 'Segurança pública',
-     'Homicídios por 100 mil habitantes (Atlas da Violência), ponderados pela população.', None, None),
+    {'id': 'receita_media', 'nome': 'Receita média por habitante', 'opcoes': [
+        {'consulta': 'variavel_analisada=receita_media',
+         'nota': 'Média simples da receita corrente por habitante dos municípios do grupo, em 2025.'},
+    ]},
+    {'id': 'risco_climatico', 'nome': 'Risco climático', 'sub_rotulo': 'Tipo de risco', 'opcoes': [
+        {'id': campo, 'nome': nome, 'grupo': grupo, 'pct': True,
+         'consulta': f'variavel_analisada=risco_climatico&risco_campo={campo}&display_format=porcentagem',
+         'titulo': f'Municípios por nível de risco (%): {nome}',
+         'titulo_curto': 'Municípios por nível de risco (%)',
+         'nota': _NOTA_RISCO, 'destaque': ['Muito alto', 'Alto'], 'destaque_txt': 'com risco alto ou muito alto'}
+        for campo, nome, grupo in _RISCOS_CLIMATICOS
+    ]},
+    {'id': 'saude_fiscal', 'nome': 'CAPAG', 'opcoes': [
+        {'consulta': 'variavel_analisada=saude_fiscal&display_format=porcentagem', 'pct': True,
+         'titulo': 'Municípios por nota da CAPAG (%)',
+         'nota': 'Frequência relativa: a parcela dos municípios de cada quintil em cada nota da Capacidade '
+                 'de Pagamento (CAPAG), do Tesouro Nacional. A e B incluem A+ e B+; "D e outros" junta a '
+                 'nota D e quem não tem nota (n.d., n.e.). Cada quintil soma 100%.',
+         'destaque': ['A'], 'destaque_txt': 'com nota A na CAPAG'},
+    ]},
+    {'id': 'educacao', 'nome': 'IDEB', 'sub_rotulo': 'Mostrar', 'opcoes': [
+        {'id': 'media', 'nome': 'Nota média', 'consulta': 'variavel_analisada=educacao',
+         'nota': 'Nota média no IDEB das escolas municipais, anos iniciais do ensino fundamental. '
+                 'Municípios sem nota ficam fora.'},
+        {'id': 'faixas', 'nome': 'Municípios por faixa de nota (%)', 'pct': True,
+         'consulta': 'variavel_analisada=educacao&educacao_tipo=faixas&display_format=porcentagem',
+         'titulo': 'Municípios por faixa de nota no IDEB (%)',
+         'nota': 'Frequência relativa: a parcela dos municípios de cada quintil em cada faixa de nota no IDEB '
+                 '(escolas municipais, anos iniciais). A meta nacional é 6. Só entram os municípios com nota, '
+                 'e cada quintil soma 100%.',
+         'destaque': ['7 ou acima', 'Entre 6 e 6,9'], 'destaque_txt': 'com nota 6 ou mais'},
+    ]},
+    {'id': 'renda', 'nome': 'Renda média das famílias', 'opcoes': [
+        {'consulta': 'variavel_analisada=renda',
+         'nota': 'Rendimento médio mensal domiciliar por habitante (Censo 2022, IBGE), ponderado pela população.'},
+    ]},
+    {'id': 'seguranca', 'nome': 'Segurança pública', 'opcoes': [
+        {'consulta': 'variavel_analisada=seguranca',
+         'nota': 'Homicídios por 100 mil habitantes (Atlas da Violência), ponderados pela população.'},
+    ]},
 ]
 
 
 def indicadores_analise():
-    """Os gráficos da aba Gráficos para a landing animada, um por indicador.
+    """Os gráficos da aba Gráficos para a landing animada, por indicador e opção.
 
     Os números saem da própria API da aba (home.views.api_get_dashboard_data),
-    com os filtros padrão dela: país inteiro, quintis, número de municípios.
-    Assim os dois gráficos não divergem. Cada item: id, nome, tipo ('media' =
-    uma barra por quintil; 'contagem' = municípios por faixa, empilhados),
-    unidade, título e as séries, na ordem da pilha (de baixo para cima).
+    com os filtros padrão dela (país inteiro, quintis) mais os da opção. Assim
+    os dois gráficos não divergem. Cada indicador: id, nome, sub_rotulo e as
+    opções; cada opção: id, nome, grupo, tipo ('media' = uma barra por quintil;
+    'contagem' = municípios por faixa, empilhados), pct, unidade, títulos e as
+    séries, na ordem da pilha (de baixo para cima).
     """
     import json
     from django.http import HttpRequest, QueryDict
     from home.views import api_get_dashboard_data
 
-    saida = []
-    for modo, nome, nota, destaque, destaque_txt in _INDICADORES_ANALISE:
+    def grafico(consulta):
         req = HttpRequest()
         req.method = 'GET'
-        req.GET = QueryDict(f'variavel_analisada={modo}')
-        grafico = json.loads(api_get_dashboard_data(req).content)['chartData']
-        saida.append({
-            'id': modo, 'nome': nome, 'nota': nota,
-            'tipo': grafico.get('tipo'), 'unidade': grafico.get('unidade'),
-            'titulo': grafico.get('yAxisTitle'),
-            'series': [{'rotulo': ds['label'].replace(' (2025)', ''), 'valores': ds['data']}
-                       for ds in grafico.get('datasets', [])],
-            'destaque': destaque, 'destaque_txt': destaque_txt,
-        })
+        req.GET = QueryDict(consulta)
+        return json.loads(api_get_dashboard_data(req).content)['chartData']
+
+    saida = []
+    for ind in _INDICADORES_ANALISE:
+        opcoes = []
+        for op in ind['opcoes']:
+            g = grafico(op['consulta'])
+            series = [{'rotulo': ds['label'].replace(' (2025)', ''), 'valores': ds['data']}
+                      for ds in g.get('datasets', [])]
+            if op.get('pct'):
+                # Em % a API divide por todos os municípios do quintil: quem não tem o
+                # dado vira uma faixa própria, para a pilha fechar em 100%.
+                falta = [100 - sum(v or 0 for v in col) for col in zip(*(s['valores'] for s in series))]
+                if any(f > 0.05 for f in falta):
+                    series.insert(0, {'rotulo': 'Sem dados', 'valores': [round(max(f, 0), 2) for f in falta]})
+            opcoes.append({
+                'id': op.get('id', ind['id']), 'nome': op.get('nome'), 'grupo': op.get('grupo'),
+                'tipo': g.get('tipo'), 'pct': bool(op.get('pct')), 'unidade': g.get('unidade'),
+                'titulo': op.get('titulo') or g.get('yAxisTitle'), 'titulo_curto': op.get('titulo_curto'),
+                'nota': op['nota'], 'series': series,
+                'destaque': op.get('destaque'), 'destaque_txt': op.get('destaque_txt'),
+            })
+        saida.append({'id': ind['id'], 'nome': ind['nome'], 'sub_rotulo': ind.get('sub_rotulo'), 'opcoes': opcoes})
     return saida
 
 

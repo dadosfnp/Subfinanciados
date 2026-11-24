@@ -22,8 +22,8 @@ rolam por cima e cada um corresponde a um estado da animacao:
   9. 2025: as fatias migram para as barras de 2025, ao lado das de 2000;
   10. anos: populacao por quintil em 2023, 2024 e 2025 (numeros fixos); as
       fatias assentam na barra de 2025;
-  11. indicadores: os graficos da aba Graficos (receita media, clima, CAPAG,
-      IDEB, renda e seguranca), trocados pelo seletor do cartao;
+  11. indicadores: os graficos da aba Graficos (receita media, risco climatico,
+      CAPAG, IDEB, renda e seguranca), trocados pelos seletores do cartao;
   12. porte: crescimento da populacao e da receita por habitante por porte;
   13. transferencias: quanto da receita vem de transferencias;
   14. fpm: populacao por quintil com mais R$ 50 bi no FPM (simulacao da FNP);
@@ -219,13 +219,18 @@ A ordem dos cartoes precisa bater com ESTADOS em static/ifem/js/inicio_animado.j
             {# O grafico deste passo troca com o seletor: inicio_animado.js (desenhaIndicadores). #}
             <article class="an-passo" data-estado="11" data-rotulo="Indicadores por quintil de receita por habitante">
                 <div class="an-cartao">
-                    <h2 class="an-cartao-titulo">Os quintis em outros indicadores</h2>
-                    <p>Os mesmos cinco grupos de receita por habitante, comparados em outros indicadores, como na aba
-                        <a href="/analise/">Gráficos</a>.</p>
+                    <h2 class="an-cartao-titulo">O Subfinanciamento e suas implicações</h2>
+                    <p>Observa-se que os municípios subfinanciados enfrentam desafios significativos em termos de recursos financeiros, o que impacta 
+                        diretamente na qualidade dos serviços públicos e no desenvolvimento sustentável.</p>
                     <label class="an-select-rotulo" for="an-indicador">Indicador</label>
                     <select id="an-indicador" class="an-select">
                         {% for id, nome in t.indicadores %}<option value="{{ id }}">{{ nome }}</option>{% endfor %}
                     </select>
+                    {# Segundo seletor (tipo de risco, grafico do IDEB): o JS preenche e mostra so quando ha opcoes. #}
+                    <div id="an-indicador-sub-bloco" hidden>
+                        <label class="an-select-rotulo" for="an-indicador-sub" id="an-indicador-sub-rotulo"></label>
+                        <select id="an-indicador-sub" class="an-select"></select>
+                    </div>
                     <p class="an-indicador-leitura" id="an-indicador-leitura" aria-live="polite"></p>
                     <p class="an-nota" id="an-indicador-nota"></p>
                 </div>

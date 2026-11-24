@@ -270,6 +270,7 @@
   cursor: pointer;
 }
 .an-select:focus-visible { outline: 2px solid var(--ap-azul-escuro); outline-offset: 2px; }
+#an-indicador-sub-bloco[hidden] { display: none; }
 .an-indicador-leitura { margin-top: 12px; }
 .an-indicador-leitura:empty { display: none; }
 
