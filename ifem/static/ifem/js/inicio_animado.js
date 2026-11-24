@@ -182,18 +182,28 @@
   var NANOS = ANOS.anos.length, kUlt = NANOS - 1;
   var fatorAnos = [0, 1, 2, 3, 4, 5].map(function (q) { return q && soma25[q] && NANOS ? ANOS.series[kUlt][q - 1] * 1e6 / soma25[q] : 0; });
 
-  // Indicadores (estado 11): os graficos da aba Graficos, um por opcao do
-  // seletor do cartao. 'media': uma barra por quintil; 'contagem': municipios
-  // por faixa, empilhados nas cores da aba (home/js/script.js).
+  // Indicadores (estado 11): os graficos da aba Graficos. O primeiro seletor
+  // do cartao escolhe o indicador; o segundo, a opcao dele (tipo de risco,
+  // grafico do IDEB). 'media': uma barra por quintil; 'contagem': municipios
+  // por faixa, empilhados nas cores da aba (home/js/script.js), em numero ou,
+  // com 'pct', em % do quintil.
   var IND = DADOS.indicadores || [];
   var COR_FAIXA = {
     'A': '#2D8A4E', 'B': '#72BA6A', 'C': '#E8C83E', 'D e outros': '#A33242',
-    'Muito baixo': '#2D8A4E', 'Baixo': '#72BA6A', 'Médio': '#E8C83E', 'Alto': '#D97636', 'Muito alto': '#A33242'
+    'Muito baixo': '#2D8A4E', 'Baixo': '#72BA6A', 'Médio': '#E8C83E', 'Alto': '#D97636', 'Muito alto': '#A33242',
+    '7 ou acima': '#2D8A4E', 'Entre 6 e 6,9': '#E8C83E', 'Abaixo de 6': '#A33242', 'Sem dados': '#9E9E9E'
   };
   var FAIXA_CLARA = { '#72BA6A': 1, '#E8C83E': 1 }; // fundos em que o numero vai em tinta escura
-  var indSel = 0;      // opcao escolhida no seletor
+  var indSel = 0;      // indicador escolhido no primeiro seletor
+  var subSel = IND.map(function () { return 0; }); // opcao de cada indicador no segundo
   var indTroca = 1;    // 0 a 1: barras subindo depois de uma troca de opcao
   var indInicio = 0;
+
+  /** O grafico em tela: a opcao escolhida do indicador escolhido. */
+  function opAtual() {
+    var ind = IND[indSel];
+    return ind ? ind.opcoes[subSel[indSel]] || ind.opcoes[0] : null;
+  }
 
   /** Formato pela unidade, como formatadorDaUnidade da aba Graficos; inteiro tira as casas. */
   function formatoUnidade(unidade) {
@@ -1173,32 +1183,42 @@
   }
 
   /**
-   * Estado 11: o grafico da aba Graficos para a opcao do seletor, no plano das
-   * outras barras. 'media': uma barra por quintil, na cor dele, com o valor em
-   * cima; 'contagem': municipios por faixa, empilhados, com a legenda das faixas.
+   * Estado 11: o grafico da aba Graficos para a opcao dos seletores, no plano
+   * das outras barras. 'media': uma barra por quintil, na cor dele, com o valor
+   * em cima; 'contagem': municipios por faixa, empilhados, com a legenda das
+   * faixas, em numero ou (pct) em % do quintil, numa escala de 0 a 100%.
    */
   function desenhaIndicadores(p) {
-    var a = peso(11, p), ind = IND[indSel];
+    var a = peso(11, p), ind = opAtual();
     if (a < 0.01 || !ind) return;
     var P = BARRAS.plot, alt = P.y1 - P.y0, s = segmento(p), q;
     var cresce = (p >= 11 ? 1 : suave(corta((s.t - 0.55) / 0.45))) * suave(indTroca);
-    var media = ind.tipo === 'media', f = formatoUnidade(ind.unidade);
+    var media = ind.tipo === 'media', pct = !media && ind.pct, f = formatoUnidade(ind.unidade);
     var larg = BARRAS.larg3;
+    var fq = function (n) { return fmt0.format(n) + (pct ? '%' : ''); };
 
-    // Escala: a maior barra (ou pilha) com folga, em passos redondos.
-    var tot = [0, 0, 0, 0, 0];
-    ind.series.forEach(function (se) { se.valores.forEach(function (v, i) { tot[i] += v || 0; }); });
-    var maior = Math.max.apply(null, tot) || 1, passo = passoRedondo(maior / 4);
-    var yMax = Math.ceil(maior * 1.1 / passo) * passo;
+    // Escala: a maior barra (ou pilha) com folga, em passos redondos; em % vai a 100.
+    var yMax = 100, passo = 25;
+    if (!pct) {
+      var tot = [0, 0, 0, 0, 0];
+      ind.series.forEach(function (se) { se.valores.forEach(function (v, i) { tot[i] += v || 0; }); });
+      var maior = Math.max.apply(null, tot) || 1;
+      passo = passoRedondo(maior / 4);
+      yMax = Math.ceil(maior * 1.1 / passo) * passo;
+    }
     eixoY(P, yMax, passo, a, function (v) {
-      if (!media) return fmt0.format(v);
+      if (!media) return fq(v);
       if (ind.unidade === 'reais' && MOBILE) return fmt0.format(v / 1000) + ' mil'; // "R$ 20.000" nao cabe a esquerda
       return f(v, true);
     });
 
     ctx.globalAlpha = a;
-    var tamL = MOBILE ? 10 : 12, yT = P.y0 - (MOBILE ? 34 : 46);
-    texto(media ? ind.titulo : 'Municípios por faixa: ' + ind.nome, P.x0, yT, { tam: MOBILE ? 11 : 13, peso: 700, cor: TINTA });
+    var tamL = MOBILE ? 10 : 12, yT = P.y0 - (MOBILE ? 34 : 46), tamTit = MOBILE ? 11 : 13;
+    // Titulo longo (com o tipo de risco) so se couber; o tipo tambem esta no cartao.
+    var titulo = ind.titulo;
+    ctx.font = '700 ' + tamTit + 'px ' + FONTE;
+    if (ind.titulo_curto && ctx.measureText(titulo).width > P.x1 - P.x0) titulo = ind.titulo_curto;
+    texto(titulo, P.x0, yT, { tam: tamTit, peso: 700, cor: TINTA });
     if (!media) {
       // Legenda das faixas; quebra a linha se nao couber.
       var xl = P.x0, yl = yT + (MOBILE ? 16 : 22);
@@ -1233,7 +1253,7 @@
         if (hs <= 0) return;
         ctx.fillStyle = cor; ctx.fillRect(x, base - hs, larg, hs);
         if (cresce > 0.98 && hs >= (MOBILE ? 11 : 14)) {
-          texto(fmt0.format(n), centroSlot(q), base - hs / 2, { tam: MOBILE ? 9 : 11, peso: 700, cor: FAIXA_CLARA[cor] ? TINTA : '#ffffff', alinha: 'center' });
+          texto(fq(n), centroSlot(q), base - hs / 2, { tam: MOBILE ? 9 : 11, peso: 700, cor: FAIXA_CLARA[cor] ? TINTA : '#ffffff', alinha: 'center' });
         }
         base -= hs;
       });
@@ -1493,10 +1513,36 @@
   // Seletor de indicadores (estado 11)
   // --------------------------------------------------------------------------
   var seletor = document.getElementById('an-indicador');
+  var seletorSub = document.getElementById('an-indicador-sub');
+  var blocoSub = document.getElementById('an-indicador-sub-bloco');
+
+  /** Segundo seletor: as opcoes do indicador escolhido, com os grupos; some se ha uma so. */
+  function preencheSub() {
+    var ind = IND[indSel];
+    if (!seletorSub || !blocoSub) return;
+    var varias = !!ind && ind.opcoes.length > 1;
+    blocoSub.hidden = !varias;
+    seletorSub.innerHTML = '';
+    if (!varias) return;
+    var rotulo = document.getElementById('an-indicador-sub-rotulo');
+    if (rotulo) rotulo.textContent = ind.sub_rotulo || 'Opção';
+    var grupo = null, pai = seletorSub;
+    ind.opcoes.forEach(function (op) {
+      if (op.grupo !== grupo) {
+        grupo = op.grupo;
+        pai = seletorSub;
+        if (grupo) { pai = document.createElement('optgroup'); pai.label = grupo; seletorSub.appendChild(pai); }
+      }
+      var o = document.createElement('option');
+      o.value = op.id; o.textContent = op.nome;
+      pai.appendChild(o);
+    });
+    seletorSub.selectedIndex = subSel[indSel]; // conta as opcoes de todos os grupos, em ordem
+  }
 
   /** Frase e nota do cartao, e o rotulo do canvas, para a opcao escolhida. */
   function atualizaCartaoIndicador() {
-    var ind = IND[indSel];
+    var ind = opAtual();
     if (!ind) return;
     var leitura = document.getElementById('an-indicador-leitura'), nota = document.getElementById('an-indicador-nota');
     if (nota) nota.textContent = ind.nota || '';
@@ -1505,16 +1551,17 @@
         var v = ind.series[0] ? ind.series[0].valores : [], f = formatoUnidade(ind.unidade);
         leitura.textContent = ind.titulo + ': ' + f(v[0]) + ' no 1º quintil e ' + f(v[4]) + ' no 5º.';
       } else {
-        // Contagem: soma as faixas em destaque (nota A; risco alto ou muito alto).
-        var soma = [0, 0, 0, 0, 0];
+        // Contagem: soma as faixas em destaque (nota A; risco alto ou muito alto; IDEB 6 ou mais).
+        var soma = [0, 0, 0, 0, 0], u = ind.pct ? '%' : '';
         ind.series.forEach(function (se) {
           if ((ind.destaque || []).indexOf(se.rotulo) < 0) return;
           se.valores.forEach(function (n, i) { soma[i] += n || 0; });
         });
-        leitura.textContent = 'Municípios ' + ind.destaque_txt + ': ' + fmt0.format(soma[0]) + ' no 1º quintil e ' + fmt0.format(soma[4]) + ' no 5º.';
+        leitura.textContent = 'Municípios ' + ind.destaque_txt + ': ' + fmt0.format(soma[0]) + u + ' no 1º quintil e ' + fmt0.format(soma[4]) + u + ' no 5º.';
       }
     }
-    if (passos[11]) passos[11].setAttribute('data-rotulo', 'Indicadores por quintil de receita por habitante: ' + ind.nome);
+    var nome = IND[indSel].nome + (ind.nome ? ', ' + ind.nome : '');
+    if (passos[11]) passos[11].setAttribute('data-rotulo', 'Indicadores por quintil de receita por habitante: ' + nome);
     if (passoAtivo === 11) canvas.setAttribute('aria-label', passos[11].getAttribute('data-rotulo'));
   }
 
@@ -1525,14 +1572,25 @@
     if (indTroca < 1) requestAnimationFrame(animaTroca);
   }
 
+  function trocaIndicador() {
+    atualizaCartaoIndicador();
+    if (!pronto) return;
+    indInicio = performance.now();
+    indTroca = 0;
+    requestAnimationFrame(animaTroca);
+  }
+
   if (seletor) {
     seletor.addEventListener('change', function () {
       indSel = Math.max(0, seletor.selectedIndex);
-      atualizaCartaoIndicador();
-      if (!pronto) return;
-      indInicio = performance.now();
-      indTroca = 0;
-      requestAnimationFrame(animaTroca);
+      preencheSub();
+      trocaIndicador();
+    });
+  }
+  if (seletorSub) {
+    seletorSub.addEventListener('change', function () {
+      subSel[indSel] = Math.max(0, seletorSub.selectedIndex);
+      trocaIndicador();
     });
   }
 
@@ -1545,6 +1603,7 @@
     secao.classList.add('is-pronto');
     // O navegador pode restaurar a opcao do seletor ao recarregar a pagina.
     if (seletor) indSel = Math.max(0, seletor.selectedIndex);
+    preencheSub();
     atualizaCartaoIndicador();
     calculaLayout();
     mede();
